@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { 
-  Building2, Monitor, ArrowLeftRight, Settings, Grid, 
+  Building2, Monitor, ArrowLeftRight, Settings, Grid, Box, Warehouse,
+  Tag, Scale, FolderTree, Package, ShoppingBag, Boxes, Copy, Store,
   Search, Maximize, Moon, Languages, Bell, PanelLeftClose, ChevronDown, ChevronUp, ChevronRight
 } from 'lucide-vue-next';
 
@@ -18,17 +19,19 @@ const toggleSidebar = () => {
     <!-- SIDEBAR -->
     <aside :class="['sidebar', { collapsed: isSidebarCollapsed }]">
       <!-- Sidebar Header -->
-      <div class="sidebar-header">
-        <div class="logo-box">
-          <Box class="logo-icon text-orange-400" :size="24" />
-        </div>
-        <div class="brand-info" v-if="!isSidebarCollapsed">
-          <h1 class="brand-title">Haleta ERP</h1>
-          <p class="brand-subtitle">Module Name</p>
-        </div>
-        <div class="app-switcher" v-if="!isSidebarCollapsed">
-          <ChevronUp :size="12" class="text-gray-400" />
-          <ChevronDown :size="12" class="text-gray-400" />
+      <div class="sidebar-header-wrapper">
+        <div class="sidebar-brand-badge">
+          <div class="logo-box">
+            <Box class="logo-icon text-orange-400" :size="20" />
+          </div>
+          <div class="brand-info" v-if="!isSidebarCollapsed">
+            <h1 class="brand-title">Haleta ERP</h1>
+            <p class="brand-subtitle">Module Name</p>
+          </div>
+          <div class="app-switcher ml-auto" v-if="!isSidebarCollapsed">
+            <ChevronUp :size="12" class="text-gray-400" />
+            <ChevronDown :size="12" class="text-gray-400" />
+          </div>
         </div>
       </div>
 
@@ -36,25 +39,99 @@ const toggleSidebar = () => {
       <nav class="sidebar-nav">
         <div class="nav-section" v-if="!isSidebarCollapsed">ENTITY SETUP</div>
         <ul>
-          <li class="nav-item">
-            <Building2 :size="18" class="nav-icon" />
-            <span class="nav-text" v-if="!isSidebarCollapsed">Business Group</span>
+          <li>
+            <router-link to="/business-group" class="nav-item" active-class="active">
+              <Building2 :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Business Group</span>
+            </router-link>
           </li>
-          <li class="nav-item active">
-            <Building2 :size="18" class="nav-icon" />
-            <span class="nav-text" v-if="!isSidebarCollapsed">Organization</span>
+          <li>
+            <router-link to="/organizations" class="nav-item" active-class="active">
+              <Building2 :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Organization</span>
+            </router-link>
           </li>
-          <li class="nav-item">
-            <Grid :size="18" class="nav-icon" />
-            <span class="nav-text" v-if="!isSidebarCollapsed">Branch</span>
+          <li>
+            <router-link to="/branches" class="nav-item" active-class="active">
+              <Grid :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Branch</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/warehouses" class="nav-item" active-class="active">
+              <Warehouse :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Warehouse</span>
+            </router-link>
+          </li>
+        </ul>
+
+        <div class="nav-section mt-6" v-if="!isSidebarCollapsed">PRODUCT SETUP</div>
+        <ul>
+          <li>
+            <router-link to="/brands" class="nav-item" active-class="active">
+              <Tag :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Brands</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/measurements" class="nav-item" active-class="active">
+              <Scale :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Measurements</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/item-categories" class="nav-item" active-class="active">
+              <FolderTree :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Item Categories</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/items" class="nav-item" active-class="active">
+              <Package :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Items</span>
+            </router-link>
+          </li>
+        </ul>
+
+        <div class="nav-section mt-6" v-if="!isSidebarCollapsed">PRODUCTS</div>
+        <ul>
+          <li>
+            <router-link to="/products" class="nav-item" active-class="active">
+              <ShoppingBag :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Products</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/product-groups" class="nav-item" active-class="active">
+              <Boxes :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Product Groups</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/variants" class="nav-item" active-class="active">
+              <Copy :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Variants</span>
+            </router-link>
+          </li>
+        </ul>
+
+        <div class="nav-section mt-6" v-if="!isSidebarCollapsed">DISTRIBUTION</div>
+        <ul>
+          <li>
+            <router-link to="/shop-products" class="nav-item" active-class="active">
+              <Store :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Shop Products</span>
+            </router-link>
           </li>
         </ul>
 
         <div class="nav-section mt-6" v-if="!isSidebarCollapsed">SETTINGS</div>
         <ul>
-          <li class="nav-item">
-            <Settings :size="18" class="nav-icon" />
-            <span class="nav-text" v-if="!isSidebarCollapsed">Settings</span>
+          <li>
+            <router-link to="/settings" class="nav-item" active-class="active">
+              <Settings :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Settings</span>
+            </router-link>
           </li>
         </ul>
       </nav>
@@ -131,16 +208,23 @@ const toggleSidebar = () => {
 }
 .sidebar.collapsed { width: 80px; }
 
-.sidebar-header {
-  padding: 20px;
+.sidebar-header-wrapper {
+  padding: 16px;
+}
+.sidebar-brand-badge {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid transparent;
+  padding: 12px;
+  background-color: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
 }
 .logo-box {
   background: #fff8eb;
-  padding: 8px;
+  padding: 6px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -165,9 +249,11 @@ ul { list-style: none; padding: 0; margin: 0; }
   cursor: pointer;
   color: #4b5563;
   margin-bottom: 4px;
+  text-decoration: none;
 }
 .nav-item:hover { background: #f3f4f6; }
 .nav-item.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+.nav-item.active .nav-icon { color: #1d4ed8; }
 .nav-icon { flex-shrink: 0; }
 .nav-text { font-size: 13px; }
 
