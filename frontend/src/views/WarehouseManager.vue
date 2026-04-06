@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import { 
   Warehouse, Layers, Box, ChevronRight, Plus, Search, 
-  Settings, Info, MapPin, ArrowRight, Package
+  Settings, Info, MapPin, ArrowRight, Package, Monitor
 } from 'lucide-vue-next';
+import HaletaHeader from '../components/HaletaHeader.vue';
 
 const currentView = ref<'list' | 'detail'>('list');
 const selectedWarehouse = ref<any>(null);
@@ -40,22 +41,18 @@ const viewWarehouse = (wh: any) => {
 
 <template>
   <div class="warehouse-manager">
-    <!-- TOP NAV -->
-    <div class="erp-nav">
-      <div class="erp-nav-left">
-        <div class="breadcrumb text-sm">
-          <span class="root">Home</span>
-          <ChevronRight :size="14" class="sep" />
-          <span class="current">Inventory</span>
-        </div>
-        <div class="view-title">
-          <h1 class="h2">{{ currentView === 'list' ? 'Warehouses' : selectedWarehouse.name }}</h1>
-        </div>
-      </div>
-      <div class="erp-nav-right">
-        <button class="btn btn-primary"><Plus :size="14" /> New Warehouse</button>
-      </div>
-    </div>
+    <!-- TOP NAV (Standardized) -->
+    <HaletaHeader 
+      :icon="Warehouse" 
+      :breadcrumbs="[
+        { label: 'Home', onClick: () => currentView = 'list' },
+        { label: currentView === 'list' ? 'Warehouses' : selectedWarehouse.name, isCurrent: true }
+      ]"
+    >
+      <template #actions>
+        <button v-if="currentView === 'list'" class="btn btn-primary"><Plus :size="14" /> New Warehouse</button>
+      </template>
+    </HaletaHeader>
 
     <!-- LIST VIEW -->
     <div v-if="currentView === 'list'" class="view-list px-lg">
@@ -143,15 +140,8 @@ const viewWarehouse = (wh: any) => {
 .px-lg { padding-left: 24px; padding-right: 24px; }
 .sticky-top { position: sticky; top: 100px; }
 
-.erp-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  background-color: white;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 24px;
-}
+.sticky-top { position: sticky; top: 100px; }
+
 
 .grid-layout {
   display: grid;

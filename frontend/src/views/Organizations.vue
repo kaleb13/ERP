@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Search, Filter, Plus, MoreVertical, Building, X } from 'lucide-vue-next';
+import { Search, Filter, Plus, MoreVertical, Building, X, ChevronRight, Monitor } from 'lucide-vue-next';
+import HaletaHeader from '../components/HaletaHeader.vue';
 
 interface Organization {
   id: string;
@@ -68,28 +69,25 @@ const tabs = [
 <template>
   <div class="organizations">
     
-    <!-- ERP TOP NAV / BREADCRUMB BAR -->
-    <div class="erp-nav">
-      <div class="erp-nav-left">
-        <div class="breadcrumb text-sm">
-          <span class="root">Home</span>
-          <ChevronRight :size="14" class="sep" />
-          <span class="current">Organizations</span>
-        </div>
-        <div class="view-title">
-          <h1 class="h2">{{ currentView === 'list' ? 'Organizations' : 'New Organization' }}</h1>
-        </div>
-      </div>
-      <div class="erp-nav-right">
+    <!-- ERP TOP NAV / BREADCRUMB BAR (Standardized) -->
+    <HaletaHeader 
+      :icon="Building" 
+      :breadcrumbs="[
+        { label: 'Home', onClick: cancelFullForm },
+        { label: currentView === 'list' ? 'Organizations' : 'New Organization', isCurrent: true }
+      ]"
+      :statusBadge="currentView === 'create_full' ? 'Not Saved' : ''"
+    >
+      <template #actions>
         <button v-if="currentView === 'list'" class="btn btn-primary" @click="openQuickCreate">
           <Plus :size="14" /> Add Organization
         </button>
         <template v-else>
            <button class="btn btn-outline" @click="cancelFullForm">Cancel</button>
-           <button class="btn btn-primary">Save</button>
+           <button class="btn btn-primary ml-2">Save</button>
         </template>
-      </div>
-    </div>
+      </template>
+    </HaletaHeader>
 
     <!-- LIST VIEW -->
     <div v-if="currentView === 'list'" class="view-list">
@@ -278,40 +276,8 @@ const tabs = [
 
 <style scoped>
 /* ERP COMPONENT STYLES */
-.erp-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background-color: white;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 20px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.erp-nav-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
-}
-.sep { color: #ccc; }
-.breadcrumb .current { color: #1a1c21; font-weight: 500; }
-
-.erp-nav-right {
-  display: flex;
-  gap: 10px;
-}
-
-.title-row { margin-bottom: 0; }
+/* ERP STYLES */
+.ml-2 { margin-left: 0.5rem; }
 
 .toolbar {
   background: white;

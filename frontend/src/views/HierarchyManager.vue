@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import { 
   Building2, Building, GitBranch, Store, ShoppingCart, 
-  Warehouse, Layers, Box, ChevronRight, Plus, MoreVertical, Search, ExternalLink 
+  Warehouse, Layers, Box, ChevronRight, Plus, MoreVertical, Search, ExternalLink, Monitor 
 } from 'lucide-vue-next';
+import HaletaHeader from '../components/HaletaHeader.vue';
 
 // This is a "Parent" View that manages the relationship
 const currentView = ref<'dashboard' | 'organization_detail'>('dashboard');
@@ -38,19 +39,14 @@ const selectOrg = (org: any) => {
 
 <template>
   <div class="hierarchy-manager">
-    <!-- TOP NAV -->
-    <div class="erp-nav">
-      <div class="erp-nav-left">
-        <div class="breadcrumb text-sm">
-          <span class="root">Home</span>
-          <ChevronRight :size="14" class="sep" />
-          <span class="current">Hierarchy Manager</span>
-        </div>
-        <div class="view-title">
-          <h1 class="h2">{{ currentView === 'dashboard' ? 'Business Hierarchy' : selectedOrg.name }}</h1>
-        </div>
-      </div>
-    </div>
+    <!-- TOP NAV (Standardized) -->
+    <HaletaHeader 
+      :icon="Building2" 
+      :breadcrumbs="[
+        { label: 'Home', onClick: () => currentView = 'dashboard' },
+        { label: currentView === 'dashboard' ? 'Business Hierarchy' : selectedOrg.name, isCurrent: true }
+      ]"
+    />
 
     <!-- DASHBOARD VIEW -->
     <div v-if="currentView === 'dashboard'" class="dashboard-grid">
@@ -142,19 +138,8 @@ const selectOrg = (org: any) => {
 <style scoped>
 .hierarchy-manager { padding: 0; }
 
-.erp-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background-color: white;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 24px;
-}
+.hierarchy-manager { padding: 0; }
 
-.breadcrumb { display: flex; align-items: center; gap: 6px; color: var(--color-text-muted); margin-bottom: 4px; }
-.sep { color: #ccc; }
-.current { color: #1a1c21; font-weight: 500; }
 
 .dashboard-grid {
   display: grid;

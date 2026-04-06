@@ -18,28 +18,30 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 2. Entity Types (Business Group, Organization, etc.)
+        // 2. Entity Types (Business Group, Organization, Branch, Shop, Outlet)
         Schema::create('entity_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // e.g. "Business Group", "Organization", "Branch"
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->integer('level');
             $table->string('description')->nullable();
-            $table->integer('level'); // hierarchy level
+            $table->string('status')->default('active');
             $table->timestamps();
         });
 
-        // 3. Main Entities Table (Hierarchical Nested Set Model)
+        // 3. Core Entities (The Node)
         Schema::create('entities', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');
             $table->string('code')->unique();
-            $table->foreignId('entity_type_id')->nullable()->constrained();
+            $table->foreignId('entity_type_id')->constrained();
             $table->foreignId('parent_id')->nullable()->references('id')->on('entities')->onDelete('cascade');
             $table->string('path')->nullable();
             $table->integer('lft')->nullable();
             $table->integer('rgt')->nullable();
             $table->boolean('is_group')->default(false);
-            $table->unsignedBigInteger('party_id')->nullable(); 
+            $table->unsignedBigInteger('party_id')->nullable();
             $table->unsignedBigInteger('admin_unit_id')->nullable();
             $table->enum('pos_type', ['retail', 'hospitality', 'mixed'])->nullable();
             $table->string('abbreviation')->nullable();
@@ -50,7 +52,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 4. Entity Details
+        // 4. Entity Details (Extended info)
         Schema::create('entity_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('entity_id')->constrained()->onDelete('cascade');
@@ -72,7 +74,67 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 5. Outlets (Operational units)
+        // 5. History Tables
+        Schema::create('entity_histories', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('entity_id')->constrained();
+            $table->string('name');
+            $table->json('data_snapshot');
+            $table->timestamps();
+        });
+
+        Schema::create('entity_detail_histories', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('entity_detail_id');
+            $table->unsignedBigInteger('entity_history_id');
+            $table->json('data_snapshot');
+            $table->timestamps();
+        });
+
+        // 6. Pivots and Addresses
+        Schema::create('entity_pivots', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('entity_history_id');
+            $table->unsignedBigInteger('entity_detail_history_id');
+            $table->timestamps();
+        });
+
+        Schema::create('entity_addresses', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('admin_pivot_id')->nullable();
+            $table->unsignedBigInteger('tax_center_history_id')->nullable();
+            $table->unsignedBigInteger('entity_pivot_id')->nullable();
+            $table->string('state')->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create('entity_sectors', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('sector_id');
+            $table->boolean('is_primary')->default(false);
+            $table->string('state')->default('active');
+            $table->timestamps();
+        });
+
+        // 7. Costing and Currency
+        Schema::create('entity_costing_rules', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
+            $table->string('costing_rule'); // FIFO, WAC
+            $table->string('state')->default('active');
+            $table->timestamps();
+        });
+
+        Schema::create('entity_base_currencies', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('base_currency_id');
+            $table->string('state')->default('active');
+            $table->timestamps();
+        });
+
+        // 8. Outlets and Operational Units
         Schema::create('outlets', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
@@ -82,17 +144,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 6. Warehouse Types
+        // 9. Warehouses
         Schema::create('warehouse_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // e.g. central, store_backroom...
+            $table->string('name');
             $table->string('code')->nullable();
-            $table->string('status')->default('pending'); // pending, approved...
+            $table->string('status')->default('pending'); // pending, approved, reject
             $table->string('state')->default('active');
             $table->timestamps();
         });
 
-        // 7. Warehouses
         Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
@@ -101,7 +162,7 @@ return new class extends Migration
             $table->string('longitude')->nullable();
             $table->string('latitude')->nullable();
             $table->foreignId('entity_id')->constrained()->onDelete('cascade');
-            $table->foreignId('parent_warehouse_id')->nullable()->references('id')->on('warehouses')->onDelete('set null');
+            $table->foreignId('warehouse_id')->nullable()->references('id')->on('warehouses')->onDelete('set null'); // Self reference
             $table->boolean('is_group')->default(false);
             $table->integer('level')->default(0);
             $table->boolean('has_shelf')->default(false);
@@ -111,7 +172,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 8. Shelves and Bins
         Schema::create('warehouse_shelves', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -131,7 +191,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 9. Employee and Customers
+        // 10. HR & CRM
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
@@ -142,7 +202,7 @@ return new class extends Migration
 
         Schema::create('customer_groups', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Wholesale, Retail...
+            $table->string('name');
             $table->string('status')->default('pending');
             $table->string('state')->default('active');
             $table->timestamps();
@@ -153,47 +213,16 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('entity_id')->constrained()->onDelete('cascade');
             $table->unsignedBigInteger('party_id')->nullable();
-            $table->foreignId('customer_group_id')->constrained();
+            $table->string('customer_group'); // retail, wholesale
             $table->decimal('credit_limit', 15, 2)->default(0);
             $table->boolean('loyalty_enabled')->default(false);
             $table->string('state')->default('active');
             $table->timestamps();
         });
-
-        // 10. Supporting tables (Pivot, Address, Sector, etc.)
-        Schema::create('entity_sectors', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
-            $table->unsignedBigInteger('sector_id');
-            $table->boolean('is_primary')->default(false);
-            $table->string('state')->default('active');
-            $table->timestamps();
-        });
-
-        Schema::create('entity_base_currencies', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
-            $table->unsignedBigInteger('base_currency_id');
-            $table->string('state')->default('active');
-            $table->timestamps();
-        });
-        
-        // Costing rules
-        Schema::create('entity_costing_rules', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('entity_id')->constrained()->onDelete('cascade');
-            $table->string('costing_rule'); // FIFO, WAC
-            $table->string('state')->default('active');
-            $table->timestamps();
-        });
-
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('entity_costing_rules');
-        Schema::dropIfExists('entity_base_currencies');
-        Schema::dropIfExists('entity_sectors');
         Schema::dropIfExists('customers');
         Schema::dropIfExists('customer_groups');
         Schema::dropIfExists('employees');
@@ -202,6 +231,13 @@ return new class extends Migration
         Schema::dropIfExists('warehouses');
         Schema::dropIfExists('warehouse_types');
         Schema::dropIfExists('outlets');
+        Schema::dropIfExists('entity_base_currencies');
+        Schema::dropIfExists('entity_costing_rules');
+        Schema::dropIfExists('entity_sectors');
+        Schema::dropIfExists('entity_addresses');
+        Schema::dropIfExists('entity_pivots');
+        Schema::dropIfExists('entity_detail_histories');
+        Schema::dropIfExists('entity_histories');
         Schema::dropIfExists('entity_details');
         Schema::dropIfExists('entities');
         Schema::dropIfExists('entity_types');
