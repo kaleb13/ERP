@@ -1,33 +1,22 @@
 <script setup lang="ts">
-// Main App Component
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <router-view />
+  <RouterView />
 </template>
 
 <style>
-/* Global resets */
+/* Global reset and setup */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 body {
-  background-color: #f4f6f8;
-  color: #333;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #fafafa;
+  color: #111827;
 }
 </style>

@@ -1,456 +1,309 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Search, Filter, Plus, MoreVertical, Building, X, ChevronRight, Monitor } from 'lucide-vue-next';
-import HaletaHeader from '../components/HaletaHeader.vue';
+import DashboardLayout from '../layouts/DashboardLayout.vue';
+import { 
+  Monitor, ChevronRight, ChevronDown, Layers, Box, CheckCircle, XCircle,
+  Search, Filter, ArrowUpDown, Plus, MoreVertical 
+} from 'lucide-vue-next';
 
-interface Organization {
-  id: string;
-  name: string;
-  abbreviation: string;
-  legalEntityType: string;
-  state: 'Active' | 'Inactive';
-}
+// Dummy data matching the image
+const summaryCards = [
+  { value: '8', label: 'Module Groups', icon: Layers, iconColor: 'text-gray-500', iconBg: 'bg-gray-100' },
+  { value: '8', label: 'Total Modules', icon: Box, iconColor: 'text-blue-500', iconBg: 'bg-blue-50' },
+  { value: '7', label: 'Active Modules', icon: CheckCircle, iconColor: 'text-green-500', iconBg: 'bg-green-50' },
+  { value: '1', label: 'In Active Modules', icon: XCircle, iconColor: 'text-red-500', iconBg: 'bg-red-50' }
+];
 
-const orgs = ref<Organization[]>([
-  { id: '1', name: 'Qelem Meda Investment Group', abbreviation: 'QMIG', legalEntityType: 'PLC', state: 'Active' },
-  { id: '2', name: 'Medirock Investment Group', abbreviation: 'MIG', legalEntityType: 'Share Company', state: 'Active' },
-  { id: '3', name: 'TTM Trading', abbreviation: 'TTM', legalEntityType: 'Sole Proprietorship', state: 'Inactive' }
-]);
-
-const currentView = ref<'list' | 'create_full'>('list');
-const showQuickCreate = ref(false);
-
-const newOrg = ref({
-  name: '',
-  abbreviation: '',
-  entity_id: ''
-});
-
-const openQuickCreate = () => {
-  showQuickCreate.value = true;
-};
-
-const closeQuickCreate = () => {
-  showQuickCreate.value = false;
-};
-
-const expandFullForm = () => {
-  showQuickCreate.value = false;
-  currentView.value = 'create_full';
-};
-
-const saveQuickCreate = () => {
-  orgs.value.push({
-    id: Date.now().toString(),
-    name: newOrg.value.name,
-    abbreviation: newOrg.value.abbreviation,
-    legalEntityType: 'Pending',
+const organizations = [
+  {
+    id: 1,
+    name: 'QMT Addis Branch Org',
+    code: 'QMT-ORG-001',
+    parent: 'QMT Business Group',
+    branches: ['Qelem meda', 'Qelem Hibr', 'Qelem Awtar'],
+    extraBranches: '+5',
     state: 'Active'
-  });
-  newOrg.value = { name: '', abbreviation: '', entity_id: '' };
-  showQuickCreate.value = false;
-};
-
-const cancelFullForm = () => {
-  currentView.value = 'list';
-};
-
-const activeTab = ref('basic');
-const tabs = [
-  { id: 'basic', label: 'Basic Info' },
-  { id: 'legal', label: 'Legal & Tax' },
-  { id: 'location', label: 'Location' },
-  { id: 'structure', label: 'Structure' },
-  { id: 'contact', label: 'Contact' },
-  { id: 'advanced', label: 'Advanced' }
+  }
 ];
 </script>
 
 <template>
-  <div class="organizations">
-    
-    <!-- ERP TOP NAV / BREADCRUMB BAR (Standardized) -->
-    <HaletaHeader 
-      :breadcrumbs="[
-        { label: 'Home', onClick: cancelFullForm },
-        { label: currentView === 'list' ? 'Organizations' : 'New Organization', isCurrent: true }
-      ]"
-      :statusBadge="currentView === 'create_full' ? 'Not Saved' : ''"
-    >
-      <template #actions>
-        <button v-if="currentView === 'list'" class="btn btn-primary" @click="openQuickCreate">
-          <Plus :size="14" /> Add Organization
-        </button>
-        <template v-else>
-           <button class="btn btn-outline" @click="cancelFullForm">Cancel</button>
-           <button class="btn btn-primary ml-2">Save</button>
-        </template>
-      </template>
-    </HaletaHeader>
-
-    <!-- LIST VIEW -->
-    <div v-if="currentView === 'list'" class="view-list">
-      <div class="toolbar card">
-        <div class="toolbar-left">
-          <div class="search-box">
-            <Search :size="14" class="search-icon" />
-            <input type="text" placeholder="Search..." class="search-input" />
-          </div>
-          <button class="btn btn-outline btn-filter">
-            <Filter :size="14" /> Filter
-          </button>
-        </div>
+  <DashboardLayout>
+    <div class="org-layout">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <Monitor :size="14" class="icon-dashboard" />
+        <ChevronRight :size="12" class="sep" />
+        <span class="current">Organizations</span>
       </div>
 
-      <div class="table-container card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="check-col"><input type="checkbox" /></th>
-              <th>Name</th>
-              <th>Abbreviation</th>
-              <th>Legal Entity</th>
-              <th>State</th>
-              <th class="actions-col"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="org in orgs" :key="org.id">
-              <td><input type="checkbox" /></td>
-              <td class="col-name">
-                {{ org.name }}
-              </td>
-              <td class="text-muted">{{ org.abbreviation }}</td>
-              <td class="text-muted">{{ org.legalEntityType }}</td>
-              <td>
-                <span class="state-dot" :class="org.state.toLowerCase()"></span>
-                <span class="text-xs uppercase font-bold">{{ org.state }}</span>
-              </td>
-              <td class="actions-col">
-                <button class="btn-icon"><MoreVertical :size="14" /></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div class="pagination">
-          <div class="text-xs text-muted">Showing {{ orgs.length }} Organizations</div>
-          <div class="page-controls">
-            <button class="btn btn-outline btn-xs">1</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FULL FORM VIEW (ERPNext 'Document' style) -->
-    <div v-else-if="currentView === 'create_full'" class="view-form">
-      <div class="form-container">
-        
-        <!-- Document Status Header -->
-        <div class="doc-header card">
-           <div class="doc-title-box">
-              <div class="doc-icon"><Building :size="24" /></div>
-              <div class="doc-info">
-                 <div class="text-xs text-muted uppercase font-bold letter-spacing-tight">Organization</div>
-                 <div class="h3 doc-id">Draft</div>
-              </div>
-           </div>
-           <div class="doc-status">
-              <div class="badge-status">
-                 <span class="dot yellow"></span>
-                 Not Saved
-              </div>
-           </div>
+      <!-- Header Section -->
+      <div class="page-container p-6 bg-white rounded-xl shadow-sm border border-gray-200 mt-4 mb-6">
+        <div class="page-header mb-6">
+          <h2 class="text-xl font-bold text-gray-900 mb-1">Organizations</h2>
+          <p class="text-sm text-gray-500">Establish legally distinct companies under your group.</p>
         </div>
 
-        <div class="form-content card">
-          <div class="tabs-sideways">
-            <div class="tabs-v-header">
-              <button 
-                v-for="tab in tabs" 
-                :key="tab.id"
-                class="v-tab-btn"
-                :class="{ active: activeTab === tab.id }"
-                @click="activeTab = tab.id"
-              >
-                {{ tab.label }}
-              </button>
+        <!-- Metrics Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card" v-for="(card, i) in summaryCards" :key="i">
+            <div>
+              <div class="text-2xl font-bold text-gray-900">{{ card.value }}</div>
+              <div class="text-xs text-gray-500 mt-1">{{ card.label }}</div>
             </div>
-
-            <div class="tabs-v-body">
-              <div v-if="activeTab === 'basic'" class="tab-pane">
-                <h4 class="section-title">General Information</h4>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label class="form-label">Organization Name</label>
-                    <input type="text" class="input" placeholder="e.g. Qelem Meda Solutions" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Abbreviation</label>
-                    <input type="text" class="input" placeholder="e.g. QMS" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Entity ID Reference</label>
-                    <input type="text" class="input" placeholder="Select Entity..." />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Date Established</label>
-                    <input type="date" class="input" />
-                  </div>
-                </div>
-              </div>
-              
-              <div v-if="activeTab === 'legal'" class="tab-pane">
-                <h4 class="section-title">Registration Details</h4>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label class="form-label">Legal Entity Type</label>
-                    <select class="input">
-                      <option value="">Select Type</option>
-                      <option value="plc">PLC</option>
-                      <option value="sc">Share Company</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">TIN Number</label>
-                    <input type="text" class="input" placeholder="Tax ID" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">VAT Number</label>
-                    <input type="text" class="input" placeholder="VAT Registration" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Trade Name</label>
-                    <input type="text" class="input" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Other tabs follow same pattern -->
-              <div v-if="activeTab === 'contact'" class="tab-pane">
-                <h4 class="section-title">Contact Channels</h4>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="input" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Phone</label>
-                    <input type="tel" class="input" />
-                  </div>
-                </div>
-              </div>
-
+            <div :class="['metric-icon-box', card.iconBg, card.iconColor]">
+              <component :is="card.icon" :size="18" />
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- QUICK CREATE MODAL -->
-    <div v-if="showQuickCreate" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="h3">Quick Create: Organization</h3>
-          <button class="btn-icon" @click="closeQuickCreate"><X :size="20" /></button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">Name <span class="text-danger">*</span></label>
-            <input type="text" class="input" v-model="newOrg.name" placeholder="Organization name" />
+      <!-- Main Table Section -->
+      <div class="page-container bg-white rounded-xl shadow-sm border border-gray-200">
+        <!-- Toolbar -->
+        <div class="toolbar p-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="toolbar-left flex gap-3">
+            <div class="search-box">
+              <Search :size="16" class="search-icon" />
+              <input type="text" placeholder="Search..." class="search-input" />
+            </div>
+            <button class="btn-outline flex items-center gap-2">
+              <Filter :size="14" /> Filter
+            </button>
+            <button class="btn-outline flex items-center gap-2">
+              <ArrowUpDown :size="14" /> Sort <ChevronDown class="ml-1" :size="12"/>
+            </button>
           </div>
-          <div class="form-group">
-            <label class="form-label">Abbreviation</label>
-            <input type="text" class="input" v-model="newOrg.abbreviation" placeholder="e.g. ORG" />
+          <div class="toolbar-right">
+            <button class="btn-primary flex items-center gap-2">
+              <Plus :size="14" /> Create Organization
+            </button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-outline" @click="expandFullForm">Expand Full Form</button>
-          <button class="btn btn-primary" @click="saveQuickCreate">Save</button>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="w-full text-left text-sm text-gray-700">
+            <thead class="text-xs text-gray-500 border-b border-gray-100">
+              <tr>
+                <th class="px-6 py-4 font-semibold">Feature Name</th>
+                <th class="px-6 py-4 font-semibold">Parent</th>
+                <th class="px-6 py-4 font-semibold">Branches <span class="help-icon">?</span></th>
+                <th class="px-6 py-4 font-semibold">State</th>
+                <th class="px-6 py-4 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="org in organizations" :key="org.id" class="border-b border-gray-50 hover:bg-gray-50">
+                <td class="px-6 py-4">
+                  <div class="font-medium text-gray-900">{{ org.name }}</div>
+                  <div class="text-xs text-gray-400 mt-1">{{ org.code }}</div>
+                </td>
+                <td class="px-6 py-4 text-gray-500">{{ org.parent }}</td>
+                <td class="px-6 py-4">
+                  <div class="flex gap-2 items-center">
+                    <span class="chip" v-for="b in org.branches" :key="b">{{ b }}</span>
+                    <span class="chip-extra">{{ org.extraBranches }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="badge badge-success">{{ org.state }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <button class="text-gray-400 hover:text-gray-600">
+                    <MoreVertical :size="16" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="pagination-footer p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+          <div class="flex items-center gap-4">
+            <span>Showing 1 to 2 of 2 entries</span>
+            <div class="flex items-center gap-2">
+              <span>Per Page:</span>
+              <select class="per-page-select">
+                <option>1</option>
+                <option>10</option>
+                <option>50</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex items-center border border-gray-200 rounded-md overflow-hidden">
+            <button class="page-btn flex items-center gap-1 border-r border-gray-200 px-3">
+              <ChevronRight class="rotate-180" :size="14" /> Previous
+            </button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn px-2">...</button>
+            <button class="page-btn">8</button>
+            <button class="page-btn">9</button>
+            <button class="page-btn border-r-0">10</button>
+            <button class="page-btn flex items-center gap-1 border-l border-gray-200 px-3">
+              Next <ChevronRight :size="14" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <style scoped>
-/* ERP COMPONENT STYLES */
-/* ERP STYLES */
-.ml-2 { margin-left: 0.5rem; }
-
-.toolbar {
-  background: white;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  background: var(--color-bg);
-  padding: 6px 12px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  width: 250px;
-}
-.search-box:focus-within {
-  background: white;
-  border-color: var(--color-primary);
-}
-.search-input {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 13px;
-  margin-left: 8px;
-  width: 100%;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  text-align: left;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.data-table td {
-  padding: 12px 16px;
-  font-size: 13px;
-  border-bottom: 1px solid #f1f3f4;
-}
-
-.check-col { width: 40px; text-align: center; }
-.actions-col { width: 40px; text-align: right; }
-
-.col-name { font-weight: 600; color: var(--color-primary); }
-
-.state-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 6px;
-}
-.state-dot.active { background-color: var(--color-success); }
-.state-dot.inactive { background-color: #ccc; }
-
-/* FORM View ERP Style */
-.form-container {
-  max-width: 1000px;
+/* Scoped specific to Organizations View */
+.org-layout {
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.doc-header {
+.breadcrumb {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  margin-bottom: 20px;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 12px;
 }
+.sep { color: #d1d5db; }
+.current { color: #374151; font-weight: 500; }
 
-.doc-title-box {
-  display: flex;
-  align-items: center;
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-.doc-icon {
-  width: 48px;
-  height: 48px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+.metric-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+
+.metric-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
 }
 
-.badge-status {
-  padding: 6px 12px;
-  background: #fff8e1;
-  color: #f57c00;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.dot.yellow { background: #f57c00; width: 6px; height: 6px; border-radius: 50%; }
-
-.tabs-sideways {
-  display: flex;
-  min-height: 500px;
+.search-box {
+  position: relative;
+  width: 300px;
 }
 
-.tabs-v-header {
-  width: 200px;
-  border-right: 1px solid var(--color-border);
-  padding: 12px 0;
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
 }
 
-.v-tab-btn {
-  width: 90%;
-  text-align: left;
-  padding: 10px 20px;
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.btn-outline {
+  padding: 8px 16px;
+  border: 1px solid #e5e5e5;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-muted);
-  border-radius: 0 4px 4px 0;
-  margin-bottom: 2px;
-}
-.v-tab-btn:hover { background-color: var(--color-bg); color: var(--color-text-main); }
-.v-tab-btn.active {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  border-left: 3px solid var(--color-primary);
+  cursor: pointer;
 }
 
-.tabs-v-body {
-  flex: 1;
-  padding: 32px;
+.btn-primary {
+  padding: 8px 16px;
+  background: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f1f3f4;
+.chip {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.chip-extra {
+  background: #f3f4f6;
+  color: #4b5563;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
 }
 
-.form-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px 40px;
+.badge-success {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
 }
 
-/* Modal Overlay Rest of common ones... */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.25);
-  display: flex;
+.help-icon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  font-size: 9px;
+  color: #6b7280;
+  margin-left: 4px;
 }
-.modal {
-  background: white; border-radius: 8px; width: 450px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+
+.per-page-select {
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
 }
-.modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-.modal-body { padding: 24px; }
-.modal-footer { padding: 12px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; }
+
+.page-btn {
+  padding: 6px 12px;
+  background: white;
+  border: none;
+  border-right: 1px solid #e5e5e5;
+  color: #374151;
+  cursor: pointer;
+  font-size: 13px;
+}
+.page-btn:last-child {
+  border-right: none;
+}
+.page-btn:hover {
+  background: #f9fafb;
+}
+.page-btn.active {
+  background: #0056b3;
+  color: white;
+  font-weight: 500;
+}
 </style>
