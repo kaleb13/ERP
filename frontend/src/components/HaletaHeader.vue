@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ChevronRight } from 'lucide-vue-next';
+import { ChevronRight, Monitor } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
 
 export interface BreadcrumbItem {
   label: string;
@@ -8,17 +9,21 @@ export interface BreadcrumbItem {
 }
 
 const props = defineProps<{
-  icon?: any;
   breadcrumbs: BreadcrumbItem[];
   statusBadge?: string;
 }>();
+
+const router = useRouter();
+const goToDashboard = () => {
+  router.push('/dashboard').catch(() => router.push('/'));
+};
 </script>
 
 <template>
   <header class="haleta-toolbar px-8 py-4 sticky top-0 z-50">
     <div class="toolbar-left-side">
-      <component v-if="icon" :is="icon" :size="16" />
-      <ChevronRight v-if="icon" :size="10" class="sep" />
+      <Monitor :size="16" class="crumb-link desktop-icon" @click="goToDashboard" />
+      <ChevronRight :size="10" class="sep" />
       
       <nav class="haleta-breadcrumb">
         <template v-for="(crumb, index) in breadcrumbs" :key="index">
@@ -73,6 +78,7 @@ const props = defineProps<{
 .toolbar-left-side .sep { color: #cbd5e1; }
 .crumb-link { color: #64748b; cursor: pointer; transition: color 0.2s; }
 .crumb-link:hover { color: #4f46e5; }
+.desktop-icon { flex-shrink: 0; }
 .crumb-current { color: #0f172a; font-weight: 700; }
 
 .haleta-status-pill {

@@ -41,7 +41,6 @@ const selectOrg = (org: any) => {
   <div class="hierarchy-manager">
     <!-- TOP NAV (Standardized) -->
     <HaletaHeader 
-      :icon="Building2" 
       :breadcrumbs="[
         { label: 'Home', onClick: () => currentView = 'dashboard' },
         { label: currentView === 'dashboard' ? 'Business Hierarchy' : selectedOrg.name, isCurrent: true }

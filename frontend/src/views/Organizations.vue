@@ -71,7 +71,6 @@ const tabs = [
     
     <!-- ERP TOP NAV / BREADCRUMB BAR (Standardized) -->
     <HaletaHeader 
-      :icon="Building" 
       :breadcrumbs="[
         { label: 'Home', onClick: cancelFullForm },
         { label: currentView === 'list' ? 'Organizations' : 'New Organization', isCurrent: true }

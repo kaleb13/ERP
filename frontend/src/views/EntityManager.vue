@@ -292,7 +292,6 @@ watch(() => route.query.parent_id, fetchParentIfNeeded);
   <div class="entity-manager">
     <!-- RIGID HORIZONTAL TOOLBAR (Haleta ERP High Fidelity) -->
     <HaletaHeader 
-      :icon="Monitor" 
       :breadcrumbs="[
         { label: entityTypeConfig.name, onClick: goToList },
         { label: currentView === 'list' ? `${entityTypeConfig.name}s` : `Create ${entityTypeConfig.name}`, isCurrent: true }
