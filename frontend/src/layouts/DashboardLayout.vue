@@ -1,17 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { 
   Building2, Monitor, ArrowLeftRight, Settings, Grid, Box, Warehouse,
   Tag, Scale, FolderTree, Package, ShoppingBag, Boxes, Copy, Store,
-  Search, Maximize, Moon, Languages, Bell, PanelLeftClose, ChevronDown, ChevronUp, ChevronRight
+  Search, Maximize, Moon, Languages, Bell, PanelLeftClose, ChevronDown, ChevronUp, ChevronRight,
+  ClipboardList, ChefHat, ShieldCheck, ShieldAlert
 } from 'lucide-vue-next';
 
 // Sidebar state
 const isSidebarCollapsed = ref(false);
+const sidebarNavRef = ref<HTMLElement | null>(null);
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 };
+
+const handleScroll = (e: Event) => {
+  const target = e.target as HTMLElement;
+  sessionStorage.setItem('erp_sidebar_scroll', target.scrollTop.toString());
+};
+
+onMounted(() => {
+  if (sidebarNavRef.value) {
+    const savedScroll = sessionStorage.getItem('erp_sidebar_scroll');
+    if (savedScroll) {
+      setTimeout(() => {
+        if (sidebarNavRef.value) sidebarNavRef.value.scrollTop = parseInt(savedScroll, 10);
+      }, 10);
+    }
+    sidebarNavRef.value.addEventListener('scroll', handleScroll);
+  }
+});
+
+onUnmounted(() => {
+  if (sidebarNavRef.value) {
+    sidebarNavRef.value.removeEventListener('scroll', handleScroll);
+  }
+});
 </script>
 
 <template>
@@ -36,7 +61,7 @@ const toggleSidebar = () => {
       </div>
 
       <!-- Navigation -->
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" ref="sidebarNavRef">
         <div class="nav-section" v-if="!isSidebarCollapsed">ENTITY SETUP</div>
         <ul>
           <li>
@@ -111,6 +136,34 @@ const toggleSidebar = () => {
             <router-link to="/variants" class="nav-item" active-class="active">
               <Copy :size="18" class="nav-icon" />
               <span class="nav-text" v-if="!isSidebarCollapsed">Variants</span>
+            </router-link>
+          </li>
+        </ul>
+
+        <div class="nav-section mt-6" v-if="!isSidebarCollapsed">POS & OPERATIONS</div>
+        <ul>
+           <li>
+            <router-link to="/pos-attributes" class="nav-item" active-class="active">
+              <ClipboardList :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Modifiers & Attr</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/pos-recipes" class="nav-item" active-class="active">
+              <ChefHat :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Recipes & Rules</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/inventory-policies" class="nav-item" active-class="active">
+              <ShieldAlert :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Procurement limits</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/warranties" class="nav-item" active-class="active">
+              <ShieldCheck :size="18" class="nav-icon" />
+              <span class="nav-text" v-if="!isSidebarCollapsed">Warranties</span>
             </router-link>
           </li>
         </ul>

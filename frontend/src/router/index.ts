@@ -10,6 +10,11 @@ import ProductGroups from '../views/ProductGroups.vue';
 import Variants from '../views/Variants.vue';
 import ShopProducts from '../views/ShopProducts.vue';
 
+import PosAttributes from '../views/PosAttributes.vue';
+import PosRecipes from '../views/PosRecipes.vue';
+import InventoryPolicies from '../views/InventoryPolicies.vue';
+import Warranties from '../views/Warranties.vue';
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -66,6 +71,26 @@ const router = createRouter({
       path: '/shop-products',
       name: 'shopProducts',
       component: ShopProducts
+    },
+    {
+      path: '/pos-attributes',
+      name: 'posAttributes',
+      component: PosAttributes
+    },
+    {
+      path: '/pos-recipes',
+      name: 'posRecipes',
+      component: PosRecipes
+    },
+    {
+      path: '/inventory-policies',
+      name: 'inventoryPolicies',
+      component: InventoryPolicies
+    },
+    {
+      path: '/warranties',
+      name: 'warranties',
+      component: Warranties
     }
   ]
 });
