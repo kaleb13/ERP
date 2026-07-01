@@ -1,3 +1,461 @@
+:root {
+  /* Primitive */
+  --primitive-spacing-0: 0;
+  --primitive-spacing-1: 4;
+  --primitive-spacing-2: 8;
+  --primitive-spacing-3: 12;
+  --primitive-spacing-4: 16;
+  --primitive-spacing-5: 20;
+  --primitive-spacing-6: 24;
+  --primitive-spacing-8: 32;
+  --primitive-spacing-10: 40;
+  --primitive-spacing-12: 48;
+  --primitive-spacing-16: 64;
+  --primitive-spacing-20: 80;
+  --primitive-spacing-24: 96;
+  --primitive-spacing-32: 128;
+  --primitive-spacing-40: 160;
+  --primitive-spacing-48: 192;
+  --primitive-spacing-56: 224;
+  --primitive-spacing-64: 256;
+  --primitive-spacing-80: 320;
+  --primitive-spacing-96: 384;
+  --primitive-spacing-120: 480;
+  --primitive-spacing-140: 560;
+  --primitive-spacing-160: 640;
+  --primitive-spacing-180: 720;
+  --primitive-spacing-192: 758;
+  --primitive-spacing-256: 1024;
+  --primitive-spacing-320: 1280;
+  --primitive-spacing-360: 1440;
+  --primitive-spacing-400: 1600;
+  --primitive-spacing-0-5: 2;
+  --primitive-spacing-1-5: 6;
+  --primitive-color-neutral-50: #fafafa;
+  --primitive-color-neutral-100: #f5f5f5;
+  --primitive-color-neutral-200: #e5e5e5;
+  --primitive-color-neutral-300: #d4d4d4;
+  --primitive-color-neutral-400: #a1a1a1;
+  --primitive-color-neutral-500: #737373;
+  --primitive-color-neutral-600: #525252;
+  --primitive-color-neutral-700: #404040;
+  --primitive-color-neutral-800: #262626;
+  --primitive-color-neutral-900: #171717;
+  --primitive-color-neutral-950: #0a0a0a;
+  --primitive-color-red-50: #fef2f2;
+  --primitive-color-red-100: #ffe2e2;
+  --primitive-color-red-200: #ffc9c9;
+  --primitive-color-red-300: #ffa2a2;
+  --primitive-color-red-400: #ff6467;
+  --primitive-color-red-500: #fb2c36;
+  --primitive-color-red-600: #e7000b;
+  --primitive-color-red-700: #c10007;
+  --primitive-color-red-800: #9f0712;
+  --primitive-color-red-900: #82181a;
+  --primitive-color-red-950: #460809;
+  --primitive-color-emerald-50: #ecfdf5;
+  --primitive-color-emerald-100: #d0fae5;
+  --primitive-color-emerald-200: #a4f4cf;
+  --primitive-color-emerald-300: #5ee9b5;
+  --primitive-color-emerald-400: #00d492;
+  --primitive-color-emerald-500: #00bc7d;
+  --primitive-color-emerald-600: #009966;
+  --primitive-color-emerald-700: #007a55;
+  --primitive-color-emerald-800: #006045;
+  --primitive-color-emerald-900: #004f3b;
+  --primitive-color-emerald-950: #002c22;
+  --primitive-color-amber-50: #fffbeb;
+  --primitive-color-amber-100: #fef3c6;
+  --primitive-color-amber-200: #fee685;
+  --primitive-color-amber-300: #ffd230;
+  --primitive-color-amber-400: #ffb900;
+  --primitive-color-amber-500: #fe9a00;
+  --primitive-color-amber-600: #e17100;
+  --primitive-color-amber-700: #bb4d00;
+  --primitive-color-amber-800: #973c00;
+  --primitive-color-amber-900: #7b3306;
+  --primitive-color-amber-950: #461901;
+  --primitive-color-sky-50: #f0f9ff;
+  --primitive-color-sky-100: #dff2fe;
+  --primitive-color-sky-200: #b8e6fe;
+  --primitive-color-sky-300: #74d4ff;
+  --primitive-color-sky-400: #00bcff;
+  --primitive-color-sky-500: #00a6f4;
+  --primitive-color-sky-600: #0084d1;
+  --primitive-color-sky-700: #0069a8;
+  --primitive-color-sky-800: #00598a;
+  --primitive-color-sky-900: #024a70;
+  --primitive-color-sky-950: #052f4a;
+  --primitive-color-blue-50: #eff6ff;
+  --primitive-color-blue-100: #dbeafe;
+  --primitive-color-blue-200: #bedbff;
+  --primitive-color-blue-300: #8ec5ff;
+  --primitive-color-blue-400: #51a2ff;
+  --primitive-color-blue-500: #2b7fff;
+  --primitive-color-blue-600: #155dfc;
+  --primitive-color-blue-700: #1447e6;
+  --primitive-color-blue-800: #193cb8;
+  --primitive-color-blue-900: #1c398e;
+  --primitive-color-blue-950: #162456;
+  --primitive-color-indigo-50: #eef2ff;
+  --primitive-color-indigo-100: #e0e7ff;
+  --primitive-color-indigo-200: #c6d2ff;
+  --primitive-color-indigo-300: #a3b3ff;
+  --primitive-color-indigo-400: #7c86ff;
+  --primitive-color-indigo-500: #615fff;
+  --primitive-color-indigo-600: #4f39f6;
+  --primitive-color-indigo-700: #432dd7;
+  --primitive-color-indigo-800: #372aac;
+  --primitive-color-indigo-900: #312c85;
+  --primitive-color-indigo-950: #1e1a4d;
+  --primitive-color-purple-50: #faf5ff;
+  --primitive-color-purple-100: #f3e8ff;
+  --primitive-color-purple-200: #e9d4ff;
+  --primitive-color-purple-300: #dab2ff;
+  --primitive-color-purple-400: #c27aff;
+  --primitive-color-purple-500: #ad46ff;
+  --primitive-color-purple-600: #9810fa;
+  --primitive-color-purple-700: #8200db;
+  --primitive-color-purple-800: #6e11b0;
+  --primitive-color-purple-900: #59168b;
+  --primitive-color-purple-950: #3c0366;
+  --primitive-color-pink-50: #fdf2f8;
+  --primitive-color-pink-100: #fce7f3;
+  --primitive-color-pink-200: #fccee8;
+  --primitive-color-pink-300: #fda5d5;
+  --primitive-color-pink-400: #fb64b6;
+  --primitive-color-pink-500: #f6339a;
+  --primitive-color-pink-600: #e60076;
+  --primitive-color-pink-700: #c6005c;
+  --primitive-color-pink-800: #a3004c;
+  --primitive-color-pink-900: #861043;
+  --primitive-color-pink-950: #510424;
+  --primitive-color-rose-50: #fff1f2;
+  --primitive-color-rose-100: #ffe4e6;
+  --primitive-color-rose-200: #ffccd3;
+  --primitive-color-rose-300: #ffa1ad;
+  --primitive-color-rose-400: #ff637e;
+  --primitive-color-rose-500: #ff2056;
+  --primitive-color-rose-600: #ec003f;
+  --primitive-color-rose-700: #c70036;
+  --primitive-color-rose-800: #a50036;
+  --primitive-color-rose-900: #8b0836;
+  --primitive-color-rose-950: #4d0218;
+  --primitive-color-orange-50: #fff7ed;
+  --primitive-color-orange-100: #ffedd4;
+  --primitive-color-orange-200: #ffd6a8;
+  --primitive-color-orange-300: #ffb86a;
+  --primitive-color-orange-400: #ff8904;
+  --primitive-color-orange-500: #ff6900;
+  --primitive-color-orange-600: #f54900;
+  --primitive-color-orange-700: #ca3500;
+  --primitive-color-orange-800: #9f2d00;
+  --primitive-color-orange-900: #7e2a0c;
+  --primitive-color-orange-950: #441306;
+  --primitive-color-brand-orange-50: #fff9eb;
+  --primitive-color-brand-orange-100: #feeec7;
+  --primitive-color-brand-orange-200: #fddb8a;
+  --primitive-color-brand-orange-300: #fcc34d;
+  --primitive-color-brand-orange-400: #fba81c;
+  --primitive-color-brand-orange-500: #f5880b;
+  --primitive-color-brand-orange-600: #d96306;
+  --primitive-color-brand-orange-700: #b44309;
+  --primitive-color-brand-orange-800: #92340e;
+  --primitive-color-brand-orange-900: #782b0f;
+  --primitive-color-brand-orange-950: #451403;
+  --primitive-color-cyan-50: #ecfeff;
+  --primitive-color-cyan-100: #cefafe;
+  --primitive-color-cyan-200: #a2f4fd;
+  --primitive-color-cyan-300: #53eafd;
+  --primitive-color-cyan-400: #00d3f3;
+  --primitive-color-cyan-500: #00b8db;
+  --primitive-color-cyan-600: #0092b8;
+  --primitive-color-cyan-700: #007595;
+  --primitive-color-cyan-800: #005f78;
+  --primitive-color-cyan-900: #104e64;
+  --primitive-color-cyan-950: #053345;
+  --primitive-color-brand-blue-50: #f1f7fe;
+  --primitive-color-brand-blue-100: #e1eefd;
+  --primitive-color-brand-blue-200: #bddbfa;
+  --primitive-color-brand-blue-300: #83bff6;
+  --primitive-color-brand-blue-400: #419eef;
+  --primitive-color-brand-blue-500: #1982de;
+  --primitive-color-brand-blue-600: #0c65bd;
+  --primitive-color-brand-blue-700: #0b529c;
+  --primitive-color-brand-blue-800: #0d457f;
+  --primitive-color-brand-blue-900: #113b69;
+  --primitive-color-brand-blue-950: #0b2546;
+
+  /* Alias */
+  --alias-50: #ffffff;
+  --alias-spacing-none: var(--primitive-spacing-0);
+  --alias-spacing-xxs: var(--primitive-spacing-0_5);
+  --alias-spacing-xs: var(--primitive-spacing-1);
+  --alias-spacing-sm: var(--primitive-spacing-1_5);
+  --alias-spacing-md: var(--primitive-spacing-2);
+  --alias-spacing-lg: var(--primitive-spacing-3);
+  --alias-spacing-xl: var(--primitive-spacing-4);
+  --alias-spacing-2xl: var(--primitive-spacing-5);
+  --alias-spacing-3xl: var(--primitive-spacing-6);
+  --alias-spacing-4xl: var(--primitive-spacing-8);
+  --alias-spacing-5xl: var(--primitive-spacing-10);
+  --alias-spacing-6xl: var(--primitive-spacing-12);
+  --alias-spacing-7xl: var(--primitive-spacing-16);
+  --alias-spacing-8xl: var(--primitive-spacing-20);
+  --alias-spacing-9xl: var(--primitive-spacing-24);
+  --alias-radius-none: var(--primitive-spacing-0);
+  --alias-radius-xs: var(--primitive-spacing-0_5);
+  --alias-radius-sm: var(--primitive-spacing-1);
+  --alias-radius-md: var(--primitive-spacing-1_5);
+  --alias-radius-lg: var(--primitive-spacing-2);
+  --alias-radius-xl: var(--primitive-spacing-3);
+  --alias-radius-2xl: var(--primitive-spacing-4);
+  --alias-radius-3xl: var(--primitive-spacing-5);
+  --alias-radius-4xl: var(--primitive-spacing-6);
+  --alias-radius-full: 9999px;
+  --alias-none: 0;
+  --alias-color-error-50: var(--primitive-color-red-50);
+  --alias-color-error-100: var(--primitive-color-red-100);
+  --alias-color-error-300: var(--primitive-color-red-300);
+  /* use for icons */
+  --alias-color-error-500: var(--primitive-color-red-500);
+  /* bg primary success */
+  --alias-color-error-600: var(--primitive-color-red-600);
+  /* bg.success.primary-hover */
+  --alias-color-error-700: var(--primitive-color-red-700);
+  --alias-color-brand-blue-primary: var(--primitive-color-brand-blue-700);
+  --alias-color-brand-blue-primary-hover: var(--primitive-color-brand-blue-800);
+  --alias-color-brand-blue-primary-surface: var(--primitive-color-brand-blue-50);
+  --alias-color-brand-blue-primary-subtle: var(--primitive-color-brand-blue-100);
+  /* Default border used for most UI containers, dividers, cards, and input outlines */
+  --alias-color-border-primary: var(--alias-color-neutral-300);
+  /* Light separator or Light boundary for cards, containers, section, row table */
+  --alias-color-border-subtle: var(--alias-color-neutral-200);
+  /* Border for inverse or dark surfaces to maintain visual contrast */
+  --alias-color-border-inverse: var(--alias-color-neutral-700);
+  --alias-color-border-brand: var(--primitive-color-brand-blue-300);
+  --alias-color-border-brand-subtle: var(--primitive-color-brand-blue-200);
+  /* Positive feedback border for success messages, confirmation fields, or success badges */
+  --alias-color-border-success: var(--alias-color-success-300);
+  /* Strong success border for highlighted success containers or actions, input fields */
+  --alias-color-border-success-strong: var(--alias-color-success-500);
+  /* "Error feedback border for alerts or form field validation errors." */
+  --alias-color-border-error: var(--alias-color-error-300);
+  /* "Strong danger border for critical or destructive UI actions." */
+  --alias-color-border-error-strong: var(--alias-color-error-500);
+  /* Border for caution or attention states in forms, alerts, or warnings */
+  --alias-color-border-warning: var(--alias-color-warning-300);
+  /* Strong warning border for highly visible warning components */
+  --alias-color-border-warning-strong: var(--alias-color-warning-500);
+  /* "Informational border for hints, tooltips, or info banners." */
+  --alias-color-border-info: var(--alias-color-info-300);
+  /* "Strong info border for emphasis in information-heavy components." */
+  --alias-color-border-info-strong: var(--alias-color-info-500);
+  --alias-color-success-50: var(--primitive-color-emerald-50);
+  --alias-color-success-100: var(--primitive-color-emerald-100);
+  --alias-color-success-300: var(--primitive-color-emerald-300);
+  /* use for icons */
+  --alias-color-success-500: var(--primitive-color-emerald-500);
+  /* bg primary success */
+  --alias-color-success-600: var(--primitive-color-emerald-600);
+  /* bg.success.primary-hover */
+  --alias-color-success-700: var(--primitive-color-emerald-700);
+  --alias-color-warning-50: var(--primitive-color-amber-50);
+  --alias-color-warning-100: var(--primitive-color-amber-100);
+  --alias-color-warning-300: var(--primitive-color-amber-300);
+  /* use for icons */
+  --alias-color-warning-500: var(--primitive-color-amber-500);
+  /* bg primary success */
+  --alias-color-warning-600: var(--primitive-color-amber-600);
+  /* bg.success.primary-hover */
+  --alias-color-warning-700: var(--primitive-color-amber-700);
+  --alias-color-info-50: var(--primitive-color-sky-50);
+  --alias-color-info-100: var(--primitive-color-sky-100);
+  --alias-color-info-300: var(--primitive-color-sky-300);
+  /* use for icons */
+  --alias-color-info-500: var(--primitive-color-sky-500);
+  /* bg primary success */
+  --alias-color-info-600: var(--primitive-color-sky-600);
+  /* bg.success.primary-hover */
+  --alias-color-info-700: var(--primitive-color-sky-700);
+  --alias-color-neutral-50: var(--primitive-color-neutral-50);
+  --alias-color-neutral-100: var(--primitive-color-neutral-100);
+  --alias-color-neutral-200: var(--primitive-color-neutral-200);
+  --alias-color-neutral-300: var(--primitive-color-neutral-300);
+  --alias-color-neutral-400: var(--primitive-color-neutral-400);
+  --alias-color-neutral-500: var(--primitive-color-neutral-500);
+  --alias-color-neutral-600: var(--primitive-color-neutral-600);
+  --alias-color-neutral-700: var(--primitive-color-neutral-700);
+  --alias-color-neutral-800: var(--primitive-color-neutral-800);
+  --alias-color-neutral-900: var(--primitive-color-neutral-900);
+  --alias-color-brand-orange-primary: var(--primitive-color-brand-orange-400);
+  --alias-color-brand-orange-primary-hover: var(--primitive-color-brand-orange-500);
+  --alias-color-brand-orange-primary-subtle: var(--primitive-color-brand-orange-50);
+  /* Usage: Main heading, titles. Strong Emphasis */
+  --alias-color-text-primary: var(--alias-color-neutral-800);
+  /* Medium-emphasis text for subheadings, secondary information, or supporting labels */
+  --alias-color-text-secondary: var(--alias-color-neutral-700);
+  /* Low-emphasis or supplementary text used for metadata, captions, helper text, or less critical information. */
+  --alias-color-text-tertiary: var(--alias-color-neutral-500);
+  /* Emphasis: Lowest, Usage: placeholder, empty state */
+  --alias-color-text-disabled: var(--alias-color-neutral-400);
+  --alias-color-text-inverse: var(--alias-color-neutral-100);
+  --alias-color-text-info: var(--alias-color-info-700);
+  --alias-color-text-success: var(--alias-color-success-700);
+  --alias-color-text-warning: var(--alias-color-warning-700);
+  --alias-color-text-error: var(--alias-color-error-700);
+  --alias-color-text-on-info: var(--alias-color-generic-white);
+  /* Text color on success backgrounds (e.g., success alerts or badges). */
+  --alias-color-text-on-success: var(--alias-color-generic-white);
+  --alias-color-text-on-warning: var(--alias-color-generic-white);
+  /* Text color on danger/error backgrounds (e.g., error alerts or destructive buttons) */
+  --alias-color-text-on-error: var(--alias-color-generic-white);
+  /* Text appearing on brand-colored backgrounds (e.g., primary button labels) */
+  --alias-color-text-on-brand: var(--alias-color-generic-white);
+  --alias-color-text-on-action: var(--alias-color-neutral-50);
+  /* Default text color on neutral or surface backgrounds, maintaining good contrast and visual harmony */
+  --alias-color-text-on-surface: var(--alias-color-neutral-800);
+  --alias-color-text-brand-primary: var(--primitive-color-brand-blue-700);
+  --alias-color-text-brand-secondary: var(--primitive-color-brand-blue-300);
+  --alias-color-text-brand-tertiary: var(--primitive-color-brand-blue-200);
+  --alias-color-text-accent-primary-default: var(--primitive-color-purple-700);
+  --alias-color-text-accent-primary-subtle: var(--primitive-color-purple-500);
+  --alias-color-text-accent-primary-soft: var(--primitive-color-purple-300);
+  --alias-color-generic-black: #000000;
+  --alias-color-generic-white: #ffffff;
+  /* Main app background surface. Used for the overall page canvas or primary layout background. like page bodies, dashboards, main panel */
+  --alias-color-background-primary: var(--alias-color-neutral-50);
+  /* Main app background surface. Used for the overall page canvas or primary layout background. */
+  --alias-color-background-secondary: var(--alias-color-neutral-100);
+  /* Sub-surface or nested area background. Used for subcards, inner forms, or sub-tle container contrast */
+  --alias-color-background-tertiary: var(--alias-color-neutral-200);
+  /* Inverted surface used in dark sections or footers, often paired with on-inverse text */
+  --alias-color-background-inverse: var(--alias-color-neutral-900);
+  /* Active or pressed background state for buttons or interactive surfaces. */
+  --alias-color-background-active: var(--alias-color-neutral-200);
+  /* Used to highlight a selected item, card, or active menu state. */
+  --alias-color-background-selected: var(--alias-color-neutral-100);
+  /* Used for disabled components to indicate inactivity or non-interaction */
+  --alias-color-background-disabled: var(--alias-color-neutral-50);
+  /* Primary brand-colored surface. Used for key brand buttons, banners, and hero sections */
+  --alias-color-background-brand-blue: var(--primitive-color-brand-blue-700);
+  /* Hover or active background for brand surfaces. */
+  --alias-color-background-brand-blue-hover: var(--primitive-color-brand-blue-800);
+  /* Soft tint of the brand color used for subtle highlights or light background areas supporting the brand */
+  --alias-color-background-brand-blue-subtle: var(--alias-color-brand-blue-primary-subtle);
+  /* Soft tint of the brand color used for subtle highlights or light background areas supporting the brand */
+  --alias-color-background-brand-blue-subtle-2: var(--alias-color-brand-blue-primary-surface);
+  /* Hover background state for interactive elements such as list items, table rows, or buttons */
+  --alias-color-background-hover: var(--alias-color-neutral-100);
+  /* soft background of cards, layout containers.  Used for success messages or confirma-tion banners, alerts. */
+  --alias-color-background-success-surface: var(--alias-color-success-50);
+  /* Strong success background for badges, tags, or high-emphasis success ele-ments where text/icon is white */
+  --alias-color-background-success-defult: var(--alias-color-success-500);
+  /* Hover state for strong success actions like primary success buttons — slightly darker for visual feedback and accessibility. */
+  --alias-color-background-success-hover: var(--alias-color-success-700);
+  /* Strong success background for badges, tags, or high-emphasis success ele-ments where text/icon is white */
+  --alias-color-background-success-strong: var(--alias-color-success-600);
+  /* Slightly stronger tint/badges/chips  for hovered or elevated success surfaces. */
+  --alias-color-background-success-subtle: var(--alias-color-success-100);
+  /* Hover state for subtle success surfaces (e.g., table row or card hover). */
+  --alias-color-background-success-surface-hover: var(--alias-color-success-100);
+  /* Error or failure feedback background for alerts or validation errors, confirma-tion banners */
+  --alias-color-background-error-surface: var(--alias-color-error-50);
+  /* Slightly stronger tint for hovered or elevated error surfaces. */
+  --alias-color-background-error-subtle: var(--alias-color-error-100);
+  /* Hover state for subtle error surfaces (e.g., table row or card hover). */
+  --alias-color-background-error-surface-hover: var(--alias-color-error-100);
+  /* Critical or destructive background for destructive actions or urgent alerts */
+  --alias-color-background-error-strong: var(--alias-color-error-600);
+  /* Critical or destructive background for destructive actions or urgent alerts */
+  --alias-color-background-error-default: var(--alias-color-error-500);
+  /* Hover state for strong error actions like primary buttons — slightly darker for visual feedback and accessibility. */
+  --alias-color-background-error-hover: var(--alias-color-error-700);
+  /* Background for caution or attention messages like warnings or alerts */
+  --alias-color-background-warning-surface: var(--alias-color-warning-50);
+  /* Slightly stronger tint for hovered or elevated warning surfaces. */
+  --alias-color-background-warning-subtle: var(--alias-color-warning-100);
+  /* Hover state for subtle warning surfaces (e.g., table row or card hover). */
+  --alias-color-background-warning-surface-hover: var(--alias-color-warning-100);
+  /* Stronger warning background for high-visibility warning states or banners */
+  --alias-color-background-warning-default: var(--alias-color-warning-500);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-warning-strong: var(--alias-color-warning-600);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-warning-hover: var(--alias-color-warning-700);
+  /* Informational surface background for hints, info alerts, or tips */
+  --alias-color-background-info-surface: var(--alias-color-info-50);
+  /* Slightly stronger tint for hovered or elevated info surfaces. */
+  --alias-color-background-info-subtle: var(--alias-color-info-100);
+  /* Hover state for subtle info surfaces (e.g., table row or card hover). */
+  --alias-color-background-info-surface-hover: var(--alias-color-info-100);
+  /* Bold informational surface for info badges or highlighted help sections */
+  --alias-color-background-info-default: var(--alias-color-info-500);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-info-strong: var(--alias-color-info-600);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-info-hover: var(--alias-color-info-700);
+  /* Highlighting a section or container, Grouping related content, Showing passive emphasis */
+  --alias-color-background-accent-primary-surface-default: var(--primitive-color-purple-50);
+  /* Hover state for subtle info surfaces (e.g., table row or card hover). */
+  --alias-color-background-accent-primary-surface-hover: var(--primitive-color-purple-100);
+  /* Hover state for subtle info surfaces (e.g., table row or card hover). */
+  --alias-color-background-accent-primary-surface-active: var(--primitive-color-purple-100);
+  /* Minimal visual hint without drawing attention. */
+  --alias-color-background-accent-primary-subtle-default: var(--primitive-color-purple-200);
+  /* Hover state for subtle info surfaces (e.g., table row or card hover). */
+  --alias-color-background-accent-primary-subtle-hover: var(--primitive-color-purple-100);
+  /* Hover state for subtle info surfaces (e.g., table row or card hover). */
+  --alias-color-background-accent-primary-subtle-active: var(--primitive-color-purple-200);
+  /* Strong background for interactive and high-emphasis elements. CTA, navigation items */
+  --alias-color-background-accent-primary-fill-default: var(--primitive-color-purple-500);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-accent-primary-fill-active: var(--primitive-color-purple-600);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-accent-primary-fill-hover: var(--primitive-color-purple-700);
+  /* Hover state for strong warning actions like primary buttons */
+  --alias-color-background-accent-primary-fill-disabled: var(--primitive-color-purple-200);
+  /* General neutral surface for cards, modals, Popovers / overlays, or forms. Containers or elevated surfaces that sit on top of primary. Often paired with shadows. */
+  --alias-color-background-surfae: var(--alias-color-neutral-50);
+  /* Subtle background for nested UI elements like tables or panels */
+  --alias-color-background-surface-subtle: var(--alias-color-neutral-100);
+  /* Elevated floating surface like modals, dropdowns, dialogs,  or tooltips. */
+  --alias-color-background-surface-elevated: var(--alias-color-generic-white);
+  /* Dark elevated surface for inverse UI like dark navbars or footers */
+  --alias-color-background-surface-inverse: var(--alias-color-neutral-900);
+  /* Soft tint of the brand color used for subtle highlights or light background areas supporting the brand */
+  --alias-color-background-brand-blue-surface: var(--alias-color-brand-blue-primary-surface);
+  /* Soft tint of the brand color used for subtle highlights or light background areas supporting the brand */
+  --alias-color-background-brand-blue-surface-hover: var(--alias-color-brand-blue-primary-subtle);
+  /* Usage: Main heading, titles. Strong Emphasis */
+  --alias-color-icon-primary: var(--alias-color-neutral-800);
+  /* Medium-emphasis text for subheadings, secondary information, or supporting labels */
+  --alias-color-icon-secondary: var(--alias-color-neutral-700);
+  /* Low-emphasis or supplementary text used for metadata, captions, helper text, or less critical information. */
+  --alias-color-icon-tertiary: var(--alias-color-neutral-500);
+  /* Emphasis: Lowest, Usage: placeholder, empty state */
+  --alias-color-icon-disabled: var(--alias-color-neutral-400);
+  --alias-color-icon-inverse: var(--alias-color-neutral-100);
+  --alias-color-icon-brand: var(--alias-color-brand-blue-primary);
+  --alias-color-icon-info: var(--alias-color-info-600);
+  --alias-color-icon-success: var(--alias-color-success-600);
+  --alias-color-icon-warning: var(--alias-color-warning-600);
+  --alias-color-icon-error: var(--alias-color-error-600);
+  /* Text appearing on brand-colored backgrounds (e.g., primary button labels) */
+  --alias-color-icon-on-brand: var(--alias-color-generic-white);
+  /* Text color on success backgrounds (e.g., success alerts or badges). */
+  --alias-color-icon-on-success: var(--alias-color-generic-white);
+  /* Text color on danger/error backgrounds (e.g., error alerts or destructive buttons) */
+  --alias-color-icon-on-error: var(--alias-color-generic-white);
+  --alias-color-icon-on-info: var(--alias-color-generic-white);
+  --alias-color-icon-on-warning: var(--alias-color-generic-white);
+  --alias-color-icon-on-action: var(--alias-color-neutral-50);
+  /* Default text color on neutral or surface backgrounds, maintaining good contrast and visual harmony */
+  --alias-color-icon-on-surface: var(--alias-color-neutral-800);
+  /* Hover background state for interactive elements such as list items, table rows, or buttons. */
+  --alias-hover: var(--alias-color-neutral-100);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

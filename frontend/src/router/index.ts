@@ -1,96 +1,118 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Organizations from '../views/Organizations.vue';
-import Warehouse from '../views/Warehouse.vue';
-import Product from '../views/Product.vue';
-import Brands from '../views/Brands.vue';
-import Measurements from '../views/Measurements.vue';
-import ItemCategories from '../views/ItemCategories.vue';
-import Items from '../views/Items.vue';
-import ProductGroups from '../views/ProductGroups.vue';
-import Variants from '../views/Variants.vue';
-import ShopProducts from '../views/ShopProducts.vue';
-
-import PosAttributes from '../views/PosAttributes.vue';
-import PosRecipes from '../views/PosRecipes.vue';
-import InventoryPolicies from '../views/InventoryPolicies.vue';
-import Warranties from '../views/Warranties.vue';
+import InventoryDashboard from '../views/InventoryDashboard.vue';
+import StockSummary from '../views/StockSummary.vue';
+import StockLedger from '../views/StockLedger.vue';
+import GatePass from '../views/GatePass.vue';
+import GatePassCreate from '../views/GatePassCreate.vue';
+import StockReservation from '../views/StockReservation.vue';
+import StockReservationCreate from '../views/StockReservationCreate.vue';
+import Home from '../views/Home.vue';
+import CompanySetup from '../views/CompanySetup.vue';
+import Customers from '../views/Customers.vue';
+import CustomerGroups from '../views/CustomerGroups.vue';
+import BuyingModule from '../views/BuyingModule.vue';
+import Products from '../views/Products.vue';
+import ProductVariants from '../views/ProductVariants.vue';
+import ProductModifiers from '../views/ProductModifiers.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      redirect: '/warehouses'
+      redirect: '/home'
     },
     {
-      path: '/organizations',
-      name: 'organizations',
-      component: Organizations
+      path: '/home',
+      name: 'home',
+      component: Home,
+      meta: { noSidebar: true }
     },
     {
-      path: '/warehouses',
-      name: 'warehouses',
-      component: Warehouse
+      path: '/dashboard',
+      name: 'dashboard',
+      component: InventoryDashboard
     },
     {
-      path: '/products',
+      path: '/stock-summary',
+      name: 'stockSummary',
+      component: StockSummary
+    },
+    {
+      path: '/stock-ledger',
+      name: 'stockLedger',
+      component: StockLedger
+    },
+    {
+      path: '/gate-pass',
+      name: 'gatePass',
+      component: GatePass
+    },
+    {
+      path: '/gate-pass/create',
+      name: 'gatePassCreate',
+      component: GatePassCreate
+    },
+    {
+      path: '/stock-reservation',
+      name: 'stockReservation',
+      component: StockReservation
+    },
+    {
+      path: '/stock-reservation/create',
+      name: 'stockReservationCreate',
+      component: StockReservationCreate
+    },
+    {
+      path: '/company-setup',
+      name: 'companySetup',
+      component: CompanySetup
+    },
+    {
+      path: '/sales',
+      redirect: '/sales/customers'
+    },
+    {
+      path: '/sales/customers',
+      name: 'customers',
+      component: Customers
+    },
+    {
+      path: '/sales/customer-groups',
+      name: 'customerGroups',
+      component: CustomerGroups
+    },
+    {
+      path: '/buying',
+      name: 'buying',
+      component: BuyingModule
+    },
+    {
+      path: '/inventory/products',
       name: 'products',
-      component: Product
+      component: Products
     },
     {
-      path: '/brands',
-      name: 'brands',
-      component: Brands
+      path: '/inventory/product-variants',
+      name: 'productVariants',
+      component: ProductVariants
     },
     {
-      path: '/measurements',
-      name: 'measurements',
-      component: Measurements
+      path: '/inventory/product-modifiers',
+      name: 'productModifiers',
+      component: ProductModifiers
     },
     {
-      path: '/item-categories',
-      name: 'itemCategories',
-      component: ItemCategories
+      path: '/inventory/product-group',
+      redirect: '/inventory/products'
     },
     {
-      path: '/items',
-      name: 'items',
-      component: Items
+      path: '/inventory/product-attribute',
+      redirect: '/inventory/products'
     },
     {
-      path: '/product-groups',
-      name: 'productGroups',
-      component: ProductGroups
-    },
-    {
-      path: '/variants',
-      name: 'variants',
-      component: Variants
-    },
-    {
-      path: '/shop-products',
-      name: 'shopProducts',
-      component: ShopProducts
-    },
-    {
-      path: '/pos-attributes',
-      name: 'posAttributes',
-      component: PosAttributes
-    },
-    {
-      path: '/pos-recipes',
-      name: 'posRecipes',
-      component: PosRecipes
-    },
-    {
-      path: '/inventory-policies',
-      name: 'inventoryPolicies',
-      component: InventoryPolicies
-    },
-    {
-      path: '/warranties',
-      name: 'warranties',
-      component: Warranties
+      path: '/inventory/locations',
+      redirect: '/inventory/products'
     }
   ]
 });
