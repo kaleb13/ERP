@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { 
   Box, Search, Maximize, Moon, Languages, Bell, PanelLeft, PanelLeftClose, ChevronDown, ChevronUp, ChevronRight,
   HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
-  Database, User, Sliders, BarChart3, Utensils, GitBranch
+  Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -96,7 +96,9 @@ const iconsMap: Record<string, any> = {
   FileText,
   BarChart3,
   Utensils,
-  GitBranch
+  GitBranch,
+  ShieldCheck,
+  Key
 };
 
 // Compute current active module
@@ -140,7 +142,19 @@ const activeModule = computed(() => {
       iconColor: 'var(--primitive-color-neutral-500)',
       iconBg: 'var(--primitive-color-neutral-100)',
       menu: [
-        { to: '/company-setup', label: 'Entities & Employees', icon: 'Building2' }
+        { isHeader: true, label: 'COMPANY SETUP' },
+        { to: '/company-setup', label: 'Entities & Employees', icon: 'Building2' },
+        { isHeader: true, label: 'USER AND ACCESS' },
+        {
+          label: 'User And Access',
+          icon: 'Users',
+          isGroup: true,
+          children: [
+            { to: '/company-setup/user-and-access', label: 'User', icon: 'User' },
+            { to: '/company-setup/user-and-access?tab=roles', label: 'Role', icon: 'ShieldCheck' },
+            { to: '/company-setup/user-and-access?tab=permissions', label: 'Permissions', icon: 'Key' }
+          ]
+        }
       ]
     };
   } else {

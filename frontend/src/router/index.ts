@@ -8,6 +8,8 @@ import StockReservation from '../views/StockReservation.vue';
 import StockReservationCreate from '../views/StockReservationCreate.vue';
 import Home from '../views/Home.vue';
 import CompanySetup from '../views/CompanySetup.vue';
+import UserAndAccess from '../views/UserAndAccess.vue';
+import CreateUser from '../views/CreateUser.vue';
 import Customers from '../views/Customers.vue';
 import CustomerGroups from '../views/CustomerGroups.vue';
 import BuyingModule from '../views/BuyingModule.vue';
@@ -67,6 +69,21 @@ const router = createRouter({
       path: '/company-setup',
       name: 'companySetup',
       component: CompanySetup
+    },
+    {
+      path: '/company-setup/user-and-access',
+      name: 'userAndAccess',
+      component: UserAndAccess
+    },
+    {
+      path: '/company-setup/user-and-access/users/create',
+      name: 'createUser',
+      component: CreateUser
+    },
+    {
+      path: '/company-setup/user-and-access/users/:id',
+      name: 'editUser',
+      component: CreateUser
     },
     {
       path: '/sales',
