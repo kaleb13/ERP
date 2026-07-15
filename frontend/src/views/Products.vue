@@ -378,6 +378,10 @@ onMounted(() => {
   if (savedProducts) {
     products.value = JSON.parse(savedProducts);
   }
+  const savedGroups = localStorage.getItem('haleta_erp_product_groups');
+  if (savedGroups) {
+    productGroups.value = JSON.parse(savedGroups);
+  }
   window.addEventListener('click', closeAllMenus);
 });
 
@@ -1357,7 +1361,7 @@ const toggleFullscreen = () => {
                       class="premium-select-style w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm appearance-none bg-white focus:border-gray-300 focus:outline-none"
                     >
                       <option value="" disabled selected>Select option</option>
-                      <option v-for="g in productGroups" :key="g.id" :value="g.name">{{ g.name }}</option>
+                      <option v-for="g in productGroups.filter(x => !x.is_group)" :key="g.id" :value="g.name">{{ g.name }}</option>
                     </select>
                     <ChevronDown :size="16" class="select-chevron-arrow absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>

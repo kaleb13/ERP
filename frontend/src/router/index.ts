@@ -16,6 +16,8 @@ import BuyingModule from '../views/BuyingModule.vue';
 import Products from '../views/Products.vue';
 import ProductVariants from '../views/ProductVariants.vue';
 import ProductModifiers from '../views/ProductModifiers.vue';
+import ProductGroups from '../views/ProductGroups.vue';
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -121,7 +123,8 @@ const router = createRouter({
     },
     {
       path: '/inventory/product-group',
-      redirect: '/inventory/products'
+      name: 'productGroups',
+      component: ProductGroups
     },
     {
       path: '/inventory/product-attribute',
