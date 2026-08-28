@@ -10,6 +10,7 @@ import Home from '../views/Home.vue';
 import CompanySetup from '../views/CompanySetup.vue';
 import UserAndAccess from '../views/UserAndAccess.vue';
 import CreateUser from '../views/CreateUser.vue';
+import AuditLogs from '../views/AuditLogs.vue';
 import Customers from '../views/Customers.vue';
 import CustomerGroups from '../views/CustomerGroups.vue';
 import BuyingModule from '../views/BuyingModule.vue';
@@ -17,6 +18,7 @@ import Products from '../views/Products.vue';
 import ProductVariants from '../views/ProductVariants.vue';
 import ProductModifiers from '../views/ProductModifiers.vue';
 import ProductGroups from '../views/ProductGroups.vue';
+import HRDashboard from '../views/hr/HRDashboard.vue';
 
 
 const router = createRouter({
@@ -88,6 +90,15 @@ const router = createRouter({
       component: CreateUser
     },
     {
+      path: '/company-setup/audit-logs',
+      name: 'auditLogs',
+      component: AuditLogs
+    },
+    {
+      path: '/system-config/audit-logs',
+      redirect: '/company-setup/audit-logs'
+    },
+    {
       path: '/sales',
       redirect: '/sales/customers'
     },
@@ -133,6 +144,16 @@ const router = createRouter({
     {
       path: '/inventory/locations',
       redirect: '/inventory/products'
+    },
+    // Human Resources (HR) Module Routes
+    {
+      path: '/hr',
+      redirect: '/hr/dashboard'
+    },
+    {
+      path: '/hr/dashboard',
+      name: 'hrDashboard',
+      component: HRDashboard
     }
   ]
 });

@@ -4,6 +4,8 @@ import {
   ShoppingCart, Plus, Search, ChevronRight, HelpCircle,
   X, Check, Lock, Edit2, Trash2, MoreVertical, Eye, Monitor
 } from 'lucide-vue-next';
+import BaseTable from '../components/BaseTable.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // Form States
 const showForm = ref(false);
@@ -11,6 +13,10 @@ const showViewModal = ref(false);
 const editMode = ref(false);
 const selectedId = ref<number | null>(null);
 const viewItem = ref<any>(null);
+
+// Pagination State
+const currentPage = ref(1);
+const perPage = ref(10);
 
 // Active action menu id
 const activeActionMenuId = ref<number | null>(null);
@@ -63,6 +69,11 @@ const filteredSuppliers = computed(() => {
     s.uuid.toLowerCase().includes(q) || 
     s.supplier_type.toLowerCase().includes(q)
   );
+});
+
+const paginatedSuppliers = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredSuppliers.value.slice(start, start + perPage.value);
 });
 
 // Actions
@@ -151,100 +162,83 @@ const triggerDelete = (id: number) => {
       <span class="breadcrumb-active">Buying Module</span>
     </div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <header class="page-header">
-        <div class="title-area">
-          <h1 class="page-title">Supplier Directory</h1>
-          <p class="page-description">
-            Oversee supplier relationship profiles and parameters. Configure operational delivery lead times, distinguish local versus international procurement types, and align linked enterprise transactional entities.
-          </p>
-        </div>
-      </header>
+    <!-- Main Content Table Card via BaseTable -->
+    <BaseTable
+      title="Supplier Directory"
+      subtitle="Oversee supplier relationship profiles and parameters. Configure operational delivery lead times, distinguish local versus international procurement types, and align linked enterprise transactional entities."
+      v-model:searchQuery="searchQuery"
+      :totalEntries="filteredSuppliers.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showFilter="false"
+      :showColumns="false"
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openAddForm">
+          <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+          <span>Add New Supplier</span>
+        </BaseButton>
+      </template>
 
-      <!-- Action & Search Bar -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <div class="search-input-wrapper">
-            <Search :size="18" class="search-icon" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search suppliers..." 
-              class="table-search" 
-            />
-          </div>
-        </div>
-
-        <div class="action-bar-right">
-          <button @click="openAddForm" class="btn-create">
-            <Plus :size="20" />
-            <span>Add New Supplier</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tables Content -->
-      <div class="table-wrapper">
-        <table class="gate-pass-table">
-          <thead>
-            <tr>
-              <th width="150">Supplier ID</th>
-              <th>Supplier Name (Party)</th>
-              <th>Assigned Entity Scope</th>
-              <th>Supplier Type</th>
-              <th>Est. Delivery Lead Time</th>
-              <th width="120">State</th>
-              <th width="80" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in filteredSuppliers" :key="s.id">
-              <td class="font-medium text-gray-800">{{ s.uuid }}</td>
-              <td class="font-semibold text-gray-900">{{ s.party_name }}</td>
-              <td class="text-gray-700">{{ s.entity }}</td>
-              <td>
-                <span :class="['type-badge', s.supplier_type === 'International' ? 'intl' : 'local']">
-                  {{ s.supplier_type }}
-                </span>
-              </td>
-              <td class="font-medium text-gray-800">{{ s.lead_time }} Days</td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ s.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <!-- Floating action menu -->
-                <div class="action-menu-container">
-                  <button @click="toggleActionMenu($event, s.id)" class="btn-three-dots" title="Actions">
-                    <MoreVertical :size="18" />
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th width="140">Supplier ID</th>
+            <th>Supplier Name (Party)</th>
+            <th>Assigned Entity Scope</th>
+            <th>Supplier Type</th>
+            <th>Est. Delivery Lead Time</th>
+            <th width="120">State</th>
+            <th width="80" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="s in paginatedSuppliers" :key="s.id">
+            <td class="col-secondary-text font-mono font-medium">{{ s.uuid }}</td>
+            <td class="col-primary-title">{{ s.party_name }}</td>
+            <td class="col-secondary-text">{{ s.entity }}</td>
+            <td>
+              <span :class="['type-badge', s.supplier_type === 'International' ? 'intl' : 'local']">
+                {{ s.supplier_type }}
+              </span>
+            </td>
+            <td class="col-secondary-text">{{ s.lead_time }} Days</td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ s.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-menu-container">
+                <button @click="toggleActionMenu($event, s.id)" class="btn-action-dots" title="Actions">
+                  <MoreVertical :size="16" />
+                </button>
+                <div v-if="activeActionMenuId === s.id" class="action-dropdown-menu" @click.stop>
+                  <button @click="triggerView(s)" class="action-dropdown-item">
+                    <Eye :size="14" class="text-gray-500" />
+                    <span>View</span>
                   </button>
-                  <div v-if="activeActionMenuId === s.id" class="action-dropdown-menu" @click.stop>
-                    <button @click="triggerView(s)" class="action-dropdown-item">
-                      <Eye :size="14" class="text-gray-500" />
-                      <span>View</span>
-                    </button>
-                    <button @click="triggerEdit(s)" class="action-dropdown-item">
-                      <Edit2 :size="14" class="text-gray-500" />
-                      <span>Edit</span>
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button @click="triggerDelete(s.id)" class="action-dropdown-item text-red-650">
-                      <Trash2 :size="14" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
+                  <button @click="triggerEdit(s)" class="action-dropdown-item">
+                    <Edit2 :size="14" class="text-gray-500" />
+                    <span>Edit</span>
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button @click="triggerDelete(s.id)" class="action-dropdown-item text-red-600 hover:bg-red-50">
+                    <Trash2 :size="14" class="text-red-500" />
+                    <span class="text-red-600 font-medium">Delete</span>
+                  </button>
                 </div>
-              </td>
-            </tr>
-            <tr v-if="filteredSuppliers.length === 0">
-              <td colspan="7" class="text-center py-6 text-gray-400">No suppliers found matching search query.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredSuppliers.length === 0">
+            <td colspan="7" class="text-center py-8 text-slate-400">
+              No suppliers found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </BaseTable>
 
     <!-- FORM OVERLAY MODAL -->
     <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">

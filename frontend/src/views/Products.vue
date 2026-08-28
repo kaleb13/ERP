@@ -10,6 +10,7 @@ import {
   MapPin, ArrowRightLeft
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // Routing
 const router = useRouter();
@@ -2645,10 +2646,10 @@ const toggleFullscreen = () => {
               />
             </div>
             
-            <button class="toolbar-filter-btn flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-700 hover:bg-gray-50 text-sm font-semibold">
-              <Filter :size="16" class="text-gray-500" />
-              Filter
-            </button>
+            <BaseButton variant="secondary" size="md">
+              <template #icon-left><Filter :size="16" /></template>
+              <span>Filter</span>
+            </BaseButton>
           </div>
 
           <!-- Right Actions -->
@@ -2666,10 +2667,10 @@ const toggleFullscreen = () => {
               <Maximize2 :size="16" />
             </button>
 
-            <button @click="openAddForm" class="create-product-btn flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0b529c] text-white hover:bg-[#0c65bd] text-sm font-semibold shadow-sm transition-colors">
-              <Plus :size="18" />
-              Create Product
-            </button>
+            <BaseButton variant="primary" @click="openAddForm">
+              <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+              <span>Create Product</span>
+            </BaseButton>
           </div>
 
         </div>
@@ -2678,15 +2679,15 @@ const toggleFullscreen = () => {
         <div class="table-scroll-wrapper overflow-x-auto">
           <table class="products-registry-table w-full border-collapse">
             <thead>
-              <tr class="border-b border-gray-150 bg-gray-50/50 text-left">
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Brand</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Product Group</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Product Type</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Measurement unit</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Is Trackable</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider text-right" width="80">Action</th>
+              <tr class="border-b border-gray-150 bg-[#fafafa] text-left">
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Name</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Brand</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Product Group</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Product Type</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Measurement unit</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Is Trackable</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373]">Status</th>
+                <th class="px-6 py-3.5 text-xs font-medium text-[#737373] text-right" width="80">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -2706,31 +2707,31 @@ const toggleFullscreen = () => {
                       </div>
                     </div>
                     <div>
-                      <div class="product-display-name text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <div class="product-display-name text-sm font-semibold text-[#262626] flex items-center gap-2">
                         <span v-if="p.color" class="inline-block w-2.5 h-2.5 rounded-full border border-gray-200 shrink-0" :style="{ backgroundColor: p.color }" title="POS tile color"></span>
                         {{ p.name }}
                       </div>
-                      <div class="product-secondary-code text-[11px] font-semibold text-gray-400 tracking-wider">
+                      <div class="product-secondary-code text-[11px] font-normal text-[#737373] tracking-wider">
                         {{ p.code }}<span v-if="p.sku"> · SKU {{ p.sku }}</span>
                       </div>
                     </div>
                   </div>
                 </td>
 
-                <td class="px-6 py-4 text-sm font-semibold text-gray-500">
+                <td class="px-6 py-4 text-sm font-normal text-[#737373]">
                   <span v-if="p.brand_ids && p.brand_ids.length">{{ brandNames(p.brand_ids) }}</span>
                   <span v-else class="text-gray-300">—</span>
                 </td>
 
-                <td class="px-6 py-4 text-sm font-semibold text-gray-500">
+                <td class="px-6 py-4 text-sm font-normal text-[#737373]">
                   {{ p.product_group }}
                 </td>
 
-                <td class="px-6 py-4 text-sm font-semibold text-gray-500">
+                <td class="px-6 py-4 text-sm font-normal text-[#737373]">
                   {{ p.product_type }}
                 </td>
 
-                <td class="px-6 py-4 text-sm font-semibold text-gray-500">
+                <td class="px-6 py-4 text-sm font-normal text-[#737373]">
                   {{ p.uom }}
                 </td>
 

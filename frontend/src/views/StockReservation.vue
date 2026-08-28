@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   Plus, Search, Filter, MoreVertical,
@@ -6,6 +6,7 @@ import {
   Columns, ArrowUpDown, ChevronDown, ArrowLeft, ArrowRight, RotateCcw,
   Eye, Edit2, Trash2, X, HelpCircle
 } from "lucide-vue-next";
+import BaseButton from "../components/BaseButton.vue";
 
 interface StockReservation {
   id: number;
@@ -190,8 +191,11 @@ const filteredReservations = computed(() => {
           <button @click="toggleFullscreen" class="btn-icon-square" :class="{ active: isFullscreen }" title="Toggle Fullscreen">
             <Maximize :size="18" />
           </button>
-          <router-link to="/stock-reservation/create" class="btn-create" style="text-decoration:none;">
-            <Plus :size="20" /><span>Create Reservation</span>
+          <router-link to="/stock-reservation/create" style="text-decoration:none;">
+            <BaseButton variant="primary">
+              <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+              <span>Create Reservation</span>
+            </BaseButton>
           </router-link>
         </div>
       </div>
@@ -215,9 +219,10 @@ const filteredReservations = computed(() => {
               <option value="Inactive">Inactive</option>
             </select>
           </div>
-          <button @click="resetFilters" class="btn-reset-filters">
-            <RotateCcw :size="14" /> Reset
-          </button>
+          <BaseButton variant="secondary" size="sm" @click="resetFilters">
+            <template #icon-left><RotateCcw :size="14" /></template>
+            <span>Reset</span>
+          </BaseButton>
         </div>
       </transition>
 
@@ -372,12 +377,13 @@ const filteredReservations = computed(() => {
 .btn-reset-filters:hover { background: #f9fafb; }
 
 .table-wrapper { overflow-x: auto; border-bottom: 1px solid #e5e7eb; }
-.reservation-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.reservation-table th { background: #fafafa; font-weight: 600; color: #4b5563; padding: 11px 16px; border-bottom: 1px solid #e5e7eb; }
-.reservation-table td { padding: 13px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.reservation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reservation-table th { background: #fafafa; font-weight: 500; color: #737373; font-size: 12px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
+.reservation-table td { padding: 13px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; color: #737373; }
+.reservation-table td:nth-child(2) { color: #262626; font-weight: 600; font-size: 13.5px; }
 .reservation-table tbody tr:hover { background: #fafafa; }
 .row-selected { background: #f0f7ff !important; }
-.table-checkbox { width: 15px; height: 15px; accent-color: #111827; cursor: pointer; }
+.table-checkbox { width: 15px; height: 15px; accent-color: #0B529C; cursor: pointer; }
 .empty-row { text-align: center; color: #9ca3af; padding: 32px; font-size: 14px; }
 
 .state-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }

@@ -111,23 +111,24 @@ const sections = ref([
       },
       { 
         id: 'hr', 
-        title: 'Human Resource', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
+        title: 'Human Resources', 
+        desc: 'Manage organizational structure, job architecture, positions, and workforce movements.', 
         icon: Users, 
-        iconColor: 'var(--primitive-color-neutral-400)', 
-        iconBg: 'var(--primitive-color-neutral-100)', 
-        subscribed: false 
+        iconColor: 'var(--primitive-color-indigo-600)', 
+        iconBg: 'var(--primitive-color-indigo-50)', 
+        subscribed: true,
+        route: '/hr/dashboard' 
       }
     ]
   },
   {
-    title: 'Human Resources',
-    id: 'human_resources',
+    title: 'Purchasing & Procurement',
+    id: 'purchasing_procurement',
     modules: [
       { 
         id: 'buying', 
         title: 'Buying', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
+        desc: 'Manage supplier relationships, purchase requests, and procurement.', 
         icon: Tag, 
         iconColor: 'var(--primitive-color-emerald-500)', 
         iconBg: 'var(--primitive-color-emerald-50)', 

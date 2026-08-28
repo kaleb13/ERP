@@ -5,6 +5,7 @@ import {
   X, Check, Lock, Edit2, Trash2, Monitor
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // Active Tab
 const activeTab = ref<'customers' | 'customer_groups'>('customers');
@@ -232,10 +233,10 @@ const handleDelete = (id: number) => {
         </div>
 
         <div class="action-bar-right">
-          <button @click="openAddForm" class="btn-create">
-            <Plus :size="20" />
+          <BaseButton variant="primary" @click="openAddForm">
+            <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
             <span>Add New {{ activeTab === 'customers' ? 'Customer' : 'Group' }}</span>
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -597,18 +598,22 @@ const handleDelete = (id: number) => {
 .gate-pass-table th {
   text-align: left;
   padding: 12px 24px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  color: #4b5563;
-  background: #f9fafb;
+  color: #737373;
+  background: #fafafa;
   border-bottom: 1px solid #e5e7eb;
 }
 .gate-pass-table td {
   padding: 14px 24px;
-  font-size: 14px;
-  color: #374151;
+  font-size: 13.5px;
+  color: #737373;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+}
+.gate-pass-table td:nth-child(2) {
+  color: #262626;
+  font-weight: 600;
 }
 .gate-pass-table tr:hover {
   background-color: #fcfcfd;

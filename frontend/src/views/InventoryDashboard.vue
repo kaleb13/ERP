@@ -5,6 +5,7 @@ import {
   Plus, Search, Filter, MoreVertical, Layers, Box, Truck,
   Monitor, ChevronRight
 } from 'lucide-vue-next';
+import MetricCard from '../components/MetricCard.vue';
 
 // Mock data for the dashboard
 const stats = [
@@ -51,23 +52,17 @@ const recentActivities = [
       </div>
     </header>
 
-    <!-- Stats Grid -->
+    <!-- Stats Grid (Using Centralized MetricCard Component) -->
     <div class="stats-grid">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-header">
-          <div :class="['stat-icon-box', stat.bg]">
-            <component :is="stat.icon" :size="20" :class="stat.color" />
-          </div>
-          <div :class="['stat-badge', stat.isPositive ? 'badge-success' : 'badge-danger']">
-            <component :is="stat.isPositive ? ArrowUpRight : ArrowDownRight" :size="12" />
-            <span>{{ stat.change }}</span>
-          </div>
-        </div>
-        <div class="stat-body">
-          <p class="stat-label">{{ stat.label }}</p>
-          <h3 class="stat-value">{{ stat.value }}</h3>
-        </div>
-      </div>
+      <MetricCard 
+        v-for="stat in stats" 
+        :key="stat.label" 
+        :label="stat.label" 
+        :value="stat.value" 
+        subtext="Real-time status"
+        :trend="stat.change"
+        :trendType="stat.isPositive ? 'up' : 'down'"
+      />
     </div>
 
     <!-- Main Content Grid -->

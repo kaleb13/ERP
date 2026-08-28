@@ -4,6 +4,8 @@ import {
   Plus, Search, ChevronRight, HelpCircle,
   X, Check, Lock, Edit2, Trash2, MoreVertical, Eye, Users, Layers, Monitor
 } from 'lucide-vue-next';
+import BaseTable from '../components/BaseTable.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // State
 const customerGroups = ref([
@@ -11,6 +13,10 @@ const customerGroups = ref([
   { id: 2, name: 'Retail Customers', description: 'Standard consumer tier', entity: 'Bole Road Branch', status_lookup: 'Approved', state: 'Active' },
   { id: 3, name: 'Corporate Clients', description: 'Special contract accounts', entity: 'Haleta Enterprise Group', status_lookup: 'Pending Approval', state: 'Active' }
 ]);
+
+// Pagination State
+const currentPage = ref(1);
+const perPage = ref(10);
 
 // Active dropdown id
 const activeActionMenuId = ref<number | null>(null);
@@ -39,7 +45,6 @@ onMounted(() => {
   if (savedGroups) {
     customerGroups.value = JSON.parse(savedGroups);
   } else {
-    // If not found, seed the localStorage first
     localStorage.setItem('haleta_erp_customer_groups', JSON.stringify(customerGroups.value));
   }
   window.addEventListener('click', closeAllMenus);
@@ -66,6 +71,11 @@ const filteredCustomerGroups = computed(() => {
     cg.entity.toLowerCase().includes(q) ||
     cg.description.toLowerCase().includes(q)
   );
+});
+
+const paginatedCustomerGroups = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredCustomerGroups.value.slice(start, start + perPage.value);
 });
 
 // Actions
@@ -149,105 +159,88 @@ const triggerDelete = (id: number) => {
       <span class="breadcrumb-active">Customer Groups</span>
     </div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <header class="page-header">
-        <div class="title-area">
-          <h1 class="page-title">Customer Groups</h1>
-          <p class="page-description">
-            Administer and segment customer pricing profiles, retail/wholesale tiers, and assign linked corporate accounts.
-          </p>
-        </div>
-      </header>
+    <!-- Main Content Table Card via BaseTable -->
+    <BaseTable
+      title="Customer Groups"
+      subtitle="Administer and segment customer pricing profiles, retail/wholesale tiers, and assign linked corporate accounts."
+      v-model:searchQuery="searchQuery"
+      :totalEntries="filteredCustomerGroups.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showFilter="false"
+      :showColumns="false"
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openAddForm">
+          <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+          <span>Add New Group</span>
+        </BaseButton>
+      </template>
 
-      <!-- Action & Search Bar -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <div class="search-input-wrapper">
-            <Search :size="18" class="search-icon" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search groups..." 
-              class="table-search" 
-            />
-          </div>
-        </div>
-
-        <div class="action-bar-right">
-          <button @click="openAddForm" class="btn-create">
-            <Plus :size="20" />
-            <span>Add New Group</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tables Content -->
-      <div class="table-wrapper">
-        <table class="gate-pass-table">
-          <thead>
-            <tr>
-              <th>Group Name</th>
-              <th>Group Scope / Description</th>
-              <th>Assigned Entity</th>
-              <th width="180">Status Lookup Value</th>
-              <th width="120">State</th>
-              <th width="80" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="cg in filteredCustomerGroups" :key="cg.id">
-              <td class="font-semibold text-gray-900">
-                <div class="group-name-cell">
-                  <div class="group-icon-box">
-                    <Users :size="14" class="text-emerald-600" />
-                  </div>
-                  <span>{{ cg.name }}</span>
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Group Scope / Description</th>
+            <th>Assigned Entity</th>
+            <th width="180">Status Lookup Value</th>
+            <th width="120">State</th>
+            <th width="80" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="cg in paginatedCustomerGroups" :key="cg.id">
+            <td class="col-primary-title">
+              <div class="group-name-cell">
+                <div class="group-icon-box">
+                  <Users :size="14" style="color: #0B529C;" />
                 </div>
-              </td>
-              <td class="text-gray-600">{{ cg.description }}</td>
-              <td class="text-gray-700">{{ cg.entity }}</td>
-              <td>
-                <span :class="['status-lookup-badge', cg.status_lookup === 'Approved' ? 'approved' : 'pending']">
-                  {{ cg.status_lookup }}
-                </span>
-              </td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ cg.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <!-- Floating action menu -->
-                <div class="action-menu-container">
-                  <button @click="toggleActionMenu($event, cg.id)" class="btn-three-dots" title="Actions">
-                    <MoreVertical :size="18" />
+                <span>{{ cg.name }}</span>
+              </div>
+            </td>
+            <td class="col-secondary-desc">{{ cg.description }}</td>
+            <td class="col-secondary-text">{{ cg.entity }}</td>
+            <td>
+              <span :class="['status-lookup-badge', cg.status_lookup === 'Approved' ? 'approved' : 'pending']">
+                {{ cg.status_lookup }}
+              </span>
+            </td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ cg.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-menu-container">
+                <button @click="toggleActionMenu($event, cg.id)" class="btn-action-dots" title="Actions">
+                  <MoreVertical :size="16" />
+                </button>
+                <div v-if="activeActionMenuId === cg.id" class="action-dropdown-menu" @click.stop>
+                  <button @click="triggerView(cg)" class="action-dropdown-item">
+                    <Eye :size="14" class="text-gray-500" />
+                    <span>View</span>
                   </button>
-                  <div v-if="activeActionMenuId === cg.id" class="action-dropdown-menu" @click.stop>
-                    <button @click="triggerView(cg)" class="action-dropdown-item">
-                      <Eye :size="14" class="text-gray-500" />
-                      <span>View</span>
-                    </button>
-                    <button @click="triggerEdit(cg)" class="action-dropdown-item">
-                      <Edit2 :size="14" class="text-gray-500" />
-                      <span>Edit</span>
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button @click="triggerDelete(cg.id)" class="action-dropdown-item text-red-650">
-                      <Trash2 :size="14" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
+                  <button @click="triggerEdit(cg)" class="action-dropdown-item">
+                    <Edit2 :size="14" class="text-gray-500" />
+                    <span>Edit</span>
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button @click="triggerDelete(cg.id)" class="action-dropdown-item text-red-600 hover:bg-red-50">
+                    <Trash2 :size="14" class="text-red-500" />
+                    <span class="text-red-600 font-medium">Delete</span>
+                  </button>
                 </div>
-              </td>
-            </tr>
-            <tr v-if="filteredCustomerGroups.length === 0">
-              <td colspan="6" class="text-center py-8 text-gray-400">No customer groups found matching search query.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredCustomerGroups.length === 0">
+            <td colspan="6" class="text-center py-8 text-slate-400">
+              No customer groups found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </BaseTable>
 
     <!-- FORM OVERLAY MODAL -->
     <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">

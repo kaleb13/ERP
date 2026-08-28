@@ -6,6 +6,7 @@ import {
   ExternalLink, ArrowLeft, ArrowRight, MoreVertical, Eye, FileText,
   X, Package, MapPin, Layers, Coins, User, ClipboardList, Boxes, ArrowRightLeft
 } from 'lucide-vue-next';
+import BaseButton from '../components/BaseButton.vue';
 
 /**
  * Immutable StockLedger rows. Every movement traces to a StockOperation and a
@@ -323,10 +324,14 @@ onUnmounted(() => {
             <Search :size="18" class="search-icon" />
             <input v-model="searchQuery" type="text" placeholder="Search by product, document, location or ledger ID..." class="table-search" />
           </div>
-          <button @click="showFilterPanel = !showFilterPanel" class="btn-filter" :class="{ active: showFilterPanel }">
-            <Filter :size="18" />
+          <BaseButton
+            variant="secondary"
+            :active="showFilterPanel || filterOperation !== 'All'"
+            @click="showFilterPanel = !showFilterPanel"
+          >
+            <template #icon-left><Filter :size="16" /></template>
             <span>Filter</span>
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -345,10 +350,10 @@ onUnmounted(() => {
               <option value="ADJUSTMENT_PLUS">Adjustment +</option>
             </select>
           </div>
-          <button @click="resetFilters" class="btn-reset-filters">
-            <RotateCcw :size="14" />
-            Reset Filters
-          </button>
+          <BaseButton variant="secondary" size="sm" @click="resetFilters">
+            <template #icon-left><RotateCcw :size="14" /></template>
+            <span>Reset Filters</span>
+          </BaseButton>
         </div>
       </transition>
 
@@ -707,20 +712,24 @@ onUnmounted(() => {
 .ledger-table { width: 100%; border-collapse: collapse; }
 .ledger-table th {
   text-align: left;
-  padding: 10px 16px;
-  font-size: 13px;
+  padding: 12px 16px;
+  font-size: 12px;
   font-weight: 500;
-  color: #4b5563;
-  background: #f9fafb;
+  color: #737373;
+  background: #fafafa;
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
 }
 .ledger-table td {
   padding: 12px 16px;
-  font-size: 14px;
-  color: #374151;
+  font-size: 13.5px;
+  color: #737373;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+}
+.ledger-table td:first-child {
+  color: #262626;
+  font-weight: 600;
 }
 .ledger-table tr:last-child td { border-bottom: none; }
 .ledger-row { cursor: pointer; transition: background 0.12s ease; }

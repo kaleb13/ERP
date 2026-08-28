@@ -6,6 +6,9 @@ import {
   Filter, ArrowUpDown, RefreshCw, Columns, Maximize2, ChevronDown,
   ArrowLeft, ArrowRight, Expand, ExternalLink
 } from 'lucide-vue-next';
+import BasePagination from '../components/BasePagination.vue';
+import BaseTable from '../components/BaseTable.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // Data State
 const customers = ref([
@@ -381,177 +384,80 @@ const handleRefresh = () => {
         <span class="breadcrumb-active">Customer</span>
       </div>
 
-      <!-- Main Content Card -->
-      <div class="content-card">
-        <header class="page-header">
-          <div class="title-area">
-            <h1 class="page-title">Customers</h1>
-            <p class="page-description">
-              Manage customer information, loyalty, and credit settings.
-            </p>
-          </div>
-        </header>
+      <!-- Main Content Table Card via BaseTable -->
+      <BaseTable
+        title="Customers"
+        subtitle="Manage customer information, loyalty, and credit settings."
+        v-model:searchQuery="searchQuery"
+        :totalEntries="totalEntries"
+        v-model:currentPage="currentPage"
+        v-model:perPage="perPage"
+        :showFilter="false"
+        :showColumns="false"
+      >
+        <template #actions>
+          <BaseButton variant="primary" @click="openAddForm">
+            <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+            <span>Create Customer</span>
+          </BaseButton>
+        </template>
 
-        <!-- Upper Action Bar (Filter, Sort, spacer, reload, columns, layout) -->
-        <div class="action-bar">
-          <div class="action-bar-left">
-            <div class="search-input-wrapper">
-              <Search :size="18" class="search-icon" />
-              <input 
-                v-model="searchQuery" 
-                type="text" 
-                placeholder="Search..." 
-                class="table-search" 
-              />
-            </div>
-            
-            <button class="btn-action-white">
-              <Filter :size="16" class="btn-icon-grey" />
-              <span>Filter</span>
-            </button>
-            
-            <button class="btn-action-white btn-sort">
-              <ArrowUpDown :size="16" class="btn-icon-grey" />
-              <span>Sort</span>
-              <ChevronDown :size="14" class="btn-chevron-down" />
-            </button>
-          </div>
-
-          <div class="action-bar-right">
-            <button @click="handleRefresh" class="btn-icon-action" title="Reload data">
-              <RefreshCw :size="16" />
-            </button>
-            
-            <div class="relative-container">
-              <button @click.stop="showColumnsDropdown = !showColumnsDropdown" class="btn-icon-action" title="Toggle columns">
-                <Columns :size="16" />
-              </button>
-              <div v-if="showColumnsDropdown" class="columns-menu shadow-lg">
-                <span class="columns-menu-title">Select Columns</span>
-                <label class="menu-item"><input type="checkbox" checked disabled /> <span>Name</span></label>
-                <label class="menu-item"><input type="checkbox" checked disabled /> <span>Assigned Entity</span></label>
-                <label class="menu-item"><input type="checkbox" checked disabled /> <span>Customer Group</span></label>
-                <label class="menu-item"><input type="checkbox" checked disabled /> <span>State</span></label>
-              </div>
-            </div>
-
-            <button class="btn-icon-action" title="Toggle Fullscreen">
-              <Maximize2 :size="16" />
-            </button>
-
-            <button @click="openAddForm" class="btn-create-dark">
-              <Plus :size="18" />
-              <span>Create Customer</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Table View -->
-        <div class="table-wrapper">
-          <table class="gate-pass-table">
-            <thead>
-              <tr>
-                <th class="text-left header-name">Name</th>
-                <th class="text-left header-entity">Assigned Entity</th>
-                <th class="text-left header-group">Customer Group</th>
-                <th class="text-left header-state">State</th>
-                <th width="80" class="text-right header-action">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="c in paginatedCustomers" :key="c.id">
-                <td class="cell-name font-semibold text-gray-900">
-                  {{ c.party_name }}
-                </td>
-                <td class="cell-entity text-gray-700 font-medium">{{ c.entity }}</td>
-                <td class="cell-group text-gray-700 font-medium">{{ c.group }}</td>
-                <td class="cell-state">
-                  <span class="status-badge-premium">
-                    {{ c.state }}
-                  </span>
-                </td>
-                <td class="cell-action text-right">
-                  <!-- Floating action menu -->
-                  <div class="action-menu-container">
-                    <button @click="toggleActionMenu($event, c.id)" class="btn-three-dots" title="Actions">
-                      <MoreVertical :size="18" />
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th class="text-left">Name</th>
+              <th class="text-left">Assigned Entity</th>
+              <th class="text-left">Customer Group</th>
+              <th class="text-left">State</th>
+              <th width="80" class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in paginatedCustomers" :key="c.id">
+              <td class="col-primary-title">
+                {{ c.party_name }}
+              </td>
+              <td class="col-secondary-text">{{ c.entity }}</td>
+              <td class="col-secondary-text">{{ c.group }}</td>
+              <td>
+                <span class="status-pill pill-active">
+                  {{ c.state }}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="action-menu-container">
+                  <button @click="toggleActionMenu($event, c.id)" class="btn-action-dots" title="Actions">
+                    <MoreVertical :size="16" />
+                  </button>
+                  <div v-if="activeActionMenuId === c.id" class="action-dropdown-menu" @click.stop>
+                    <button @click="triggerView(c)" class="action-dropdown-item">
+                      <Eye :size="14" class="text-gray-500" />
+                      <span>View Details</span>
                     </button>
-                    <div v-if="activeActionMenuId === c.id" class="action-dropdown-menu" @click.stop>
-                      <button @click="triggerView(c)" class="action-dropdown-item">
-                        <Eye :size="14" class="text-gray-500" />
-                        <span>View Details</span>
-                      </button>
-                      <button @click="triggerEdit(c)" class="action-dropdown-item">
-                        <Edit2 :size="14" class="text-gray-500" />
-                        <span>Edit Form</span>
-                      </button>
-                      <div class="dropdown-divider"></div>
-                      <button @click="triggerDelete(c.id)" class="action-dropdown-item text-red-650">
-                        <Trash2 :size="14" />
-                        <span>Remove Client</span>
-                      </button>
-                    </div>
+                    <button @click="triggerEdit(c)" class="action-dropdown-item">
+                      <Edit2 :size="14" class="text-gray-500" />
+                      <span>Edit Form</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button @click="triggerDelete(c.id)" class="action-dropdown-item text-red-600 hover:bg-red-50">
+                      <Trash2 :size="14" class="text-red-500" />
+                      <span class="text-red-600 font-medium">Remove Client</span>
+                    </button>
                   </div>
-                </td>
-              </tr>
-              <tr v-if="filteredCustomers.length === 0">
-                <td colspan="5" class="text-center py-12 text-gray-400">
-                  <div class="empty-state-box">
-                    <Users :size="32" class="text-gray-300 mb-2" />
-                    <p>No registered customer accounts found matching search scope.</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination Footer -->
-        <div class="table-footer">
-          <div class="footer-info">
-            Showing {{ startIndex }} to {{ endIndex }} of {{ totalEntries }} entries
-            <span class="per-page-selector">
-              Per Page: 
-              <select v-model="perPage" class="page-select" @change="currentPage = 1">
-                <option :value="1">1</option>
-                <option :value="5">5</option>
-                <option :value="10">10</option>
-                <option :value="20">20</option>
-              </select>
-            </span>
-          </div>
-
-          <div class="pagination-controls">
-            <button 
-              class="page-nav-btn" 
-              :disabled="currentPage === 1"
-              @click="changePage(currentPage - 1)"
-            >
-              <ArrowLeft :size="14" class="mr-1.5" />
-              Previous
-            </button>
-            
-            <button 
-              v-for="page in totalPages" 
-              :key="page" 
-              class="page-num" 
-              :class="{ 'active': currentPage === page }"
-              @click="changePage(page)"
-            >
-              {{ page }}
-            </button>
-
-            <button 
-              class="page-nav-btn" 
-              :disabled="currentPage === totalPages"
-              @click="changePage(currentPage + 1)"
-            >
-              Next
-              <ArrowRight :size="14" class="ml-1.5" />
-            </button>
-          </div>
-        </div>
-      </div>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="filteredCustomers.length === 0">
+              <td colspan="5" class="text-center py-12 text-slate-400">
+                <div class="empty-state-box">
+                  <Users :size="32" class="text-slate-300 mb-2" />
+                  <p>No registered customer accounts found matching search scope.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </BaseTable>
     </div>
 
     <!-- ==================== FLOW 3: QUICK CREATE MODAL ==================== -->

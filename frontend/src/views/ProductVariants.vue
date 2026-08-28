@@ -5,6 +5,7 @@ import {
   MoreVertical, Eye, GitBranch, Box, Layers, Package, Sparkles, Trash,
   RefreshCw, Check, Info, Tag, ArrowLeft
 } from 'lucide-vue-next';
+import BaseButton from '../components/BaseButton.vue';
 
 // ─────────────────────────────────────────────────────────────
 // TYPES  (mirrors Product.parent_id / ProductAttribute / ProductVariantOption)
@@ -464,9 +465,10 @@ const triggerView = (v: Variant) => {
               <Search :size="18" class="search-icon" />
               <input v-model="searchQuery" type="text" placeholder="Search products or SKUs..." class="table-search" />
             </div>
-            <button @click="openBuilder()" class="btn-create">
-              <Plus :size="20" /><span>Create Variants</span>
-            </button>
+            <BaseButton variant="primary" @click="openBuilder()">
+              <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+              <span>Create Variants</span>
+            </BaseButton>
           </div>
         </div>
 
@@ -904,10 +906,11 @@ const triggerView = (v: Variant) => {
 .variant-table-wrap { border-top: 1px solid #f1f5f9; background: #fcfcfd; overflow-x: auto; }
 .variant-table { width: 100%; border-collapse: collapse; }
 .variant-table th {
-  text-align: left; padding: 10px 16px; font-size: 11.5px; font-weight: 600; color: #6b7280;
-  background: #f9fafb; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.03em;
+  text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 500; color: #737373;
+  background: #fafafa; border-bottom: 1px solid #f1f5f9;
 }
-.variant-table td { padding: 11px 16px; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.variant-table td { padding: 12px 16px; font-size: 13px; color: #737373; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+.variant-table td:first-child { color: #262626; font-weight: 600; }
 .variant-table tr:last-child td { border-bottom: none; }
 .variant-table tr:hover td { background: #f8fafc; }
 

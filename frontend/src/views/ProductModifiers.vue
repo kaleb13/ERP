@@ -4,6 +4,8 @@ import {
   Plus, Search, ChevronRight, HelpCircle,
   X, Edit2, Trash2, MoreVertical, Eye, Monitor, Utensils
 } from 'lucide-vue-next';
+import BaseTable from '../components/BaseTable.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 // ─── Types (mirrors ProductModifier / ProductModifierItem schema) ───
 interface ModifierItem {
@@ -59,80 +61,86 @@ const modifiers = ref<ProductModifier[]>([
   {
     id: 2,
     uuid: 'a1b2c3d4-0002',
-    name: 'Extra Sauce',
+    name: 'Spicy Dip',
     entity_id: 'Bole Road Branch',
-    status_lookup_value_id: 'pending',
+    status_lookup_value_id: 'acceptForThis',
     state: 'Active',
     items: [
-      { id: 21, base_product_id: 1, added_product_id: 4, state: 'Active' }
+      { id: 21, base_product_id: 2, added_product_id: 4, state: 'Active' }
     ]
   }
 ]);
 
+// Pagination State
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const searchQuery = ref('');
 const activeActionMenuId = ref<number | null>(null);
 const showForm = ref(false);
 const showViewModal = ref(false);
 const editMode = ref(false);
 const selectedId = ref<number | null>(null);
 const viewItem = ref<ProductModifier | null>(null);
-const searchQuery = ref('');
 
 const blankForm = () => ({
   name: '',
   entity_id: ENTITIES[0],
-  status_lookup_value_id: 'pending',
+  status_lookup_value_id: 'acceptForAll',
   state: 'Active',
-  items: [] as ModifierItem[]
+  items: [{ id: Date.now(), base_product_id: '' as number | '', added_product_id: '' as number | '', state: 'Active' }]
 });
 const formState = ref(blankForm());
 
 // ─── Persistence ───
-const STORAGE_KEY = 'haleta_erp_product_modifiers';
-
 onMounted(() => {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem('haleta_erp_product_modifiers');
   if (saved) {
-    modifiers.value = JSON.parse(saved);
-  } else {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(modifiers.value));
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) modifiers.value = parsed;
+    } catch {}
   }
-  const savedProducts = localStorage.getItem('haleta_erp_products');
-  if (savedProducts) {
-    const parsed = JSON.parse(savedProducts);
-    if (Array.isArray(parsed) && parsed.length) {
-      products.value = parsed.map((p: any) => ({ id: p.id, name: p.name }));
-    }
+  const savedProds = localStorage.getItem('haleta_erp_products');
+  if (savedProds) {
+    try {
+      const parsed = JSON.parse(savedProds);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        products.value = parsed.map((p: any) => ({ id: p.id, name: p.name }));
+      }
+    } catch {}
   }
   window.addEventListener('click', closeAllMenus);
 });
 
-onUnmounted(() => {
-  window.removeEventListener('click', closeAllMenus);
-});
+onUnmounted(() => window.removeEventListener('click', closeAllMenus));
 
 const saveToLocalStorage = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(modifiers.value));
+  localStorage.setItem('haleta_erp_product_modifiers', JSON.stringify(modifiers.value));
 };
 
 const closeAllMenus = () => {
   activeActionMenuId.value = null;
 };
 
-// ─── Search ───
+// ─── Search & Pagination ───
 const filteredModifiers = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim();
+  const q = searchQuery.value.trim().toLowerCase();
   if (!q) return modifiers.value;
   return modifiers.value.filter(m =>
     m.name.toLowerCase().includes(q) ||
-    m.entity_id.toLowerCase().includes(q)
+    m.entity_id.toLowerCase().includes(q) ||
+    m.uuid.toLowerCase().includes(q)
   );
 });
 
+const paginatedModifiers = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredModifiers.value.slice(start, start + perPage.value);
+});
+
 // ─── UUID helper ───
-const newUuid = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return 'xxxxxxxx-xxxx'.replace(/x/g, () => ((Math.random() * 16) | 0).toString(16));
-};
+const newUuid = () => 'mod-' + Math.random().toString(36).substring(2, 10);
 
 // ─── Item rows inside the form ───
 const addItemRow = () => {
@@ -188,7 +196,7 @@ const triggerDelete = (id: number) => {
 
 const handleSave = () => {
   if (!formState.value.name.trim()) {
-    alert('Please provide the Modifier Name (e.g. Extra Cheese).');
+    alert('Please provide the Modifier Name.');
     return;
   }
   const cleanItems = formState.value.items.filter(
@@ -225,7 +233,6 @@ const handleSave = () => {
 
 <template>
   <div class="modifiers-page">
-    <!-- Breadcrumbs -->
     <div class="breadcrumbs">
       <router-link to="/dashboard" class="breadcrumb-link">
         <Monitor :size="16" />
@@ -234,107 +241,91 @@ const handleSave = () => {
       <span class="breadcrumb-active">Product Modifiers</span>
     </div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <header class="page-header">
-        <div class="title-area">
-          <h1 class="page-title">Product Modifiers</h1>
-          <p class="page-description">
-            Define optional POS add-ons for hospitality products (e.g. Extra Cheese on a Pizza) and control which base products each add-on applies to.
-          </p>
-        </div>
-      </header>
+    <!-- Main Content Table Card via BaseTable -->
+    <BaseTable
+      title="Product Modifiers"
+      subtitle="Define optional POS add-ons for hospitality products (e.g. Extra Cheese on a Pizza) and control which base products each add-on applies to."
+      v-model:searchQuery="searchQuery"
+      :totalEntries="filteredModifiers.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showFilter="false"
+      :showColumns="false"
+    >
+      <template #actions>
+        <BaseButton variant="primary" @click="openAddForm">
+          <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+          <span>Add Modifier</span>
+        </BaseButton>
+      </template>
 
-      <!-- Action & Search Bar -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <div class="search-input-wrapper">
-            <Search :size="18" class="search-icon" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search modifiers..."
-              class="table-search"
-            />
-          </div>
-        </div>
-
-        <div class="action-bar-right">
-          <button @click="openAddForm" class="btn-create">
-            <Plus :size="20" />
-            <span>Add Modifier</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tables Content -->
-      <div class="table-wrapper">
-        <table class="gate-pass-table">
-          <thead>
-            <tr>
-              <th>Modifier Name</th>
-              <th>Applies To (Base → Added)</th>
-              <th>Assigned Entity</th>
-              <th width="170">Status</th>
-              <th width="120">State</th>
-              <th width="80" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="m in filteredModifiers" :key="m.id">
-              <td class="font-semibold text-gray-900">
-                <div class="group-name-cell">
-                  <div class="group-icon-box">
-                    <Utensils :size="14" class="text-emerald-600" />
-                  </div>
-                  <span>{{ m.name }}</span>
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Modifier Name</th>
+            <th>Applies To (Base → Added)</th>
+            <th>Assigned Entity</th>
+            <th width="170">Status</th>
+            <th width="120">State</th>
+            <th width="80" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="m in paginatedModifiers" :key="m.id">
+            <td class="col-primary-title">
+              <div class="group-name-cell">
+                <div class="group-icon-box">
+                  <Utensils :size="14" style="color: #0B529C;" />
                 </div>
-              </td>
-              <td class="text-gray-600">
-                <span v-if="m.items.length === 0" class="text-gray-400">No base products linked</span>
-                <span v-else>{{ m.items.length }} product{{ m.items.length > 1 ? 's' : '' }} linked</span>
-              </td>
-              <td class="text-gray-700">{{ m.entity_id }}</td>
-              <td>
-                <span :class="['status-lookup-badge', m.status_lookup_value_id === 'pending' ? 'pending' : 'approved']">
-                  {{ statusLabel(m.status_lookup_value_id) }}
-                </span>
-              </td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ m.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-menu-container">
-                  <button @click="toggleActionMenu($event, m.id)" class="btn-three-dots" title="Actions">
-                    <MoreVertical :size="18" />
+                <span>{{ m.name }}</span>
+              </div>
+            </td>
+            <td class="col-secondary-desc">
+              <span v-if="m.items.length === 0" class="text-gray-400">No base products linked</span>
+              <span v-else>{{ m.items.length }} product{{ m.items.length > 1 ? 's' : '' }} linked</span>
+            </td>
+            <td class="col-secondary-text">{{ m.entity_id }}</td>
+            <td>
+              <span :class="['status-lookup-badge', m.status_lookup_value_id === 'pending' ? 'pending' : 'approved']">
+                {{ statusLabel(m.status_lookup_value_id) }}
+              </span>
+            </td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ m.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-menu-container">
+                <button @click="toggleActionMenu($event, m.id)" class="btn-action-dots" title="Actions">
+                  <MoreVertical :size="16" />
+                </button>
+                <div v-if="activeActionMenuId === m.id" class="action-dropdown-menu" @click.stop>
+                  <button @click="triggerView(m)" class="action-dropdown-item">
+                    <Eye :size="14" class="text-gray-500" />
+                    <span>View</span>
                   </button>
-                  <div v-if="activeActionMenuId === m.id" class="action-dropdown-menu" @click.stop>
-                    <button @click="triggerView(m)" class="action-dropdown-item">
-                      <Eye :size="14" class="text-gray-500" />
-                      <span>View</span>
-                    </button>
-                    <button @click="triggerEdit(m)" class="action-dropdown-item">
-                      <Edit2 :size="14" class="text-gray-500" />
-                      <span>Edit</span>
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button @click="triggerDelete(m.id)" class="action-dropdown-item text-red-650">
-                      <Trash2 :size="14" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
+                  <button @click="triggerEdit(m)" class="action-dropdown-item">
+                    <Edit2 :size="14" class="text-gray-500" />
+                    <span>Edit</span>
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button @click="triggerDelete(m.id)" class="action-dropdown-item text-red-600 hover:bg-red-50">
+                    <Trash2 :size="14" class="text-red-500" />
+                    <span class="text-red-600 font-medium">Delete</span>
+                  </button>
                 </div>
-              </td>
-            </tr>
-            <tr v-if="filteredModifiers.length === 0">
-              <td colspan="6" class="text-center py-8 text-gray-400">No product modifiers found. Click "Add Modifier" to create one.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredModifiers.length === 0">
+            <td colspan="6" class="text-center py-8 text-slate-400">
+              No product modifiers found matching your search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </BaseTable>
 
     <!-- FORM OVERLAY MODAL -->
     <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">

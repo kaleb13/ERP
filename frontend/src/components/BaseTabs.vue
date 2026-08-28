@@ -42,10 +42,10 @@ defineEmits<{
 .base-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   padding: 4px;
-  background: #f5f5f5;
-  border: 1px solid #e2e8f0;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
   border-radius: 30px;
 }
 
@@ -57,20 +57,20 @@ defineEmits<{
   background: none;
   font-weight: 600;
   color: #64748b;
-  border-radius: 20px;
+  border-radius: 22px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .base-tab:hover {
-  color: #334155;
+  color: #0f172a;
 }
 
 .base-tab.active {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .base-tab__icon {

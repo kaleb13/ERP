@@ -6,6 +6,7 @@ import {
   Columns, ArrowUpDown, ChevronDown, ArrowLeft, ArrowRight, RotateCcw,
   Eye, Edit2, Trash2, X
 } from 'lucide-vue-next';
+import BaseButton from '../components/BaseButton.vue';
 
 // Mock data from the image
 const gatePasses = ref([
@@ -261,10 +262,12 @@ const filteredGatePasses = computed(() => {
             <Maximize :size="18" />
           </button>
 
-          <!-- Primary Action Button (Solid Black) -->
-          <router-link to="/gate-pass/create" class="btn-create" style="text-decoration: none;">
-            <Plus :size="20" />
-            <span>Create Document</span>
+          <!-- Primary Action Button (Brand Blue) -->
+          <router-link to="/gate-pass/create" style="text-decoration: none;">
+            <BaseButton variant="primary">
+              <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+              <span>Create Document</span>
+            </BaseButton>
           </router-link>
         </div>
       </div>
@@ -299,10 +302,10 @@ const filteredGatePasses = computed(() => {
             </select>
           </div>
 
-          <button @click="resetFilters" class="btn-reset-filters">
-            <RotateCcw :size="14" />
-            Reset Filters
-          </button>
+          <BaseButton variant="secondary" size="sm" @click="resetFilters">
+            <template #icon-left><RotateCcw :size="14" /></template>
+            <span>Reset Filters</span>
+          </BaseButton>
         </div>
       </transition>
 
@@ -833,11 +836,11 @@ const filteredGatePasses = computed(() => {
 }
 .gate-pass-table th {
   text-align: left;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 500; /* Regular weight from layout mockup */
-  color: #4b5563; /* Slate grey color from layout mockup */
-  background: #f9fafb; /* Soft light neutral background */
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #737373;
+  background: #fafafa;
   border-bottom: 1px solid #e5e7eb;
 }
 .gate-pass-table th:first-child, .gate-pass-table td:first-child {
@@ -847,11 +850,15 @@ const filteredGatePasses = computed(() => {
   padding-right: 16px;
 }
 .gate-pass-table td {
-  padding: 10px 16px;
-  font-size: 14px;
-  color: #374151;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: #737373;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+}
+.gate-pass-table td:nth-child(2) {
+  color: #262626;
+  font-weight: 600;
 }
 .gate-pass-table tr.row-selected {
   background: #f9fafb;

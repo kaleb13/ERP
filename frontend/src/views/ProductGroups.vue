@@ -7,6 +7,7 @@ import {
   Folder, FolderOpen, FolderPlus, Grid, List, ArrowLeft, Info,
   Box, EyeOff, LayoutGrid, AlertCircle, RefreshCw, BarChart2, Monitor
 } from 'lucide-vue-next';
+import BaseButton from '../components/BaseButton.vue';
 
 // Routing
 const router = useRouter();
@@ -611,10 +612,10 @@ const triggerDelete = (id: number) => {
         </div>
 
         <div class="action-buttons-header mt-4 md:mt-0 flex gap-3">
-          <button @click="openAddForm" class="btn-create shadow-sm">
-            <Plus :size="18" />
-            Add New Group
-          </button>
+          <BaseButton variant="primary" @click="openAddForm">
+            <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+            <span>Add New Group</span>
+          </BaseButton>
         </div>
       </header>
 
@@ -1253,19 +1254,21 @@ const triggerDelete = (id: number) => {
   text-align: left;
   padding: 12px 24px;
   font-size: 12px;
-  font-weight: 600;
-  color: #4b5563;
-  background: #f9fafb;
+  font-weight: 500;
+  color: #737373;
+  background: #fafafa;
   border-bottom: 1px solid #e5e7eb;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 .gate-pass-table td {
   padding: 14px 24px;
   font-size: 13px;
-  color: #374151;
+  color: #737373;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+}
+.gate-pass-table td:first-child {
+  color: #262626;
+  font-weight: 600;
 }
 
 .group-name-cell {
