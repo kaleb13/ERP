@@ -11,6 +11,7 @@ import {
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
 import BaseButton from '../components/BaseButton.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 
 // Routing
 const router = useRouter();
@@ -1230,22 +1231,18 @@ const toggleFullscreen = () => {
       
       <!-- Top Action Bar & Breadcrumbs -->
       <div class="form-top-bar flex items-center justify-between border-b border-gray-200 pb-4 mb-5">
-        <div class="breadcrumbs-area flex items-center gap-2">
-          <router-link to="/dashboard" class="home-icon-link text-gray-400 hover:text-gray-900">
-            <Monitor :size="16" />
-          </router-link>
-          <ChevronRight :size="12" class="text-gray-400" />
-          <button @click="showFullForm = false" class="breadcrumb-back-btn text-gray-500 hover:text-gray-900 font-medium">
-            Products
-          </button>
-          <ChevronRight :size="12" class="text-gray-400" />
-          <span class="breadcrumb-active text-gray-700 font-semibold">
-            {{ editMode ? 'Edit Product' : 'Create Product' }}
-          </span>
-          <span class="status-badge-orange bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold ml-3">
-            Not Saved
-          </span>
-        </div>
+        <AppBreadcrumb 
+          :items="[
+            { label: 'Products', to: '/inventory/products' },
+            { label: editMode ? 'Edit Product' : 'Create Product' }
+          ]" 
+        >
+          <template #extra>
+            <span class="status-badge-orange bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2">
+              Not Saved
+            </span>
+          </template>
+        </AppBreadcrumb>
 
         <div class="form-action-buttons flex items-center gap-3">
           <button class="options-btn-dots p-2 border border-gray-200 rounded-lg bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900">
@@ -1290,7 +1287,7 @@ const toggleFullscreen = () => {
                   <input 
                     v-model="formState.name" 
                     type="text" 
-                    placeholder="Enter Product Name" 
+                     
                     class="premium-input-style w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300"
                   />
                 </div>
@@ -1302,7 +1299,7 @@ const toggleFullscreen = () => {
                   <input
                     v-model="formState.code"
                     type="text"
-                    placeholder="Enter Code"
+                    
                     class="premium-input-style w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300"
                   />
                   <p class="field-tip-desc text-[10px] text-gray-400 mt-1 font-medium">Organisational code.</p>
@@ -1315,7 +1312,7 @@ const toggleFullscreen = () => {
                   <input
                     v-model="formState.sku"
                     type="text"
-                    placeholder="Internal sellable code"
+                    
                     class="premium-input-style w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-300"
                   />
                   <p class="field-tip-desc text-[10px] text-gray-400 mt-1 font-medium">Internal sellable/barcode code used at POS.</p>
@@ -1328,7 +1325,7 @@ const toggleFullscreen = () => {
                   <div class="flex items-center gap-2">
                     <div class="flex-1 flex items-center border border-gray-200 rounded-xl overflow-hidden">
                       <span class="px-3 text-gray-400 text-sm font-semibold">#</span>
-                      <input v-model="formState.color" type="text" placeholder="0B529C" class="flex-1 py-2.5 text-sm focus:outline-none font-mono" @input="formState.color = formState.color.startsWith('#') ? formState.color : '#' + formState.color.replace('#','')" />
+                      <input v-model="formState.color" type="text"  class="flex-1 py-2.5 text-sm focus:outline-none font-mono" @input="formState.color = formState.color.startsWith('#') ? formState.color : '#' + formState.color.replace('#','')" />
                     </div>
                     <input type="color" v-model="formState.color" class="w-10 h-[42px] rounded-xl border border-gray-200 cursor-pointer p-0.5" />
                   </div>
@@ -1599,7 +1596,7 @@ const toggleFullscreen = () => {
                     <input 
                       v-model="cItem.name" 
                       type="text" 
-                      placeholder="e.g. Red Gala Apple" 
+                       
                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
                     />
                   </div>
@@ -1634,7 +1631,7 @@ const toggleFullscreen = () => {
                 <div>
                   <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Barcode</label>
                   <div class="flex items-center gap-2">
-                    <input v-model="formState.barcode" type="text" placeholder="Auto-generated" class="flex-1 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gray-300" />
+                    <input v-model="formState.barcode" type="text"  class="flex-1 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gray-300" />
                     <button @click="generateBarcode" class="p-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-500" title="Regenerate"><RefreshCw :size="15" /></button>
                   </div>
                 </div>
@@ -1734,7 +1731,7 @@ const toggleFullscreen = () => {
                     <tr v-for="(alt, idx) in ingredientAlternatives" :key="alt.id" class="border-b border-gray-100 hover:bg-gray-50/50">
                       <td class="p-3 text-center border-r border-gray-200"><input type="checkbox" class="w-4 h-4 rounded border-gray-300" /></td>
                       <td :class="['p-3 text-sm font-bold text-center border-r border-gray-200', alt.uomMismatch ? 'text-red-500' : 'text-gray-600']">{{ idx + 1 }}</td>
-                      <td class="p-0 border-r border-gray-200"><input v-model="alt.alternative" type="text" placeholder="Enter alternative name" class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none" /></td>
+                      <td class="p-0 border-r border-gray-200"><input v-model="alt.alternative" type="text"  class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none" /></td>
                       <td class="p-3 text-sm text-gray-600 border-r border-gray-200">{{ alt.alternativeFor }}</td>
                       <td class="p-0 border-r border-gray-200"><select v-model="alt.uom" class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none cursor-pointer"><option value="">—</option><option v-for="u in uomList" :key="u.id" :value="u.name">{{ u.name }}</option></select></td>
                       <td class="p-0 border-r border-gray-200"><input type="number" v-model.number="alt.qty" min="0" class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none" /></td>
@@ -1777,7 +1774,7 @@ const toggleFullscreen = () => {
                     <div class="flex items-center gap-2">
                       <div class="flex-1 flex items-center border border-gray-200 rounded-xl overflow-hidden">
                         <span class="px-3 text-gray-400 text-sm font-semibold">#</span>
-                        <input v-model="attr.color" type="text" placeholder="0B529C" class="flex-1 py-2.5 text-sm focus:outline-none font-mono" />
+                        <input v-model="attr.color" type="text"  class="flex-1 py-2.5 text-sm focus:outline-none font-mono" />
                       </div>
                       <input type="color" :value="'#' + attr.color.replace('#','')" @input="attr.color = ($event.target as HTMLInputElement).value.replace('#','')" class="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5" />
                       <button @click="removeAttribute(idx)" class="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg"><Trash2 :size="14" /></button>
@@ -1789,7 +1786,7 @@ const toggleFullscreen = () => {
                       <span v-for="s in attr.sizes" :key="s" class="flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-bold">{{ s }}<button @click="removeSize(attr, s)" class="ml-0.5 text-blue-400 hover:text-blue-700 leading-none">×</button></span>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                      <input v-model="attr.newSize" @keydown.enter.prevent="addSize(attr)" type="text" placeholder="e.g. XL, Double XL…" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none w-40" />
+                      <input v-model="attr.newSize" @keydown.enter.prevent="addSize(attr)" type="text"  class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none w-40" />
                       <button @click="addSize(attr)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold text-gray-700">Add</button>
                       <div class="flex gap-1 flex-wrap">
                         <button v-for="p in sizePresets" :key="p" @click="!attr.sizes.includes(p) && attr.sizes.push(p)" class="px-2 py-1 border border-gray-200 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-600">{{ p }}</button>
@@ -1798,7 +1795,7 @@ const toggleFullscreen = () => {
                   </div>
                   <div v-else-if="attr.type" class="flex-1">
                     <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">{{ attr.type }} Values</label>
-                    <input type="text" placeholder="Enter values separated by comma" class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none" />
+                    <input type="text"  class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none" />
                   </div>
                   <button v-if="attr.type !== 'Color'" @click="removeAttribute(idx)" class="mt-6 p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg self-start"><Trash2 :size="14" /></button>
                 </div>
@@ -1861,7 +1858,7 @@ const toggleFullscreen = () => {
                   <tr v-if="formState.modifiers.length === 0"><td colspan="4" class="p-8 text-center text-sm font-semibold text-gray-400">No modifiers. Add POS add-ons like "Extra Cheese".</td></tr>
                   <tr v-for="(mod, idx) in formState.modifiers" :key="mod.id" class="border-b border-gray-100 hover:bg-gray-50/50">
                     <td class="p-3 text-center text-sm font-bold text-gray-600 border-r border-gray-200">{{ idx + 1 }}</td>
-                    <td class="p-0 border-r border-gray-200"><input v-model="mod.name" type="text" placeholder="e.g. Extra Cheese" class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none" /></td>
+                    <td class="p-0 border-r border-gray-200"><input v-model="mod.name" type="text"  class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none" /></td>
                     <td class="p-0 border-r border-gray-200">
                       <select v-model="mod.added_product" class="w-full px-3 py-3.5 text-sm bg-transparent focus:outline-none cursor-pointer">
                         <option value="" disabled>Select added product</option>
@@ -1971,7 +1968,7 @@ const toggleFullscreen = () => {
                           <input 
                             type="number" 
                             v-model.number="row.rate" 
-                            :placeholder="getRatePlaceholder(row.unit, formState.uom)"
+                            
                             @click.stop="toggleDropdown(idx, 'rate', $event)"
                             class="w-full h-full px-4 py-3.5 bg-transparent focus:outline-none text-sm text-gray-800 placeholder-gray-450 font-semibold"
                           />
@@ -2404,7 +2401,7 @@ const toggleFullscreen = () => {
                     <input
                       v-model="formState.warranty_period"
                       type="text"
-                      placeholder="eg.365"
+                      
                       class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-1 focus:ring-gray-300 focus:outline-none"
                     />
                   </div>
@@ -2890,7 +2887,7 @@ const toggleFullscreen = () => {
                 type="text"
                 readonly
                 class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-gray-50 text-gray-600 cursor-not-allowed focus:outline-none"
-                :placeholder="formState.name || 'iPhone 17 Pro Max'"
+                
               />
             </div>
 

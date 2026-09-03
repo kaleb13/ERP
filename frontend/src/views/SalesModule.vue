@@ -6,6 +6,13 @@ import {
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
 import BaseButton from '../components/BaseButton.vue';
+import BaseTable from '../components/BaseTable.vue';
+import MetricCard from '../components/MetricCard.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
+import FormTextarea from '../components/FormTextarea.vue';
 
 // Active Tab
 const activeTab = ref<'customers' | 'customer_groups'>('customers');
@@ -13,6 +20,10 @@ const tabs: { id: 'customers' | 'customer_groups'; label: string }[] = [
   { id: 'customers', label: 'Customers List' },
   { id: 'customer_groups', label: 'Customer Groups' }
 ];
+
+// Pagination State
+const currentPage = ref(1);
+const perPage = ref(10);
 
 // Form States
 const showForm = ref(false);
@@ -22,8 +33,11 @@ const selectedId = ref<number | null>(null);
 // Search Query
 const searchQuery = ref('');
 
-// Clear the search box whenever the active tab changes
-watch(activeTab, () => { searchQuery.value = ''; });
+// Clear the search box and reset page whenever the active tab changes
+watch(activeTab, () => {
+  searchQuery.value = '';
+  currentPage.value = 1;
+});
 
 // Seed data
 const customerGroups = ref([
@@ -80,6 +94,21 @@ const filteredCustomerGroups = computed(() => {
     cg.name.toLowerCase().includes(q) || 
     cg.entity.toLowerCase().includes(q)
   );
+});
+
+const currentList = computed(() => {
+  if (activeTab.value === 'customers') return filteredCustomers.value;
+  return filteredCustomerGroups.value;
+});
+
+const paginatedCustomers = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredCustomers.value.slice(start, start + perPage.value);
+});
+
+const paginatedCustomerGroups = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredCustomerGroups.value.slice(start, start + perPage.value);
 });
 
 // Actions
@@ -178,246 +207,204 @@ const handleDelete = (id: number) => {
 
 <template>
   <div class="sales-module-page">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
-      <router-link to="/dashboard" class="breadcrumb-link">
-        <Monitor :size="16" />
-      </router-link>
-      <ChevronRight :size="12" class="breadcrumb-separator" />
-      <span class="breadcrumb-active">Sales Module</span>
+    <!-- Standard Breadcrumbs -->
+    <AppBreadcrumb :items="[{ label: 'Sales Module' }]" />
+
+    <!-- Stats Grid (Using Centralized MetricCard Component) -->
+    <div class="stats-grid mb-5">
+      <MetricCard
+        v-for="stat in stats"
+        :key="stat.label"
+        :label="stat.label"
+        :value="stat.value"
+        :icon="stat.icon"
+        :showMenu="false"
+      />
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-header">
-          <div :class="['stat-icon-box', stat.bg]">
-            <component :is="stat.icon" :size="20" :class="stat.color" />
-          </div>
+    <!-- Main Content BaseTable -->
+    <BaseTable
+      title="Customers & Customer Groups"
+      subtitle="Administer customer registry and segmentation profiles. Set credit boundaries, enroll key clients in custom wholesale/retail loyalty tiers, and manage billing entity assignments."
+      v-model:searchQuery="searchQuery"
+      :totalEntries="currentList.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showFilter="false"
+      :showColumns="false"
+    >
+      <template #header-bottom>
+        <div class="tabs-bar mb-3">
+          <BaseTabs v-model="activeTab" :tabs="tabs" />
         </div>
-        <div class="stat-body">
-          <p class="stat-label">{{ stat.label }}</p>
-          <h3 class="stat-value">{{ stat.value }}</h3>
+      </template>
+
+      <template #actions>
+        <BaseButton variant="primary" @click="openAddForm">
+          <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+          <span>Add New {{ activeTab === 'customers' ? 'Customer' : 'Group' }}</span>
+        </BaseButton>
+      </template>
+
+      <!-- TAB 1: CUSTOMERS -->
+      <table v-if="activeTab === 'customers'" class="erp-table">
+        <thead>
+          <tr>
+            <th width="150">Customer ID</th>
+            <th>Customer Name (Party)</th>
+            <th>Assigned Entity</th>
+            <th>Customer Group</th>
+            <th>Credit Limit ($)</th>
+            <th width="150" class="text-center">Loyalty Opt-In?</th>
+            <th width="120">Status</th>
+            <th width="120" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="c in paginatedCustomers" :key="c.id">
+            <td class="col-primary-title font-mono">{{ c.uuid }}</td>
+            <td class="col-primary-title">{{ c.party_name }}</td>
+            <td class="col-secondary-text">{{ c.entity }}</td>
+            <td>
+              <span class="group-tag">{{ c.group }}</span>
+            </td>
+            <td class="col-primary-title font-semibold">${{ c.credit_limit.toLocaleString() }}</td>
+            <td class="text-center">
+              <span :class="['loyalty-badge', c.loyalty === 'Yes' ? 'yes' : 'no']">{{ c.loyalty }}</span>
+            </td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ c.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-cell justify-end">
+                <button @click="handleEdit(c)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
+                <button @click="handleDelete(c.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredCustomers.length === 0">
+            <td colspan="8" class="text-center py-8 text-slate-400">No customers found matching query.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TAB 2: CUSTOMER GROUPS -->
+      <table v-if="activeTab === 'customer_groups'" class="erp-table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Group Scope / Description</th>
+            <th>Assigned Entity</th>
+            <th width="180">Status Lookup Value</th>
+            <th width="120">State</th>
+            <th width="120" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="cg in paginatedCustomerGroups" :key="cg.id">
+            <td class="col-primary-title">{{ cg.name }}</td>
+            <td class="col-secondary-desc">{{ cg.description }}</td>
+            <td class="col-secondary-text">{{ cg.entity }}</td>
+            <td>
+              <span :class="['status-lookup-badge', cg.status_lookup === 'Approved' ? 'approved' : 'pending']">
+                {{ cg.status_lookup }}
+              </span>
+            </td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ cg.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-cell justify-end">
+                <button @click="handleEdit(cg)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
+                <button @click="handleDelete(cg.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredCustomerGroups.length === 0">
+            <td colspan="6" class="text-center py-8 text-slate-400">No customer groups found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </BaseTable>
+
+    <!-- QUICK CREATE / EDIT MODAL -->
+    <QuickCreateModal
+      v-model:show="showForm"
+      :title="`${editMode ? 'Edit' : 'Create'} ${activeTab === 'customers' ? 'Customer Profile' : 'Customer Segment Group'}`"
+      :showExpandButton="false"
+      @save="handleSave"
+    >
+      <!-- FORM 1: CUSTOMER -->
+      <div v-if="activeTab === 'customers'" class="space-y-3.5">
+        <FormInput
+          v-model="formState.c_party"
+          label="Customer Name (Party Link)"
+          :required="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <FormSelect
+            v-model="formState.c_group"
+            label="Customer Segment Group"
+            :options="customerGroups.map(g => ({ value: g.name, label: g.name }))"
+          />
+
+          <FormSelect
+            v-model="formState.c_entity"
+            label="Assigned Entity"
+            :options="['Haleta Enterprise Group', 'Bole Road Branch']"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <FormInput
+            v-model="formState.c_limit"
+            label="Allowed Credit Limit ($)"
+            type="number"
+            :required="true"
+          />
+
+          <FormSelect
+            v-model="formState.c_loyalty"
+            label="Loyalty Tier Enroll"
+            :options="['Yes', 'No']"
+          />
         </div>
       </div>
-    </div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <header class="page-header">
-        <div class="title-area">
-          <h1 class="page-title">Customers & Customer Groups</h1>
-          <p class="page-description">
-            Administer customer registry and segmentation profiles. Set credit boundaries, enroll key clients in custom wholesale/retail loyalty tiers, and manage billing entity assignments.
-          </p>
+      <!-- FORM 2: CUSTOMER GROUPS -->
+      <div v-if="activeTab === 'customer_groups'" class="space-y-3.5">
+        <FormInput
+          v-model="formState.cg_name"
+          label="Group Category Name"
+          :required="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <FormSelect
+            v-model="formState.cg_entity"
+            label="Assigned Entity Scope"
+            :options="['Haleta Enterprise Group', 'Bole Road Branch']"
+          />
+
+          <FormSelect
+            v-model="formState.cg_status"
+            label="Registration Status"
+            :options="['Approved', 'Pending Approval']"
+          />
         </div>
-      </header>
 
-      <!-- Inner Navigation Tabs (shared component) -->
-      <div class="tabs-bar">
-        <BaseTabs v-model="activeTab" :tabs="tabs" />
+        <FormTextarea
+          v-model="formState.cg_desc"
+          label="Group Description"
+          :rows="3"
+        />
       </div>
-
-      <!-- Action & Search Bar -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <div class="search-input-wrapper">
-            <Search :size="18" class="search-icon" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search items..." 
-              class="table-search" 
-            />
-          </div>
-        </div>
-
-        <div class="action-bar-right">
-          <BaseButton variant="primary" @click="openAddForm">
-            <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
-            <span>Add New {{ activeTab === 'customers' ? 'Customer' : 'Group' }}</span>
-          </BaseButton>
-        </div>
-      </div>
-
-      <!-- Tables Content -->
-      <div class="table-wrapper">
-        <!-- TAB 1: CUSTOMERS -->
-        <table v-if="activeTab === 'customers'" class="gate-pass-table">
-          <thead>
-            <tr>
-              <th width="150">Customer ID</th>
-              <th>Customer Name (Party)</th>
-              <th>Assigned Entity</th>
-              <th>Customer Group</th>
-              <th>Credit Limit ($)</th>
-              <th width="150" class="text-center">Loyalty Opt-In?</th>
-              <th width="120">Status</th>
-              <th width="120" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in filteredCustomers" :key="c.id">
-              <td class="font-medium text-gray-800">{{ c.uuid }}</td>
-              <td class="font-semibold text-gray-900">{{ c.party_name }}</td>
-              <td class="text-gray-700">{{ c.entity }}</td>
-              <td>
-                <span class="group-tag">{{ c.group }}</span>
-              </td>
-              <td class="font-semibold text-gray-800">${{ c.credit_limit.toLocaleString() }}</td>
-              <td class="text-center">
-                <span :class="['loyalty-badge', c.loyalty === 'Yes' ? 'yes' : 'no']">{{ c.loyalty }}</span>
-              </td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ c.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-buttons-cell">
-                  <button @click="handleEdit(c)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
-                  <button @click="handleDelete(c.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredCustomers.length === 0">
-              <td colspan="8" class="text-center py-6 text-gray-400">No customers found matching query.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- TAB 2: CUSTOMER GROUPS -->
-        <table v-if="activeTab === 'customer_groups'" class="gate-pass-table">
-          <thead>
-            <tr>
-              <th>Group Name</th>
-              <th>Group Scope / Description</th>
-              <th>Assigned Entity</th>
-              <th width="180">Status Lookup Value</th>
-              <th width="120">State</th>
-              <th width="120" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="cg in filteredCustomerGroups" :key="cg.id">
-              <td class="font-semibold text-gray-900">{{ cg.name }}</td>
-              <td class="text-gray-600">{{ cg.description }}</td>
-              <td class="text-gray-700">{{ cg.entity }}</td>
-              <td>
-                <span :class="['status-lookup-badge', cg.status_lookup === 'Approved' ? 'approved' : 'pending']">
-                  {{ cg.status_lookup }}
-                </span>
-              </td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ cg.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-buttons-cell">
-                  <button @click="handleEdit(cg)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
-                  <button @click="handleDelete(cg.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredCustomerGroups.length === 0">
-              <td colspan="6" class="text-center py-6 text-gray-400">No customer groups found.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- FORM OVERLAY MODAL -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-card">
-        <button class="modal-close-btn" @click="showForm = false">
-          <X :size="18" />
-        </button>
-
-        <header class="modal-card-header">
-          <h3>{{ editMode ? 'Edit' : 'Create' }} {{ activeTab === 'customers' ? 'Customer Profile' : 'Customer Segment Group' }}</h3>
-        </header>
-
-        <div class="modal-body-content">
-          <!-- FORM 1: CUSTOMER -->
-          <div v-if="activeTab === 'customers'" class="form-container">
-            <div class="form-group">
-              <label class="form-label">Customer Name (Party Link) *</label>
-              <input v-model="formState.c_party" type="text" placeholder="Individual or Company Name" class="form-input" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Customer Segment Group</label>
-                <select v-model="formState.c_group" class="form-select">
-                  <option v-for="grp in customerGroups" :key="grp.id" :value="grp.name">{{ grp.name }}</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Assigned Entity</label>
-                <select v-model="formState.c_entity" class="form-select">
-                  <option value="Haleta Enterprise Group">Haleta Enterprise Group</option>
-                  <option value="Bole Road Branch">Bole Road Branch</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Allowed Credit Limit ($) *</label>
-                <input v-model="formState.c_limit" type="number" step="100" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Loyalty Tier Enroll</label>
-                <select v-model="formState.c_loyalty" class="form-select">
-                  <option value="Yes">Yes (Enable points accum)</option>
-                  <option value="No">No</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- FORM 2: CUSTOMER GROUPS -->
-          <div v-if="activeTab === 'customer_groups'" class="form-container">
-            <div class="form-group">
-              <label class="form-label">Group Category Name *</label>
-              <input v-model="formState.cg_name" type="text" placeholder="e.g. Wholesale T1, VIP" class="form-input" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Assigned Entity Scope</label>
-                <select v-model="formState.cg_entity" class="form-select">
-                  <option value="Haleta Enterprise Group">Haleta Enterprise Group</option>
-                  <option value="Bole Road Branch">Bole Road Branch</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Registration Status</label>
-                <select v-model="formState.cg_status" class="form-select">
-                  <option value="Approved">Approved</option>
-                  <option value="Pending Approval">Pending Approval</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Group Description</label>
-              <textarea v-model="formState.cg_desc" rows="3" placeholder="Describe pricing discount tier constraints" class="form-textarea"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer-row">
-          <button @click="showForm = false" class="btn-modal-secondary">Cancel</button>
-          <button @click="handleSave" class="btn-modal-primary">Save Changes</button>
-        </div>
-      </div>
-    </div>
+    </QuickCreateModal>
   </div>
 </template>
 
@@ -735,7 +722,7 @@ const handleDelete = (id: number) => {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .form-grid-2 {
   display: grid;
@@ -743,22 +730,37 @@ const handleDelete = (id: number) => {
   gap: 16px;
 }
 .form-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  margin-bottom: 3px;
 }
-.form-input, .form-select, .form-textarea {
+.form-input, .form-select {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13.5px;
   outline: none;
   background-color: white;
+  color: #1e293b;
+  transition: all 0.15s ease;
+}
+.form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  outline: none;
+  background-color: white;
+  color: #1e293b;
   transition: all 0.15s ease;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: #111827;
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 .form-tip-text {
   font-size: 11px;

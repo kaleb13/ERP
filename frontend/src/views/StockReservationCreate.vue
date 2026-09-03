@@ -619,7 +619,6 @@ watch(hasChangesFromDraft, (changed) => {
                 <input 
                   type="text" 
                   v-model="externalReference" 
-                  placeholder="e.g. SO-REF-8902" 
                   class="field-input-text"
                   :disabled="documentState === 'approved'"
                 />
@@ -644,7 +643,6 @@ watch(hasChangesFromDraft, (changed) => {
                 <textarea 
                   v-model="remark" 
                   rows="3" 
-                  placeholder="Write internal notes about this stock reservation..." 
                   class="field-input-textarea"
                   :disabled="documentState === 'approved'"
                 ></textarea>
@@ -699,7 +697,7 @@ watch(hasChangesFromDraft, (changed) => {
                       <input 
                         type="text" 
                         v-model="row.product" 
-                        placeholder="Search/Select product..." 
+                         
                         @focus="activeProductDropdownId = row.id"
                         @blur="closeProductDropdown(row.id)"
                         class="table-cell-input"
@@ -721,7 +719,7 @@ watch(hasChangesFromDraft, (changed) => {
                       v-if="documentState !== 'approved'"
                       type="text" 
                       v-model="row.batch" 
-                      placeholder="e.g. BCH-1001" 
+                       
                       class="table-cell-input"
                     />
                     <span v-else class="text-gray-600">{{ row.batch || '-' }}</span>
@@ -752,7 +750,7 @@ watch(hasChangesFromDraft, (changed) => {
                       v-if="documentState !== 'approved'"
                       type="number" 
                       v-model="row.reserved" 
-                      placeholder="0" 
+                       
                       class="table-cell-input text-right font-semibold"
                     />
                     <span v-else class="text-gray-800 font-semibold block text-right">{{ row.reserved }}</span>

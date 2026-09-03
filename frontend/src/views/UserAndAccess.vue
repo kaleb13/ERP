@@ -9,6 +9,7 @@ import {
 import BaseTabs from '../components/BaseTabs.vue';
 import BasePagination from '../components/BasePagination.vue';
 import BaseButton from '../components/BaseButton.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -45,10 +46,10 @@ const setTab = (tab: UATab) => {
   }
 };
 
-const tabs: { id: UATab; label: string }[] = [
-  { id: 'users', label: 'Users' },
-  { id: 'roles', label: 'Roles' },
-  { id: 'permissions', label: 'Permissions' }
+const tabs = [
+  { id: 'users' as const, label: 'Users', icon: Users },
+  { id: 'roles' as const, label: 'Roles', icon: UserCheck },
+  { id: 'permissions' as const, label: 'Permissions', icon: Key }
 ];
 
 // Controls & Filter state
@@ -341,28 +342,15 @@ const getInitials = (name: string) => {
 <template>
   <div class="user-management-page">
 
-    <!-- Top Breadcrumbs (Desktop icon > User & Access) -->
-    <div class="breadcrumb-nav">
-      <router-link to="/dashboard" class="breadcrumb-icon-link" title="Dashboard">
-        <Monitor :size="15" />
-      </router-link>
-      <ChevronRight :size="12" class="breadcrumb-divider" />
-      <span class="breadcrumb-current">User & Access</span>
-    </div>
+    <!-- Top Breadcrumbs -->
+    <AppBreadcrumb :items="[{ label: 'User & Access' }]" />
 
     <!-- TABLE SECTION CARD: Table Title, Toolbar, Inline Filters, Table & Pagination -->
     <div :class="['table-section-card', { 'is-fullscreen': isFullscreen }]">
 
       <!-- Optional Tab Switcher Bar if route has ?tab=... -->
-      <div v-if="route.query.tab" class="tabs-header-bar">
-        <button 
-          v-for="t in tabs" 
-          :key="t.id"
-          :class="['tab-btn', activeTab === t.id ? 'active-tab' : '']"
-          @click="setTab(t.id)"
-        >
-          {{ t.label }}
-        </button>
+      <div v-if="route.query.tab" class="tabs-header-bar mb-4">
+        <BaseTabs :model-value="activeTab" :tabs="tabs" size="md" @update:model-value="setTab" />
       </div>
 
       <!-- Table Title & Description Header -->
@@ -1279,19 +1267,21 @@ const getInitials = (name: string) => {
 
 .erp-table th {
   background-color: #fafafa;
-  padding: 12px 20px;
+  padding: 8px 16px;
   font-size: 12px;
   font-weight: 500;
   color: #737373;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
+  height: 34px;
 }
 
 .erp-table td {
-  padding: 14px 20px;
+  padding: 8px 16px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  color: #737373;
+  color: #404040;
+  height: 38px;
 }
 
 .erp-table tr:hover {

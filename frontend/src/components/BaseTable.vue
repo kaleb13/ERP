@@ -287,7 +287,7 @@ if (typeof window !== 'undefined') {
 
 /* Table Header Title */
 .table-header-title-block {
-  padding: 20px 28px 12px 28px;
+  padding: 20px 24px 12px 24px;
 }
 .table-block-title {
   font-size: 18px;
@@ -307,9 +307,14 @@ if (typeof window !== 'undefined') {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px 18px 28px;
+  padding: 16px 24px;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.table-header-title-block + .toolbar-wrapper {
+  padding-top: 0;
+  padding-bottom: 16px;
 }
 
 .toolbar-left {
@@ -472,7 +477,7 @@ if (typeof window !== 'undefined') {
 .columns-popover {
   right: 0;
   left: auto !important;
-  width: 200px;
+  width: 220px;
   padding: 12px 14px;
 }
 
@@ -491,6 +496,9 @@ if (typeof window !== 'undefined') {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .column-option-item {
@@ -562,19 +570,21 @@ if (typeof window !== 'undefined') {
 
 :deep(.erp-table th) {
   background-color: #fafafa;
-  padding: 12px 20px;
+  padding: 8px 16px;
   font-size: 12px;
   font-weight: 500;
   color: #737373;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
+  height: 34px;
 }
 
 :deep(.erp-table td) {
-  padding: 14px 20px;
+  padding: 8px 16px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  color: #737373;
+  color: #404040;
+  height: 38px;
 }
 
 :deep(.erp-table tr:hover) {
@@ -582,20 +592,21 @@ if (typeof window !== 'undefined') {
 }
 
 :deep(.col-no) {
-  width: 54px;
+  width: 50px;
   color: #737373;
   font-weight: 500;
 }
 
 :deep(.col-primary-title) {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #262626;
+  font-size: 13px;
+  font-weight: 550;
+  color: #404040;
 }
 
 :deep(.col-secondary-desc) {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #737373;
+  line-height: 1.25;
 }
 
 :deep(.col-secondary-text) {
@@ -606,11 +617,11 @@ if (typeof window !== 'undefined') {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 14px;
+  padding: 2px 10px;
   border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 11.5px;
+  font-weight: 550;
+  line-height: 1.2;
 }
 
 :deep(.pill-active) {
@@ -626,9 +637,9 @@ if (typeof window !== 'undefined') {
 :deep(.btn-action-dots) {
   background: none;
   border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   color: #737373;
   display: inline-flex;
   align-items: center;
@@ -639,6 +650,6 @@ if (typeof window !== 'undefined') {
 
 :deep(.btn-action-dots:hover) {
   background-color: #f1f5f9;
-  color: #262626;
+  color: #404040;
 }
 </style>

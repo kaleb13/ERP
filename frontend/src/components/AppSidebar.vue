@@ -5,7 +5,7 @@ import {
   Box, ChevronDown, ChevronUp, ChevronRight,
   HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
   UserCheck, LayoutGrid, Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key,
-  Briefcase, Layers, Award, GitPullRequest, PanelLeft
+  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap
 } from 'lucide-vue-next';
 
 interface Props {
@@ -112,7 +112,10 @@ const iconsMap: Record<string, any> = {
   Briefcase,
   Layers,
   Award,
-  GitPullRequest
+  GitPullRequest,
+  FolderTree,
+  Network,
+  GraduationCap
 };
 
 // Active link matching helper
@@ -183,8 +186,11 @@ const activeModule = computed(() => {
       iconColor: 'var(--primitive-color-indigo-500)',
       iconBg: 'var(--primitive-color-indigo-50)',
       menu: [
-        { isHeader: true, label: 'Menu' },
-        { to: '/hr/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' }
+        { isHeader: true, label: 'Workforce & Profile' },
+        { to: '/hr/parties', label: 'Party Profiles', icon: 'UserCheck' },
+        { to: '/hr/committees', label: 'Committees & Panels', icon: 'ShieldCheck' },
+        { isHeader: true, label: 'Academic & Qualifications' },
+        { to: '/hr/field-of-study', label: 'Field of Study', icon: 'GraduationCap' }
       ]
     };
   } else if (path.startsWith('/company-setup')) {
@@ -352,7 +358,7 @@ onUnmounted(() => {
                 <span class="submenu-text">Company Setup</span>
               </div>
 
-              <div class="submenu-item" @click="navigateToModule('/hr/dashboard')">
+              <div class="submenu-item" @click="navigateToModule('/hr/parties')">
                 <div class="submenu-icon-box" style="background-color: #eef2ff;">
                   <Users :size="14" style="color: #4f46e5;" />
                 </div>

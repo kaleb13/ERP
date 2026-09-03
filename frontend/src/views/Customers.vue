@@ -9,6 +9,11 @@ import {
 import BasePagination from '../components/BasePagination.vue';
 import BaseTable from '../components/BaseTable.vue';
 import BaseButton from '../components/BaseButton.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
+import FormCheckbox from '../components/FormCheckbox.vue';
 
 // Data State
 const customers = ref([
@@ -265,18 +270,16 @@ const handleRefresh = () => {
     <div v-if="showFullForm" class="full-form-view">
       <!-- Top Action Bar & Breadcrumbs -->
       <div class="page-top-bar">
-        <div class="breadcrumbs">
-          <router-link to="/dashboard" class="breadcrumb-link">
-            <Monitor :size="16" />
-          </router-link>
-          <ChevronRight :size="12" class="breadcrumb-separator" />
-          <button @click="showFullForm = false" class="breadcrumb-link-btn">Customer</button>
-          <ChevronRight :size="12" class="breadcrumb-separator" />
-          <span class="breadcrumb-active">Create Customer</span>
-          
-          <!-- Status Badge matching screenshot exactly -->
-          <span class="status-badge-detailed">Not Saved</span>
-        </div>
+        <AppBreadcrumb 
+          :items="[
+            { label: 'Customer', to: '#' },
+            { label: editMode ? 'Edit Customer' : 'Create Customer' }
+          ]"
+        >
+          <template #extra>
+            <span class="status-badge-detailed">Not Saved</span>
+          </template>
+        </AppBreadcrumb>
         
         <div class="top-actions">
           <button @click="handleSave" class="btn-save-detailed">Save</button>
@@ -287,88 +290,67 @@ const handleRefresh = () => {
       <div class="content-card detailed-form-card">
         <div class="detailed-form-grid">
           <!-- Row 1 -->
-          <div class="form-group">
-            <label class="form-label-premium">Customer Type <span class="required-asterisk">*</span></label>
-            <div class="custom-select-wrapper">
-              <select v-model="formState.customer_type" class="form-select-premium">
-                <option value="" disabled selected hidden>Select option</option>
-                <option value="Individual">Individual</option>
-                <option value="Company">Company</option>
-              </select>
-              <ChevronDown :size="18" class="select-arrow" />
-            </div>
-          </div>
+          <FormSelect
+            v-model="formState.customer_type"
+            label="Customer Type"
+            :required="true"
+            :options="['Individual', 'Company']"
+          />
 
-          <div class="form-group">
-            <label class="form-label-premium">Customer Group</label>
-            <div class="custom-select-wrapper">
-              <select v-model="formState.group" class="form-select-premium">
-                <option value="" disabled selected hidden>Select option</option>
-                <option v-for="grp in customerGroups" :key="grp.id" :value="grp.name">{{ grp.name }}</option>
-              </select>
-              <ChevronDown :size="18" class="select-arrow" />
-            </div>
-          </div>
+          <FormSelect
+            v-model="formState.group"
+            label="Customer Group"
+            :options="customerGroups.map(g => ({ value: g.name, label: g.name }))"
+          />
 
           <!-- Row 2 -->
-          <div class="form-group">
-            <label class="form-label-premium">Customer Name <span class="required-asterisk">*</span></label>
-            <input v-model="formState.customer_name" type="text" placeholder="" class="form-input-premium" />
-          </div>
+          <FormInput
+            v-model="formState.customer_name"
+            label="Customer Name"
+            :required="true"
+          />
 
-          <div class="form-group">
-            <label class="form-label-premium">Tin Number</label>
-            <input v-model="formState.tin_number" type="text" placeholder="" class="form-input-premium" />
-          </div>
+          <FormInput
+            v-model="formState.tin_number"
+            label="Tin Number"
+          />
 
           <!-- Row 3 -->
-          <div class="form-group">
-            <label class="form-label-premium">Phone</label>
-            <input v-model="formState.phone" type="text" placeholder="" class="form-input-premium" />
-          </div>
+          <FormInput
+            v-model="formState.phone"
+            label="Phone"
+          />
 
-          <div class="form-group">
-            <label class="form-label-premium">Email</label>
-            <input v-model="formState.email" type="email" placeholder="" class="form-input-premium" />
-          </div>
+          <FormInput
+            v-model="formState.email"
+            label="Email"
+            type="email"
+          />
 
           <!-- Row 4 (Full Width) -->
-          <div class="form-group full-width">
-            <label class="form-label-premium">Credit Limit</label>
-            <input v-model="formState.credit_limit" type="number" placeholder="" class="form-input-premium" />
-            <span class="field-helper-desc">
-              Set the maximum amount of unpaid balance this customer is allowed to owe before new credit sales or invoices are restricted. Leave empty or set to 0 to disable credit purchasing.
-            </span>
+          <div class="full-width">
+            <FormInput
+              v-model="formState.credit_limit"
+              label="Credit Limit"
+              type="number"
+              helperText="Set the maximum amount of unpaid balance this customer is allowed to owe before new credit sales or invoices are restricted. Leave empty or set to 0 to disable credit purchasing."
+            />
           </div>
         </div>
 
         <!-- Checkboxes Row (Side-by-Side) -->
         <div class="checkboxes-row-detailed">
-          <label class="custom-checkbox-row" @click.stop>
-            <input type="checkbox" v-model="formState.walk_in" class="hidden-checkbox" />
-            <div class="custom-checkbox-box" :class="{ 'checked': formState.walk_in }">
-              <Check v-if="formState.walk_in" :size="14" class="checkbox-checkmark" />
-            </div>
-            <div class="checkbox-label-block">
-              <span class="checkbox-label-title">Walk-in Customer</span>
-              <span class="checkbox-label-desc">
-                Enable this option if the customer is a temporary or one-time customer without a registered account or detailed profile. Walk-in customers can be used for quick sales and faster checkout processes.
-              </span>
-            </div>
-          </label>
+          <FormCheckbox
+            v-model="formState.walk_in"
+            label="Walk-in Customer"
+            description="Enable this option if the customer is a temporary or one-time customer without a registered account or detailed profile. Walk-in customers can be used for quick sales and faster checkout processes."
+          />
 
-          <label class="custom-checkbox-row" @click.stop>
-            <input type="checkbox" v-model="formState.enable_loyalty" class="hidden-checkbox" />
-            <div class="custom-checkbox-box" :class="{ 'checked': formState.enable_loyalty }">
-              <Check v-if="formState.enable_loyalty" :size="14" class="checkbox-checkmark" />
-            </div>
-            <div class="checkbox-label-block">
-              <span class="checkbox-label-title">Enable Loyalty Program</span>
-              <span class="checkbox-label-desc">
-                Allow this customer to earn, collect, and redeem loyalty points based on the configured loyalty rules and reward programs. Disable this option if the customer should not participate in loyalty benefits.
-              </span>
-            </div>
-          </label>
+          <FormCheckbox
+            v-model="formState.enable_loyalty"
+            label="Enable Loyalty Program"
+            description="Allow this customer to earn, collect, and redeem loyalty points based on the configured loyalty rules and reward programs. Disable this option if the customer should not participate in loyalty benefits."
+          />
         </div>
       </div>
     </div>
@@ -461,75 +443,46 @@ const handleRefresh = () => {
     </div>
 
     <!-- ==================== FLOW 3: QUICK CREATE MODAL ==================== -->
-    <div v-if="showQuickModal" class="modal-overlay" @click.self="showQuickModal = false">
-      <div class="modal-card quick-create-modal">
-        <button class="modal-close-btn" @click="showQuickModal = false">
-          <X :size="20" />
-        </button>
+    <QuickCreateModal
+      v-model:show="showQuickModal"
+      title="Create Customer"
+      @expand="expandFullForm"
+      @save="handleSave"
+    >
+      <div class="form-container">
+        <FormSelect
+          v-model="formState.customer_type"
+          label="Customer Type"
+          :required="true"
+          :options="['Individual', 'Company']"
+        />
 
-        <header class="modal-card-header">
-          <h3>Create Customer</h3>
-        </header>
+        <FormInput
+          v-model="formState.customer_name"
+          label="Customer Name"
+          :required="true"
+        />
 
-        <div class="modal-body-content">
-          <div class="form-container">
-            <div class="form-group">
-              <label class="form-label-premium">Customer Type <span class="required-asterisk">*</span></label>
-              <div class="custom-select-wrapper">
-                <select v-model="formState.customer_type" class="form-select-premium">
-                  <option value="" disabled selected hidden>Select option</option>
-                  <option value="Individual">Individual</option>
-                  <option value="Company">Company</option>
-                </select>
-                <ChevronDown :size="18" class="select-arrow" />
-              </div>
-            </div>
+        <div class="form-grid-2">
+          <FormInput
+            v-model="formState.phone"
+            label="Phone"
+          />
 
-            <div class="form-group">
-              <label class="form-label-premium">Customer Name <span class="required-asterisk">*</span></label>
-              <input v-model="formState.customer_name" type="text" placeholder="" class="form-input-premium" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label-premium">Phone</label>
-                <input v-model="formState.phone" type="text" placeholder="" class="form-input-premium" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label-premium">Email</label>
-                <input v-model="formState.email" type="email" placeholder="" class="form-input-premium" />
-              </div>
-            </div>
-
-            <!-- Highly refined custom checkbox element -->
-            <label class="custom-checkbox-row" @click.stop>
-              <input type="checkbox" v-model="formState.walk_in" class="hidden-checkbox" />
-              <div class="custom-checkbox-box" :class="{ 'checked': formState.walk_in }">
-                <Check v-if="formState.walk_in" :size="14" class="checkbox-checkmark" />
-              </div>
-              <div class="checkbox-label-block">
-                <span class="checkbox-label-title">Walk-in Customer</span>
-                <span class="checkbox-label-desc">
-                  Enable this option if the customer is a temporary or one-time customer without a registered account or detailed profile. Walk-in customers can be used for quick sales and faster checkout processes.
-                </span>
-              </div>
-            </label>
-          </div>
+          <FormInput
+            v-model="formState.email"
+            label="Email"
+            type="email"
+          />
         </div>
 
-        <div class="modal-footer-row">
-          <button @click="expandFullForm" class="btn-expand-form">
-            <span>Expand Full Form</span>
-            <Expand :size="14" class="ml-2.5" />
-          </button>
-          
-          <button @click="handleSave" class="btn-modal-save">
-            <span>Save</span>
-          </button>
-        </div>
+        <FormCheckbox
+          v-model="formState.walk_in"
+          label="Walk-in Customer"
+          description="Enable for fast checkout without an assigned commercial credit balance."
+        />
       </div>
-    </div>
+    </QuickCreateModal>
 
     <!-- ==================== FLOW 4: VIEW DETAILS MODAL ==================== -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">
@@ -962,12 +915,12 @@ const handleRefresh = () => {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .form-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
 }
 .required-asterisk {
   color: #dc2626;
@@ -976,17 +929,19 @@ const handleRefresh = () => {
 }
 .form-input, .form-select {
   width: 100%;
-  padding: 11px 14px;
-  border: 1px solid #d1d5db;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13.5px;
   outline: none;
   background-color: white;
+  color: #1e293b;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-input:focus, .form-select:focus {
-  border-color: #111827;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.05);
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 .field-desc-text {
   font-size: 11px;
@@ -1363,10 +1318,10 @@ const handleRefresh = () => {
 }
 
 .form-label-premium {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  margin-bottom: 3px;
   display: inline-block;
 }
 
@@ -1377,43 +1332,47 @@ const handleRefresh = () => {
 }
 .form-select-premium {
   width: 100%;
-  padding: 13px 16px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 15px;
+  height: 38px;
+  padding: 0 32px 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13.5px;
   outline: none;
   background-color: white;
   color: #1f2937;
   appearance: none;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-select-premium:focus {
-  border-color: #cbd5e1;
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 .select-arrow {
   position: absolute;
-  right: 16px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
+  color: #64748b;
   pointer-events: none;
 }
 
 /* Premium input styling */
 .form-input-premium {
   width: 100%;
-  padding: 13px 16px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 15px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13.5px;
   outline: none;
   background-color: white;
   color: #1f2937;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-input-premium:focus {
-  border-color: #cbd5e1;
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 
 /* Replicating the beautifully stylized custom checkbox row exactly */

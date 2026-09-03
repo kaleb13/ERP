@@ -8,6 +8,13 @@ import {
 import BaseTabs from '../components/BaseTabs.vue';
 import MetricCard from '../components/MetricCard.vue';
 import BaseButton from '../components/BaseButton.vue';
+import BaseTable from '../components/BaseTable.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
+import FormCheckbox from '../components/FormCheckbox.vue';
+import FormTextarea from '../components/FormTextarea.vue';
 
 const route = useRoute();
 
@@ -35,6 +42,10 @@ const tabs: { id: CompanyTab; label: string }[] = [
   { id: 'entity_types', label: 'Entity Hierarchy Types' }
 ];
 
+// Pagination State
+const currentPage = ref(1);
+const perPage = ref(10);
+
 // Form States
 const showForm = ref(false);
 const editMode = ref(false);
@@ -43,8 +54,11 @@ const selectedId = ref<number | null>(null);
 // Search Query
 const searchQuery = ref('');
 
-// Clear the search box whenever the active tab changes
-watch(activeTab, () => { searchQuery.value = ''; });
+// Clear search and reset page on tab switch
+watch(activeTab, () => {
+  searchQuery.value = '';
+  currentPage.value = 1;
+});
 
 // Seed data
 const entityTypes = ref([
@@ -127,6 +141,27 @@ const filteredEntityTypes = computed(() => {
     et.code.toLowerCase().includes(q) || 
     et.parent_id.toLowerCase().includes(q)
   );
+});
+
+const currentList = computed(() => {
+  if (activeTab.value === 'parties') return filteredParties.value;
+  if (activeTab.value === 'employees') return filteredEmployees.value;
+  return filteredEntityTypes.value;
+});
+
+const paginatedParties = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredParties.value.slice(start, start + perPage.value);
+});
+
+const paginatedEmployees = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredEmployees.value.slice(start, start + perPage.value);
+});
+
+const paginatedEntityTypes = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredEntityTypes.value.slice(start, start + perPage.value);
 });
 
 // Actions
@@ -281,290 +316,257 @@ const handleDelete = (id: number) => {
       />
     </div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <header class="page-header">
-        <div class="title-area">
-          <h1 class="page-title">Entities, Employees & Parties</h1>
-          <p class="page-description">
-            Organize company structures, employee associations, and party identities. Set up entity types like business groups or branches, register individual and enterprise party identifiers, and manage staff records.
-          </p>
+    <!-- Main Content BaseTable -->
+    <BaseTable
+      title="Entities, Employees & Parties"
+      subtitle="Organize company structures, employee associations, and party identities. Set up entity types like business groups or branches, register individual and enterprise party identifiers, and manage staff records."
+      v-model:searchQuery="searchQuery"
+      :totalEntries="currentList.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showFilter="false"
+      :showColumns="false"
+    >
+      <template #header-bottom>
+        <div class="tabs-bar mb-3">
+          <BaseTabs v-model="activeTab" :tabs="tabs" />
         </div>
-      </header>
+      </template>
 
-      <!-- Inner Navigation Tabs (shared component) -->
-      <div class="tabs-bar">
-        <BaseTabs v-model="activeTab" :tabs="tabs" />
+      <template #actions>
+        <BaseButton variant="primary" @click="openAddForm">
+          <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
+          <span>Add New Record</span>
+        </BaseButton>
+      </template>
+
+      <!-- TAB 1: PARTIES -->
+      <table v-if="activeTab === 'parties'" class="erp-table">
+        <thead>
+          <tr>
+            <th width="150">Party ID</th>
+            <th>Display Name</th>
+            <th width="150">Entity Type</th>
+            <th width="180">Phone Number</th>
+            <th width="200">Email Address</th>
+            <th width="120">TIN Number</th>
+            <th width="110">Walk-In?</th>
+            <th width="120">Status</th>
+            <th width="120" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in paginatedParties" :key="p.id">
+            <td class="col-primary-title font-mono">{{ p.uuid }}</td>
+            <td class="col-primary-title">{{ p.name }}</td>
+            <td class="col-secondary-text">{{ p.entity_type }}</td>
+            <td class="col-secondary-text">{{ p.phone }}</td>
+            <td class="col-secondary-text">{{ p.email }}</td>
+            <td class="col-secondary-text font-mono">{{ p.tin }}</td>
+            <td>
+              <span :class="['walkin-badge', p.is_walkin === 'Yes' ? 'yes' : 'no']">{{ p.is_walkin }}</span>
+            </td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ p.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-cell justify-end">
+                <button @click="handleEdit(p)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
+                <button @click="handleDelete(p.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredParties.length === 0">
+            <td colspan="9" class="text-center py-8 text-slate-400">No parties found matching query.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TAB 2: EMPLOYEES -->
+      <table v-if="activeTab === 'employees'" class="erp-table">
+        <thead>
+          <tr>
+            <th width="150">Employee ID</th>
+            <th>Full Name</th>
+            <th>Assigned Entity</th>
+            <th>Linked Party Identity</th>
+            <th width="120">Status</th>
+            <th width="120" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="e in paginatedEmployees" :key="e.id">
+            <td class="col-primary-title font-mono">{{ e.uuid }}</td>
+            <td class="col-primary-title">{{ e.name }}</td>
+            <td class="col-secondary-text">{{ e.entity }}</td>
+            <td class="col-secondary-desc font-mono">{{ e.party_name }}</td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ e.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-cell justify-end">
+                <button @click="handleEdit(e)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
+                <button @click="handleDelete(e.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredEmployees.length === 0">
+            <td colspan="6" class="text-center py-8 text-slate-400">No employees found.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TAB 3: ENTITY TYPES -->
+      <table v-if="activeTab === 'entity_types'" class="erp-table">
+        <thead>
+          <tr>
+            <th width="80">Level</th>
+            <th>Name</th>
+            <th>System Code</th>
+            <th>Parent Type</th>
+            <th>Scope Description</th>
+            <th width="120">Status</th>
+            <th width="120" class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="et in paginatedEntityTypes" :key="et.id">
+            <td class="text-center font-bold text-indigo-600">Lvl {{ et.level }}</td>
+            <td class="col-primary-title">{{ et.name }}</td>
+            <td class="col-secondary-text font-mono">{{ et.code }}</td>
+            <td class="col-secondary-text">{{ et.parent_id }}</td>
+            <td class="col-secondary-desc">{{ et.description }}</td>
+            <td>
+              <span class="status-pill pill-active">
+                {{ et.state }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-buttons-cell justify-end">
+                <button @click="handleEdit(et)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
+                <button @click="handleDelete(et.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredEntityTypes.length === 0">
+            <td colspan="7" class="text-center py-8 text-slate-400">No entity types found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </BaseTable>
+
+    <!-- QUICK CREATE / EDIT MODAL -->
+    <QuickCreateModal
+      v-model:show="showForm"
+      :title="`${editMode ? 'Edit' : 'Create'} ${activeTab === 'parties' ? 'Party Identity' : activeTab === 'employees' ? 'Employee Staff File' : 'Hierarchy Entity Type'}`"
+      :showExpandButton="false"
+      @save="handleSave"
+    >
+      <!-- FORM 1: PARTIES -->
+      <div v-if="activeTab === 'parties'" class="space-y-3.5">
+        <FormInput
+          v-model="formState.p_name"
+          label="Display Name"
+          :required="true"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <FormSelect
+            v-model="formState.p_entity_type"
+            label="Identity Type"
+            :options="['Business Group', 'Organization', 'Branch', 'Shop', 'Individual']"
+          />
+
+          <FormInput
+            v-model="formState.p_tin"
+            label="Tax ID (TIN)"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <FormInput
+            v-model="formState.p_phone"
+            label="Primary Phone"
+          />
+
+          <FormInput
+            v-model="formState.p_email"
+            label="Primary Email"
+            type="email"
+          />
+        </div>
+
+        <FormCheckbox
+          :modelValue="formState.p_walkin === 'Yes'"
+          label="Mark as walk-in / temporary identity?"
+          description="Enable fast tracking for unregistered consumer entities."
+          @update:modelValue="(val) => formState.p_walkin = val ? 'Yes' : 'No'"
+        />
       </div>
 
-      <!-- Action & Search Bar -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <div class="search-input-wrapper">
-            <Search :size="18" class="search-icon" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search items..." 
-              class="table-search" 
-            />
-          </div>
-        </div>
+      <!-- FORM 2: EMPLOYEES -->
+      <div v-if="activeTab === 'employees'" class="space-y-3.5">
+        <FormInput
+          v-model="formState.emp_name"
+          label="Employee Full Name"
+          :required="true"
+        />
 
-        <div class="action-bar-right">
-          <BaseButton variant="primary" @click="openAddForm">
-            <template #icon-left><Plus :size="18" stroke-width="2.5" /></template>
-            <span>Add New Record</span>
-          </BaseButton>
-        </div>
+        <FormSelect
+          v-model="formState.emp_entity"
+          label="Assigned Entity Scope"
+          :required="true"
+          :options="['Haleta Enterprise Group', 'Bole Road Branch', 'Downtown Shop']"
+        />
+
+        <FormInput
+          v-model="formState.emp_party"
+          label="Linked Party Identity"
+          helperText="Every employee represents a Party identity in the business world."
+        />
       </div>
 
-      <!-- Tables Content -->
-      <div class="table-wrapper">
-        <!-- TAB 1: PARTIES -->
-        <table v-if="activeTab === 'parties'" class="gate-pass-table">
-          <thead>
-            <tr>
-              <th width="150">Party ID</th>
-              <th>Display Name</th>
-              <th width="150">Entity Type</th>
-              <th width="180">Phone Number</th>
-              <th width="200">Email Address</th>
-              <th width="120">TIN Number</th>
-              <th width="110">Walk-In?</th>
-              <th width="120">Status</th>
-              <th width="120" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in filteredParties" :key="p.id">
-              <td class="font-medium text-gray-800">{{ p.uuid }}</td>
-              <td class="font-semibold text-gray-900">{{ p.name }}</td>
-              <td>{{ p.entity_type }}</td>
-              <td class="text-gray-600">{{ p.phone }}</td>
-              <td class="text-gray-600">{{ p.email }}</td>
-              <td><code>{{ p.tin }}</code></td>
-              <td>
-                <span :class="['walkin-badge', p.is_walkin === 'Yes' ? 'yes' : 'no']">{{ p.is_walkin }}</span>
-              </td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ p.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-buttons-cell">
-                  <button @click="handleEdit(p)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
-                  <button @click="handleDelete(p.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredParties.length === 0">
-              <td colspan="9" class="text-center py-6 text-gray-400">No parties found matching query.</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- FORM 3: ENTITY TYPES -->
+      <div v-if="activeTab === 'entity_types'" class="space-y-3.5">
+        <div class="grid grid-cols-2 gap-3">
+          <FormInput
+            v-model="formState.et_name"
+            label="Human-Readable Name"
+            :required="true"
+          />
 
-        <!-- TAB 2: EMPLOYEES -->
-        <table v-if="activeTab === 'employees'" class="gate-pass-table">
-          <thead>
-            <tr>
-              <th width="150">Employee ID</th>
-              <th>Full Name</th>
-              <th>Assigned Entity</th>
-              <th>Linked Party Identity</th>
-              <th width="120">Status</th>
-              <th width="120" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="e in filteredEmployees" :key="e.id">
-              <td class="font-medium text-gray-800">{{ e.uuid }}</td>
-              <td class="font-semibold text-gray-900">{{ e.name }}</td>
-              <td class="text-gray-700">{{ e.entity }}</td>
-              <td class="text-gray-500"><code>{{ e.party_name }}</code></td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ e.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-buttons-cell">
-                  <button @click="handleEdit(e)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
-                  <button @click="handleDelete(e.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredEmployees.length === 0">
-              <td colspan="6" class="text-center py-6 text-gray-400">No employees found.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- TAB 3: ENTITY TYPES -->
-        <table v-if="activeTab === 'entity_types'" class="gate-pass-table">
-          <thead>
-            <tr>
-              <th width="80">Level</th>
-              <th>Name</th>
-              <th>System Code</th>
-              <th>Parent Type</th>
-              <th>Scope Description</th>
-              <th width="120">Status</th>
-              <th width="120" class="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="et in filteredEntityTypes" :key="et.id">
-              <td class="text-center font-bold text-indigo-600">Lvl {{ et.level }}</td>
-              <td class="font-semibold text-gray-900">{{ et.name }}</td>
-              <td><code>{{ et.code }}</code></td>
-              <td class="text-gray-600">{{ et.parent_id }}</td>
-              <td class="text-gray-500">{{ et.description }}</td>
-              <td>
-                <span class="status-badge status-completed">
-                  <span class="dot"></span>{{ et.state }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="action-buttons-cell">
-                  <button @click="handleEdit(et)" class="btn-action-icon" title="Edit"><Edit2 :size="15" /></button>
-                  <button @click="handleDelete(et.id)" class="btn-action-icon text-red-500" title="Delete"><Trash2 :size="15" /></button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredEntityTypes.length === 0">
-              <td colspan="7" class="text-center py-6 text-gray-400">No entity types found.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- FORM OVERLAY MODAL -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-card">
-        <button class="modal-close-btn" @click="showForm = false">
-          <X :size="18" />
-        </button>
-
-        <header class="modal-card-header">
-          <h3>{{ editMode ? 'Edit' : 'Create' }} {{ activeTab === 'parties' ? 'Party Identity' : activeTab === 'employees' ? 'Employee Staff File' : 'Hierarchy Entity Type' }}</h3>
-        </header>
-
-        <div class="modal-body-content">
-          <!-- FORM 1: PARTIES -->
-          <div v-if="activeTab === 'parties'" class="form-container">
-            <div class="form-group">
-              <label class="form-label">Display Name *</label>
-              <input v-model="formState.p_name" type="text" placeholder="Individual or Company Name" class="form-input" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Identity Type</label>
-                <select v-model="formState.p_entity_type" class="form-select">
-                  <option value="Business Group">Business Group</option>
-                  <option value="Organization">Organization</option>
-                  <option value="Branch">Branch</option>
-                  <option value="Shop">Shop</option>
-                  <option value="Individual">Individual (Nullable)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Tax ID (TIN)</label>
-                <input v-model="formState.p_tin" type="text" placeholder="TIN-XXXXX-XXXX" class="form-input" />
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Primary Phone</label>
-                <input v-model="formState.p_phone" type="text" placeholder="+251 9XX XXX XXX" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Primary Email</label>
-                <input v-model="formState.p_email" type="email" placeholder="example@domain.com" class="form-input" />
-              </div>
-            </div>
-
-            <div class="form-group inline-checkbox">
-              <label class="column-option">
-                <input type="checkbox" v-model="formState.p_walkin" true-value="Yes" false-value="No" />
-                <span>Mark as walk-in / temporary identity?</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- FORM 2: EMPLOYEES -->
-          <div v-if="activeTab === 'employees'" class="form-container">
-            <div class="form-group">
-              <label class="form-label">Employee Full Name *</label>
-              <input v-model="formState.emp_name" type="text" placeholder="Employee Name" class="form-input" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Assigned Entity Scope *</label>
-              <select v-model="formState.emp_entity" class="form-select">
-                <option value="Haleta Enterprise Group">Haleta Enterprise Group (Business Group)</option>
-                <option value="Bole Road Branch">Bole Road Branch (Branch)</option>
-                <option value="Downtown Shop">Downtown Shop (Shop)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Linked Party Identity</label>
-              <input v-model="formState.emp_party" type="text" placeholder="UUID of Linked Party Identity (Optional)" class="form-input" />
-              <small class="form-tip-text">Every employee represents a Party identity in the business world.</small>
-            </div>
-          </div>
-
-          <!-- FORM 3: ENTITY TYPES -->
-          <div v-if="activeTab === 'entity_types'" class="form-container">
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Human-Readable Name *</label>
-                <input v-model="formState.et_name" type="text" placeholder="e.g. Regional Shop" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">System Code *</label>
-                <input v-model="formState.et_code" type="text" placeholder="e.g. REGIONAL_SHOP" class="form-input" />
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Hierarchy Level</label>
-                <input v-model="formState.et_level" type="number" min="1" max="10" class="form-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Parent Type</label>
-                <select v-model="formState.et_parent" class="form-select">
-                  <option value="None">None (Root Level)</option>
-                  <option value="Business Group">Business Group</option>
-                  <option value="Organization">Organization</option>
-                  <option value="Branch">Branch</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Scope Description</label>
-              <textarea v-model="formState.et_desc" rows="3" placeholder="Describe scope rules for this entity" class="form-textarea"></textarea>
-            </div>
-          </div>
+          <FormInput
+            v-model="formState.et_code"
+            label="System Code"
+            :required="true"
+          />
         </div>
 
-        <div class="modal-footer-row">
-          <button @click="showForm = false" class="btn-modal-secondary">Cancel</button>
-          <button @click="handleSave" class="btn-modal-primary">Save Changes</button>
+        <div class="grid grid-cols-2 gap-3">
+          <FormInput
+            v-model="formState.et_level"
+            label="Hierarchy Level"
+            type="number"
+          />
+
+          <FormSelect
+            v-model="formState.et_parent"
+            label="Parent Type"
+            :options="['None (Root Level)', 'Business Group', 'Organization', 'Branch']"
+          />
         </div>
+
+        <FormTextarea
+          v-model="formState.et_desc"
+          label="Scope Description"
+          :rows="3"
+        />
       </div>
-    </div>
+    </QuickCreateModal>
   </div>
 </template>
 

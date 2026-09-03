@@ -489,7 +489,7 @@ const statusBadgeClass = computed(() => {
                   type="text" 
                   class="form-input" 
                   v-model="documentName" 
-                  placeholder="Enter document header..." 
+                   
                   :disabled="documentState === 'approved'"
                 />
               </div>
@@ -647,7 +647,6 @@ const statusBadgeClass = computed(() => {
                           type="text" 
                           class="table-input" 
                           v-model="row.product" 
-                          placeholder="Search or enter product..." 
                           @focus="activeProductDropdownId = row.id"
                           @blur="closeProductDropdown(row.id)"
                           :disabled="documentState === 'approved'"
@@ -666,16 +665,16 @@ const statusBadgeClass = computed(() => {
                         </div>
                       </td>
                       <td v-if="columns.batch">
-                        <input type="text" class="table-input" v-model="row.batch" placeholder="Batch no." :disabled="documentState === 'approved'" />
+                        <input type="text" class="table-input" v-model="row.batch" :disabled="documentState === 'approved'" />
                       </td>
                       <td v-if="columns.uom">
-                        <input type="text" class="table-input" v-model="row.uom" placeholder="UOM" :disabled="documentState === 'approved'" />
+                        <input type="text" class="table-input" v-model="row.uom" :disabled="documentState === 'approved'" />
                       </td>
                       <td v-if="columns.location">
-                        <input type="text" class="table-input" v-model="row.location" placeholder="Location" :disabled="documentState === 'approved'" />
+                        <input type="text" class="table-input" v-model="row.location" :disabled="documentState === 'approved'" />
                       </td>
                       <td v-if="columns.quantity">
-                        <input type="text" class="table-input" v-model="row.quantity" placeholder="0" :disabled="documentState === 'approved'" />
+                        <input type="text" class="table-input" v-model="row.quantity" :disabled="documentState === 'approved'" />
                       </td>
                       <td class="text-center">
                         <Maximize2 :size="16" class="text-gray-400 cursor-pointer hover:text-gray-600 inline" />
@@ -751,7 +750,6 @@ const statusBadgeClass = computed(() => {
                   type="text" 
                   class="form-input" 
                   v-model="vehiclePlate" 
-                  placeholder="Enter plate number..." 
                   :disabled="documentState === 'approved'"
                 />
               </div>
@@ -761,7 +759,6 @@ const statusBadgeClass = computed(() => {
                   type="text" 
                   class="form-input" 
                   v-model="driverName" 
-                  placeholder="Enter driver name..." 
                   :disabled="documentState === 'approved'"
                 />
               </div>
@@ -771,7 +768,6 @@ const statusBadgeClass = computed(() => {
                   type="text" 
                   class="form-input" 
                   v-model="externalReference" 
-                  placeholder="Enter external reference ID..." 
                   :disabled="documentState === 'approved'"
                 />
               </div>
@@ -834,7 +830,6 @@ const statusBadgeClass = computed(() => {
                 <textarea 
                   class="editor-textarea" 
                   v-model="remark" 
-                  placeholder="Enter remarks..."
                   :disabled="documentState === 'approved'"
                 ></textarea>
               </div>

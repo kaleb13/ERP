@@ -6,6 +6,9 @@ import {
   RefreshCw, Check, Info, Tag, ArrowLeft
 } from 'lucide-vue-next';
 import BaseButton from '../components/BaseButton.vue';
+import UnderlineTabs from '../components/UnderlineTabs.vue';
+import MetricCard from '../components/MetricCard.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 
 // ─────────────────────────────────────────────────────────────
 // TYPES  (mirrors Product.parent_id / ProductAttribute / ProductVariantOption)
@@ -178,6 +181,12 @@ const stats = computed(() => {
   const standalone = baseProducts.value.length - withVar;
   return { withVar, standalone, totalVariants: variants.value.length };
 });
+
+const filterTabs = computed(() => [
+  { id: 'withVariants' as const, label: 'With Variants', count: stats.value.withVar },
+  { id: 'standalone' as const, label: 'Zero Variants', count: stats.value.standalone },
+  { id: 'all' as const, label: 'All Products', count: baseProducts.value.length }
+]);
 
 const priceRange = (children: Variant[]) => {
   if (!children.length) return '—';
@@ -398,40 +407,34 @@ const triggerView = (v: Variant) => {
 
 <template>
   <div class="variants-page">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
-      <router-link to="/dashboard" class="breadcrumb-link"><Monitor :size="16" /></router-link>
-      <ChevronRight :size="12" class="breadcrumb-separator" />
-      <router-link to="/inventory/products" class="breadcrumb-link-text">Products</router-link>
-      <ChevronRight :size="12" class="breadcrumb-separator" />
-      <span class="breadcrumb-active">Product Variants</span>
-    </div>
+    <!-- Standard Breadcrumbs -->
+    <AppBreadcrumb :items="[{ label: 'Products', to: '/inventory/products' }, { label: 'Product Variants' }]" />
 
     <!-- ═══════════════ LIST VIEW ═══════════════ -->
     <template v-if="!showBuilder">
-      <!-- Stat cards -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#eff6ff;"><Layers :size="18" style="color:#2563eb;" /></div>
-          <div>
-            <div class="stat-value">{{ stats.withVar }}</div>
-            <div class="stat-label">Products with Variants</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#f0fdf4;"><GitBranch :size="18" style="color:#16a34a;" /></div>
-          <div>
-            <div class="stat-value">{{ stats.totalVariants }}</div>
-            <div class="stat-label">Total Variants</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#fff7ed;"><Package :size="18" style="color:#ea580c;" /></div>
-          <div>
-            <div class="stat-value">{{ stats.standalone }}</div>
-            <div class="stat-label">Standalone (Zero Variants)</div>
-          </div>
-        </div>
+      <!-- Metric Cards Grid -->
+      <div class="stats-row mb-4">
+        <MetricCard
+          label="Products with Variants"
+          :value="stats.withVar"
+          :icon="Layers"
+          subtext="Active parent products"
+          :showMenu="false"
+        />
+        <MetricCard
+          label="Total Variants"
+          :value="stats.totalVariants"
+          :icon="GitBranch"
+          subtext="SKU combinations built"
+          :showMenu="false"
+        />
+        <MetricCard
+          label="Standalone (Zero Variants)"
+          :value="stats.standalone"
+          :icon="Package"
+          subtext="Direct base products"
+          :showMenu="false"
+        />
       </div>
 
       <!-- Main Card -->
@@ -448,17 +451,7 @@ const triggerView = (v: Variant) => {
 
         <!-- Tabs + Search + Create -->
         <div class="action-bar">
-          <div class="filter-tabs">
-            <button :class="['filter-tab', { active: activeTab === 'withVariants' }]" @click="activeTab = 'withVariants'">
-              With Variants <span class="tab-count">{{ stats.withVar }}</span>
-            </button>
-            <button :class="['filter-tab', { active: activeTab === 'standalone' }]" @click="activeTab = 'standalone'">
-              Zero Variants <span class="tab-count">{{ stats.standalone }}</span>
-            </button>
-            <button :class="['filter-tab', { active: activeTab === 'all' }]" @click="activeTab = 'all'">
-              All Products <span class="tab-count">{{ baseProducts.length }}</span>
-            </button>
-          </div>
+          <UnderlineTabs v-model="activeTab" :tabs="filterTabs" />
 
           <div class="action-bar-right">
             <div class="search-input-wrapper">
@@ -725,8 +718,8 @@ const triggerView = (v: Variant) => {
                         <span v-for="o in row.options" :key="o.attribute" class="opt-chip">{{ o.value }}</span>
                       </div>
                     </td>
-                    <td class="p-1"><input v-model="row.sku" class="cell-input mono" placeholder="SKU" /></td>
-                    <td class="p-1"><input v-model="row.barcode" class="cell-input mono" placeholder="Barcode" /></td>
+                    <td class="p-1"><input v-model="row.sku" class="cell-input mono"  /></td>
+                    <td class="p-1"><input v-model="row.barcode" class="cell-input mono"  /></td>
                     <td class="p-1">
                       <div class="price-input-wrap">
                         <span class="price-prefix">$</span>

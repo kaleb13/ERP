@@ -10,6 +10,7 @@ import {
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
 import UnderlineTabs from '../components/UnderlineTabs.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -667,17 +668,16 @@ const handleSave = () => {
 
     <!-- Top Navigation Breadcrumbs & Action Bar -->
     <div class="header-action-row">
-      <!-- Breadcrumbs -->
-      <div class="breadcrumb-trail">
-        <router-link to="/dashboard" class="breadcrumb-home-link" title="Dashboard">
-          <Monitor :size="15" />
-        </router-link>
-        <ChevronRight :size="12" class="breadcrumb-arrow" />
-        <router-link to="/company-setup/user-and-access" class="breadcrumb-link">User</router-link>
-        <ChevronRight :size="12" class="breadcrumb-arrow" />
-        <span class="breadcrumb-active">{{ isEditMode ? 'Edit User' : 'Create User' }}</span>
-        <span class="not-saved-pill">Not Saved</span>
-      </div>
+      <AppBreadcrumb 
+        :items="[
+          { label: 'User & Access', to: '/company-setup/user-and-access' },
+          { label: isEditMode ? 'Edit User' : 'Create User' }
+        ]"
+      >
+        <template #extra>
+          <span class="not-saved-pill">Not Saved</span>
+        </template>
+      </AppBreadcrumb>
 
       <!-- Action Buttons -->
       <div class="header-action-buttons">
@@ -758,7 +758,7 @@ const handleSave = () => {
             <input
               v-model="form.nationalId"
               type="text"
-              placeholder="Eg.4546453254545"
+              
               class="nid-text-input"
             />
             <Check v-if="isVerified && form.nationalId" :size="16" class="nid-check-icon text-emerald-600" />
@@ -830,7 +830,7 @@ const handleSave = () => {
               <input
                 v-model="form.phone"
                 type="text"
-                placeholder="+251"
+                
                 class="phone-text-input"
               />
             </div>
@@ -868,7 +868,7 @@ const handleSave = () => {
               <input
                 v-model="form.dob"
                 type="text"
-                placeholder="mm/dd/yyyy"
+                
                 class="dob-text-input"
               />
               <span class="gc-pill-tag">GC</span>
@@ -984,7 +984,7 @@ const handleSave = () => {
                 <input
                   v-model="roleForm.startDate"
                   type="text"
-                  placeholder="mm/dd/yyyy"
+                  
                   class="dob-text-input"
                 />
                 <span class="gc-pill-tag">GC</span>
@@ -999,7 +999,7 @@ const handleSave = () => {
                 <input
                   v-model="roleForm.endDate"
                   type="text"
-                  placeholder="mm/dd/yyyy"
+                  
                   class="dob-text-input"
                 />
                 <span class="gc-pill-tag">GC</span>
@@ -1310,7 +1310,7 @@ const handleSave = () => {
               <label class="input-field-label">Start Date <span class="required-star">*</span></label>
               <div class="dob-input-wrap">
                 <Calendar :size="16" class="dob-calendar-icon" />
-                <input v-model="grantForm.startDate" type="text" placeholder="mm/dd/yyyy" class="dob-text-input" />
+                <input v-model="grantForm.startDate" type="text"  class="dob-text-input" />
                 <span class="gc-pill-tag">GC</span>
               </div>
             </div>
@@ -1318,7 +1318,7 @@ const handleSave = () => {
               <label class="input-field-label">End Date</label>
               <div class="dob-input-wrap">
                 <Calendar :size="16" class="dob-calendar-icon" />
-                <input v-model="grantForm.endDate" type="text" placeholder="mm/dd/yyyy" class="dob-text-input" />
+                <input v-model="grantForm.endDate" type="text"  class="dob-text-input" />
                 <span class="gc-pill-tag">GC</span>
               </div>
             </div>
@@ -1380,7 +1380,7 @@ const handleSave = () => {
             <input
               v-model="grantGroupSearch"
               type="text"
-              placeholder="Search by permission group..."
+              
               class="perm-search-input"
             />
           </div>
@@ -1461,7 +1461,7 @@ const handleSave = () => {
             <input
               v-model="grantPermSearch"
               type="text"
-              placeholder="Search Permissions..."
+              
               class="perm-search-input"
             />
           </div>
@@ -1558,7 +1558,7 @@ const handleSave = () => {
             <input
               v-model="grantedSearchQuery"
               type="text"
-              placeholder="Search permission..."
+              
               class="toolbar-search-input"
             />
           </div>
@@ -2365,7 +2365,14 @@ const handleSave = () => {
 .form-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+.input-field-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  display: block;
 }
 
 .form-text-input {

@@ -6,6 +6,9 @@ import {
 } from 'lucide-vue-next';
 import BaseTable from '../components/BaseTable.vue';
 import BaseButton from '../components/BaseButton.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
 
 // ─── Types (mirrors ProductModifier / ProductModifierItem schema) ───
 interface ModifierItem {
@@ -327,105 +330,91 @@ const handleSave = () => {
       </table>
     </BaseTable>
 
-    <!-- FORM OVERLAY MODAL -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-card modal-card-lg">
-        <button class="modal-close-btn" @click="showForm = false">
-          <X :size="18" />
-        </button>
+    <!-- QUICK CREATE / EDIT MODAL -->
+    <QuickCreateModal
+      v-model:show="showForm"
+      :title="`${editMode ? 'Edit' : 'Create'} Product Modifier`"
+      :showExpandButton="false"
+      width="lg"
+      @save="handleSave"
+    >
+      <div class="space-y-3.5">
+        <FormInput
+          v-model="formState.name"
+          label="Modifier Name"
+          :required="true"
+        />
 
-        <header class="modal-card-header">
-          <h3>{{ editMode ? 'Edit Product Modifier' : 'Create Product Modifier' }}</h3>
-        </header>
+        <div class="grid grid-cols-3 gap-3">
+          <FormSelect
+            v-model="formState.entity_id"
+            label="Assigned Entity Scope"
+            :options="ENTITIES"
+          />
 
-        <div class="modal-body-content">
-          <div class="form-container">
-            <div class="form-group">
-              <label class="form-label">Modifier Name *</label>
-              <input v-model="formState.name" type="text" placeholder="e.g. Extra Cheese, Extra Sauce" class="form-input" />
-            </div>
+          <FormSelect
+            v-model="formState.status_lookup_value_id"
+            label="Status"
+            :options="STATUS_OPTIONS"
+          />
 
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Assigned Entity Scope</label>
-                <select v-model="formState.entity_id" class="form-select">
-                  <option v-for="e in ENTITIES" :key="e" :value="e">{{ e }}</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Status</label>
-                <select v-model="formState.status_lookup_value_id" class="form-select">
-                  <option v-for="s in STATUS_OPTIONS" :key="s.value" :value="s.value">{{ s.label }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">State</label>
-              <select v-model="formState.state" class="form-select">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-            <!-- Modifier Items (ProductModifierItem) -->
-            <div class="items-block">
-              <div class="items-block-header">
-                <div class="flex items-center gap-1.5">
-                  <span class="items-block-title">Applies To (Base Products)</span>
-                  <HelpCircle :size="13" class="text-gray-400 cursor-pointer" title="Each row links a base product (e.g. Pizza) to the added product this modifier brings (e.g. Cheese)." />
-                </div>
-                <button type="button" @click="addItemRow" class="btn-add-row">
-                  <Plus :size="14" /> Add Row
-                </button>
-              </div>
-
-              <table class="items-table">
-                <thead>
-                  <tr>
-                    <th width="40" class="text-center">No.</th>
-                    <th>Base Product</th>
-                    <th>Added Product</th>
-                    <th width="44" class="text-center">—</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="formState.items.length === 0">
-                    <td colspan="4" class="items-empty">No base products linked yet. Add a row to define where this modifier applies.</td>
-                  </tr>
-                  <tr v-for="(it, idx) in formState.items" :key="it.id">
-                    <td class="text-center text-gray-500 font-semibold">{{ idx + 1 }}</td>
-                    <td class="p-0">
-                      <select v-model="it.base_product_id" class="cell-select">
-                        <option value="" disabled>Select base product</option>
-                        <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                      </select>
-                    </td>
-                    <td class="p-0">
-                      <select v-model="it.added_product_id" class="cell-select">
-                        <option value="" disabled>Select added product</option>
-                        <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                      </select>
-                    </td>
-                    <td class="text-center">
-                      <button type="button" @click="removeItemRow(idx)" class="btn-row-delete">
-                        <Trash2 :size="13" />
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <FormSelect
+            v-model="formState.state"
+            label="State"
+            :options="['Active', 'Inactive']"
+          />
         </div>
 
-        <div class="modal-footer-row">
-          <button @click="showForm = false" class="btn-modal-secondary">Cancel</button>
-          <button @click="handleSave" class="btn-modal-primary">Save Changes</button>
+        <!-- Modifier Items (ProductModifierItem) -->
+        <div class="items-block">
+          <div class="items-block-header">
+            <div class="flex items-center gap-1.5">
+              <span class="items-block-title">Applies To (Base Products)</span>
+              <HelpCircle :size="13" class="text-gray-400 cursor-pointer" title="Each row links a base product (e.g. Pizza) to the added product this modifier brings (e.g. Cheese)." />
+            </div>
+            <button type="button" @click="addItemRow" class="btn-add-row">
+              <Plus :size="14" /> Add Row
+            </button>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th width="40" class="text-center">No.</th>
+                <th>Base Product</th>
+                <th>Added Product</th>
+                <th width="44" class="text-center">—</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="formState.items.length === 0">
+                <td colspan="4" class="items-empty">No base products linked yet. Add a row to define where this modifier applies.</td>
+              </tr>
+              <tr v-for="(it, idx) in formState.items" :key="it.id">
+                <td class="text-center text-gray-500 font-semibold">{{ idx + 1 }}</td>
+                <td class="p-0">
+                  <select v-model="it.base_product_id" class="cell-select">
+                    <option value="" disabled>Select</option>
+                    <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+                  </select>
+                </td>
+                <td class="p-0">
+                  <select v-model="it.added_product_id" class="cell-select">
+                    <option value="" disabled>Select</option>
+                    <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+                  </select>
+                </td>
+                <td class="text-center">
+                  <button type="button" @click="removeItemRow(idx)" class="btn-row-delete">
+                    <Trash2 :size="13" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
+    </QuickCreateModal>
 
     <!-- VIEW DETAILS MODAL -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">

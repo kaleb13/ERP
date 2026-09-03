@@ -803,13 +803,13 @@ if (typeof window !== 'undefined') {
           <!-- IP Address -->
           <div class="filter-field">
             <label class="field-label">IP Address</label>
-            <input v-model="ipFilter" type="text" placeholder="e.g. 192.168.1.45" class="filter-input" />
+            <input v-model="ipFilter" type="text" class="filter-input" />
           </div>
 
           <!-- Session ID -->
           <div class="filter-field">
             <label class="field-label">Session ID</label>
-            <input v-model="sessionIdFilter" type="text" placeholder="e.g. SESS-8942" class="filter-input" />
+            <input v-model="sessionIdFilter" type="text" class="filter-input" />
           </div>
         </div>
 
@@ -1671,19 +1671,21 @@ if (typeof window !== 'undefined') {
 .table-container { width: 100%; overflow-x: auto; }
 .erp-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
 .erp-table th {
-  padding: 12px 14px;
+  padding: 8px 14px;
   background-color: #fafafa;
   color: #737373;
   font-weight: 500;
   font-size: 12px;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
+  height: 34px;
 }
 .erp-table td {
-  padding: 12px 14px;
+  padding: 8px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  color: #737373;
+  color: #404040;
+  height: 38px;
 }
 .clickable-row { cursor: pointer; transition: background 0.15s ease; }
 .clickable-row:hover { background-color: #f8fafc; }

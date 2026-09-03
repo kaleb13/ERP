@@ -6,6 +6,9 @@ import {
 } from 'lucide-vue-next';
 import BaseTable from '../components/BaseTable.vue';
 import BaseButton from '../components/BaseButton.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
 
 // Form States
 const showForm = ref(false);
@@ -240,56 +243,42 @@ const triggerDelete = (id: number) => {
       </table>
     </BaseTable>
 
-    <!-- FORM OVERLAY MODAL -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-card">
-        <button class="modal-close-btn" @click="showForm = false">
-          <X :size="18" />
-        </button>
+    <!-- QUICK CREATE / EDIT MODAL -->
+    <QuickCreateModal
+      v-model:show="showForm"
+      :title="`${editMode ? 'Edit' : 'Create'} Supplier Profile`"
+      :showExpandButton="false"
+      @save="handleSave"
+    >
+      <div class="space-y-3.5">
+        <FormInput
+          v-model="formState.party_name"
+          label="Supplier Name (Party Link)"
+          :required="true"
+        />
 
-        <header class="modal-card-header">
-          <h3>{{ editMode ? 'Edit Supplier Profile' : 'Create Supplier Profile' }}</h3>
-        </header>
+        <div class="grid grid-cols-2 gap-3">
+          <FormSelect
+            v-model="formState.supplier_type"
+            label="Procurement Type"
+            :options="['Local', 'International']"
+          />
 
-        <div class="modal-body-content">
-          <div class="form-container">
-            <div class="form-group">
-              <label class="form-label">Supplier Name (Party Link) *</label>
-              <input v-model="formState.party_name" type="text" placeholder="Individual or Company Name" class="form-input" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Procurement Type</label>
-                <select v-model="formState.supplier_type" class="form-select">
-                  <option value="Local">Local Supplier</option>
-                  <option value="International">International Supplier</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Assigned Entity</label>
-                <select v-model="formState.entity" class="form-select">
-                  <option value="Haleta Enterprise Group">Haleta Enterprise Group</option>
-                  <option value="Bole Road Branch">Bole Road Branch</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Est. Delivery Lead Time (Days)</label>
-              <input v-model="formState.lead_time" type="number" min="1" max="180" class="form-input" />
-              <small class="form-tip-text">Estimated time between placing an order and receiving items.</small>
-            </div>
-          </div>
+          <FormSelect
+            v-model="formState.entity"
+            label="Assigned Entity"
+            :options="['Haleta Enterprise Group', 'Bole Road Branch']"
+          />
         </div>
 
-        <div class="modal-footer-row">
-          <button @click="showForm = false" class="btn-modal-secondary">Cancel</button>
-          <button @click="handleSave" class="btn-modal-primary">Save Changes</button>
-        </div>
+        <FormInput
+          v-model="formState.lead_time"
+          label="Est. Delivery Lead Time (Days)"
+          type="number"
+          helperText="Estimated time between placing an order and receiving items."
+        />
       </div>
-    </div>
+    </QuickCreateModal>
 
     <!-- VIEW DETAILS MODAL -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">

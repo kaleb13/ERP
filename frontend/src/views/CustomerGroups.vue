@@ -6,6 +6,10 @@ import {
 } from 'lucide-vue-next';
 import BaseTable from '../components/BaseTable.vue';
 import BaseButton from '../components/BaseButton.vue';
+import QuickCreateModal from '../components/QuickCreateModal.vue';
+import FormInput from '../components/FormInput.vue';
+import FormSelect from '../components/FormSelect.vue';
+import FormTextarea from '../components/FormTextarea.vue';
 
 // State
 const customerGroups = ref([
@@ -242,55 +246,41 @@ const triggerDelete = (id: number) => {
       </table>
     </BaseTable>
 
-    <!-- FORM OVERLAY MODAL -->
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-card">
-        <button class="modal-close-btn" @click="showForm = false">
-          <X :size="18" />
-        </button>
+    <!-- QUICK CREATE / EDIT MODAL -->
+    <QuickCreateModal
+      v-model:show="showForm"
+      :title="`${editMode ? 'Edit' : 'Create'} Customer Segment Group`"
+      :showExpandButton="false"
+      @save="handleSave"
+    >
+      <div class="space-y-3.5">
+        <FormInput
+          v-model="formState.cg_name"
+          label="Group Category Name"
+          :required="true"
+        />
 
-        <header class="modal-card-header">
-          <h3>{{ editMode ? 'Edit Customer Segment Group' : 'Create Customer Segment Group' }}</h3>
-        </header>
+        <div class="grid grid-cols-2 gap-3">
+          <FormSelect
+            v-model="formState.cg_entity"
+            label="Assigned Entity Scope"
+            :options="['Haleta Enterprise Group', 'Bole Road Branch']"
+          />
 
-        <div class="modal-body-content">
-          <div class="form-container">
-            <div class="form-group">
-              <label class="form-label">Group Category Name *</label>
-              <input v-model="formState.cg_name" type="text" placeholder="e.g. Wholesale T1, VIP" class="form-input" />
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Assigned Entity Scope</label>
-                <select v-model="formState.cg_entity" class="form-select">
-                  <option value="Haleta Enterprise Group">Haleta Enterprise Group</option>
-                  <option value="Bole Road Branch">Bole Road Branch</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Registration Status</label>
-                <select v-model="formState.cg_status" class="form-select">
-                  <option value="Approved">Approved</option>
-                  <option value="Pending Approval">Pending Approval</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Group Description</label>
-              <textarea v-model="formState.cg_desc" rows="3" placeholder="Describe pricing discount tier constraints" class="form-textarea"></textarea>
-            </div>
-          </div>
+          <FormSelect
+            v-model="formState.cg_status"
+            label="Registration Status"
+            :options="['Approved', 'Pending Approval']"
+          />
         </div>
 
-        <div class="modal-footer-row">
-          <button @click="showForm = false" class="btn-modal-secondary">Cancel</button>
-          <button @click="handleSave" class="btn-modal-primary">Save Changes</button>
-        </div>
+        <FormTextarea
+          v-model="formState.cg_desc"
+          label="Group Description"
+          :rows="3"
+        />
       </div>
-    </div>
+    </QuickCreateModal>
 
     <!-- VIEW DETAILS MODAL -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">

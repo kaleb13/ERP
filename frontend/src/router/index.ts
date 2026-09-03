@@ -18,7 +18,11 @@ import Products from '../views/Products.vue';
 import ProductVariants from '../views/ProductVariants.vue';
 import ProductModifiers from '../views/ProductModifiers.vue';
 import ProductGroups from '../views/ProductGroups.vue';
-import HRDashboard from '../views/hr/HRDashboard.vue';
+import FieldOfStudy from '../views/hr/FieldOfStudy.vue';
+import FieldOfStudyCreate from '../views/hr/FieldOfStudyCreate.vue';
+import PartyProfile from '../views/hr/PartyProfile.vue';
+import PartyCreate from '../views/hr/PartyCreate.vue';
+import Committees from '../views/hr/Committees.vue';
 
 
 const router = createRouter({
@@ -148,12 +152,37 @@ const router = createRouter({
     // Human Resources (HR) Module Routes
     {
       path: '/hr',
-      redirect: '/hr/dashboard'
+      redirect: '/hr/parties'
     },
     {
-      path: '/hr/dashboard',
-      name: 'hrDashboard',
-      component: HRDashboard
+      path: '/hr/parties',
+      name: 'hrParties',
+      component: PartyProfile
+    },
+    {
+      path: '/hr/parties/create',
+      name: 'hrPartyCreate',
+      component: PartyCreate
+    },
+    {
+      path: '/hr/committees',
+      name: 'hrCommittees',
+      component: Committees
+    },
+    {
+      path: '/hr/field-of-study',
+      name: 'hrFieldOfStudy',
+      component: FieldOfStudy
+    },
+    {
+      path: '/hr/field-of-study/create',
+      name: 'hrFieldOfStudyCreate',
+      component: FieldOfStudyCreate
+    },
+    {
+      path: '/hr/field-of-study/:id',
+      name: 'hrFieldOfStudyEdit',
+      component: FieldOfStudyCreate
     }
   ]
 });

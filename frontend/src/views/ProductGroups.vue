@@ -922,7 +922,7 @@ const triggerDelete = (id: number) => {
             
             <div class="form-group">
               <label class="form-label">Product Group Name *</label>
-              <input v-model="formState.name" type="text" placeholder="e.g. Android Devices, Laptops" class="form-input" />
+              <input v-model="formState.name" type="text"  class="form-input" />
             </div>
 
             <div class="form-group">
@@ -999,7 +999,7 @@ const triggerDelete = (id: number) => {
 
             <div class="form-group">
               <label class="form-label">Group Description</label>
-              <textarea v-model="formState.description" rows="3" placeholder="Describe the inventory category context and reporting usage" class="form-textarea"></textarea>
+              <textarea v-model="formState.description" rows="3"  class="form-textarea"></textarea>
             </div>
           </div>
         </div>

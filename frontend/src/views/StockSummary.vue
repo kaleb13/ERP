@@ -5,6 +5,8 @@ import {
   Monitor, ChevronRight, MoreVertical, TrendingUp,
   Bell, Filter, Calendar, ChevronDown, ExternalLink, ScrollText
 } from 'lucide-vue-next';
+import MetricCard from '../components/MetricCard.vue';
+import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 
 const router = useRouter();
 
@@ -93,31 +95,21 @@ const ledger = [
 
 <template>
   <div class="stock-summary-page">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
-      <router-link to="/dashboard" class="breadcrumb-link">
-        <Monitor :size="16" />
-      </router-link>
-      <ChevronRight :size="12" class="breadcrumb-separator" />
-      <span class="breadcrumb-active">Stock Summary</span>
-    </div>
+    <!-- Standard Breadcrumbs -->
+    <AppBreadcrumb :items="[{ label: 'Stock Summary' }]" />
 
-    <!-- KPI CARDS -->
+    <!-- KPI CARDS (Using Centralized MetricCard Component) -->
     <div class="kpi-grid">
-      <div v-for="kpi in kpis" :key="kpi.label" class="kpi-card">
-        <div class="kpi-top">
-          <span class="kpi-label">{{ kpi.label }}</span>
-          <button class="btn-more"><MoreVertical :size="16" /></button>
-        </div>
-        <h2 class="kpi-value">{{ kpi.value }}</h2>
-        <div class="kpi-footer">
-          <span class="kpi-sub">{{ kpi.sub }}</span>
-          <span v-if="kpi.isTrend" class="kpi-trend">
-            <TrendingUp :size="12" />
-            {{ kpi.trend }}
-          </span>
-        </div>
-      </div>
+      <MetricCard
+        v-for="kpi in kpis"
+        :key="kpi.label"
+        :label="kpi.label"
+        :value="kpi.value"
+        :subtext="kpi.sub"
+        :trend="kpi.isTrend ? kpi.trend : undefined"
+        trendType="up"
+        :showMenu="true"
+      />
     </div>
 
     <!-- ROW: STATUS DISTRIBUTION + ALERTS -->

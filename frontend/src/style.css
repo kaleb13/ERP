@@ -291,10 +291,13 @@
   --alias-color-brand-orange-primary: var(--primitive-color-brand-orange-400);
   --alias-color-brand-orange-primary-hover: var(--primitive-color-brand-orange-500);
   --alias-color-brand-orange-primary-subtle: var(--primitive-color-brand-orange-50);
+  /* Standard Dark Text & Form Labels: #404040 */
+  --alias-color-text-dark: #404040;
+  --alias-color-form-label: #404040;
   /* Usage: Main heading, titles. Strong Emphasis */
-  --alias-color-text-primary: var(--alias-color-neutral-800);
+  --alias-color-text-primary: #404040;
   /* Medium-emphasis text for subheadings, secondary information, or supporting labels */
-  --alias-color-text-secondary: var(--alias-color-neutral-700);
+  --alias-color-text-secondary: #404040;
   /* Low-emphasis or supplementary text used for metadata, captions, helper text, or less critical information. */
   --alias-color-text-tertiary: var(--alias-color-neutral-500);
   /* Emphasis: Lowest, Usage: placeholder, empty state */
@@ -459,3 +462,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   GLOBAL ERP TABLE STANDARDS (Uniform 34px TH, 38px TD, #404040 text)
+   ========================================================================== */
+.erp-table,
+.gate-pass-table,
+.ledger-table,
+.reservation-table,
+.variant-table,
+.products-registry-table,
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.erp-table th,
+.gate-pass-table th,
+.ledger-table th,
+.reservation-table th,
+.variant-table th,
+.products-registry-table th,
+table.data-table th {
+  background-color: #fafafa;
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #737373 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap;
+  height: 34px !important;
+}
+
+.erp-table td,
+.gate-pass-table td,
+.ledger-table td,
+.reservation-table td,
+.variant-table td,
+.products-registry-table td,
+table.data-table td {
+  padding: 8px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle !important;
+  color: #404040 !important;
+  height: 38px !important;
+  font-size: 13px !important;
+}
+
+.erp-table tr:hover,
+.gate-pass-table tr:hover,
+.ledger-table tr:hover,
+.reservation-table tr:hover,
+.variant-table tr:hover,
+.products-registry-table tr:hover,
+table.data-table tr:hover {
+  background-color: #f8fafc;
+}
+
