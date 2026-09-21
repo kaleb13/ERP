@@ -101,13 +101,6 @@ const form = ref({
   pension_number: '',
   notes: '',
 
-  // Recruitment Provenance (HR_Schema_final-v4.sql lines 549-556)
-  hiring_source: 'direct',
-  hired_from_job_offer_id: '',
-  hired_from_candidate_id: '',
-  hired_from_job_posting_id: '',
-  hired_from_recruitment_result_id: '',
-
   // Remuneration & Package (Moved Grade & Steps here for unified UX)
   job_grade: '',
   job_grade_step: '',
@@ -174,7 +167,6 @@ const sections = ref({
   // Tab 2: Employment (OrgPlacement expanded by default)
   orgPlacement: true,
   contractDetails: false,
-  recruitmentProvenance: false,
   statutoryRegistration: false,
 
   // Tab 3: Compensation (Screenshot: Remuneration and PrimaryBank expanded)
@@ -1441,11 +1433,6 @@ const clearForm = () => {
     tin: '',
     pension_number: '',
     notes: '',
-    hiring_source: 'direct',
-    hired_from_job_offer_id: '',
-    hired_from_candidate_id: '',
-    hired_from_job_posting_id: '',
-    hired_from_recruitment_result_id: '',
     job_grade: 'Grade B2',
     job_grade_step: 'Step 1 (Entry)',
     salary_structure: '',
@@ -2297,69 +2284,6 @@ onMounted(() => {
               v-model="form.is_working_days_only" 
               label="Working Days Only"
               description="Enable this if employment follows a 5-day workweek where Saturday is a non-working rest day. Disable for a standard 6-day workweek where Saturday is an ordinary working day."
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Accordion Card 3: Recruitment Provenance & Hiring Source -->
-      <div class="clean-card">
-        <div class="card-accordion-header" @click="toggleSection('recruitmentProvenance')">
-          <span>Recruitment Provenance & Hiring Source</span>
-          <ChevronDown v-if="sections.recruitmentProvenance" :size="15" class="header-chevron" />
-          <ChevronRight v-else :size="15" class="header-chevron" />
-        </div>
-        <div v-if="sections.recruitmentProvenance" class="card-accordion-divider" />
-        <div v-if="sections.recruitmentProvenance" class="card-accordion-body">
-          <div class="form-grid-2">
-            <FormSelect 
-              label="Hiring Channel / Source" 
-              v-model="form.hiring_source" 
-              :options="[
-                { label: 'Direct Hire / Manual Backfill', value: 'direct' },
-                { label: 'Recruitment Pipeline / Accepted Job Offer', value: 'job_offer' },
-                { label: 'Internal Promotion / Lateral Transfer', value: 'transfer' },
-                { label: 'Campus Recruitment / University Partnership', value: 'campus' },
-                { label: 'Executive Search / Headhunting Agency', value: 'executive_search' }
-              ]" 
-              placeholder="Select Source" 
-              helper-text="Originating recruitment channel stamped in hr.employee_details (hired_from_*)."
-            />
-            <div v-if="form.hiring_source === 'job_offer'">
-              <FormSelect 
-                label="Linked Accepted Job Offer" 
-                v-model="form.hired_from_job_offer_id" 
-                :options="[
-                  'OFF-2024-0042 - Senior Auditor (Accepted by Candidate)',
-                  'OFF-2024-0045 - HR Generalist (Accepted by Candidate)',
-                  'OFF-2024-0051 - Branch Operations Officer (Accepted by Candidate)',
-                  'OFF-2024-0058 - Junior Accountant (Accepted by Candidate)'
-                ]" 
-                placeholder="Select Job Offer" 
-                helper-text="FK hr.job_offers. Automatically binds candidate profile, interview scores, and offer terms."
-              />
-            </div>
-            <div v-else class="p-3 bg-slate-50 border border-slate-200 rounded-md flex items-center gap-2 text-xs text-slate-600">
-              <Info :size="15" class="text-slate-400 shrink-0" />
-              <span>Direct hire without prior applicant tracking pipeline record. Recruitment provenance foreign keys will remain NULL in hr.employee_details.</span>
-            </div>
-          </div>
-
-          <div v-if="form.hiring_source === 'job_offer'" class="form-grid-3 mt-4 pt-3 border-t border-slate-100">
-            <FormInput 
-              label="Candidate ID / Profile" 
-              v-model="form.hired_from_candidate_id" 
-              helper-text="FK hr.candidates (e.g. CND-1044)"
-            />
-            <FormInput 
-              label="Originating Job Posting" 
-              v-model="form.hired_from_job_posting_id" 
-              helper-text="FK hr.job_postings (e.g. PST-2024-0018)"
-            />
-            <FormInput 
-              label="Recruitment Result & Score" 
-              v-model="form.hired_from_recruitment_result_id" 
-              helper-text="Score / Rank from interview panel (e.g. 92.5% Rank #1)"
             />
           </div>
         </div>
