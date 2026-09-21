@@ -117,7 +117,7 @@ const sections = ref([
         iconColor: 'var(--primitive-color-indigo-600)', 
         iconBg: 'var(--primitive-color-indigo-50)', 
         subscribed: true,
-        route: '/hr/parties' 
+        route: '/hr/employees' 
       }
     ]
   },

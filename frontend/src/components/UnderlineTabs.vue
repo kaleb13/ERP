@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T extends string | number">
-import type { Component } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, type Component } from 'vue';
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 export interface UnderlineTabItem<IdType = T> {
   id: IdType;
@@ -13,7 +14,7 @@ export interface UnderlineTabItem<IdType = T> {
   customClass?: string;
 }
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** Currently active tab id (use with v-model). */
     modelValue: T;
@@ -27,12 +28,18 @@ withDefaults(
     justify?: 'start' | 'center' | 'end' | 'between';
     /** Whether to show the bottom border line across the bar. */
     showBottomBorder?: boolean;
+    /** Whether to show count badges on tabs. Defaults to true. */
+    showCount?: boolean;
+    /** Whether to display scroll indicator arrows when tabs overflow horizontally. Defaults to true. */
+    showScrollArrows?: boolean;
   }>(),
   {
     size: 'md',
     fullWidth: false,
     justify: 'start',
-    showBottomBorder: true
+    showBottomBorder: true,
+    showCount: true,
+    showScrollArrows: true
   }
 );
 
@@ -41,12 +48,78 @@ const emit = defineEmits<{
   'tab-click': [tab: UnderlineTabItem<T>];
 }>();
 
+const tabsRef = ref<HTMLElement | null>(null);
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+const updateScrollState = () => {
+  const el = tabsRef.value;
+  if (!el) {
+    canScrollLeft.value = false;
+    canScrollRight.value = false;
+    return;
+  }
+  const scrollLeft = Math.ceil(el.scrollLeft);
+  const maxScrollLeft = el.scrollWidth - el.clientWidth;
+  canScrollLeft.value = scrollLeft > 2;
+  canScrollRight.value = maxScrollLeft - scrollLeft > 2;
+};
+
+const scrollTabs = (direction: 'left' | 'right') => {
+  const el = tabsRef.value;
+  if (!el) return;
+  const offset = direction === 'left' ? -180 : 180;
+  el.scrollBy({ left: offset, behavior: 'smooth' });
+};
+
 const handleTabClick = (tab: UnderlineTabItem<T>) => {
   if (!tab.disabled) {
     emit('update:modelValue', tab.id);
     emit('tab-click', tab);
   }
 };
+
+const scrollActiveIntoView = () => {
+  nextTick(() => {
+    const el = tabsRef.value;
+    if (!el) return;
+    const activeEl = el.querySelector<HTMLElement>('.underline-tab.active');
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+    updateScrollState();
+  });
+};
+
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  nextTick(() => {
+    updateScrollState();
+  });
+  if (tabsRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      updateScrollState();
+    });
+    resizeObserver.observe(tabsRef.value);
+  }
+  window.addEventListener('resize', updateScrollState);
+});
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+  window.removeEventListener('resize', updateScrollState);
+});
+
+watch(() => props.tabs, () => {
+  nextTick(updateScrollState);
+}, { deep: true });
+
+watch(() => props.modelValue, () => {
+  scrollActiveIntoView();
+});
 </script>
 
 <template>
@@ -60,14 +133,28 @@ const handleTabClick = (tab: UnderlineTabItem<T>) => {
     <!-- Optional Prefix Slot -->
     <slot name="prefix" />
 
-    <!-- Tab Buttons List -->
+    <!-- Left Scroll Arrow Button -->
+    <button 
+      v-if="showScrollArrows && canScrollLeft" 
+      type="button" 
+      class="tab-scroll-btn tab-scroll-btn--left" 
+      aria-label="Scroll tabs left"
+      title="Scroll tabs left"
+      @click="scrollTabs('left')"
+    >
+      <ChevronLeft :size="15" />
+    </button>
+
+    <!-- Scrollable Tab Buttons Track -->
     <div 
+      ref="tabsRef"
       class="underline-tabs"
       :class="[
         `underline-tabs--${size}`,
         `justify-${justify}`,
         { 'underline-tabs--full': fullWidth }
       ]"
+      @scroll="updateScrollState"
     >
       <button
         v-for="tab in tabs"
@@ -100,9 +187,9 @@ const handleTabClick = (tab: UnderlineTabItem<T>) => {
           <!-- Label Text -->
           <span class="tab-label">{{ tab.label }}</span>
 
-          <!-- Count Badge Pill -->
+          <!-- Count Badge Pill (hidden if showCount is false) -->
           <span 
-            v-if="tab.count !== undefined" 
+            v-if="showCount && tab.count !== undefined" 
             :class="[
               'tab-count-badge',
               `count-variant-${tab.badgeVariant || 'default'}`,
@@ -132,6 +219,18 @@ const handleTabClick = (tab: UnderlineTabItem<T>) => {
       <slot name="suffix" />
     </div>
 
+    <!-- Right Scroll Arrow Button -->
+    <button 
+      v-if="showScrollArrows && canScrollRight" 
+      type="button" 
+      class="tab-scroll-btn tab-scroll-btn--right" 
+      aria-label="Scroll tabs right"
+      title="Scroll tabs right"
+      @click="scrollTabs('right')"
+    >
+      <ChevronRight :size="15" />
+    </button>
+
     <!-- Right Actions Slot (e.g. search, filters, or add button) -->
     <div v-if="$slots.right" class="underline-tabs-right">
       <slot name="right" />
@@ -145,10 +244,45 @@ const handleTabClick = (tab: UnderlineTabItem<T>) => {
   align-items: center;
   width: 100%;
   position: relative;
+  min-width: 0;
 }
 
 .underline-tabs-container.has-bottom-border {
   border-bottom: 1px solid #e2e8f0;
+}
+
+/* Scroll Arrow Controls */
+.tab-scroll-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.tab-scroll-btn:hover {
+  background-color: #f8fafc;
+  color: #0B529C;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.tab-scroll-btn--left {
+  margin-right: 6px;
+}
+
+.tab-scroll-btn--right {
+  margin-left: 6px;
 }
 
 .underline-tabs {
@@ -158,6 +292,9 @@ const handleTabClick = (tab: UnderlineTabItem<T>) => {
   overflow-x: auto;
   user-select: none;
   scrollbar-width: none;
+  scroll-behavior: smooth;
+  flex: 1;
+  min-width: 0;
 }
 
 .underline-tabs::-webkit-scrollbar {

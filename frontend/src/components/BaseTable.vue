@@ -517,12 +517,44 @@ if (typeof window !== 'undefined') {
 }
 
 .custom-checkbox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #cbd5e1;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  border-radius: 5px;
+  border: 1.5px solid #d1d5db;
+  background-color: #ffffff;
   cursor: pointer;
-  accent-color: #0B529C;
+  display: inline-grid;
+  place-content: center;
+  position: relative;
+  vertical-align: middle;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.custom-checkbox:hover:not(:checked):not(:disabled) {
+  border-color: #9ca3af;
+  background-color: #f9fafb;
+}
+
+.custom-checkbox:checked {
+  background-color: #0B529C;
+  border-color: #0B529C;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 5.5'/%3e%3c/svg%3e");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 75% 75%;
+}
+
+.custom-checkbox:checked:hover:not(:disabled) {
+  background-color: #094482;
+  border-color: #094482;
 }
 
 /* REVEALING FILTER PANEL */

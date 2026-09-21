@@ -132,7 +132,7 @@ const isChildActive = (to: string) => {
     return false;
   }
   if (route.path === to) {
-    if (route.query.tab && route.query.tab !== 'users' && route.query.tab !== 'parties') {
+    if (route.query.tab && route.query.tab !== 'users') {
       return false;
     }
     return true;
@@ -187,10 +187,7 @@ const activeModule = computed(() => {
       iconBg: 'var(--primitive-color-indigo-50)',
       menu: [
         { isHeader: true, label: 'Workforce & Profile' },
-        { to: '/hr/parties', label: 'Party Profiles', icon: 'UserCheck' },
-        { to: '/hr/committees', label: 'Committees & Panels', icon: 'ShieldCheck' },
-        { isHeader: true, label: 'Academic & Qualifications' },
-        { to: '/hr/field-of-study', label: 'Field of Study', icon: 'GraduationCap' }
+        { to: '/hr/employees', label: 'Employee Directory', icon: 'Users' }
       ]
     };
   } else if (path.startsWith('/company-setup')) {
@@ -358,7 +355,7 @@ onUnmounted(() => {
                 <span class="submenu-text">Company Setup</span>
               </div>
 
-              <div class="submenu-item" @click="navigateToModule('/hr/parties')">
+              <div class="submenu-item" @click="navigateToModule('/hr/employees')">
                 <div class="submenu-icon-box" style="background-color: #eef2ff;">
                   <Users :size="14" style="color: #4f46e5;" />
                 </div>
