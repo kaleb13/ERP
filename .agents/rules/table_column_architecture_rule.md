@@ -123,4 +123,59 @@ const isColVisible = (key: string) => {
   - The detail view provides breadcrumb and back-button navigation (`← Back to [Entities]`) to return to the table.
   - **Strict Data Isolation**: Detail pages MUST be dedicated exclusively to the selected record. **NEVER** display other entities as selector tabs or pill bars inside a detail page.
 
+---
+
+## 6. Zero Standalone "Code" Column & Column Color Hierarchy Standard
+- **No Standalone "Code" Column**:
+  - `Code` MUST NEVER have its own standalone column in tables.
+  - The first data column immediately following selection checkboxes MUST always be the **Name** column.
+  - If the code is important enough to display, write the Name on top and Code at the bottom as sub-text:
+    ```html
+    <td class="col-name">
+      <div class="name-cell-stack">
+        <span class="table-name-primary">{{ item.name }}</span>
+        <span class="table-code-subtext font-mono">{{ item.code }}</span>
+      </div>
+    </td>
+    ```
+  - If not that important, omit code entirely.
+- **Column Text Color Hierarchy (Secondary for Name, Tertiary for Right Columns)**:
+  - The first data column (the Name column) MUST be styled in the **Secondary Color** (`#404040` / `--alias-color-text-secondary`, font-weight `500` or `600`).
+  - This establishes clear typographic scan hierarchy where the primary entity identity stands out, and all auxiliary column details recede harmoniously into clean tertiary tones.
+
+---
+
+## 7. Strict Anti-Badge Standard (Plain Text Default)
+- **Plain Text Default**: Table data cells MUST default to clean, readable plain text in the tertiary color (`#737373`).
+- **NEVER wrap ordinary content in badges**:
+  - ❌ **Forbidden**: Wrapping unit counts (`16 Units`, `8 Units`) in a badge or colored container.
+  - ❌ **Forbidden**: Wrapping entity types (`Department`, `Section`, `Region`) in badge pills.
+  - ❌ **Forbidden**: Wrapping boolean visibility or flags (`Visible`, `Hidden`) in badges.
+  - ✅ **Mandatory**: Simply write the plain text (`16 Units`, `Department`, `Section`).
+- **Badges/Pills are Strictly Reserved for Lifecycle States**:
+  - Badges are permitted **only** for actual record lifecycle states (`Active`, `Inactive`, `Draft`, `Pending`), and even then, only when genuinely needed.
+  - If information can simply be written as clear text, write it as plain text without badges.
+
+---
+
+## 8. Zero Extraneous Decorative Icons in Table Cells
+- **No Decorative Icons**: Table data cells MUST NOT contain decorative or redundant icons:
+  - ❌ **Forbidden**: Placing `<Building2 />` before an owning entity name.
+  - ❌ **Forbidden**: Placing `<Layers />` before a unit count.
+  - ❌ **Forbidden**: Placing `<FolderTree />` before a unit type.
+  - ❌ **Forbidden**: Placing `<Calendar />` or `<ArrowRight />` inside effective timeline date cells.
+- **Icons Permitted Only for Functional Actions**:
+  - Icons are allowed in tables ONLY when strictly functional (e.g., sort indicators in headers, 3-dots action menu dropdown buttons, row selection checkboxes, or expandable row chevrons).
+
+---
+
+## 9. Cross-Entity Reference Standard (Zero Foreign Avatars in Middle Columns)
+- **Middle Columns Must Never Contain Avatars**:
+  - When a table row references an external or linked entity (e.g. `Current Manager` / `Unit Head`, `Owning Company`, `Supervisor`, `Approver`):
+    - ❌ **Forbidden**: Rendering profile avatars, thumbnails, employee IDs (`EMP-00142`), or compound profile identity cards inside middle columns of a table.
+    - Doing so severely degrades UX: it disrupts visual scanning across rows, creates jarring visual noise, and unnecessarily inflates row heights.
+    - Avatars belong **exclusively** on the far-left primary identity column of that entity's *own* primary directory table (e.g., `EmployeesView.vue`).
+    - ✅ **Mandatory**: Render ONLY the clean plain text name of the person or entity (e.g. `Dawit Tadesse`, `Raleh Girma`, `Solomon Mengistu`) in the tertiary color (`#737373`).
+    - The user can click into the record's detail view to inspect full profile photos, IDs, titles, and appointment history.
+
 

@@ -5,7 +5,7 @@ import {
   Box, ChevronDown, ChevronUp, ChevronRight,
   HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
   UserCheck, LayoutGrid, Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key,
-  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap
+  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap, BadgeCheck
 } from 'lucide-vue-next';
 
 interface Props {
@@ -115,7 +115,8 @@ const iconsMap: Record<string, any> = {
   GitPullRequest,
   FolderTree,
   Network,
-  GraduationCap
+  GraduationCap,
+  BadgeCheck
 };
 
 // Active link matching helper
@@ -187,7 +188,16 @@ const activeModule = computed(() => {
       iconBg: 'var(--primitive-color-indigo-50)',
       menu: [
         { isHeader: true, label: 'Workforce & Profile' },
-        { to: '/hr/employees', label: 'Employee Directory', icon: 'Users' }
+        { to: '/hr/employees', label: 'Employee Directory', icon: 'Users' },
+        { isHeader: true, label: 'Organization & Structure' },
+        { to: '/hr/org-structures', label: 'Org Structures', icon: 'Network' },
+        { to: '/hr/org-units', label: 'Organization Units', icon: 'FolderTree' },
+        { isHeader: true, label: 'Compensation & Pay' },
+        { to: '/hr/salary-scales', label: 'Salary Scales', icon: 'Award' },
+        { isHeader: true, label: 'Job & Position Architecture' },
+        { to: '/hr/job-positions', label: 'Job Positions', icon: 'Briefcase' },
+        { to: '/hr/job-titles', label: 'Job Titles & Roles', icon: 'BadgeCheck' },
+        { to: '/hr/job-levels', label: 'Job Levels', icon: 'Layers' }
       ]
     };
   } else if (path.startsWith('/company-setup')) {

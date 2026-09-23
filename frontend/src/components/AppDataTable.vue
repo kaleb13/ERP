@@ -89,7 +89,12 @@ const emit = defineEmits<{
     <template v-if="$slots['toolbar-left']" #toolbar-left><slot name="toolbar-left" /></template>
     <template v-if="$slots['toolbar-right']" #toolbar-right><slot name="toolbar-right" /></template>
     <template v-if="$slots.actions" #actions><slot name="actions" /></template>
-    <template v-if="$slots['filter-panel']" #filter-panel><slot name="filter-panel" /></template>
+    <template v-if="$slots['filter-panel'] || $slots['filter'] || $slots['filterContent']" #filter-panel>
+      <slot name="filter-panel" />
+      <slot name="filter" />
+      <slot name="filterContent" />
+    </template>
+    <slot name="customTable" />
     <slot />
   </BaseTable>
 </template>

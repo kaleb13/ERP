@@ -210,6 +210,22 @@ export interface StatutoryExemptionRecord {
   notes?: string;
 }
 
+export interface PartyAddressRecord {
+  id: number;
+  uuid: string;
+  employee_id: number;
+  address_type: 'residence' | 'postal' | 'work' | 'emergency' | 'birth_place' | 'other';
+  admin_unit: string;
+  line?: string;
+  house_number?: string;
+  kebele?: string;
+  postal_code?: string;
+  is_primary: boolean;
+  effective_from?: string;
+  effective_to?: string | null;
+  state: RowState;
+}
+
 export interface EmployeeDependentItem {
   id: number;
   uuid: string;
@@ -361,10 +377,10 @@ const initialEmployees: EmployeeRecord[] = [
     entity_id: 3,
     entity_name: 'Haleta Addis Ababa HQ',
     employee_number: 'EMP-00124',
-    employee_name: 'Abebe Kebede',
-    first_name: 'Abebe',
-    middle_name: 'Kebede',
-    last_name: 'Mola',
+    employee_name: 'Almaz Ayana',
+    first_name: 'Almaz',
+    middle_name: 'Ayana',
+    last_name: 'Kassahun',
     job_title: 'Senior Accountant',
     job_grade: 'Grade B2',
     job_grade_step: 'Step 2',
@@ -377,11 +393,11 @@ const initialEmployees: EmployeeRecord[] = [
     employment_status: 'active',
     pension_number: 'PN-204415',
     tin: '0051177245',
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-    work_email: 'abebe.kebede@haleta.com',
-    personal_email: 'abebe.kebede.m@gmail.com',
+    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+    work_email: 'AlmazAyana@haleta.com',
+    personal_email: 'almaz.ayana@gmail.com',
     phone: '+251 911 123 456',
-    fayda_id: 'FYD-90114522208',
+    fayda_id: '051564848884',
     gender: 'Male',
     birth_date: '1992-03-12',
     birth_place: 'Hawassa',
@@ -390,15 +406,16 @@ const initialEmployees: EmployeeRecord[] = [
     nationality_country: 'Ethiopian',
     nationality_type: 'Citizen',
     residence_region: 'Addis Ababa',
-    residence_subcity: 'Bole',
-    residence_kebele: 'Kebele 04 / Piazza',
-    residence_house_number: 'H-102',
-    residence_line: 'Main Commercial Boulevard',
-    residence_postal_code: '1700',
+    residence_subcity: 'Bole Sub-City',
+    residence_woreda: 'Woreda 03',
+    residence_kebele: 'Kebele 08',
+    residence_house_number: '214',
+    residence_line: 'Bole, Addis Ababa',
+    residence_postal_code: '1176',
     basic_amount: 72000,
-    transport_allowance: 4240,
+    transport_allowance: 5740,
     housing_allowance: 11000,
-    other_allowance: 1500,
+    other_allowance: 0,
     currency: 'ETB',
     payroll_group: 'Standard Monthly Payroll',
     salary_structure: 'Standard Commercial Staff Grade',
@@ -488,7 +505,7 @@ const breadcrumbItems = computed(() => {
   if (viewMode.value === 'detail' && selectedEmployee.value) {
     return [
       { label: 'Employee Directory', to: '/hr/employees', onClick: () => { viewMode.value = 'list'; } },
-      { label: `${selectedEmployee.value.employee_number} — ${selectedEmployee.value.employee_name}` }
+      { label: `${selectedEmployee.value.employee_number} - ${selectedEmployee.value.employee_name}` }
     ];
   }
   return [
@@ -691,9 +708,54 @@ const statutoryExemptions = ref<StatutoryExemptionRecord[]>([
   }
 ]);
 
+const addresses = ref<PartyAddressRecord[]>([
+  {
+    id: 1,
+    uuid: 'addr_001',
+    employee_id: 14,
+    address_type: 'residence',
+    admin_unit: 'Addis Ababa > Bole Sub-City > Woreda 03',
+    line: 'Cameroon St., near Edna Mall',
+    house_number: '214',
+    postal_code: '',
+    is_primary: true,
+    effective_from: '2024-01-15',
+    effective_to: null,
+    state: 'active'
+  },
+  {
+    id: 2,
+    uuid: 'addr_002',
+    employee_id: 14,
+    address_type: 'postal',
+    admin_unit: 'Addis Ababa > Kirkos Sub-City',
+    line: 'P.O. Box 1176, Central Post Office',
+    house_number: '',
+    postal_code: '1000',
+    is_primary: true,
+    effective_from: '2024-01-15',
+    effective_to: null,
+    state: 'active'
+  },
+  {
+    id: 3,
+    uuid: 'addr_003',
+    employee_id: 14,
+    address_type: 'emergency',
+    admin_unit: 'Addis Ababa > Bole Sub-City',
+    line: 'Behind Edna Mall, Road 4',
+    house_number: '42',
+    postal_code: '',
+    is_primary: false,
+    effective_from: '2024-01-15',
+    effective_to: null,
+    state: 'active'
+  }
+]);
+
 const bankAccounts = ref<EmployeeBankAccount[]>([
-  { id: 1, uuid: 'bnk_1', employee_id: 14, payment_provider_id: 4, bank_name: 'Commercial Bank of Ethiopia (CBE)', account_number: '1000512230871', account_holder_name: 'Abebe Kebede Mola', branch_name: 'Bole Medhanealem Branch', currency_id: 'ETB', is_primary: true, split_percent: 80, account_state_lookup_value_id: 'verified', state: 'active' },
-  { id: 2, uuid: 'bnk_2', employee_id: 14, payment_provider_id: 7, bank_name: 'Awash International Bank', account_number: '0134420115523', account_holder_name: 'Abebe Kebede Mola', branch_name: 'Addis Ababa Main Branch', currency_id: 'ETB', is_primary: false, split_percent: 20, account_state_lookup_value_id: 'verified', state: 'active' }
+  { id: 1, uuid: 'bnk_1', employee_id: 14, payment_provider_id: 4, bank_name: 'Commercial Bank of Ethiopia (CBE)', account_number: '1000512230087', account_holder_name: 'Almaz Ayana Kassahun', branch_name: 'Bole Medhanealem Branch', currency_id: 'ETB', is_primary: true, split_percent: 100, account_state_lookup_value_id: 'verified', state: 'active' },
+  { id: 2, uuid: 'bnk_2', employee_id: 14, payment_provider_id: 7, bank_name: 'Awash International Bank', account_number: '0134420115523', account_holder_name: 'Almaz Ayana Kassahun', branch_name: 'Addis Ababa Main Branch', currency_id: 'ETB', is_primary: false, split_percent: 0, account_state_lookup_value_id: 'verified', state: 'active' }
 ]);
 
 const guarantees = ref<EmployeeGuarantee[]>([
@@ -1245,16 +1307,15 @@ onUnmounted(() => {
     <div v-else-if="viewMode === 'detail'" class="profile-detail-wrapper">
       <div v-if="selectedEmployee" class="profile-container">
         
-        <!-- HERO PROFILE HEADER BANNER (CLEAN & ALIGNED) -->
+        <!-- HERO PROFILE HEADER BANNER (MINIMAL & ALIGNED TO SCREENSHOT) -->
         <div class="profile-hero-banner">
           <div class="hero-left-section">
             <div class="hero-avatar-wrapper">
               <img 
-                :src="selectedEmployee.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'" 
+                :src="selectedEmployee.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'" 
                 class="hero-avatar-img" 
                 alt="Employee Photo" 
               />
-              <div class="avatar-status-badge"></div>
             </div>
 
             <div class="hero-identity-block">
@@ -1263,30 +1324,12 @@ onUnmounted(() => {
               </div>
 
               <div class="hero-code-title">
-                <span class="font-mono text-xs font-semibold text-slate-700">{{ selectedEmployee.employee_number }}</span>
-                <span class="sep-bullet">&bull;</span>
-                <span class="hero-title-text">{{ selectedEmployee.job_title }}</span>
-                <span class="sep-bullet">&bull;</span>
-                <span class="text-xs font-medium text-slate-500">{{ selectedEmployee.job_grade || 'Grade B2' }} ({{ selectedEmployee.job_grade_step || 'Step 2' }})</span>
+                <span class="hero-code-id">{{ selectedEmployee.employee_number }} - </span>
+                <span class="hero-job-pill">{{ selectedEmployee.job_title }}</span>
               </div>
 
-              <div class="hero-tags-row">
-                <span class="hero-tag">
-                  <Building2 :size="12" class="tag-icon" />
-                  {{ selectedEmployee.department_name }}
-                </span>
-                <span class="hero-tag">
-                  <MapPin :size="12" class="tag-icon" />
-                  {{ selectedEmployee.residence_subcity || 'Addis Ababa' }}
-                </span>
-                <span :class="['status-pill', getStatusPillClass(selectedEmployee.employment_status)]">
-                  <span class="status-dot"></span>
-                  {{ formatStatus(selectedEmployee.employment_status) }}
-                </span>
-                <span class="hero-tenure-tag">
-                  <CalendarDays :size="12" class="tenure-icon" />
-                  Joined {{ formatDate(selectedEmployee.hire_date) }} ({{ calculateTenure(selectedEmployee.hire_date) }})
-                </span>
+              <div class="hero-work-location">
+                Works at Bole Branch - {{ selectedEmployee.department_name }} Department
               </div>
             </div>
           </div>
@@ -1294,255 +1337,211 @@ onUnmounted(() => {
           <div class="hero-right-section">
             <div class="hero-contact-card">
               <div class="hero-contact-item">
-                <Mail :size="13" class="contact-icon" />
-                <a :href="'mailto:' + selectedEmployee.work_email" class="contact-link">{{ selectedEmployee.work_email || 'abebe.kebede@haleta.com' }}</a>
+                <Mail :size="14" class="contact-icon" />
+                <a :href="'mailto:' + selectedEmployee.work_email" class="contact-link">{{ selectedEmployee.work_email }}</a>
               </div>
               <div class="hero-contact-item">
-                <Phone :size="13" class="contact-icon" />
-                <span class="font-mono">{{ selectedEmployee.phone || '+251 911 123 456' }}</span>
+                <Phone :size="14" class="contact-icon" />
+                <span class="contact-text">{{ selectedEmployee.phone }}</span>
               </div>
               <div class="hero-contact-item">
-                <User :size="13" class="contact-icon" />
-                <div>
+                <User :size="14" class="contact-icon" />
+                <div class="reports-to-text">
                   <span class="manager-label">Reports to: </span>
-                  <span class="manager-name">{{ selectedEmployee.reports_to || 'Fitsum Assefa (Finance Manager)' }}</span>
+                  <span class="manager-name">{{ selectedEmployee.reports_to }}</span>
                 </div>
               </div>
-            </div>
-            
-            <div class="hero-header-actions">
-              <button class="btn-hero-edit" @click="handleQuickAction('edit')" title="Edit full master record">
-                <Edit2 :size="13" />
-                <span>Edit Record</span>
-              </button>
             </div>
           </div>
         </div>
 
-        <!-- UNDERLINE TABS BAR (7 STANDARDIZED DOMAINS) -->
-        <div class="profile-tabs-wrapper">
-          <UnderlineTabs 
-            v-model="activeTab"
-            :tabs="profileTabs"
-            size="md"
-            justify="start"
-            :showCount="true"
-          />
+        <!-- UNIFIED MASTER WORKSPACE CARD (KPIs, NARRATIVE & TABS) -->
+        <div class="master-workspace-card">
+          <!-- Row 1: KPI Metrics Grid -->
+          <div class="profile-kpi-grid">
+            <MetricCard
+              label="TOTAL LEAVE BALANCE"
+              value="14 Days"
+              subtext="Annual leave balance"
+              :icon="CalendarDays"
+              :showMenu="false"
+              class="cursor-pointer"
+              @click="activeTab = 'employment'"
+            />
+
+            <MetricCard
+              label="ATTENDANCE (THIS MONTH)"
+              value="14 Days"
+              subtext="Present on all days"
+              trend="100%"
+              trendType="up"
+              :icon="Clock4"
+              :showMenu="false"
+              class="cursor-pointer"
+              @click="activeTab = 'employment'"
+            />
+
+            <MetricCard
+              label="PERFORMANCE RATING"
+              value="4.2 /5.0"
+              subtext="Dec 2024 Evaluation"
+              :icon="Sparkles"
+              :showMenu="false"
+              class="cursor-pointer"
+              @click="activeTab = 'employment'"
+            />
+
+            <MetricCard
+              label="CURRENT GROSS PACKEDGE"
+              value="88,740 ETB"
+              subtext="Monthly base & allowances"
+              trend="+12.3%"
+              trendType="up"
+              :icon="Landmark"
+              :showMenu="false"
+              class="cursor-pointer"
+              @click="activeTab = 'compensation'"
+            />
+          </div>
+
+          <!-- Section Explanatory Header with Inline Edit Link -->
+          <div class="profile-narrative-box">
+            <p class="profile-desc-paragraph">
+              All records and documentation for this employee are centralized below. While the Overview tab presents high-level highlights and key indicators, you can access detailed, granular information by navigating through each specific tab. If any details are outdated or need to be updated in any way, please click on the 
+              <button class="inline-edit-link" @click="handleQuickAction('edit')" title="Edit full master record">Edit Record</button> 
+              to make the necessary changes.
+            </p>
+          </div>
+
+          <!-- Underline Tabs Bar (Embedded inside the master card) -->
+          <div class="profile-tabs-wrapper-inline">
+            <UnderlineTabs 
+              v-model="activeTab"
+              :tabs="profileTabs"
+              size="md"
+              justify="start"
+              :showCount="true"
+            />
+          </div>
         </div>
 
-        <!-- TAB WORKSPACE CONTENT -->
+        <!-- Tab Workspace Content (Stand-alone below master card) -->
         <div class="tab-content-area">
           
-          <!-- TAB 1: OVERVIEW (EXECUTIVE SUMMARY OF ALL 6 DOMAINS) -->
+          <!-- TAB 1: OVERVIEW (2x2 GRID OF 4 CARDS MATCHING SCREENSHOT) -->
           <div v-if="activeTab === 'overview'" class="overview-view">
-            <!-- Row 1: KPI Metrics Grid (Using Centralized MetricCard Component) -->
-            <div class="profile-kpi-grid">
-              <MetricCard
-                label="Total Leave Balance"
-                value="14 Days"
-                subtext="Annual leave balance"
-                :icon="CalendarDays"
-                :showMenu="false"
-                class="cursor-pointer"
-                @click="activeTab = 'employment'"
-              />
-
-              <MetricCard
-                label="Attendance (This Month)"
-                value="22 / 22 Days"
-                subtext="Present on all scheduled days"
-                trend="100%"
-                trendType="up"
-                :icon="Clock4"
-                :showMenu="false"
-                class="cursor-pointer"
-                @click="activeTab = 'employment'"
-              />
-
-              <MetricCard
-                label="Performance Rating"
-                value="4.2 / 5.0"
-                subtext="Dec 2024 Evaluation"
-                trend="Exceeds"
-                trendType="up"
-                :icon="Sparkles"
-                :showMenu="false"
-                class="cursor-pointer"
-                @click="activeTab = 'employment'"
-              />
-
-              <MetricCard
-                label="Current Gross Package"
-                :value="selectedEmployeeGross"
-                subtext="Monthly base & allowances"
-                :icon="Landmark"
-                :showMenu="false"
-                class="cursor-pointer"
-                @click="activeTab = 'compensation'"
-              />
-            </div>
-
-            <!-- Quick Action Toolbar Strip (Minimalist & Compact) -->
-            <div class="quick-action-strip">
-              <span class="qa-strip-title">Quick Actions:</span>
-              <div class="qa-strip-buttons">
-                <button class="qa-strip-btn" @click="handleQuickAction('edit')">
-                  <Edit2 :size="13" />
-                  <span>Edit Profile</span>
-                </button>
-                <button class="qa-strip-btn" @click="handleQuickAction('leave')">
-                  <Calendar :size="13" />
-                  <span>Assign Leave</span>
-                </button>
-                <button class="qa-strip-btn" @click="handleQuickAction('position')">
-                  <Briefcase :size="13" />
-                  <span>Transfer / Promotion</span>
-                </button>
-                <button class="qa-strip-btn" @click="handleQuickAction('document')">
-                  <UploadCloud :size="13" />
-                  <span>Upload Document</span>
-                </button>
-                <button class="qa-strip-btn" @click="handleQuickAction('asset')">
-                  <Monitor :size="13" />
-                  <span>Assign Asset</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2-Column Balanced Overview Grid -->
-            <div class="overview-dual-grid">
-              <!-- Column 1: Employment & Compensation Glance -->
-              <div class="overview-column">
-                <!-- Employment Glance Card -->
-                <div class="content-section-card">
-                  <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                      <Briefcase :size="14" class="text-primary" />
-                      <h3 class="section-card-title">Employment & Placement</h3>
-                    </div>
-                    <button class="card-header-link" @click="activeTab = 'employment'">Full Record &rarr;</button>
+            <div class="overview-cards-grid">
+              
+              <!-- Card 1: Identity & Location -->
+              <div class="overview-section-card">
+                <h3 class="overview-card-title">Identity & Location</h3>
+                <div class="overview-fields-3col">
+                  <div class="overview-field">
+                    <span class="overview-label">Legal Name</span>
+                    <span class="overview-value">{{ selectedEmployee.employee_name }}</span>
                   </div>
-                  <div class="fields-compact-grid">
-                    <div class="detail-field">
-                      <span class="detail-field-label">Department</span>
-                      <span class="detail-field-value font-medium">{{ selectedEmployee.department_name }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Position Title</span>
-                      <span class="detail-field-value font-medium">{{ selectedEmployee.job_title }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Contract Type</span>
-                      <span class="detail-field-value capitalize">{{ selectedEmployee.employment_type }} Full-Time</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Work Schedule</span>
-                      <span class="detail-field-value">40 hrs / week (5 days)</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Hire Date</span>
-                      <span class="detail-field-value">{{ formatDate(selectedEmployee.hire_date) }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Probation Confirmation</span>
-                      <span class="detail-field-value text-emerald-700 font-medium">Confirmed ({{ formatDate(selectedEmployee.confirmation_date) }})</span>
-                    </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Gender</span>
+                    <span class="overview-value">{{ selectedEmployee.gender || 'Male' }}</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">National ID</span>
+                    <span class="overview-value">{{ selectedEmployee.fayda_id || '051564848884' }}</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Marital Status</span>
+                    <span class="overview-value">{{ selectedEmployee.marital_status || 'Married' }}</span>
+                  </div>
+                  <div class="overview-field col-span-2">
+                    <span class="overview-label">Residence Address</span>
+                    <span class="overview-value">{{ selectedEmployee.residence_line || 'Bole, Addis Ababa' }}</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- Compensation Glance Card -->
-                <div class="content-section-card">
-                  <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                      <Landmark :size="14" class="text-primary" />
-                      <h3 class="section-card-title">Compensation & Bank Accounts</h3>
-                    </div>
-                    <button class="card-header-link" @click="activeTab = 'compensation'">Full Package &rarr;</button>
+              <!-- Card 2: Employment & Placement -->
+              <div class="overview-section-card">
+                <h3 class="overview-card-title">Employment & Placement</h3>
+                <div class="overview-fields-3col">
+                  <div class="overview-field">
+                    <span class="overview-label">Department</span>
+                    <span class="overview-value">{{ selectedEmployee.department_name }}</span>
                   </div>
-                  <div class="fields-compact-grid">
-                    <div class="detail-field">
-                      <span class="detail-field-label">Monthly Base Salary</span>
-                      <span class="detail-field-value font-semibold text-emerald-700">ETB {{ (selectedEmployee.basic_amount || 72000).toLocaleString() }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Monthly Allowances</span>
-                      <span class="detail-field-value">ETB {{ ((selectedEmployee.transport_allowance ?? 4240) + (selectedEmployee.housing_allowance ?? 11000) + (selectedEmployee.other_allowance ?? 1500)).toLocaleString() }}</span>
-                    </div>
-                    <div class="detail-field span-full">
-                      <span class="detail-field-label">Primary Bank Disbursement</span>
-                      <div class="flex items-center justify-between mt-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-xs">
-                        <span class="font-medium text-slate-700">Commercial Bank of Ethiopia (CBE)</span>
-                        <span class="font-mono text-slate-600">•••• •••• •••• 0871 (80% Split)</span>
-                      </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Position Title</span>
+                    <span class="overview-value">{{ selectedEmployee.job_title }}</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Contract Type</span>
+                    <span class="overview-value">Permanent Full-Time</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Work Schedule</span>
+                    <span class="overview-value">40 hrs/ week (5 days)</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Hire Date</span>
+                    <span class="overview-value">Jan 15, 2024</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Probation Confirmation</span>
+                    <span class="overview-value">Jul 16, 2024</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 3: Compensation & Bank Accounts -->
+              <div class="overview-section-card">
+                <h3 class="overview-card-title">Compensation & Bank Accounts</h3>
+                <div class="overview-fields-3col">
+                  <div class="overview-field">
+                    <span class="overview-label">Monthly Base Salary</span>
+                    <span class="overview-value">72,000 ETB</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">Monthly Allowance</span>
+                    <span class="overview-value">16, 740 ETB</span>
+                  </div>
+                  <div class="overview-field">
+                    <span class="overview-label">National ID</span>
+                    <span class="overview-value">{{ selectedEmployee.fayda_id || '051564848884' }}</span>
+                  </div>
+                  <div class="overview-field col-span-3">
+                    <span class="overview-label">Bank Disbursement</span>
+                    <div class="overview-disbursement-box">
+                      <span class="bank-name">Commercial Bank of Ethiopia (CBE)</span>
+                      <span class="bank-acc">**** *** *** 0087</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Column 2: Personal, Compliance & Family Glance -->
-              <div class="overview-column">
-                <!-- Personal Glance Card -->
-                <div class="content-section-card">
-                  <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                      <User :size="14" class="text-primary" />
-                      <h3 class="section-card-title">Identity & Demographics</h3>
-                    </div>
-                    <button class="card-header-link" @click="activeTab = 'personal'">Full Profile &rarr;</button>
+              <!-- Card 4: Compliance & Statutory -->
+              <div class="overview-section-card">
+                <h3 class="overview-card-title">Compliance & Statutory</h3>
+                <div class="overview-fields-3col">
+                  <div class="overview-field">
+                    <span class="overview-label">Tin Number</span>
+                    <span class="overview-value">Finance</span>
                   </div>
-                  <div class="fields-compact-grid">
-                    <div class="detail-field">
-                      <span class="detail-field-label">Legal Name</span>
-                      <span class="detail-field-value font-semibold">{{ selectedEmployee.employee_name }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Gender & Age</span>
-                      <span class="detail-field-value">{{ selectedEmployee.gender }} &bull; {{ calculateAge(selectedEmployee.birth_date) }} years</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Fayda National ID</span>
-                      <span class="detail-field-value font-mono text-xs font-semibold text-emerald-700">{{ selectedEmployee.fayda_id || 'FYD-90114522208' }} &check;</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Marital Status</span>
-                      <span class="detail-field-value">{{ selectedEmployee.marital_status || 'Married' }}</span>
-                    </div>
-                    <div class="detail-field span-full">
-                      <span class="detail-field-label">Residence Address</span>
-                      <span class="detail-field-value text-xs">{{ selectedEmployee.residence_line || 'Main Commercial Boulevard' }}, {{ selectedEmployee.residence_subcity || 'Bole' }}, {{ selectedEmployee.residence_region || 'Addis Ababa' }}</span>
-                    </div>
+                  <div class="overview-field">
+                    <span class="overview-label">POESSA Pension No.</span>
+                    <span class="overview-value">PN - 2014546</span>
                   </div>
-                </div>
-
-                <!-- Compliance & Family Glance Card -->
-                <div class="content-section-card">
-                  <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                      <ShieldCheck :size="14" class="text-primary" />
-                      <h3 class="section-card-title">Compliance & Statutory</h3>
-                    </div>
-                    <button class="card-header-link" @click="activeTab = 'compliance'">View All &rarr;</button>
+                  <div class="overview-field">
+                    <span class="overview-label">Guarantor</span>
+                    <span class="overview-value">Daniel Kebede</span>
                   </div>
-                  <div class="fields-compact-grid">
-                    <div class="detail-field">
-                      <span class="detail-field-label">TIN Number</span>
-                      <span class="detail-field-value font-mono text-xs">{{ selectedEmployee.tin || '0051177245' }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">POESSA Pension No.</span>
-                      <span class="detail-field-value font-mono text-xs">{{ selectedEmployee.pension_number || 'PN-204415' }}</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Guarantor Bond</span>
-                      <span class="detail-field-value font-medium text-xs">Daniel Kebede (ETB 150,000 Bond)</span>
-                    </div>
-                    <div class="detail-field">
-                      <span class="detail-field-label">Emergency Next of Kin</span>
-                      <span class="detail-field-value font-medium text-xs">Hiwot Tadesse (Spouse &bull; +251 91 298 3341)</span>
+                  <div class="overview-field col-span-3">
+                    <span class="overview-label">Emergency</span>
+                    <div class="emergency-contact-display">
+                      <span class="emergency-name">Hiwot Tadese</span>
+                      <a href="tel:+251911235781" class="emergency-phone">+251 911 235 781</a>
                     </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -1627,54 +1626,52 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Section 3: Residential Address -->
+            <!-- Section 3: Addresses & Physical Domicile (PartyAddress Dynamic Sub-Table) -->
             <div class="content-section-card">
               <div class="section-card-header">
-                <h3 class="section-card-title">Residential Address</h3>
-                <span class="section-badge">Physical Domicile</span>
+                <div class="flex items-center gap-2">
+                  <MapPin :size="14" class="text-primary" />
+                  <h3 class="section-card-title">Addresses & Physical Domicile</h3>
+                </div>
+                <span class="section-badge">PartyAddress (1:N)</span>
               </div>
-              <div class="fields-compact-grid">
-                <div class="detail-field">
-                  <span class="detail-field-label">Address Type</span>
-                  <span class="detail-field-value">{{ selectedEmployee.address_type || 'Residence / Primary Home' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Country</span>
-                  <span class="detail-field-value">{{ selectedEmployee.address_country || 'Ethiopia' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Region / City Administration</span>
-                  <span class="detail-field-value">{{ selectedEmployee.residence_region || 'Addis Ababa' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Sub-City / Zone</span>
-                  <span class="detail-field-value">{{ selectedEmployee.residence_subcity || 'Bole Sub-City' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Woreda</span>
-                  <span class="detail-field-value">{{ selectedEmployee.residence_woreda || 'Woreda 03' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Kebele</span>
-                  <span class="detail-field-value">{{ selectedEmployee.residence_kebele || 'Kebele 08' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">House Number</span>
-                  <span class="detail-field-value font-mono">{{ selectedEmployee.residence_house_number || 'H-102' }}</span>
-                </div>
-                <div class="detail-field">
-                  <span class="detail-field-label">Postal Code / P.O. Box</span>
-                  <span class="detail-field-value font-mono">{{ selectedEmployee.residence_postal_code || '1176' }}</span>
-                </div>
-                <div class="detail-field span-full">
-                  <span class="detail-field-label">Street / Locality Line</span>
-                  <span class="detail-field-value">{{ selectedEmployee.residence_line || 'Cameroon St., Near Edna Mall' }}</span>
-                </div>
-                <div class="detail-field span-full">
-                  <span class="detail-field-label">Effective Domicile Period</span>
-                  <span class="detail-field-value font-mono text-xs">{{ selectedEmployee.address_effective_from || '2022-01-10' }} &rarr; {{ selectedEmployee.address_effective_to || 'Current (Active Domicile)' }}</span>
-                </div>
-              </div>
+              <table class="nested-mini-table">
+                <thead>
+                  <tr>
+                    <th>Address Type</th>
+                    <th>Exact Location (Region & Sub-City)</th>
+                    <th>Street / P.O. Box Line</th>
+                    <th>House No.</th>
+                    <th>Postal Code</th>
+                    <th class="text-center">Primary</th>
+                    <th>Effective Timeline</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="addr in addresses" :key="addr.id">
+                    <td>
+                      <span class="capitalize font-semibold text-slate-800">{{ addr.address_type }}</span>
+                    </td>
+                    <td class="text-xs text-slate-700 font-medium">{{ addr.admin_unit }}</td>
+                    <td class="text-xs text-slate-600">{{ addr.line || '—' }}</td>
+                    <td class="text-xs text-slate-700">
+                      <span v-if="addr.address_type !== 'postal' && addr.house_number">{{ addr.house_number }}</span>
+                      <span v-else class="text-slate-400 font-mono">—</span>
+                    </td>
+                    <td class="text-xs text-slate-700 font-mono">
+                      <span v-if="addr.postal_code">{{ addr.postal_code }}</span>
+                      <span v-else class="text-slate-400 font-mono">—</span>
+                    </td>
+                    <td class="text-center">
+                      <span v-if="addr.is_primary" class="status-pill status-pill-active">Primary</span>
+                      <span v-else class="text-slate-400 text-xs">—</span>
+                    </td>
+                    <td class="font-mono text-xs text-slate-500">
+                      {{ formatDate(addr.effective_from) }} &rarr; {{ addr.effective_to ? formatDate(addr.effective_to) : 'Present' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <!-- Section 4: Biography Notes -->
@@ -2185,7 +2182,7 @@ onUnmounted(() => {
               </table>
             </div>
 
-            <!-- Employee Guarantor (EmployeeGuarantee - HR_Schema_final-v4.sql Line 839) -->
+            <!-- Employee Guarantor (EmployeeGuarantee) -->
             <div class="content-section-card">
               <div class="section-card-header">
                 <div class="flex items-center gap-2">
@@ -2641,12 +2638,12 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* HERO PROFILE HEADER BANNER */
+/* HERO PROFILE HEADER BANNER (MINIMAL & BALANCED) */
 .profile-hero-banner {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px 20px;
+  border-radius: 12px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2657,35 +2654,28 @@ onUnmounted(() => {
 .hero-left-section {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
 .hero-avatar-wrapper {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   flex-shrink: 0;
+  border-radius: 50%;
+  border: 3px solid #f59e0b;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
 }
 
 .hero-avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 16px;
-  object-fit: cover;
-  background-color: #f1f5f9;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.avatar-status-badge {
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 13px;
-  height: 13px;
   border-radius: 50%;
-  background-color: #10b981;
-  border: 2px solid #ffffff;
+  object-fit: cover;
 }
 
 .hero-identity-block {
@@ -2694,10 +2684,16 @@ onUnmounted(() => {
   gap: 3px;
 }
 
+.hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .hero-employee-name {
   font-size: 20px;
   font-weight: 700;
-  color: #404040;
+  color: #1e293b;
   line-height: 1.2;
   margin: 0;
 }
@@ -2706,49 +2702,29 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-top: 1px;
+}
+
+.hero-code-id {
   font-size: 13px;
-}
-
-.sep-bullet {
-  color: #cbd5e1;
-}
-
-.hero-title-text {
-  font-weight: 500;
   color: #64748b;
-}
-
-.hero-tags-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  flex-wrap: wrap;
-}
-
-.hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 11px;
-  color: #475569;
   font-weight: 500;
 }
 
-.hero-tenure-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #737373;
+.hero-job-pill {
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 5px;
 }
 
-.tag-icon { color: #64748b; }
-.tenure-icon { color: #94a3b8; }
+.hero-work-location {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
 
 /* Hero Right: Contact Card */
 .hero-right-section {
@@ -2761,15 +2737,15 @@ onUnmounted(() => {
 .hero-contact-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: #404040;
+  gap: 6px;
+  font-size: 13px;
+  color: #334155;
 }
 
 .hero-contact-item {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
 .contact-icon {
@@ -2780,125 +2756,187 @@ onUnmounted(() => {
 .contact-link {
   color: #0B529C;
   text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
 }
 .contact-link:hover {
   text-decoration: underline;
 }
 
-.manager-label { color: #737373; }
-.manager-name { font-weight: 600; color: #404040; }
-
-.btn-hero-edit {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 32px;
-  padding: 0 12px;
-  background-color: #ffffff;
-  color: #404040;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-hero-edit:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0B529C;
+.contact-text {
+  font-size: 13px;
+  color: #334155;
 }
 
-/* Tabs Bar */
-.profile-tabs-wrapper {
+.reports-to-text {
+  font-size: 13px;
+}
+.manager-label { color: #64748b; }
+.manager-name { font-weight: 500; color: #334155; }
+
+/* UNIFIED MASTER WORKSPACE CARD */
+.master-workspace-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 2px 12px;
-}
-
-.tab-content-area {
-  width: 100%;
-}
-
-/* ── OVERVIEW TAB (COMPACT & SLEEK) ── */
-.overview-view {
+  border-radius: 12px;
+  padding: 20px 24px 0 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* KPI Metrics Grid (Using Centralized MetricCard Component) */
 .profile-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
-/* Quick Action Strip */
-.quick-action-strip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 8px 14px;
+/* Header Description with Inline Edit Link */
+.profile-narrative-box {
+  padding: 2px 0 2px 0;
 }
 
-.qa-strip-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #737373;
-  white-space: nowrap;
+.profile-desc-paragraph {
+  font-size: 13px;
+  color: #525252;
+  line-height: 1.55;
+  margin: 0;
 }
 
-.qa-strip-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.qa-strip-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-  color: #404040;
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.qa-strip-btn:hover {
-  background-color: #eff6ff;
-  border-color: #bfdbfe;
+.inline-edit-link {
+  background: none;
+  border: none;
+  padding: 0;
   color: #0B529C;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.inline-edit-link:hover {
+  color: #094482;
 }
 
-/* Dual Column Overview Grid */
-.overview-dual-grid {
+.profile-tabs-wrapper-inline {
+  border-bottom: 1px solid #f1f5f9;
+  margin-top: 2px;
+}
+
+.tab-content-area {
+  width: 100%;
+}
+
+/* ── OVERVIEW TAB (2x2 GRID OF SEPARATE CARDS MATCHING SCREENSHOT) ── */
+.overview-view {
+  width: 100%;
+}
+
+.overview-cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 16px;
   align-items: start;
 }
 
-.overview-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.overview-section-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* ── DOMAIN DETAIL CARDS (TABS 2 TO 7) ── */
-.domain-tab-view {
+.overview-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0 0 20px 0;
+  line-height: 1.2;
+}
+
+.overview-fields-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: 20px;
+  column-gap: 24px;
+}
+
+.overview-field {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
+}
+
+.overview-field.col-span-2 {
+  grid-column: span 2;
+}
+
+.overview-field.col-span-3 {
+  grid-column: span 3;
+}
+
+.overview-label {
+  font-size: 12px;
+  color: #737373;
+  font-weight: 400;
+}
+
+.overview-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #404040;
+  line-height: 1.3;
+}
+
+/* Inset Bank Disbursement Box */
+.overview-disbursement-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.bank-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+}
+
+.bank-acc {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #525252;
+  letter-spacing: 0.05em;
+}
+
+/* Emergency Contact Display */
+.emergency-contact-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emergency-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.emergency-phone {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0B529C;
+  text-decoration: none;
+}
+.emergency-phone:hover {
+  text-decoration: underline;
 }
 
 .content-section-card {

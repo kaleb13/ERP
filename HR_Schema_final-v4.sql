@@ -2280,8 +2280,8 @@
 		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
 		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
 		- employee_salary_id      -- FK EmployeeSalary -- parent package
-		- payroll_component_id    -- FK PayrollComponent -- UNIQUE (employee_salary_id, payroll_component_id)
-		- amount                  -- numeric(15,4) nullable -- fixed value for this employee
+		- ✅ payroll_component_id    -- FK PayrollComponent -- UNIQUE (employee_salary_id, payroll_component_id)
+		- ✅ amount                  -- numeric(15,4) nullable -- fixed value for this employee
 		- percent                 -- numeric(7,4) nullable -- for percentage components
 		- payroll_formula_id      -- FK PayrollFormula nullable -- personal formula pin
 		- effective_from          -- date nullable -- line-level effectivity (a one-year housing allowance); NULL = whole package life

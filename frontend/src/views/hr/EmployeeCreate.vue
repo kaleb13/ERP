@@ -6,7 +6,7 @@ import {
   User, Briefcase, Landmark, GraduationCap, ShieldCheck, Heart,
   Calendar, UploadCloud, Upload, Info, Plus, Trash2, List, ListOrdered,
   Square, Link, Undo2, Redo2, Table, Expand, Copy, ArrowDown, ArrowUp,
-  ShieldAlert
+  ShieldAlert, MapPin
 } from 'lucide-vue-next';
 import BaseTabs from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -208,7 +208,26 @@ export type ChildTableType =
   | 'dependentsList'
   | 'statutoryExemptionsList'
   | 'bankAccountsList'
-  | 'salaryComponentsList';
+  | 'salaryComponentsList'
+  | 'addressesList';
+
+export interface PartyAddressRow {
+  id: number;
+  selected: boolean;
+  address_type: 'residence' | 'postal' | 'work' | 'emergency' | 'birth_place' | 'other';
+  admin_unit: string;
+  country?: string;
+  region?: string;
+  subcity_zone?: string;
+  woreda?: string;
+  line: string;
+  house_number: string;
+  kebele?: string;
+  postal_code?: string;
+  is_primary: boolean;
+  effective_from?: string;
+  effective_to?: string;
+}
 
 export interface EmployeeSalaryComponentRow {
   id: number;
@@ -216,11 +235,11 @@ export interface EmployeeSalaryComponentRow {
   component_name: string;
   calc_type: 'Fixed Amount' | 'Percentage of Basic';
   amount: number | string;
+  percent?: number | string;
   payroll_formula?: string;
-  effective_from: string;
-  effective_to: string;
-  state?: 'active' | 'inactive';
-  notes?: string;
+  effective_from?: string;
+  effective_to?: string;
+  order?: number;
 }
 
 export interface EmployeeBankAccountRow {
@@ -253,22 +272,16 @@ export interface AcademicQualificationRow {
   graduation_date: string;
   start_date: string;
   gpa: string;
-  country: string;
-  honors_distinction: string;
-  notes: string;
 }
 
 export interface ProfessionalCertificationRow {
   id: number;
   selected: boolean;
-  certification_title: string;
+  certification: string;
   issuing_institution: string;
   certificate_number: string;
   issued_date: string;
   expiry_date: string;
-  credential_url: string;
-  verification_status: string;
-  notes: string;
 }
 
 export interface PriorWorkExperienceRow {
@@ -279,11 +292,10 @@ export interface PriorWorkExperienceRow {
   employment_type: string;
   start_date: string;
   end_date: string;
-  department: string;
-  ending_salary: string;
   reason_for_leaving: string;
   supervisor_reference: string;
   responsibilities: string;
+  is_relevant: boolean;
 }
 
 export interface TechnicalSkillRow {
@@ -291,9 +303,7 @@ export interface TechnicalSkillRow {
   selected: boolean;
   skill: string;
   proficiency: string;
-  year: string;
-  certified: string;
-  description: string;
+  years_of_experience: number | string;
 }
 
 export interface SpokenLanguageRow {
@@ -301,7 +311,7 @@ export interface SpokenLanguageRow {
   selected: boolean;
   language: string;
   fluency_level: string;
-  mother_tongue: string;
+  is_native: boolean;
   speaking_level: string;
   listening_level: string;
   reading_level: string;
@@ -316,7 +326,7 @@ export interface RegulatoryClearanceRow {
   issue_date: string;
   expiry_date: string;
   verification_status: string;
-  issuing_authority: string;
+  verified_by?: string;
   notes: string;
 }
 
@@ -326,10 +336,8 @@ export interface EmergencyContactRow {
   full_name: string;
   phone: string;
   relationship: string;
+  priority: number | string;
   city_location: string;
-  alternate_phone: string;
-  email: string;
-  workplace_employer: string;
 }
 
 export interface DependentRow {
@@ -338,14 +346,30 @@ export interface DependentRow {
   dependent_name: string;
   relationship: string;
   birth_date: string;
-  primary_insurance: string;
-  national_id: string;
-  gender: string;
-  insurance_policy_no: string;
-  special_care_notes: string;
+  is_beneficiary: boolean;
+  benefit_notes: string;
 }
 
 // Reactive table arrays
+const addressesList = ref<PartyAddressRow[]>([
+  {
+    id: 1,
+    selected: false,
+    address_type: 'residence',
+    country: 'Ethiopia',
+    region: 'Addis Ababa',
+    subcity_zone: 'Bole Sub-City',
+    woreda: 'Woreda 03',
+    kebele: 'Kebele 01',
+    line: 'Cameroon St., near Edna Mall',
+    house_number: '214',
+    postal_code: '',
+    is_primary: true,
+    effective_from: '2024-01-15',
+    effective_to: '',
+    admin_unit: 'Addis Ababa > Bole Sub-City > Woreda 03 > Kebele 01'
+  }
+]);
 const academicQualifications = ref<AcademicQualificationRow[]>([]);
 const professionalCertifications = ref<ProfessionalCertificationRow[]>([]);
 const priorWorkExperiences = ref<PriorWorkExperienceRow[]>([]);
@@ -375,8 +399,7 @@ const salaryComponentsList = ref<EmployeeSalaryComponentRow[]>([
     calc_type: 'Fixed Amount',
     amount: 2200,
     effective_from: '',
-    effective_to: '',
-    notes: 'Standard recurring transit allowance'
+    effective_to: ''
   },
   {
     id: 2,
@@ -385,8 +408,7 @@ const salaryComponentsList = ref<EmployeeSalaryComponentRow[]>([
     calc_type: 'Fixed Amount',
     amount: 3000,
     effective_from: '',
-    effective_to: '',
-    notes: 'Statutory taxable accommodation allowance'
+    effective_to: ''
   }
 ]);
 
@@ -403,23 +425,17 @@ const createBlankRow = (type: ChildTableType): any => {
         awarding_institute: '',
         graduation_date: '',
         start_date: '',
-        gpa: '',
-        country: '',
-        honors_distinction: '',
-        notes: ''
+        gpa: ''
       };
     case 'professionalCertifications':
       return {
         id,
         selected: false,
-        certification_title: '',
+        certification: '',
         issuing_institution: '',
         certificate_number: '',
         issued_date: '',
-        expiry_date: '',
-        credential_url: '',
-        verification_status: 'Active',
-        notes: ''
+        expiry_date: ''
       };
     case 'priorWorkExperiences':
       return {
@@ -430,11 +446,10 @@ const createBlankRow = (type: ChildTableType): any => {
         employment_type: 'Permanent',
         start_date: '',
         end_date: '',
-        department: '',
-        ending_salary: '',
         reason_for_leaving: '',
         supervisor_reference: '',
-        responsibilities: ''
+        responsibilities: '',
+        is_relevant: true
       };
     case 'technicalSkills':
       return {
@@ -442,9 +457,7 @@ const createBlankRow = (type: ChildTableType): any => {
         selected: false,
         skill: '',
         proficiency: 'Intermediate',
-        year: '1',
-        certified: 'No',
-        description: ''
+        years_of_experience: 1
       };
     case 'spokenLanguages':
       return {
@@ -452,7 +465,7 @@ const createBlankRow = (type: ChildTableType): any => {
         selected: false,
         language: '',
         fluency_level: 'Fluent',
-        mother_tongue: 'No',
+        is_native: false,
         speaking_level: 'Fluent',
         listening_level: 'Fluent',
         reading_level: 'Fluent',
@@ -462,12 +475,12 @@ const createBlankRow = (type: ChildTableType): any => {
       return {
         id,
         selected: false,
-        clearance_type: 'Medical Clearance',
+        clearance_type: '',
         ref_number: '',
         issue_date: '',
         expiry_date: '',
         verification_status: 'Valid / Cleared',
-        issuing_authority: '',
+        verified_by: '',
         notes: ''
       };
     case 'emergencyContactsList':
@@ -477,30 +490,25 @@ const createBlankRow = (type: ChildTableType): any => {
         full_name: '',
         phone: '',
         relationship: '',
-        city_location: '',
-        alternate_phone: '',
-        email: '',
-        workplace_employer: ''
+        priority: emergencyContactsList.value.length === 0 ? 1 : 2,
+        city_location: ''
       };
     case 'dependentsList':
       return {
         id,
         selected: false,
         dependent_name: '',
-        relationship: 'Child',
+        relationship: '',
         birth_date: '',
-        primary_insurance: 'Yes',
-        national_id: '',
-        gender: '',
-        insurance_policy_no: '',
-        special_care_notes: ''
+        is_beneficiary: true,
+        benefit_notes: ''
       };
     case 'statutoryExemptionsList':
       return {
         id,
         selected: false,
         rule_type: '',
-        effective_from: '',
+        effective_from: form.value.salary_effective_date || form.value.hire_date || '',
         effective_to: '',
         reason: '',
         approved_by: ''
@@ -524,15 +532,35 @@ const createBlankRow = (type: ChildTableType): any => {
         calc_type: 'Fixed Amount',
         amount: '',
         payroll_formula: 'Default Component Formula',
-        effective_from: form.value.hire_date || '',
+        effective_from: '',
+        effective_to: ''
+      };
+    case 'addressesList':
+      return {
+        id,
+        selected: false,
+        address_type: 'residence',
+        country: 'Ethiopia',
+        region: 'Addis Ababa',
+        subcity_zone: '',
+        woreda: '',
+        kebele: '',
+        line: '',
+        house_number: '',
+        postal_code: '',
+        is_primary: addressesList.value.length === 0,
+        effective_from: form.value.hire_date || new Date().toISOString().split('T')[0],
         effective_to: '',
-        state: 'active',
-        notes: ''
+        admin_unit: ''
       };
   }
 };
 
 // Add Row handlers
+const addAddressItem = () => addressesList.value.push(createBlankRow('addressesList'));
+const removeAddressItem = (index: number) => {
+  addressesList.value.splice(index, 1);
+};
 const addAcademicQualification = () => academicQualifications.value.push(createBlankRow('academicQualifications'));
 const addProfessionalCertification = () => professionalCertifications.value.push(createBlankRow('professionalCertifications'));
 const addPriorWorkExperience = () => priorWorkExperiences.value.push(createBlankRow('priorWorkExperiences'));
@@ -544,6 +572,315 @@ const addDependentItem = () => dependentsList.value.push(createBlankRow('depende
 const addStatutoryExemptionRow = () => statutoryExemptionsList.value.push(createBlankRow('statutoryExemptionsList'));
 const addBankAccount = () => bankAccountsList.value.push(createBlankRow('bankAccountsList'));
 const addSalaryComponent = () => salaryComponentsList.value.push(createBlankRow('salaryComponentsList'));
+
+// ─── Address Cards Repeater Helpers ───
+const getRegionsForRow = (row: PartyAddressRow) => {
+  if (!row.country || row.country === 'Ethiopia') {
+    return ethiopianRegions;
+  }
+  if (row.country === 'Kenya') {
+    return ['Nairobi County', 'Mombasa County', 'Kisumu County', 'Nakuru County', 'Kiambu County'];
+  }
+  if (row.country === 'Djibouti') {
+    return ['Djibouti City', 'Ali Sabieh', 'Dikhil', 'Tadjourah', 'Obock', 'Arta'];
+  }
+  if (row.country === 'United States') {
+    return ['California', 'New York', 'Texas', 'Washington', 'Virginia', 'Maryland'];
+  }
+  if (row.country === 'United Kingdom') {
+    return ['Greater London', 'West Midlands', 'Greater Manchester', 'Scotland'];
+  }
+  return [];
+};
+
+const getZonesForRow = (row: PartyAddressRow) => {
+  if (!row.region) return [];
+  return subcitiesByRegion[row.region] || [
+    'Central Zone', 'North Zone', 'South Zone', 'East Zone', 'West Zone', 'Special Zone'
+  ];
+};
+
+const getWoredasForRow = (row: PartyAddressRow) => {
+  if (!row.subcity_zone) return [];
+  if (woredasBySubcity[row.subcity_zone]) {
+    return woredasBySubcity[row.subcity_zone];
+  }
+  return [
+    'Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05',
+    'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10'
+  ];
+};
+
+const getKebelesForRow = (_row: PartyAddressRow) => {
+  return [
+    'Kebele 01', 'Kebele 02', 'Kebele 03', 'Kebele 04', 'Kebele 05',
+    'Kebele 06', 'Kebele 07', 'Kebele 08', 'Kebele 09', 'Kebele 10',
+    'Kebele 11', 'Kebele 12', 'Kebele 13', 'Kebele 14', 'Kebele 15'
+  ];
+};
+
+const onRowCountryChange = (row: PartyAddressRow) => {
+  row.region = '';
+  row.subcity_zone = '';
+  row.woreda = '';
+  row.kebele = '';
+  syncAdminUnitForRow(row);
+};
+
+const onRowRegionChange = (row: PartyAddressRow) => {
+  row.subcity_zone = '';
+  row.woreda = '';
+  row.kebele = '';
+  syncAdminUnitForRow(row);
+};
+
+const onRowZoneChange = (row: PartyAddressRow) => {
+  row.woreda = '';
+  row.kebele = '';
+  syncAdminUnitForRow(row);
+};
+
+const onRowWoredaChange = (row: PartyAddressRow) => {
+  row.kebele = '';
+  syncAdminUnitForRow(row);
+};
+
+const onRowKebeleChange = (row: PartyAddressRow) => {
+  syncAdminUnitForRow(row);
+};
+
+const syncAdminUnitForRow = (row: PartyAddressRow) => {
+  const parts: string[] = [];
+  if (row.region) parts.push(row.region);
+  if (row.subcity_zone) parts.push(row.subcity_zone);
+  if (row.woreda) parts.push(row.woreda);
+  if (row.kebele) parts.push(row.kebele);
+  row.admin_unit = parts.join(' > ');
+};
+
+// ─── Exact Geographic Location Catalog & Reactive Hierarchy ───
+const ethiopianRegions = [
+  'Addis Ababa',
+  'Dire Dawa',
+  'Oromia',
+  'Amhara',
+  'Sidama',
+  'Tigray',
+  'Central Ethiopia',
+  'South Ethiopia',
+  'South West Ethiopia',
+  'Somali',
+  'Afar',
+  'Benishangul-Gumuz',
+  'Gambela',
+  'Harari'
+];
+
+const subcitiesByRegion: Record<string, string[]> = {
+  'Addis Ababa': [
+    'Bole Sub-City',
+    'Kirkos Sub-City',
+    'Yeka Sub-City',
+    'Arada Sub-City',
+    'Lideta Sub-City',
+    'Gulele Sub-City',
+    'Nifas Silk-Lafto Sub-City',
+    'Kolfe Keranio Sub-City',
+    'Akaki Kality Sub-City',
+    'Lemi Kura Sub-City',
+    'Addis Ketema Sub-City'
+  ],
+  'Dire Dawa': [
+    'Dire Dawa City',
+    'Gurgura'
+  ],
+  'Oromia': [
+    'Sheger City',
+    'East Shewa Zone (Adama)',
+    'Finfine Special Zone',
+    'West Shewa Zone (Ambo)',
+    'Jimma Zone',
+    'Arsi Zone (Asella)',
+    'West Arsi Zone (Shashamane)',
+    'North Shewa Zone'
+  ],
+  'Amhara': [
+    'Bahir Dar Special Zone',
+    'North Shewa Zone (Debre Berhan)',
+    'South Gondar Zone (Debre Tabor)',
+    'North Gondar Zone (Gondar City)',
+    'West Gojjam Zone',
+    'East Gojjam Zone',
+    'South Wollo Zone (Dessie)'
+  ],
+  'Sidama': [
+    'Hawassa City Administration',
+    'Aleta Wondo',
+    'Dale',
+    'Yirgalem'
+  ],
+  'Tigray': [
+    'Mekelle Special Zone',
+    'Central Tigray',
+    'Eastern Tigray'
+  ],
+  'Central Ethiopia': [
+    'Gurage Zone',
+    'Silte Zone',
+    'Hadiya Zone'
+  ],
+  'South Ethiopia': [
+    'Wolayita Zone (Sodo)',
+    'Gamo Zone (Arba Minch)',
+    'Gofa Zone'
+  ],
+  'Somali': [
+    'Fafan Zone (Jigjiga)',
+    'Siti Zone'
+  ],
+  'Harari': [
+    'Harar City'
+  ]
+};
+
+const woredasBySubcity: Record<string, string[]> = {
+  'Bole Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11', 'Woreda 12', 'Woreda 13', 'Woreda 14'],
+  'Kirkos Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11'],
+  'Yeka Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11', 'Woreda 12', 'Woreda 13'],
+  'Arada Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10'],
+  'Lideta Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10'],
+  'Gulele Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10'],
+  'Nifas Silk-Lafto Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11', 'Woreda 12', 'Woreda 13', 'Woreda 14', 'Woreda 15'],
+  'Kolfe Keranio Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11', 'Woreda 12', 'Woreda 13', 'Woreda 14', 'Woreda 15'],
+  'Akaki Kality Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10', 'Woreda 11', 'Woreda 12', 'Woreda 13'],
+  'Lemi Kura Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10'],
+  'Addis Ketema Sub-City': ['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10']
+};
+
+const isCustomSubcity = ref(false);
+const customSubcityText = ref('');
+const isCustomWoreda = ref(false);
+const customWoredaText = ref('');
+
+const currentRegionOptions = computed(() => {
+  if (!activeRowData.value) return ethiopianRegions;
+  const c = activeRowData.value.country;
+  if (!c || c === 'Ethiopia') return ethiopianRegions;
+  if (c === 'Kenya') return ['Nairobi County', 'Mombasa County', 'Kisumu County', 'Nakuru County', 'Kiambu County'];
+  if (c === 'Djibouti') return ['Djibouti City', 'Ali Sabieh', 'Dikhil', 'Tadjourah', 'Obock', 'Arta'];
+  if (c === 'United States') return ['California', 'New York', 'Texas', 'Washington', 'Virginia', 'Maryland'];
+  if (c === 'United Kingdom') return ['Greater London', 'West Midlands', 'Greater Manchester', 'Scotland'];
+  return [];
+});
+
+const currentSubcityOptions = computed(() => {
+  if (!activeRowData.value || !activeRowData.value.region) return [];
+  return subcitiesByRegion[activeRowData.value.region] || [];
+});
+
+const currentWoredaOptions = computed(() => {
+  if (!activeRowData.value || !activeRowData.value.subcity_zone) return [];
+  return woredasBySubcity[activeRowData.value.subcity_zone] || [];
+});
+
+const onCountryChange = () => {
+  if (!activeRowData.value) return;
+  activeRowData.value.region = '';
+  activeRowData.value.subcity_zone = '';
+  activeRowData.value.woreda = '';
+  isCustomSubcity.value = false;
+  customSubcityText.value = '';
+  isCustomWoreda.value = false;
+  customWoredaText.value = '';
+  updateAdminUnitSummary();
+};
+
+const onRegionChange = () => {
+  if (!activeRowData.value) return;
+  activeRowData.value.subcity_zone = '';
+  activeRowData.value.woreda = '';
+  isCustomSubcity.value = false;
+  customSubcityText.value = '';
+  isCustomWoreda.value = false;
+  customWoredaText.value = '';
+  updateAdminUnitSummary();
+};
+
+const onSubcityChange = () => {
+  if (!activeRowData.value) return;
+  if (activeRowData.value.subcity_zone === '__custom__') {
+    isCustomSubcity.value = true;
+    activeRowData.value.subcity_zone = customSubcityText.value || '';
+  } else {
+    isCustomSubcity.value = false;
+    customSubcityText.value = '';
+  }
+  activeRowData.value.woreda = '';
+  isCustomWoreda.value = false;
+  customWoredaText.value = '';
+  updateAdminUnitSummary();
+};
+
+const onCustomSubcityInput = () => {
+  if (!activeRowData.value) return;
+  activeRowData.value.subcity_zone = customSubcityText.value;
+  updateAdminUnitSummary();
+};
+
+const onWoredaChange = () => {
+  if (!activeRowData.value) return;
+  if (activeRowData.value.woreda === '__custom__') {
+    isCustomWoreda.value = true;
+    activeRowData.value.woreda = customWoredaText.value || '';
+  } else {
+    isCustomWoreda.value = false;
+    customWoredaText.value = '';
+  }
+  updateAdminUnitSummary();
+};
+
+const onCustomWoredaInput = () => {
+  if (!activeRowData.value) return;
+  activeRowData.value.woreda = customWoredaText.value;
+  updateAdminUnitSummary();
+};
+
+const updateAdminUnitSummary = () => {
+  if (!activeRowData.value) return;
+  const parts: string[] = [];
+  if (activeRowData.value.region) parts.push(activeRowData.value.region);
+  if (activeRowData.value.subcity_zone && activeRowData.value.subcity_zone !== '__custom__') {
+    parts.push(activeRowData.value.subcity_zone);
+  }
+  if (activeRowData.value.woreda && activeRowData.value.woreda !== '__custom__') {
+    parts.push(activeRowData.value.woreda);
+  }
+  activeRowData.value.admin_unit = parts.length > 0 ? parts.join(' > ') : '';
+};
+
+const syncRowFromAdminUnitString = (row: PartyAddressRow) => {
+  if (!row.admin_unit) return;
+  const parts = row.admin_unit.split('>').map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 1 && ethiopianRegions.includes(parts[0])) {
+    row.region = parts[0];
+    row.country = 'Ethiopia';
+  }
+  if (parts.length >= 2) {
+    row.subcity_zone = parts[1];
+  }
+  if (parts.length >= 3) {
+    row.woreda = parts[2];
+  }
+};
+
+const setPrimaryAddress = (selectedIdx: number) => {
+  const targetType = addressesList.value[selectedIdx].address_type;
+  addressesList.value.forEach((addr, idx) => {
+    if (addr.address_type === targetType) {
+      addr.is_primary = (idx === selectedIdx);
+    }
+  });
+};
 
 const setPrimaryAccount = (selectedIdx: number) => {
   bankAccountsList.value.forEach((acc, idx) => {
@@ -558,14 +895,15 @@ const activeRowData = ref<any>(null);
 const activeRowIndex = ref<number>(0);
 
 const modalSectionTitles: Record<ChildTableType, string> = {
+  addressesList: 'Address & Physical Domicile',
   academicQualifications: 'Academic Qualification',
   professionalCertifications: 'Certification & License',
   priorWorkExperiences: 'Work Experience',
   technicalSkills: 'Technical Skill',
   spokenLanguages: 'Spoken Language',
-  regulatoryClearances: 'Clearance & License',
+  regulatoryClearances: 'Statutory Clearance & Compliance',
   emergencyContactsList: 'Emergency Contact',
-  dependentsList: 'Dependent & Beneficiary',
+  dependentsList: 'Dependent & Insurance Beneficiary',
   statutoryExemptionsList: 'Tax & Pension Exemption',
   bankAccountsList: 'Bank Account',
   salaryComponentsList: 'Allowance & Benefit'
@@ -573,6 +911,7 @@ const modalSectionTitles: Record<ChildTableType, string> = {
 
 const getListByType = (type: ChildTableType): any[] => {
   switch (type) {
+    case 'addressesList': return addressesList.value;
     case 'academicQualifications': return academicQualifications.value;
     case 'professionalCertifications': return professionalCertifications.value;
     case 'priorWorkExperiences': return priorWorkExperiences.value;
@@ -591,6 +930,25 @@ const openRowModal = (type: ChildTableType, row: any, idx: number) => {
   activeModalType.value = type;
   activeRowData.value = row;
   activeRowIndex.value = idx;
+  if (type === 'addressesList' && row) {
+    const availableSubcities = subcitiesByRegion[row.region] || [];
+    if (row.subcity_zone && !availableSubcities.includes(row.subcity_zone)) {
+      isCustomSubcity.value = true;
+      customSubcityText.value = row.subcity_zone;
+    } else {
+      isCustomSubcity.value = false;
+      customSubcityText.value = '';
+    }
+
+    const availableWoredas = woredasBySubcity[row.subcity_zone] || [];
+    if (row.woreda && !availableWoredas.includes(row.woreda)) {
+      isCustomWoreda.value = true;
+      customWoredaText.value = row.woreda;
+    } else {
+      isCustomWoreda.value = false;
+      customWoredaText.value = '';
+    }
+  }
   showRowModal.value = true;
 };
 
@@ -684,6 +1042,7 @@ const toggleSelectAll = (list: Array<{ selected: boolean }>, e: Event) => {
 const activeSelectedTable = computed<ChildTableType | null>(() => {
   if (salaryComponentsList.value.some(r => r.selected)) return 'salaryComponentsList';
   if (bankAccountsList.value.some(r => r.selected)) return 'bankAccountsList';
+  if (addressesList.value.some(r => r.selected)) return 'addressesList';
   if (statutoryExemptionsList.value.some(r => r.selected)) return 'statutoryExemptionsList';
   if (academicQualifications.value.some(r => r.selected)) return 'academicQualifications';
   if (professionalCertifications.value.some(r => r.selected)) return 'professionalCertifications';
@@ -888,9 +1247,8 @@ watch(() => form.value.salary_structure, (val) => {
         component_name: 'Transport Allowance',
         calc_type: 'Fixed Amount',
         amount: template.transport,
-        effective_from: form.value.hire_date || '',
-        effective_to: '',
-        notes: 'Standard recurring transit allowance'
+        effective_from: '',
+        effective_to: ''
       },
       {
         id: Date.now() + 2,
@@ -898,9 +1256,8 @@ watch(() => form.value.salary_structure, (val) => {
         component_name: 'Housing Allowance',
         calc_type: 'Fixed Amount',
         amount: template.housing,
-        effective_from: form.value.hire_date || '',
-        effective_to: '',
-        notes: 'Statutory taxable accommodation allowance'
+        effective_from: '',
+        effective_to: ''
       }
     ];
   }
@@ -1480,6 +1837,7 @@ const clearForm = () => {
     accommodation_notes: ''
   };
   isIdVerified.value = false;
+  addressesList.value = [];
   academicQualifications.value = [];
   professionalCertifications.value = [];
   priorWorkExperiences.value = [];
@@ -1709,94 +2067,140 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Accordion Card 3: Residential Address -->
+      <!-- Accordion Card 3: Address (Matching User Settled Design) -->
       <div class="clean-card">
         <div class="card-accordion-header" @click="toggleSection('residenceAddress')">
-          <span>Residential Address</span>
+          <span>Address</span>
           <ChevronDown v-if="sections.residenceAddress" :size="15" class="header-chevron" />
           <ChevronRight v-else :size="15" class="header-chevron" />
         </div>
         <div v-if="sections.residenceAddress" class="card-accordion-divider" />
-        <div v-if="sections.residenceAddress" class="card-accordion-body">
-          <div class="form-grid-3">
-            <FormSelect 
-              label="Address Type" 
-              v-model="form.address_type" 
-              :options="['Residence / Primary Home', 'Permanent Legal', 'Postal Address', 'Work Location', 'Emergency Domicile', 'Other']" 
-              placeholder="Select" 
-              helper-text="Categorization under PartyAddress schema."
-            />
-            <FormSelect 
-              label="Country" 
-              v-model="form.address_country" 
-              :options="['Ethiopia', 'Kenya', 'Djibouti', 'Sudan', 'Somalia', 'Eritrea', 'United States', 'United Kingdom', 'Other']" 
-              placeholder="Select" 
-            />
-            <FormSelect 
-              label="Region / City Administration" 
-              v-model="form.residence_region" 
-              :options="['Addis Ababa', 'Oromia', 'Amhara', 'Sidama', 'Dire Dawa', 'Tigray', 'SNNP', 'Somali', 'Afar', 'Benishangul-Gumuz', 'Gambela', 'Harari']" 
-              placeholder="Select Region" 
-            />
-          </div>
+        <div v-if="sections.residenceAddress" class="card-accordion-body address-section-body">
+          <!-- Stack of Address Cards -->
+          <div class="address-cards-stack">
+            <div 
+              v-for="(row, idx) in addressesList" 
+              :key="row.id" 
+              class="address-item-card"
+            >
+              <!-- Card Header: Pill Badge & Delete Icon -->
+              <div class="address-card-header">
+                <span class="address-card-badge">Address {{ idx + 1 }}</span>
+                <button 
+                  type="button" 
+                  class="btn-delete-address-card" 
+                  @click="removeAddressItem(idx)" 
+                  title="Remove Address"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
 
-          <div class="form-grid-3 mt-4">
-            <FormSelect 
-              label="Zone / Sub-City" 
-              v-model="form.residence_subcity" 
-              :options="['Bole Sub-City', 'Yeka Sub-City', 'Kirkos Sub-City', 'Arada Sub-City', 'Nifas Silk-Lafto Sub-City', 'Gulele Sub-City', 'Lideta Sub-City', 'Kolfe Keranio Sub-City', 'Akaki Kality Sub-City', 'Addis Ketema Sub-City', 'East Shewa', 'North Shewa']" 
-              placeholder="Select Zone" 
-            />
-            <FormSelect 
-              label="Woreda" 
-              v-model="form.residence_woreda" 
-              :options="['Woreda 01', 'Woreda 02', 'Woreda 03', 'Woreda 04', 'Woreda 05', 'Woreda 06', 'Woreda 07', 'Woreda 08', 'Woreda 09', 'Woreda 10']" 
-              placeholder="Select Woreda" 
-            />
-            <FormInput 
-              label="Kebele" 
-              v-model="form.residence_kebele" 
-              helper-text="Kebele / neighbourhood unit."
-            />
-          </div>
+              <!-- Grid Row 1: Address Type | Country | Region -->
+              <div class="address-form-grid">
+                <div class="address-form-group">
+                  <label class="address-field-label">Address Type</label>
+                  <select v-model="row.address_type" class="address-field-select">
+                    <option value="" disabled>Select Type</option>
+                    <option value="residence">Residence / Primary Home</option>
+                    <option value="postal">Postal Address</option>
+                    <option value="work">Work Location</option>
+                    <option value="emergency">Emergency Domicile</option>
+                    <option value="birth_place">Place of Birth</option>
+                    <option value="other">Other Domicile</option>
+                  </select>
+                </div>
 
-          <div class="form-grid-3 mt-4">
-            <FormInput 
-              label="House Number" 
-              v-model="form.residence_house_number" 
-              helper-text="Used for legal address records and official correspondence."
-            />
-            <FormInput label="Street / Locality Line" v-model="form.residence_line" />
-            <FormInput label="Postal Code / P.O. Box" v-model="form.residence_postal_code" />
-          </div>
+                <div class="address-form-group">
+                  <label class="address-field-label">Country</label>
+                  <select v-model="row.country" class="address-field-select" @change="onRowCountryChange(row)">
+                    <option value="" disabled>Select Country</option>
+                    <option value="Ethiopia">Ethiopia</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="Djibouti">Djibouti</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                  </select>
+                </div>
 
-          <div class="form-grid-2 mt-4 pt-3 border-t border-slate-100">
-            <div class="form-field-wrap">
-              <label class="field-label">Effective From</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="date" 
-                  v-model="form.address_effective_from" 
-                  class="date-field-inner"
+                <div class="address-form-group">
+                  <label class="address-field-label">Region</label>
+                  <select v-model="row.region" class="address-field-select" @change="onRowRegionChange(row)">
+                    <option value="" disabled>Select Region</option>
+                    <option v-for="r in getRegionsForRow(row)" :key="r" :value="r">{{ r }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Grid Row 2: Zone | Woreda | Kebele -->
+              <div class="address-form-grid">
+                <div class="address-form-group">
+                  <label class="address-field-label">Zone</label>
+                  <select v-model="row.subcity_zone" class="address-field-select" @change="onRowZoneChange(row)">
+                    <option value="" disabled>Select Zone</option>
+                    <option v-for="z in getZonesForRow(row)" :key="z" :value="z">{{ z }}</option>
+                  </select>
+                </div>
+
+                <div class="address-form-group">
+                  <label class="address-field-label">Woreda</label>
+                  <select v-model="row.woreda" class="address-field-select" @change="onRowWoredaChange(row)">
+                    <option value="" disabled>Select Woreda</option>
+                    <option v-for="w in getWoredasForRow(row)" :key="w" :value="w">{{ w }}</option>
+                  </select>
+                </div>
+
+                <div class="address-form-group">
+                  <label class="address-field-label">Kebele</label>
+                  <select v-model="row.kebele" class="address-field-select" @change="onRowKebeleChange(row)">
+                    <option value="" disabled>Select Kebele</option>
+                    <option v-for="k in getKebelesForRow(row)" :key="k" :value="k">{{ k }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Grid Row 3: House Number | Street | Postal Code / P.O. Box -->
+              <div class="address-form-grid">
+                <div class="address-form-group">
+                  <label class="address-field-label">House Number</label>
+                  <input type="text" v-model="row.house_number" class="address-field-input" />
+                  <p class="address-field-hint">Used for legal address records and official correspondence.</p>
+                </div>
+
+                <div class="address-form-group">
+                  <label class="address-field-label">Street</label>
+                  <input type="text" v-model="row.line" class="address-field-input" />
+                </div>
+
+                <div class="address-form-group">
+                  <label class="address-field-label">Postal Code / P.O. Box</label>
+                  <input type="text" v-model="row.postal_code" class="address-field-input" />
+                </div>
+              </div>
+
+              <!-- Row 4: Primary Address Checkbox -->
+              <div class="address-primary-row">
+                <FormCheckbox 
+                  :id="'address_primary_' + row.id"
+                  v-model="row.is_primary"
+                  label="Primary Address"
+                  description="Designates this record as the employee's official primary residence for statutory tax remittance, administrative notices, and emergency routing."
+                  @change="setPrimaryAddress(idx)"
                 />
-                <span class="gc-badge">GC</span>
               </div>
             </div>
-            <div class="form-field-wrap">
-              <label class="field-label">Effective To</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="date" 
-                  v-model="form.address_effective_to" 
-                  class="date-field-inner"
-                />
-                <span class="gc-badge">GC</span>
-              </div>
-              <span class="text-[11.5px] text-slate-500 mt-1 block">Leave empty if currently active domicile.</span>
-            </div>
           </div>
+
+          <!-- Empty State -->
+          <div v-if="addressesList.length === 0" class="address-empty-state">
+            <p class="text-sm text-slate-500">No address configured. Click below to add an address record.</p>
+          </div>
+
+          <!-- Add Address Action Button -->
+          <button type="button" class="btn-add-address-card" @click="addAddressItem">
+            <Plus :size="15" />
+            <span>Add Address</span>
+          </button>
         </div>
       </div>
 
@@ -1984,14 +2388,14 @@ onMounted(() => {
               label="Disability Category" 
               v-model="form.disability_category" 
               :options="['Physical Impairment', 'Visual Impairment', 'Hearing Impairment', 'Speech Impairment', 'Intellectual Impairment', 'Psychosocial Condition', 'Multiple Impairments', 'Other Impairment']" 
-              placeholder="Select Category" 
+               
               helper-text="Primary impairment category that guides ergonomic, software, and facility accessibility adjustments."
             />
             <FormSelect 
               label="Severity Level" 
               v-model="form.disability_severity" 
               :options="['Mild Impairment', 'Moderate Impairment', 'Severe Impairment']" 
-              placeholder="Select Level" 
+               
               helper-text="Operational classification for adaptive workplace provisions."
             />
             <FormInput 
@@ -2094,20 +2498,20 @@ onMounted(() => {
               label="Employee Entity" 
               v-model="form.entity_id" 
               :options="['Haleta Addis Ababa HQ', 'Haleta Hawassa Branch', 'Haleta Bahir Dar Factory', 'Haleta Dire Dawa Outlet']" 
-              placeholder="Select Entity" 
+               
               helper-text="The contracting legal entity that controls cost center allocation, labor policies, and payroll jurisdiction."
             />
             <FormSelect 
               label="Assigned Department" 
               v-model="form.department_name" 
               :options="['Finance & Accounts', 'Human Resources', 'Treasury', 'Supply Chain & Logistics', 'Operations & Processing', 'Engineering & IT']" 
-              placeholder="Select Department" 
+               
             />
             <FormSelect 
               label="Job Position" 
               v-model="form.job_title" 
               :options="['Junior Auditor', 'Financial Accountant', 'Chief Accountant', 'Treasury Officer', 'HR Officer', 'Senior HR Specialist', 'Procurement Officer', 'Supply Chain Analyst', 'Operations Supervisor', 'Senior Cashier', 'Software Engineer']" 
-              placeholder="Select Position" 
+               
             />
           </div>
 
@@ -2118,13 +2522,13 @@ onMounted(() => {
               label="Work Location / Branch" 
               v-model="form.work_location" 
               :options="['Addis Ababa - Main Campus', 'Bole Branch Office', 'Hawassa Industrial Park', 'Bahir Dar Plant', 'Dire Dawa Hub']" 
-              placeholder="Select Branch" 
+               
             />
             <FormSelect 
               label="Direct Supervisor" 
               v-model="form.reports_to" 
               :options="['Selamawit Bekele (Head of HR)', 'Abebe Kebede (Finance Director)', 'Dawit Alemu (Operations Manager)', 'Meron Tadesse (Senior HR Specialist)']" 
-              placeholder="Select Supervisor" 
+               
               helper-text="Direct line manager responsible for attendance, leave approvals, and appraisals."
             />
           </div>
@@ -2174,7 +2578,7 @@ onMounted(() => {
                 'Professional Consultant',
                 'Part-Time Staff'
               ]" 
-              placeholder="Select Type" 
+               
             />
             <FormSelect 
               label="Legal Contract Type" 
@@ -2187,7 +2591,7 @@ onMounted(() => {
                 'Project-Based',
                 'Casual / Daily Labor'
               ]" 
-              placeholder="Select Type" 
+               
               helper-text="Contractual engagement type that governs notice periods, severance entitlements, and renewal obligations."
             />
           </div>
@@ -2235,7 +2639,7 @@ onMounted(() => {
                 'PAT-GUARD-4C (Security Guard 4-Day Cycle)',
                 'PAT-SHOP-6D (Commercial Outlet 6-Day)'
               ]" 
-              placeholder="Select Schedule" 
+               
             />
 
             <FormInput 
@@ -2310,22 +2714,22 @@ onMounted(() => {
               v-model="form.job_grade" 
               :options="['Grade A1', 'Grade A2', 'Grade B1', 'Grade B2', 'Grade C1', 'Grade C2', 'Grade D1']" 
               :disabled="true"
-              placeholder="Select Grade" 
-              helper-text="Locked to selected Job Position (JobPosition.job_grade_id)."
+               
+              helper-text="Determined automatically by the assigned job position."
             />
             <FormSelect 
               label="Grade Scale Steps" 
               v-model="form.job_grade_step" 
               :options="availableGradeSteps" 
-              placeholder="Select Steps" 
+               
               helper-text="Discrete step increment inside the position's grade ladder."
             />
             <FormSelect 
               label="Salary Structure Template" 
               v-model="form.salary_structure" 
               :options="['Standard Professional Package', 'Executive & Management Package', 'Plant & Factory Staff Package', 'Sales & Field Package']" 
-              placeholder="Select Group" 
-              helper-text="Package template from Section 8 that auto-populates base salary and recurring allowances."
+               
+              helper-text="Standard compensation template that auto-populates base salary and recurring allowances."
             />
           </div>
 
@@ -2341,13 +2745,13 @@ onMounted(() => {
               label="Currency" 
               v-model="form.currency" 
               :options="['ETB', 'USD', 'EUR', 'GBP', 'KES', 'AED']" 
-              placeholder="Select Currency" 
+               
             />
             <FormSelect 
               label="Payroll Processing Group" 
               v-model="form.payroll_group" 
               :options="['Standard Monthly Payroll', 'Executive & Management', 'Plant & Factory Staff', 'Daily / Casual Payroll']" 
-              placeholder="Select Group" 
+               
               helper-text="Assigned payroll cycle that determines pay frequency, cut-off dates, and disbursement approval routing."
             />
           </div>
@@ -2358,7 +2762,7 @@ onMounted(() => {
               label="Package Authorized By" 
               v-model="form.compensation_supervisor" 
               :options="['Selamawit Bekele (Head of HR)', 'Abebe Kebede (Finance Director)', 'Dawit Alemu (Operations Manager)']" 
-              placeholder="Select Approver" 
+               
               helper-text="Designated officer who approved this compensation package offer."
             />
             <div class="form-field-wrap">
@@ -2369,7 +2773,7 @@ onMounted(() => {
                   type="text" 
                   v-model="form.salary_effective_date" 
                   class="date-field-inner"
-                  placeholder="mm/dd/yyyy"
+                  
                 />
                 <span class="gc-badge">GC</span>
               </div>
@@ -2382,7 +2786,7 @@ onMounted(() => {
                   type="text" 
                   v-model="form.salary_effective_until" 
                   class="date-field-inner"
-                  placeholder="mm/dd/yyyy"
+                  
                 />
                 <span class="gc-badge">GC</span>
               </div>
@@ -2422,11 +2826,9 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(salaryComponentsList, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 180px;">Allowance / Component</th>
-                  <th class="child-th" style="min-width: 150px;">Calculation Type</th>
-                  <th class="child-th" style="min-width: 130px;">Amount / Value</th>
-                  <th class="child-th" style="min-width: 130px;">Effective From</th>
-                  <th class="child-th" style="min-width: 130px;">Effective To</th>
+                  <th class="child-th" style="min-width: 240px;">Allowance / Component</th>
+                  <th class="child-th" style="min-width: 180px;">Calculation Type</th>
+                  <th class="child-th" style="min-width: 160px;">Amount / Value</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2438,7 +2840,7 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr v-if="salaryComponentsList.length === 0">
-                  <td colspan="8" class="child-td-empty">No Recurring Allowances Added (Basic Salary Only)</td>
+                  <td colspan="6" class="child-td-empty">No Recurring Allowances Added (Basic Salary Only)</td>
                 </tr>
                 <tr v-else v-for="(row, idx) in salaryComponentsList" :key="row.id" class="child-tr">
                   <td class="child-td child-td-check">
@@ -2447,13 +2849,13 @@ onMounted(() => {
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
                   <td class="child-td">
                     <select v-model="row.component_name" class="child-inline-select">
-                      <option value="Transport Allowance">Transport Allowance (TRANS_ALLOW)</option>
-                      <option value="Housing Allowance">Housing Allowance (HOUSE_ALLOW)</option>
-                      <option value="Representation Allowance">Representation Allowance (POSITION_ALLOW)</option>
-                      <option value="Hardship Allowance">Hardship Allowance (HARDSHIP_ALLOW)</option>
-                      <option value="Fuel & Mileage Allowance">Fuel Allowance (FUEL_ALLOW)</option>
-                      <option value="Mobile & Communication">Mobile Allowance (COMMUNICATION_ALLOW)</option>
-                      <option value="Food & Subsistence">Food Allowance (FOOD_ALLOW)</option>
+                      <option value="Transport Allowance">Transport Allowance</option>
+                      <option value="Housing Allowance">Housing Allowance</option>
+                      <option value="Representation Allowance">Representation Allowance</option>
+                      <option value="Hardship Allowance">Hardship Allowance</option>
+                      <option value="Fuel & Mileage Allowance">Fuel & Mileage Allowance</option>
+                      <option value="Mobile & Communication">Mobile & Communication Allowance</option>
+                      <option value="Food & Subsistence">Food Allowance</option>
                       <option value="Other Special Allowance">Other Allowance</option>
                     </select>
                   </td>
@@ -2464,13 +2866,12 @@ onMounted(() => {
                     </select>
                   </td>
                   <td class="child-td">
-                    <input type="number" v-model="row.amount" class="child-inline-input text-right" placeholder="0.00" />
-                  </td>
-                  <td class="child-td">
-                    <input type="date" v-model="row.effective_from" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <input type="date" v-model="row.effective_to" class="child-inline-input" />
+                    <div class="relative flex items-center">
+                      <input type="number" v-model="row.amount" class="child-inline-input text-right pr-9" />
+                      <span class="absolute right-2 text-[11px] font-semibold text-slate-400 select-none pointer-events-none">
+                        {{ row.calc_type === 'Percentage of Basic' ? '%' : 'ETB' }}
+                      </span>
+                    </div>
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('salaryComponentsList', row, idx)" title="Expand Allowance Details">
@@ -2539,16 +2940,16 @@ onMounted(() => {
                     </select>
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.account_number" class="child-inline-input" placeholder="Account Number / Wallet" />
+                    <input type="text" v-model="row.account_number" class="child-inline-input"  />
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.account_holder_name" class="child-inline-input" placeholder="Holder Name" />
+                    <input type="text" v-model="row.account_holder_name" class="child-inline-input"  />
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.branch_name" class="child-inline-input" placeholder="Branch Name" />
+                    <input type="text" v-model="row.branch_name" class="child-inline-input"  />
                   </td>
                   <td class="child-td">
-                    <input type="number" v-model="row.split_percent" class="child-inline-input text-right" placeholder="100" min="1" max="100" />
+                    <input type="number" v-model="row.split_percent" class="child-inline-input text-right"  min="1" max="100" />
                   </td>
                   <td class="child-td text-center">
                     <input 
@@ -2620,16 +3021,25 @@ onMounted(() => {
                     <input type="checkbox" v-model="row.selected" class="table-checkbox" />
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.degree_level" class="child-inline-input" placeholder="e.g. Bachelor's" />
+                  <td class="child-td" style="min-width: 140px;">
+                    <select v-model="row.degree_level" class="child-inline-select">
+                      <option value="" disabled>Select</option>
+                      <option value="Primary School">Primary</option>
+                      <option value="Secondary School">Secondary</option>
+                      <option value="TVET / Level IV Certificate">TVET Certificate</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Bachelor's Degree">Bachelor's Degree</option>
+                      <option value="Master's Degree">Master's Degree</option>
+                      <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+                    </select>
                   </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.field_of_study" class="child-inline-input" placeholder="e.g. Accounting" />
+                  <td class="child-td" style="min-width: 160px;">
+                    <input type="text" v-model="row.field_of_study" class="child-inline-input" list="fieldsOfStudyList" />
                   </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.awarding_institute" class="child-inline-input" placeholder="e.g. AAU" />
+                  <td class="child-td" style="min-width: 170px;">
+                    <input type="text" v-model="row.awarding_institute" class="child-inline-input" list="institutionsList" />
                   </td>
-                  <td class="child-td">
+                  <td class="child-td" style="min-width: 130px;">
                     <input type="date" v-model="row.graduation_date" class="child-inline-input" />
                   </td>
                   <td class="child-td child-td-col-icon">
@@ -2666,10 +3076,11 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(professionalCertifications, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Certification Title</th>
+                  <th class="child-th">Certification / License</th>
                   <th class="child-th">Issuing Institution</th>
-                  <th class="child-th">Certificate Number</th>
+                  <th class="child-th">Certificate / License No.</th>
                   <th class="child-th">Issued Date</th>
+                  <th class="child-th">Expiry Date</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2681,24 +3092,27 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr v-if="professionalCertifications.length === 0">
-                  <td colspan="7" class="child-td-empty">No Row</td>
+                  <td colspan="8" class="child-td-empty">No Row</td>
                 </tr>
                 <tr v-else v-for="(row, idx) in professionalCertifications" :key="row.id" class="child-tr">
                   <td class="child-td child-td-check">
                     <input type="checkbox" v-model="row.selected" class="table-checkbox" />
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.certification_title" class="child-inline-input" placeholder="e.g. ACCA" />
+                  <td class="child-td" style="min-width: 170px;">
+                    <input type="text" v-model="row.certification" class="child-inline-input" list="certificationsList" />
                   </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.issuing_institution" class="child-inline-input" placeholder="e.g. ACCA Global" />
+                  <td class="child-td" style="min-width: 160px;">
+                    <input type="text" v-model="row.issuing_institution" class="child-inline-input" list="certInstitutionsList" />
                   </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.certificate_number" class="child-inline-input" placeholder="Certificate #" />
+                  <td class="child-td" style="min-width: 140px;">
+                    <input type="text" v-model="row.certificate_number" class="child-inline-input" />
                   </td>
-                  <td class="child-td">
+                  <td class="child-td" style="min-width: 120px;">
                     <input type="date" v-model="row.issued_date" class="child-inline-input" />
+                  </td>
+                  <td class="child-td" style="min-width: 120px;">
+                    <input type="date" v-model="row.expiry_date" class="child-inline-input" />
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('professionalCertifications', row, idx)" title="Expand Row Details">
@@ -2734,13 +3148,11 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(priorWorkExperiences, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Previous Employer</th>
-                  <th class="child-th">Job Title</th>
-                  <th class="child-th">Employment Type</th>
-                  <th class="child-th">Start Date</th>
-                  <th class="child-th">End Date</th>
-                  <th class="child-th">Reason for Leaving</th>
-                  <th class="child-th">Reference Person / Contact</th>
+                  <th class="child-th" style="min-width: 170px;">Previous Employer</th>
+                  <th class="child-th" style="min-width: 160px;">Job Title</th>
+                  <th class="child-th" style="min-width: 140px;">Employment Type</th>
+                  <th class="child-th" style="min-width: 130px;">Start Date</th>
+                  <th class="child-th" style="min-width: 130px;">End Date</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2752,7 +3164,7 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr v-if="priorWorkExperiences.length === 0">
-                  <td colspan="10" class="child-td-empty">No Row</td>
+                  <td colspan="8" class="child-td-empty">No Row</td>
                 </tr>
                 <tr v-else v-for="(row, idx) in priorWorkExperiences" :key="row.id" class="child-tr">
                   <td class="child-td child-td-check">
@@ -2760,15 +3172,19 @@ onMounted(() => {
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
                   <td class="child-td">
-                    <input type="text" v-model="row.previous_employer" class="child-inline-input" placeholder="Company Name" />
+                    <input type="text" v-model="row.previous_employer" class="child-inline-input" />
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.job_title" class="child-inline-input" placeholder="Position" />
+                    <input type="text" v-model="row.job_title" class="child-inline-input" />
                   </td>
                   <td class="child-td">
                     <select v-model="row.employment_type" class="child-inline-select">
+                      <option value="" disabled>Select</option>
                       <option value="Permanent">Permanent</option>
                       <option value="Contract">Contract</option>
+                      <option value="Temporary">Temporary</option>
+                      <option value="Probation">Probation</option>
+                      <option value="Part-time">Part-time</option>
                       <option value="Internship">Internship</option>
                       <option value="Consultancy">Consultancy</option>
                     </select>
@@ -2778,12 +3194,6 @@ onMounted(() => {
                   </td>
                   <td class="child-td">
                     <input type="date" v-model="row.end_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.reason_for_leaving" class="child-inline-input" placeholder="e.g. Advancement" />
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.supervisor_reference" class="child-inline-input" placeholder="Name & Phone" />
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('priorWorkExperiences', row, idx)" title="Expand Row Details">
@@ -2822,9 +3232,9 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(technicalSkills, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Skill</th>
-                  <th class="child-th">Proficiency</th>
-                  <th class="child-th">Year</th>
+                  <th class="child-th" style="min-width: 180px;">Skill / Competency</th>
+                  <th class="child-th" style="min-width: 140px;">Proficiency</th>
+                  <th class="child-th" style="width: 110px;">Years of Exp.</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2844,10 +3254,11 @@ onMounted(() => {
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
                   <td class="child-td">
-                    <input type="text" v-model="row.skill" class="child-inline-input" placeholder="e.g. Financial Analysis" />
+                    <input type="text" v-model="row.skill" class="child-inline-input" list="skillsCatalogList" />
                   </td>
                   <td class="child-td">
                     <select v-model="row.proficiency" class="child-inline-select">
+                      <option value="" disabled>Select</option>
                       <option value="Beginner">Beginner</option>
                       <option value="Intermediate">Intermediate</option>
                       <option value="Advanced">Advanced</option>
@@ -2855,7 +3266,7 @@ onMounted(() => {
                     </select>
                   </td>
                   <td class="child-td">
-                    <input type="number" v-model="row.year" class="child-inline-input" placeholder="Years" />
+                    <input type="number" step="0.5" v-model="row.years_of_experience" class="child-inline-input text-right" />
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('technicalSkills', row, idx)" title="Expand Row Details">
@@ -2885,7 +3296,7 @@ onMounted(() => {
                   <th class="child-th child-th-no">No.</th>
                   <th class="child-th">Language</th>
                   <th class="child-th">Fluency Level</th>
-                  <th class="child-th">Mother Tongue</th>
+                  <th class="child-th text-center" style="width: 110px;">Mother Tongue</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2904,22 +3315,25 @@ onMounted(() => {
                     <input type="checkbox" v-model="row.selected" class="table-checkbox" />
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.language" class="child-inline-input" placeholder="e.g. English / French" />
+                  <td class="child-td" style="min-width: 160px;">
+                    <input type="text" v-model="row.language" class="child-inline-input" list="languagesCatalogList" />
                   </td>
-                  <td class="child-td">
+                  <td class="child-td" style="min-width: 140px;">
                     <select v-model="row.fluency_level" class="child-inline-select">
+                      <option value="" disabled>Select</option>
                       <option value="Basic">Basic</option>
-                      <option value="Professional">Professional</option>
+                      <option value="Conversational">Conversational</option>
                       <option value="Fluent">Fluent</option>
                       <option value="Native">Native</option>
                     </select>
                   </td>
-                  <td class="child-td">
-                    <select v-model="row.mother_tongue" class="child-inline-select">
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                  <td class="child-td text-center">
+                    <input 
+                      type="checkbox" 
+                      v-model="row.is_native" 
+                      class="custom-squircle-check" 
+                      title="Mother Tongue / Native Language"
+                    />
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('spokenLanguages', row, idx)" title="Expand Row Details">
@@ -2978,8 +3392,7 @@ onMounted(() => {
                     </th>
                     <th class="child-th child-th-no">No.</th>
                     <th class="child-th" style="min-width: 240px;">Rule Type</th>
-                    <th class="child-th" style="min-width: 140px;">Effective From</th>
-                    <th class="child-th" style="min-width: 140px;">Effective Until</th>
+                    <th class="child-th">Legal Reason / Exemption Basis</th>
                     <th class="child-th child-th-col-icon">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                         <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -2991,7 +3404,7 @@ onMounted(() => {
                 </thead>
                 <tbody>
                   <tr v-if="statutoryExemptionsList.length === 0">
-                    <td colspan="6" class="child-td-empty">No Row</td>
+                    <td colspan="5" class="child-td-empty">No Row</td>
                   </tr>
                   <tr v-else v-for="(row, idx) in statutoryExemptionsList" :key="row.id" class="child-tr">
                     <td class="child-td child-td-check">
@@ -3000,7 +3413,7 @@ onMounted(() => {
                     <td class="child-td child-td-no">{{ idx + 1 }}</td>
                     <td class="child-td">
                       <select v-model="row.rule_type" class="child-inline-select">
-                        <option value="" disabled>Select Rule</option>
+                        <option value="" disabled>Select</option>
                         <option value="pension_employee">Pension (Employee Contribution)</option>
                         <option value="pension_employer">Pension (Employer Contribution)</option>
                         <option value="income_tax">Employment Income Tax</option>
@@ -3013,10 +3426,7 @@ onMounted(() => {
                       </select>
                     </td>
                     <td class="child-td">
-                      <input type="date" v-model="row.effective_from" class="child-inline-input" />
-                    </td>
-                    <td class="child-td">
-                      <input type="date" v-model="row.effective_to" class="child-inline-input" />
+                      <input type="text" v-model="row.reason" class="child-inline-input" />
                     </td>
                     <td class="child-td child-td-col-icon">
                       <button type="button" class="btn-row-expand" @click="openRowModal('statutoryExemptionsList', row, idx)" title="Expand Row Details">
@@ -3036,16 +3446,16 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Card 2: Clearances & Licenses -->
+      <!-- Card 2: Statutory Clearances & Compliance -->
       <div class="clean-card">
         <div class="card-accordion-header" @click="toggleSection('regulatoryClearances')">
-          <span>Clearances & Licenses</span>
+          <span>Statutory Clearances & Compliance</span>
           <ChevronDown v-if="sections.regulatoryClearances" :size="15" class="header-chevron" />
           <ChevronRight v-else :size="15" class="header-chevron" />
         </div>
         <div v-if="sections.regulatoryClearances" class="card-accordion-divider" />
         <div v-if="sections.regulatoryClearances" class="card-accordion-body">
-          <p class="child-sub-desc mb-4">Record mandatory pre-employment medical checks, police background clearances, work permits, and professional licenses.</p>
+          <p class="child-sub-desc mb-4">Record mandatory pre-employment medical checks, police background clearances, work permits, and statutory compliance verifications.</p>
 
         <div class="child-table-wrapper">
           <table class="child-table">
@@ -3055,11 +3465,10 @@ onMounted(() => {
                   <input type="checkbox" @change="toggleSelectAll(regulatoryClearances, $event)" class="table-checkbox" />
                 </th>
                 <th class="child-th child-th-no">No.</th>
-                <th class="child-th">Clearance Type</th>
-                <th class="child-th">Reference No.</th>
-                <th class="child-th">Issue Date</th>
-                <th class="child-th">Expiry Date</th>
-                <th class="child-th">Verification Status</th>
+                <th class="child-th" style="min-width: 220px;">Compliance Item</th>
+                <th class="child-th" style="min-width: 170px;">Reference / Permit No.</th>
+                <th class="child-th" style="min-width: 130px;">Expiry Date</th>
+                <th class="child-th" style="min-width: 150px;">Compliance Status</th>
                 <th class="child-th child-th-col-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                     <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -3071,7 +3480,7 @@ onMounted(() => {
             </thead>
             <tbody>
               <tr v-if="regulatoryClearances.length === 0">
-                <td colspan="8" class="child-td-empty">No Row</td>
+                <td colspan="7" class="child-td-empty">No Row</td>
               </tr>
               <tr v-else v-for="(row, idx) in regulatoryClearances" :key="row.id" class="child-tr">
                 <td class="child-td child-td-check">
@@ -3080,24 +3489,25 @@ onMounted(() => {
                 <td class="child-td child-td-no">{{ idx + 1 }}</td>
                 <td class="child-td">
                   <select v-model="row.clearance_type" class="child-inline-select">
-                    <option value="Medical Clearance">Medical Clearance (medical_check)</option>
-                    <option value="Police Clearance">Police Clearance (police_clearance)</option>
-                    <option value="Work Permit">Work Permit (work_permit)</option>
-                    <option value="Professional / Board License">Board License (professional_license)</option>
-                    <option value="Fayda National ID">Fayda ID (fayda_verification)</option>
+                    <option value="" disabled>Select</option>
+                    <option value="fayda_verification">Fayda National ID Verification</option>
+                    <option value="pension_registration">Pension Registration Confirmation</option>
+                    <option value="work_permit">Work Permit / Visa</option>
+                    <option value="medical_check">Pre-Employment Medical Check</option>
+                    <option value="police_clearance">Police Background Clearance</option>
+                    <option value="professional_license">Professional / Board License</option>
+                    <option value="tax_registration">Tax Registration / TIN Verification</option>
                   </select>
                 </td>
                 <td class="child-td">
-                  <input type="text" v-model="row.ref_number" class="child-inline-input" placeholder="Ref #" />
-                </td>
-                <td class="child-td">
-                  <input type="date" v-model="row.issue_date" class="child-inline-input" />
+                  <input type="text" v-model="row.ref_number" class="child-inline-input" />
                 </td>
                 <td class="child-td">
                   <input type="date" v-model="row.expiry_date" class="child-inline-input" />
                 </td>
                 <td class="child-td">
                   <select v-model="row.verification_status" class="child-inline-select">
+                    <option value="" disabled>Select</option>
                     <option value="Valid / Cleared">Valid / Cleared</option>
                     <option value="Pending Verification">Pending Verification</option>
                     <option value="Statutorily Waived">Statutorily Waived</option>
@@ -3171,7 +3581,7 @@ onMounted(() => {
               v-model="form.guarantor_name" 
               v-model:selectedId="form.guarantor_party_id"
               :options="guarantorPartyOptions"
-              placeholder="Select Guarantor"
+              placeholder="Select"
               search-placeholder="Search by Name, Phone...."
               create-label="Create and Continue"
               helper-text="Search by name or phone, or click “+ Create and Continue” if not found."
@@ -3194,13 +3604,13 @@ onMounted(() => {
               label="Relationship to Employee" 
               v-model="form.guarantor_relation" 
               :options="['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Colleague', 'Friend']" 
-              placeholder="Select Relationship" 
+               
             />
             <FormSelect 
               label="Guarantee Purpose" 
               v-model="form.guarantee_purpose" 
               :options="['Cash Handling Surety (Cashier / Treasury)', 'Asset Custody (Storekeeper / Warehouse)', 'Staff Loan / Financial Collateral', 'Company Study / Training Bond', 'General Employment Surety']" 
-              placeholder="Select Purpose" 
+               
             />
             <FormInput 
               label="Guaranteed Amount (ETB)" 
@@ -3216,7 +3626,7 @@ onMounted(() => {
               v-model="form.guarantor_employer" 
               v-model:selectedId="form.guarantor_employer_party_id"
               :options="employerOrganizationOptions"
-              placeholder="Select Organization"
+              placeholder="Select"
               search-placeholder="Search by Name, Phone...."
               create-label="Create and Continue"
               helper-text="Search by name or phone, or click “+ Create and Continue” if not found."
@@ -3239,7 +3649,7 @@ onMounted(() => {
               <label class="field-label">Letter Agreement Date</label>
               <div class="date-composite-input">
                 <Calendar :size="15" class="date-cal-icon" />
-                <input type="text" v-model="form.letter_agreement_date" class="date-field-inner" placeholder="mm/dd/yyyy" />
+                <input type="text" v-model="form.letter_agreement_date" class="date-field-inner"  />
                 <span class="gc-badge">GC</span>
               </div>
             </div>
@@ -3248,7 +3658,7 @@ onMounted(() => {
               <label class="field-label">Coverage Start Date</label>
               <div class="date-composite-input">
                 <Calendar :size="15" class="date-cal-icon" />
-                <input type="text" v-model="form.coverage_start_date" class="date-field-inner" placeholder="mm/dd/yyyy" />
+                <input type="text" v-model="form.coverage_start_date" class="date-field-inner"  />
                 <span class="gc-badge">GC</span>
               </div>
             </div>
@@ -3257,7 +3667,7 @@ onMounted(() => {
               <label class="field-label">Coverage End Date</label>
               <div class="date-composite-input">
                 <Calendar :size="15" class="date-cal-icon" />
-                <input type="text" v-model="form.coverage_end_date" class="date-field-inner" placeholder="mm/dd/yyyy" />
+                <input type="text" v-model="form.coverage_end_date" class="date-field-inner"  />
                 <span class="gc-badge">GC</span>
               </div>
             </div>
@@ -3306,10 +3716,10 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(emergencyContactsList, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Contact Full Name</th>
-                  <th class="child-th">Phone No.</th>
-                  <th class="child-th">Relationship</th>
-                  <th class="child-th">City / Location</th>
+                  <th class="child-th" style="min-width: 170px;">Contact Full Name</th>
+                  <th class="child-th" style="min-width: 140px;">Relationship</th>
+                  <th class="child-th" style="min-width: 150px;">Primary Phone</th>
+                  <th class="child-th" style="width: 120px;">Call Priority</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -3329,16 +3739,29 @@ onMounted(() => {
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
                   <td class="child-td">
-                    <input type="text" v-model="row.full_name" class="child-inline-input" placeholder="Full Name" />
+                    <input type="text" v-model="row.full_name" class="child-inline-input" />
                   </td>
                   <td class="child-td">
-                    <input type="tel" v-model="row.phone" class="child-inline-input" placeholder="Phone Number" />
+                    <select v-model="row.relationship" class="child-inline-select">
+                      <option value="" disabled>Select</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Child">Child</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Relative">Relative</option>
+                      <option value="Colleague">Colleague</option>
+                      <option value="Friend">Friend</option>
+                    </select>
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.relationship" class="child-inline-input" placeholder="e.g. Spouse / Parent" />
+                    <input type="tel" v-model="row.phone" class="child-inline-input" />
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.city_location" class="child-inline-input" placeholder="City / Location" />
+                    <select v-model="row.priority" class="child-inline-select">
+                      <option value="" disabled>Select</option>
+                      <option :value="1">1 - Primary</option>
+                      <option :value="2">2 - Secondary</option>
+                    </select>
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('emergencyContactsList', row, idx)" title="Expand Row Details">
@@ -3360,7 +3783,7 @@ onMounted(() => {
       <!-- Card 2: Dependents & Beneficiaries -->
       <div class="clean-card">
         <div class="card-accordion-header" @click="toggleSection('dependents')">
-          <span>Dependents & Beneficiaries</span>
+          <span>Dependents & Insurance Beneficiaries</span>
           <ChevronDown v-if="sections.dependents" :size="15" class="header-chevron" />
           <ChevronRight v-else :size="15" class="header-chevron" />
         </div>
@@ -3374,10 +3797,10 @@ onMounted(() => {
                     <input type="checkbox" @change="toggleSelectAll(dependentsList, $event)" class="table-checkbox" />
                   </th>
                   <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Dependent Full Name</th>
-                  <th class="child-th">Relationship</th>
-                  <th class="child-th">Date of Birth</th>
-                  <th class="child-th">Primary insurance</th>
+                  <th class="child-th" style="min-width: 170px;">Dependent Full Name</th>
+                  <th class="child-th" style="min-width: 140px;">Relationship</th>
+                  <th class="child-th" style="min-width: 130px;">Date of Birth</th>
+                  <th class="child-th text-center" style="width: 100px;">Beneficiary</th>
                   <th class="child-th child-th-col-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
                       <rect x="3" y="3" width="4" height="18" rx="1.5" />
@@ -3397,19 +3820,28 @@ onMounted(() => {
                   </td>
                   <td class="child-td child-td-no">{{ idx + 1 }}</td>
                   <td class="child-td">
-                    <input type="text" v-model="row.dependent_name" class="child-inline-input" placeholder="Full Name" />
+                    <input type="text" v-model="row.dependent_name" class="child-inline-input" />
                   </td>
                   <td class="child-td">
-                    <input type="text" v-model="row.relationship" class="child-inline-input" placeholder="e.g. Child / Spouse" />
+                    <select v-model="row.relationship" class="child-inline-select">
+                      <option value="" disabled>Select</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Child">Child</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </td>
                   <td class="child-td">
                     <input type="date" v-model="row.birth_date" class="child-inline-input" />
                   </td>
-                  <td class="child-td">
-                    <select v-model="row.primary_insurance" class="child-inline-select">
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                  <td class="child-td text-center">
+                    <input 
+                      type="checkbox" 
+                      v-model="row.is_beneficiary" 
+                      class="custom-squircle-check" 
+                      title="Included in healthcare insurance and pension survivor benefits"
+                    />
                   </td>
                   <td class="child-td child-td-col-icon">
                     <button type="button" class="btn-row-expand" @click="openRowModal('dependentsList', row, idx)" title="Expand Row Details">
@@ -3445,102 +3877,72 @@ onMounted(() => {
 
           <!-- Body -->
           <div class="row-modal-body">
-            <!-- 1. Academic Qualification Fields -->
+            <!-- 1. Academic Qualification Fields (Aligned with PartyQualification Schema) -->
             <div v-if="activeModalType === 'academicQualifications'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Degree Level <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.degree_level" class="modal-form-select">
                   <option value="" disabled>Select</option>
-                  <option value="High School / Preparatory">High School / Preparatory</option>
+                  <option value="Primary School">Primary School</option>
+                  <option value="Secondary School">Secondary School</option>
                   <option value="TVET / Level IV Certificate">TVET / Level IV Certificate</option>
                   <option value="Diploma">Diploma</option>
                   <option value="Bachelor's Degree">Bachelor's Degree</option>
                   <option value="Master's Degree">Master's Degree</option>
                   <option value="Doctorate (PhD)">Doctorate (PhD)</option>
-                  <option value="Post-Doctoral Fellowship">Post-Doctoral Fellowship</option>
                 </select>
-                <p class="modal-form-hint">
-                  Highest educational tier completed at an accredited institution. Directly influences job level placement, minimum salary brackets, and organizational leadership eligibility.
-                </p>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Field of Study <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.field_of_study" class="modal-form-input" />
+                <input type="text" v-model="activeRowData.field_of_study" class="modal-form-input" list="fieldsOfStudyList" />
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Awarding Institute <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.awarding_institute" class="modal-form-input" />
+                <input type="text" v-model="activeRowData.awarding_institute" class="modal-form-input" list="institutionsList" />
+              </div>
+              <div class="modal-form-group">
+                <label class="modal-form-label">Cumulative GPA (4.00 Scale)</label>
+                <input type="text" v-model="activeRowData.gpa" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  Cumulative grade point average on the 4.00 scale (e.g. 3.75).
+                </p>
+              </div>
+              <div class="modal-form-group">
+                <label class="modal-form-label">Study Start Date</label>
+                <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Graduation Date</label>
                 <input type="date" v-model="activeRowData.graduation_date" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Start Date</label>
-                <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Cumulative GPA / Score</label>
-                <input type="text" v-model="activeRowData.gpa" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Country / Location</label>
-                <input type="text" v-model="activeRowData.country" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Honors & Academic Distinctions</label>
-                <input type="text" v-model="activeRowData.honors_distinction" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Specialization / Research Project Notes</label>
-                <textarea v-model="activeRowData.notes" class="modal-form-textarea" rows="2"></textarea>
-              </div>
             </div>
 
-            <!-- 2. Professional Certification Fields -->
+            <!-- 2. Professional Certification Fields (Aligned with PartyCertification Schema) -->
             <div v-else-if="activeModalType === 'professionalCertifications'" class="modal-grid-2">
               <div class="modal-form-group">
-                <label class="modal-form-label">Certification Title <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.certification_title" class="modal-form-input" />
+                <label class="modal-form-label">Certification / License <span class="text-rose-500">*</span></label>
+                <input type="text" v-model="activeRowData.certification" class="modal-form-input" list="certificationsList" />
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Issuing Institution <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.issuing_institution" class="modal-form-input" />
+                <input type="text" v-model="activeRowData.issuing_institution" class="modal-form-input" list="certInstitutionsList" />
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Certificate / License Number</label>
                 <input type="text" v-model="activeRowData.certificate_number" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Verification Status</label>
-                <select v-model="activeRowData.verification_status" class="modal-form-select">
-                  <option value="Active">Active</option>
-                  <option value="Under Review">Under Review</option>
-                  <option value="Expired">Expired</option>
-                </select>
-                <p class="modal-form-hint">
-                  Current standing of the certification with the issuing authority. Unverified credentials require primary-source confirmation before authorizing regulated or client-facing operations.
-                </p>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Issued Date</label>
+                <label class="modal-form-label">Issued Date <span class="text-rose-500">*</span></label>
                 <input type="date" v-model="activeRowData.issued_date" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
+              <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Expiration Date</label>
                 <input type="date" v-model="activeRowData.expiry_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Credential URL / Online Verification Link</label>
-                <input type="url" v-model="activeRowData.credential_url" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Scope of Practice / Notes</label>
-                <textarea v-model="activeRowData.notes" class="modal-form-textarea" rows="2"></textarea>
+                <p class="modal-form-hint">Leave blank if lifetime / never expires.</p>
               </div>
             </div>
 
-            <!-- 3. Prior Work Experience Fields -->
+            <!-- 3. Prior Work Experience Fields (Aligned with PartyExperience & EmployeeExperience Schema) -->
             <div v-else-if="activeModalType === 'priorWorkExperiences'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Previous Employer <span class="text-rose-500">*</span></label>
@@ -3551,33 +3953,26 @@ onMounted(() => {
                 <input type="text" v-model="activeRowData.job_title" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Employment Type</label>
+                <label class="modal-form-label">Employment Type <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.employment_type" class="modal-form-select">
+                  <option value="" disabled>Select</option>
                   <option value="Permanent">Permanent</option>
                   <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
+                  <option value="Temporary">Temporary</option>
+                  <option value="Probation">Probation</option>
                   <option value="Part-time">Part-time</option>
+                  <option value="Internship">Internship</option>
                   <option value="Consultancy">Consultancy</option>
                 </select>
-                <p class="modal-form-hint">
-                  Work arrangement held during previous employment. Helps calculate equivalent full-time experience credits and evaluate role-specific technical depth.
-                </p>
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Department / Business Unit</label>
-                <input type="text" v-model="activeRowData.department" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Start Date</label>
+                <label class="modal-form-label">Start Date <span class="text-rose-500">*</span></label>
                 <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">End Date</label>
                 <input type="date" v-model="activeRowData.end_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Ending Base Salary</label>
-                <input type="text" v-model="activeRowData.ending_salary" class="modal-form-input" />
+                <p class="modal-form-hint">Leave blank if still ongoing.</p>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Reason for Leaving</label>
@@ -3586,46 +3981,44 @@ onMounted(() => {
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Supervisor Reference Contact</label>
                 <input type="text" v-model="activeRowData.supervisor_reference" class="modal-form-input" />
-                <span class="modal-form-help">Name, title, and contact telephone number or email.</span>
+                <p class="modal-form-hint">Contact person name, job title, and phone number or email.</p>
               </div>
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Key Responsibilities & Deliverables</label>
                 <textarea v-model="activeRowData.responsibilities" class="modal-form-textarea" rows="3"></textarea>
               </div>
+              <div class="modal-form-group col-span-2 pt-2">
+                <FormCheckbox 
+                  id="expIsRelevant"
+                  v-model="activeRowData.is_relevant" 
+                  label="Directly Relevant to Current Role"
+                  description="Flag this work experience as relevant to the current position. Used by HR for role-specific staffing, placement grading, and succession analysis."
+                />
+              </div>
             </div>
 
-            <!-- 4. Key Competencies & Technical Skills Fields -->
+            <!-- 4. Key Competencies & Technical Skills Fields (Aligned with PartySkill Schema) -->
             <div v-else-if="activeModalType === 'technicalSkills'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Skill / Competency <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.skill" class="modal-form-input" />
+                <input type="text" v-model="activeRowData.skill" class="modal-form-input" list="skillsCatalogList" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Proficiency Level</label>
+                <label class="modal-form-label">Proficiency Level <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.proficiency" class="modal-form-select">
+                  <option value="" disabled>Select</option>
                   <option value="Beginner">Beginner</option>
                   <option value="Intermediate">Intermediate</option>
                   <option value="Advanced">Advanced</option>
                   <option value="Expert">Expert</option>
                 </select>
-                <p class="modal-form-hint">
-                  Assessed operational depth ranging from basic conceptual understanding to advanced domain leadership. Directly informs project staffing matches and training program recommendations.
-                </p>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Years of Experience</label>
-                <input type="number" v-model="activeRowData.year" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Formally Assessed / Certified</label>
-                <select v-model="activeRowData.certified" class="modal-form-select">
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
               </div>
               <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Practical Demonstration / Context</label>
-                <textarea v-model="activeRowData.description" class="modal-form-textarea" rows="2"></textarea>
+                <label class="modal-form-label">Years of Experience</label>
+                <input type="number" step="0.5" v-model="activeRowData.years_of_experience" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  Cumulative practical experience applying this skill (e.g. 3.5 years).
+                </p>
               </div>
             </div>
 
@@ -3633,96 +4026,112 @@ onMounted(() => {
             <div v-else-if="activeModalType === 'spokenLanguages'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Language <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.language" class="modal-form-input" />
+                <input type="text" v-model="activeRowData.language" class="modal-form-input" list="languagesCatalogList" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Overall Fluency Level</label>
+                <label class="modal-form-label">Overall Fluency Level <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.fluency_level" class="modal-form-select">
+                  <option value="" disabled>Select</option>
                   <option value="Basic">Basic</option>
-                  <option value="Professional">Professional</option>
+                  <option value="Conversational">Conversational</option>
                   <option value="Fluent">Fluent</option>
                   <option value="Native">Native</option>
-                </select>
-                <p class="modal-form-hint">
-                  Standardized language proficiency across professional business environments. Determines readiness for international team collaboration, external client relations, and multilingual documentation.
-                </p>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Mother Tongue</label>
-                <select v-model="activeRowData.mother_tongue" class="modal-form-select">
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
                 </select>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Speaking Competence</label>
                 <select v-model="activeRowData.speaking_level" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="None">None</option>
                   <option value="Basic">Basic</option>
                   <option value="Intermediate">Intermediate</option>
-                  <option value="Fluent">Fluent</option>
+                  <option value="Advanced">Advanced</option>
                   <option value="Native">Native</option>
                 </select>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Listening Competence</label>
                 <select v-model="activeRowData.listening_level" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="None">None</option>
                   <option value="Basic">Basic</option>
                   <option value="Intermediate">Intermediate</option>
-                  <option value="Fluent">Fluent</option>
+                  <option value="Advanced">Advanced</option>
                   <option value="Native">Native</option>
                 </select>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Reading Competence</label>
                 <select v-model="activeRowData.reading_level" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="None">None</option>
                   <option value="Basic">Basic</option>
                   <option value="Intermediate">Intermediate</option>
-                  <option value="Fluent">Fluent</option>
+                  <option value="Advanced">Advanced</option>
                   <option value="Native">Native</option>
                 </select>
               </div>
-              <div class="modal-form-group col-span-2">
+              <div class="modal-form-group">
                 <label class="modal-form-label">Writing Competence</label>
                 <select v-model="activeRowData.writing_level" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="None">None</option>
                   <option value="Basic">Basic</option>
                   <option value="Intermediate">Intermediate</option>
-                  <option value="Fluent">Fluent</option>
+                  <option value="Advanced">Advanced</option>
                   <option value="Native">Native</option>
                 </select>
+              </div>
+              <div class="modal-form-group col-span-2 pt-2">
+                <FormCheckbox 
+                  id="langIsNative"
+                  v-model="activeRowData.is_native" 
+                  label="Mother Tongue (Native Language)"
+                  description="Designates this language as the employee's primary native language acquired from childhood."
+                />
               </div>
             </div>
 
-            <!-- 6. Regulatory Clearance Fields -->
+            <!-- 6. Statutory Clearances & Compliance Fields (Aligned with EmployeeCompliance Schema) -->
             <div v-else-if="activeModalType === 'regulatoryClearances'" class="modal-grid-2">
               <div class="modal-form-group">
-                <label class="modal-form-label">Clearance Type <span class="text-rose-500">*</span></label>
+                <label class="modal-form-label">Compliance Item <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.clearance_type" class="modal-form-select">
-                  <option value="Medical Clearance">Medical Clearance (medical_check)</option>
-                  <option value="Police Clearance">Police Clearance (police_clearance)</option>
-                  <option value="Work Permit">Work Permit (work_permit)</option>
-                  <option value="Professional / Board License">Board License (professional_license)</option>
-                  <option value="Fayda National ID">Fayda National ID (fayda_verification)</option>
-                  <option value="Security Clearance">Security Clearance</option>
+                  <option value="" disabled>Select</option>
+                  <option value="fayda_verification">Fayda National ID Verification</option>
+                  <option value="pension_registration">Pension Registration Confirmation</option>
+                  <option value="work_permit">Work Permit / Visa</option>
+                  <option value="medical_check">Pre-Employment Medical Check</option>
+                  <option value="police_clearance">Police Background Clearance</option>
+                  <option value="professional_license">Professional / Board License</option>
+                  <option value="tax_registration">Tax Registration / TIN Verification</option>
                 </select>
                 <p class="modal-form-hint">
-                  The specific regulatory compliance check or screening category. Required clearances must be authenticated and valid prior to employee onboarding confirmation.
+                  Statutory compliance item required prior to employee onboarding.
                 </p>
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Reference / Certificate No. <span class="text-rose-500">*</span></label>
+                <label class="modal-form-label">Reference / Permit No. <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.ref_number" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Issuing Authority / Agency</label>
-                <input type="text" v-model="activeRowData.issuing_authority" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Verification Status</label>
+                <label class="modal-form-label">Compliance Status <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.verification_status" class="modal-form-select">
+                  <option value="" disabled>Select</option>
                   <option value="Valid / Cleared">Valid / Cleared</option>
                   <option value="Pending Verification">Pending Verification</option>
                   <option value="Statutorily Waived">Statutorily Waived</option>
                 </select>
+              </div>
+              <div class="modal-form-group">
+                <label class="modal-form-label">Inspected & Verified By</label>
+                <select v-model="activeRowData.verified_by" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="Selamawit Bekele (Head of HR)">Selamawit Bekele (Head of HR)</option>
+                  <option value="Dawit Alemu (Compliance Officer)">Dawit Alemu (Compliance Officer)</option>
+                  <option value="Abebe Kebede (Finance Director)">Abebe Kebede (Finance Director)</option>
+                </select>
+                <p class="modal-form-hint">Designated compliance officer who inspected and verified the documentation.</p>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Issue Date</label>
@@ -3731,6 +4140,9 @@ onMounted(() => {
               <div class="modal-form-group">
                 <label class="modal-form-label">Expiry / Renewal Date</label>
                 <input type="date" v-model="activeRowData.expiry_date" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  Leave blank if document does not expire.
+                </p>
               </div>
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Verification Notes & Institutional Reference</label>
@@ -3738,7 +4150,7 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- 7. Emergency Contacts Fields -->
+            <!-- 7. Emergency Contacts Fields (Aligned with EmployeeEmergencyContact Schema) -->
             <div v-else-if="activeModalType === 'emergencyContactsList'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Contact Full Name <span class="text-rose-500">*</span></label>
@@ -3746,34 +4158,38 @@ onMounted(() => {
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Relationship to Employee <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.relationship" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Personal or familial relationship to the employee. Establishes the priority sequence and decision-making proxy order during critical medical or safety incidents.
-                </p>
+                <select v-model="activeRowData.relationship" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option value="Spouse">Spouse</option>
+                  <option value="Parent">Parent</option>
+                  <option value="Child">Child</option>
+                  <option value="Sibling">Sibling</option>
+                  <option value="Relative">Relative</option>
+                  <option value="Colleague">Colleague</option>
+                  <option value="Friend">Friend</option>
+                </select>
               </div>
               <div class="modal-form-group">
                 <label class="modal-form-label">Primary Telephone <span class="text-rose-500">*</span></label>
                 <input type="tel" v-model="activeRowData.phone" class="modal-form-input" />
               </div>
               <div class="modal-form-group">
-                <label class="modal-form-label">Secondary / Alternate Telephone</label>
-                <input type="tel" v-model="activeRowData.alternate_phone" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Email Address</label>
-                <input type="email" v-model="activeRowData.email" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">City / Residential Location</label>
-                <input type="text" v-model="activeRowData.city_location" class="modal-form-input" />
+                <label class="modal-form-label">Call Priority <span class="text-rose-500">*</span></label>
+                <select v-model="activeRowData.priority" class="modal-form-select">
+                  <option value="" disabled>Select</option>
+                  <option :value="1">1 - Primary / First Call</option>
+                  <option :value="2">2 - Secondary / Backup Call</option>
+                </select>
+                <p class="modal-form-hint">Emergency response dialing sequence.</p>
               </div>
               <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Workplace / Employer Organization</label>
-                <input type="text" v-model="activeRowData.workplace_employer" class="modal-form-input" />
+                <label class="modal-form-label">City / Residential Location</label>
+                <input type="text" v-model="activeRowData.city_location" class="modal-form-input" />
+                <p class="modal-form-hint">Physical residence or kebele location for emergency dispatch.</p>
               </div>
             </div>
 
-            <!-- 8. Dependents Fields -->
+            <!-- 8. Dependents Fields (Aligned with PartyDependent Schema) -->
             <div v-else-if="activeModalType === 'dependentsList'" class="modal-grid-2">
               <div class="modal-form-group">
                 <label class="modal-form-label">Dependent Full Name <span class="text-rose-500">*</span></label>
@@ -3782,49 +4198,32 @@ onMounted(() => {
               <div class="modal-form-group">
                 <label class="modal-form-label">Relationship <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.relationship" class="modal-form-select">
-                  <option value="Child">Child</option>
+                  <option value="" disabled>Select</option>
                   <option value="Spouse">Spouse</option>
+                  <option value="Child">Child</option>
                   <option value="Parent">Parent</option>
                   <option value="Sibling">Sibling</option>
-                  <option value="Other Dependent">Other Dependent</option>
+                  <option value="Other">Other</option>
                 </select>
-                <p class="modal-form-hint">
-                  Legal relationship category of the dependent. Determines benefit eligibility tiers, age qualification limits for children, and corporate healthcare plan subsidies.
-                </p>
               </div>
-              <div class="modal-form-group">
+              <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Date of Birth</label>
                 <input type="date" v-model="activeRowData.birth_date" class="modal-form-input" />
+                <p class="modal-form-hint">Required for statutory age-dependent health cover and benefit limits.</p>
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Gender</label>
-                <select v-model="activeRowData.gender" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
+              <div class="modal-form-group col-span-2">
+                <FormCheckbox 
+                  v-model="activeRowData.is_beneficiary" 
+                  label="Healthcare & Pension Survivor Beneficiary"
+                  description="Designates whether this dependent is included in corporate health insurance coverage and statutory pension survivor benefits."
+                />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">National ID / Social Security Number</label>
-                <input type="text" v-model="activeRowData.national_id" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Primary Insurance Beneficiary</label>
-                <select v-model="activeRowData.primary_insurance" class="modal-form-select">
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
+              <div class="modal-form-group col-span-2">
+                <label class="modal-form-label">Benefit Remarks & Healthcare Card Details</label>
+                <textarea v-model="activeRowData.benefit_notes" class="modal-form-textarea" rows="2"></textarea>
                 <p class="modal-form-hint">
-                  Specifies primary beneficiary status for employer-sponsored health and life coverage. Directly impacts premium deductions and insurance claim settlement distribution.
+                  Coverage remarks, insurance policy card number, or specific healthcare exclusions.
                 </p>
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Insurance Policy / Healthcare Card Ref</label>
-                <input type="text" v-model="activeRowData.insurance_policy_no" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Special Healthcare & Support Accommodations</label>
-                <textarea v-model="activeRowData.special_care_notes" class="modal-form-textarea" rows="2"></textarea>
               </div>
             </div>
 
@@ -3833,7 +4232,7 @@ onMounted(() => {
               <div class="modal-form-group">
                 <label class="modal-form-label">Rule Type <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.rule_type" class="modal-form-select">
-                  <option value="" disabled>Select Rule</option>
+                  <option value="" disabled>Select</option>
                   <option value="pension_employee">Pension (Employee Contribution)</option>
                   <option value="pension_employer">Pension (Employer Contribution)</option>
                   <option value="income_tax">Employment Income Tax</option>
@@ -3845,20 +4244,20 @@ onMounted(() => {
                   <option value="probation_maximum">Probation Maximum</option>
                 </select>
                 <p class="modal-form-hint">
-                  National statutory labor or tax rule waived under authorized exemption.
+                  Statutory tax or labor policy being waived under authorized exemption.
                 </p>
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-form-label">Exemption Authorized By</label>
+                <label class="modal-form-label">Exemption Authorized By <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.approved_by" class="modal-form-select">
-                  <option value="" disabled>Select Approver</option>
+                  <option value="" disabled>Select</option>
                   <option value="Selamawit Bekele (Head of HR)">Selamawit Bekele (Head of HR)</option>
                   <option value="Abebe Kebede (Finance Director)">Abebe Kebede (Finance Director)</option>
                   <option value="Dawit Alemu (Operations Manager)">Dawit Alemu (Operations Manager)</option>
                 </select>
                 <p class="modal-form-hint">
-                  Senior officer or legal counsel who validated the exemption documentation.
+                  Designated officer who validated the legal basis for the waiver.
                 </p>
               </div>
 
@@ -3866,15 +4265,15 @@ onMounted(() => {
                 <label class="modal-form-label">Effective From</label>
                 <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
                 <p class="modal-form-hint">
-                  Date when this exemption takes effect in payroll calculations.
+                  Defaults to employment start date if left blank.
                 </p>
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-form-label">Effective To (Nullable)</label>
+                <label class="modal-form-label">Effective Until (Optional)</label>
                 <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
                 <p class="modal-form-hint">
-                  Expiration date of the waiver (leave blank if permanent or until revoked).
+                  Leave blank if waiver is indefinite or valid until revoked.
                 </p>
               </div>
 
@@ -3912,7 +4311,6 @@ onMounted(() => {
                     v-model="activeRowData.reason" 
                     class="wysiwyg-textarea" 
                     rows="4" 
-                    placeholder="Document legal basis (e.g. Expatriate on home-country social security bilateral agreement, diplomatic status, re-hired retiree already collecting pension)..."
                   ></textarea>
                   <div class="wysiwyg-status-bar">
                     <span class="char-count">{{ (activeRowData.reason || '').length }} Characters</span>
@@ -3929,53 +4327,42 @@ onMounted(() => {
                   <option value="" disabled>Select Provider</option>
                   <option v-for="prov in paymentProviders" :key="prov" :value="prov">{{ prov }}</option>
                 </select>
-                <p class="modal-form-hint">
-                  Commercial bank or digital wallet institution licensed for payroll clearing.
-                </p>
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Branch Name</label>
-                <input type="text" v-model="activeRowData.branch_name" class="modal-form-input" placeholder="e.g. Bole Medhanealem Branch" />
-                <p class="modal-form-hint">
-                  Originating or domiciled branch for direct bank mandates.
-                </p>
+                <input type="text" v-model="activeRowData.branch_name" class="modal-form-input" />
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Account Number / Wallet ID <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.account_number" class="modal-form-input" placeholder="e.g. 1000234511209" />
-                <p class="modal-form-hint">
-                  Full bank account number or registered phone number for mobile money.
-                </p>
+                <input type="text" v-model="activeRowData.account_number" class="modal-form-input" />
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Account Holder Name <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.account_holder_name" class="modal-form-input" placeholder="e.g. Abebe Kebede Wolde" />
+                <input type="text" v-model="activeRowData.account_holder_name" class="modal-form-input" />
                 <p class="modal-form-hint">
-                  Exact legal name as registered with the bank or KYC profile.
+                  Must match the official registered name on the bank account.
                 </p>
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Split Share (%) <span class="text-rose-500">*</span></label>
-                <input type="number" v-model="activeRowData.split_percent" class="modal-form-input" placeholder="100" min="1" max="100" />
+                <input type="number" v-model="activeRowData.split_percent" class="modal-form-input" min="1" max="100" />
                 <p class="modal-form-hint">
-                  Percentage of net salary disbursed to this account.
+                  Percentage of net salary routed to this account (total must equal 100%).
                 </p>
               </div>
 
-              <div class="modal-form-group flex items-center pt-5">
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    :checked="activeRowData.is_primary" 
-                    class="custom-squircle-check" 
-                    @change="setPrimaryAccount(activeRowIndex)" 
-                  />
-                  <span class="text-sm font-medium text-[#404040]">Primary Disbursement Account</span>
-                </label>
+              <div class="modal-form-group col-span-2 pt-2">
+                <FormCheckbox 
+                  id="modalBankAccountIsPrimary"
+                  v-model="activeRowData.is_primary" 
+                  label="Primary Disbursement Account"
+                  description="Designates this bank account as the primary destination for automated monthly net salary electronic fund transfers."
+                  @change="setPrimaryAccount(activeRowIndex)"
+                />
               </div>
             </div>
 
@@ -3984,84 +4371,232 @@ onMounted(() => {
               <div class="modal-form-group">
                 <label class="modal-form-label">Payroll Component <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.component_name" class="modal-form-select">
-                  <option value="Transport Allowance">Transport Allowance (TRANS_ALLOW)</option>
-                  <option value="Housing Allowance">Housing Allowance (HOUSE_ALLOW)</option>
-                  <option value="Representation Allowance">Representation Allowance (POSITION_ALLOW)</option>
-                  <option value="Hardship Allowance">Hardship Allowance (HARDSHIP_ALLOW)</option>
-                  <option value="Fuel & Mileage Allowance">Fuel Allowance (FUEL_ALLOW)</option>
-                  <option value="Mobile & Communication">Mobile Allowance (COMMUNICATION_ALLOW)</option>
-                  <option value="Food & Subsistence">Food Allowance (FOOD_ALLOW)</option>
-                  <option value="Other Special Allowance">Other Allowance</option>
+                  <option value="Transport Allowance">Transport Allowance</option>
+                  <option value="Housing Allowance">Housing Allowance</option>
+                  <option value="Representation Allowance">Representation Allowance</option>
+                  <option value="Hardship Allowance">Hardship Allowance</option>
+                  <option value="Fuel & Mileage Allowance">Fuel & Mileage Allowance</option>
+                  <option value="Mobile & Communication">Mobile & Communication Allowance</option>
+                  <option value="Food & Subsistence">Food Allowance</option>
+                  <option value="Other Special Allowance">Other Special Allowance</option>
                 </select>
                 <p class="modal-form-hint">
-                  Earning element mapping to payroll_component_id (Schema Line 2283).
+                  Select the recurring allowance or earning component to add to monthly compensation.
                 </p>
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Calculation Type <span class="text-rose-500">*</span></label>
                 <select v-model="activeRowData.calc_type" class="modal-form-select">
-                  <option value="Fixed Amount">Fixed Amount (ETB) &rarr; populates amount</option>
-                  <option value="Percentage of Basic">% of Monthly Basic Salary &rarr; populates percent</option>
+                  <option value="Fixed Amount">Fixed Amount (ETB)</option>
+                  <option value="Percentage of Basic">% of Monthly Basic Salary</option>
                 </select>
                 <p class="modal-form-hint">
-                  Defines whether value populates amount (Line 2284) or percent (Line 2285).
+                  Choose whether this allowance is a fixed ETB amount or calculated as a percentage of basic salary.
                 </p>
               </div>
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Amount / Value <span class="text-rose-500">*</span></label>
-                <input type="number" v-model="activeRowData.amount" class="modal-form-input" placeholder="e.g. 2500" />
+                <input type="number" v-model="activeRowData.amount" class="modal-form-input" />
                 <p class="modal-form-hint">
-                  Cash value in ETB or percentage number (e.g. 15 for 15%).
+                  Enter the fixed amount in ETB or percentage rate (e.g. 15 for 15%).
                 </p>
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-form-label">Formula Pin (payroll_formula_id)</label>
+                <label class="modal-form-label">Calculation Formula (Optional)</label>
                 <select v-model="activeRowData.payroll_formula" class="modal-form-select">
                   <option value="Default Component Formula">Default Component Formula</option>
                   <option value="min(basic * 0.25, 2200)">Statutory Cap: min(basic * 0.25, 2200)</option>
                   <option value="Direct Value (No Formula)">Direct Value (No Formula Pin)</option>
                 </select>
                 <p class="modal-form-hint">
-                  FK to PayrollFormula (Schema Line 2286).
+                  Optional automated calculation rule for statutory caps or tiered formulas.
                 </p>
               </div>
 
+              <div class="modal-form-group">
+                <label class="modal-form-label">Effective From (Optional)</label>
+                <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  Optional line start date; defaults to package effective date if left blank.
+                </p>
+              </div>
+
+              <div class="modal-form-group">
+                <label class="modal-form-label">Effective To (Optional)</label>
+                <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  Optional expiration date; leave blank if ongoing throughout employment.
+                </p>
+              </div>
+            </div>
+
+            <!-- 12. Address & Physical Domicile Fields -->
+            <div v-else-if="activeModalType === 'addressesList'" class="modal-grid-2">
+              <div class="modal-form-group col-span-2">
+                <label class="modal-form-label">Address Type <span class="text-rose-500">*</span></label>
+                <select v-model="activeRowData.address_type" class="modal-form-select">
+                  <option value="residence">Residence / Primary Home</option>
+                  <option value="postal">Postal Address</option>
+                  <option value="work">Work Location</option>
+                  <option value="emergency">Emergency Domicile</option>
+                  <option value="birth_place">Place of Birth</option>
+                  <option value="other">Other Domicile</option>
+                </select>
+                <p class="modal-form-hint">
+                  Classification of this address record for official Party identity.
+                </p>
+              </div>
+
+              <!-- Exact Geographic Location Hierarchy (Spine) -->
+              <div class="modal-form-group col-span-2">
+                <div class="location-picker-card">
+                  <div class="location-picker-header">
+                    <div class="location-header-title">
+                      <MapPin :size="15" class="location-pin-icon" />
+                      <span>Exact Geographic Location</span>
+                    </div>
+                    <!-- Visual Dynamic Breadcrumb / Badge -->
+                    <div class="location-breadcrumb-badge" :title="activeRowData.admin_unit || 'No location configured'">
+                      <span class="breadcrumb-dot"></span>
+                      <span class="breadcrumb-text">{{ activeRowData.admin_unit || 'Select Location Hierarchy' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="location-picker-body">
+                    <!-- Level 1: Country -->
+                    <div class="modal-form-group">
+                      <label class="modal-form-label">Country <span class="text-rose-500">*</span></label>
+                      <select v-model="activeRowData.country" class="modal-form-select" @change="onCountryChange">
+                        <option value="Ethiopia">Ethiopia [ET]</option>
+                        <option value="Kenya">Kenya [KE]</option>
+                        <option value="Djibouti">Djibouti [DJ]</option>
+                        <option value="United States">United States [US]</option>
+                        <option value="United Kingdom">United Kingdom [GB]</option>
+                      </select>
+                      <p class="modal-form-hint">Primary sovereign jurisdiction.</p>
+                    </div>
+
+                    <!-- Level 2: Region / City Administration -->
+                    <div class="modal-form-group">
+                      <label class="modal-form-label">Region / City Administration <span class="text-rose-500">*</span></label>
+                      <select v-model="activeRowData.region" class="modal-form-select" @change="onRegionChange">
+                        <option value="" disabled>Select</option>
+                        <option v-for="r in currentRegionOptions" :key="r" :value="r">{{ r }}</option>
+                      </select>
+                      <p class="modal-form-hint">Administrative state or chartered city.</p>
+                    </div>
+
+                    <!-- Level 3: Zone / Sub-City -->
+                    <div class="modal-form-group">
+                      <label class="modal-form-label">Zone / Sub-City</label>
+                      <div v-if="currentSubcityOptions.length > 0" class="flex flex-col gap-1.5">
+                        <select v-model="activeRowData.subcity_zone" class="modal-form-select" @change="onSubcityChange">
+                          <option value="" disabled>Select</option>
+                          <option v-for="sc in currentSubcityOptions" :key="sc" :value="sc">{{ sc }}</option>
+                          <option value="__custom__">Other / Custom Zone...</option>
+                        </select>
+                        <input 
+                          v-if="activeRowData.subcity_zone === '__custom__' || isCustomSubcity" 
+                          type="text" 
+                          v-model="customSubcityText" 
+                          class="modal-form-input mt-1" 
+                          @input="onCustomSubcityInput" 
+                        />
+                      </div>
+                      <div v-else>
+                        <input 
+                          type="text" 
+                          v-model="activeRowData.subcity_zone" 
+                          class="modal-form-input" 
+                          @input="updateAdminUnitSummary" 
+                        />
+                      </div>
+                      <p class="modal-form-hint">{{ activeRowData.region === 'Addis Ababa' ? 'Chartered municipal sub-city.' : 'Provincial zone or municipal district.' }}</p>
+                    </div>
+
+                    <!-- Level 4: Woreda / District -->
+                    <div class="modal-form-group">
+                      <label class="modal-form-label">Woreda / District</label>
+                      <div v-if="currentWoredaOptions.length > 0" class="flex flex-col gap-1.5">
+                        <select v-model="activeRowData.woreda" class="modal-form-select" @change="onWoredaChange">
+                          <option value="" disabled>Select</option>
+                          <option v-for="w in currentWoredaOptions" :key="w" :value="w">{{ w }}</option>
+                          <option value="__custom__">Other / Custom Woreda...</option>
+                        </select>
+                        <input 
+                          v-if="activeRowData.woreda === '__custom__' || isCustomWoreda" 
+                          type="text" 
+                          v-model="customWoredaText" 
+                          class="modal-form-input mt-1" 
+                          @input="onCustomWoredaInput" 
+                        />
+                      </div>
+                      <div v-else>
+                        <input 
+                          type="text" 
+                          v-model="activeRowData.woreda" 
+                          class="modal-form-input" 
+                          @input="updateAdminUnitSummary" 
+                        />
+                      </div>
+                      <p class="modal-form-hint">{{ activeRowData.region === 'Addis Ababa' ? 'e.g. Woreda 03, Woreda 08.' : 'Local district / woreda administration.' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-form-group col-span-2">
+                <label class="modal-form-label">
+                  {{ activeRowData.address_type === 'postal' ? 'P.O. Box & Branch Line' : 'Street / Locality Line' }}
+                  <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" v-model="activeRowData.line" class="modal-form-input" />
+                <p class="modal-form-hint">
+                  {{ activeRowData.address_type === 'postal' ? 'e.g. P.O. Box 1176, Central Post Office' : 'e.g. Cameroon St., near Edna Mall' }}
+                </p>
+              </div>
+
+              <!-- House Number: physical addresses only -->
+              <div v-if="activeRowData.address_type !== 'postal'" class="modal-form-group">
+                <label class="modal-form-label">House Number</label>
+                <input type="text" v-model="activeRowData.house_number" class="modal-form-input" />
+                <p class="modal-form-hint">House number as printed on Fayda ID registration or door plaque.</p>
+              </div>
+
+              <!-- Postal Code: prominent for postal -->
+              <div :class="activeRowData.address_type === 'postal' ? 'modal-form-group col-span-2' : 'modal-form-group'">
+                <label class="modal-form-label">
+                  Postal Code / Zip
+                  <span v-if="activeRowData.address_type === 'postal'" class="text-rose-500">*</span>
+                </label>
+                <input type="text" v-model="activeRowData.postal_code" class="modal-form-input font-mono" />
+                <p class="modal-form-hint">Official postal dispatch zip code (e.g. 1000, 1176).</p>
+              </div>
+
+              <!-- Temporal Effectivity (Audit) -->
               <div class="modal-form-group">
                 <label class="modal-form-label">Effective From</label>
                 <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Line start date: effective_from (Schema Line 2287).
-                </p>
+                <p class="modal-form-hint">Defaults to current hire date or intake date.</p>
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-form-label">Effective To (Nullable)</label>
+                <label class="modal-form-label">Effective To</label>
                 <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Optional line expiration: effective_to (Schema Line 2288).
-                </p>
+                <p class="modal-form-hint">Leave empty if this is an active current domicile.</p>
               </div>
 
-              <div class="modal-form-group">
-                <label class="modal-form-label">Line Status</label>
-                <select v-model="activeRowData.state" class="modal-form-select">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <p class="modal-form-hint">
-                  Row lifecycle state (Schema Line 2290).
-                </p>
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Notes & Remarks</label>
-                <input type="text" v-model="activeRowData.notes" class="modal-form-input" placeholder="Justification or contract clause reference" />
-                <p class="modal-form-hint">
-                  Contextual justification or contract reference.
-                </p>
+              <div class="modal-form-group col-span-2 pt-2">
+                <FormCheckbox 
+                  id="modalAddressIsPrimary"
+                  v-model="activeRowData.is_primary" 
+                  label="Primary Address (Official Domicile)"
+                  description="Designates this record as the employee's official primary residence for statutory tax remittance, administrative notices, and emergency routing."
+                  @change="setPrimaryAddress(activeRowIndex)"
+                />
               </div>
             </div>
           </div>
@@ -4132,6 +4667,108 @@ onMounted(() => {
       @change-status="handleFloatingChangeStatus"
       @close="handleFloatingClose"
     />
+
+    <!-- Standard Catalog Datalists for Academic Qualifications -->
+    <datalist id="fieldsOfStudyList">
+      <option value="Accounting" />
+      <option value="Finance" />
+      <option value="Human Resource Management" />
+      <option value="Computer Science & Software Engineering" />
+      <option value="Information Technology" />
+      <option value="Business Administration" />
+      <option value="Economics" />
+      <option value="Marketing & Sales Management" />
+      <option value="Supply Chain & Logistics" />
+      <option value="Electrical Engineering" />
+      <option value="Mechanical Engineering" />
+      <option value="Civil Engineering" />
+      <option value="Law / Legal Studies" />
+      <option value="Public Administration" />
+      <option value="Statistics & Data Analytics" />
+    </datalist>
+
+    <datalist id="institutionsList">
+      <option value="Addis Ababa University (AAU)" />
+      <option value="Bahir Dar University (BDU)" />
+      <option value="Hawassa University" />
+      <option value="Jimma University" />
+      <option value="Mekelle University" />
+      <option value="Adama Science and Technology University (ASTU)" />
+      <option value="Addis Ababa Science and Technology University (AASTU)" />
+      <option value="Admas University" />
+      <option value="Unity University" />
+      <option value="St. Mary's University" />
+      <option value="Rift Valley University" />
+      <option value="Entoto TVET College" />
+      <option value="General Wingate TVET College" />
+      <option value="Foreign / International University" />
+    </datalist>
+
+    <datalist id="certificationsList">
+      <option value="ACCA (Association of Chartered Certified Accountants)" />
+      <option value="CPA (Certified Public Accountant)" />
+      <option value="PMP (Project Management Professional)" />
+      <option value="CIA (Certified Internal Auditor)" />
+      <option value="CFA (Chartered Financial Analyst)" />
+      <option value="Cisco CCNA / CCNP" />
+      <option value="AWS Certified Solutions Architect" />
+      <option value="SHRM-CP / SHRM-SCP (HR Professional)" />
+      <option value="Certified Supply Chain Professional (CSCP)" />
+      <option value="Professional Food Handler Certification" />
+      <option value="Certified Procurement Specialist" />
+    </datalist>
+
+    <datalist id="certInstitutionsList">
+      <option value="ACCA Global" />
+      <option value="AABE (Accounting and Auditing Board of Ethiopia)" />
+      <option value="Project Management Institute (PMI)" />
+      <option value="Institute of Internal Auditors (IIA)" />
+      <option value="Cisco Systems" />
+      <option value="Amazon Web Services (AWS)" />
+      <option value="Ethiopian Management Institute (EMI)" />
+      <option value="Federal Public Procurement Authority (FPPA)" />
+      <option value="Addis Ababa Food and Drug Authority" />
+    </datalist>
+
+    <datalist id="skillsCatalogList">
+      <option value="IFRS Reporting & Financial Accounting" />
+      <option value="Peachtree / Sage 50 Accounting" />
+      <option value="Point of Sale (POS) Operation" />
+      <option value="Cash Management & Daily Reconciliation" />
+      <option value="Cost Accounting & Budgeting" />
+      <option value="Tax Compliance & Withholding" />
+      <option value="Procurement Negotiation" />
+      <option value="Supply Chain & Inventory Management" />
+      <option value="Warehouse Management & Stock Auditing" />
+      <option value="Forklift Operation & Material Handling" />
+      <option value="Food Safety & Hygiene Compliance" />
+      <option value="Food Handler Technique & Prep" />
+      <option value="Barista & Beverage Crafting" />
+      <option value="Customer Service & Front Desk Operations" />
+      <option value="Housekeeping & Facility Upkeep" />
+      <option value="Data Entry & Documentation Integrity" />
+      <option value="Labour Law & Employee Relations" />
+      <option value="Payroll Processing & Statutory Remittance" />
+      <option value="Talent Acquisition & Sourcing" />
+      <option value="ERP System Administration & SQL" />
+      <option value="Full-Stack Software Development" />
+      <option value="Network Infrastructure & Security" />
+    </datalist>
+
+    <datalist id="languagesCatalogList">
+      <option value="Amharic" />
+      <option value="Afaan Oromo" />
+      <option value="Tigrinya" />
+      <option value="Somali" />
+      <option value="Sidama" />
+      <option value="Wolaytta" />
+      <option value="English" />
+      <option value="French" />
+      <option value="Arabic" />
+      <option value="Mandarin Chinese" />
+      <option value="German" />
+      <option value="Italian" />
+    </datalist>
   </div>
 </template>
 
@@ -5158,6 +5795,38 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.08);
 }
 
+.inline-location-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.location-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-inline-location-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #0B529C;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.btn-inline-location-picker:hover {
+  background: rgba(11, 82, 156, 0.08);
+  border-color: rgba(11, 82, 156, 0.2);
+}
+
 .child-inline-select {
   width: 100%;
   height: 30px;
@@ -5221,6 +5890,171 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* ─── Address Cards Repeater (Matching User Settled Design) ─── */
+.address-section-body {
+  padding: 20px 24px 24px;
+}
+
+.address-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.address-item-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.address-item-card:hover {
+  border-color: #cbd5e1;
+}
+
+.address-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.address-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+}
+
+.btn-delete-address-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-address-card:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.address-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .address-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.address-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.address-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  margin-bottom: 6px;
+}
+
+.address-field-select {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: #404040;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.address-field-select:focus {
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+}
+
+.address-field-input {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: #404040;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.address-field-input:focus {
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+}
+
+.address-field-hint {
+  font-size: 11.5px;
+  color: #737373;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.address-primary-row {
+  margin-top: 12px;
+  padding-top: 4px;
+}
+
+.address-empty-state {
+  padding: 24px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.btn-add-address-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-address-card:hover {
   background-color: #f8fafc;
   border-color: #cbd5e1;
 }
@@ -5615,6 +6449,73 @@ onMounted(() => {
   font-size: 11.5px;
   color: #737373;
   margin-top: 4px;
+}
+
+/* ─── Exact Geographic Location Picker Card ─── */
+.location-picker-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 2px;
+}
+
+.location-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.location-header-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.location-pin-icon {
+  color: #0B529C;
+}
+
+.location-breadcrumb-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: rgba(11, 82, 156, 0.08);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #0B529C;
+  max-width: 65%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breadcrumb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0B529C;
+  flex-shrink: 0;
+}
+
+.breadcrumb-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-picker-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .row-modal-footer {
