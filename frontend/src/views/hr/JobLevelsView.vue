@@ -61,7 +61,7 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'description', label: 'Scope & Autonomy', visible: true, sortable: false },
   { key: 'entity', label: 'Owning Entity', visible: false, sortable: true },
   { key: 'positions_count', label: 'Attached Positions', visible: true, sortable: true },
-  { key: 'status', label: 'Governance Approval', visible: false, sortable: true },
+  { key: 'status', label: 'Status', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
@@ -388,9 +388,9 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Governance Status Filter -->
+        <!-- Status Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Governance:</label>
+          <label class="filter-label">Status:</label>
           <select v-model="filterStatus" class="filter-select">
             <option value="All">All Statuses</option>
             <option value="acceptForAll">Approved for All</option>
@@ -442,7 +442,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('description')" class="col-desc">Scope &amp; Autonomy</th>
               <th v-if="isColumnVisible('entity')" class="col-entity">Owning Entity</th>
               <th v-if="isColumnVisible('positions_count')" class="col-count">Attached Positions</th>
-              <th v-if="isColumnVisible('status')" class="col-status">Governance</th>
+              <th v-if="isColumnVisible('status')" class="col-status">Status</th>
               <th v-if="isColumnVisible('state')" class="col-state">State</th>
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>
             </tr>
@@ -505,9 +505,19 @@ onUnmounted(() => {
                 <span class="text-tertiary">{{ item.positions_count }} Positions</span>
               </td>
 
-              <!-- Governance Status (Tertiary Color #737373) -->
+              <!-- Status Badge Pill -->
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span class="text-tertiary">{{ item.status_label }}</span>
+                <span 
+                  class="status-pill"
+                  :class="{
+                    'status-pill-approved': item.status === 'acceptForAll',
+                    'status-pill-entity': item.status === 'acceptForThis',
+                    'status-pill-pending': item.status === 'pending',
+                    'status-pill-rejected': item.status === 'rejected'
+                  }"
+                >
+                  {{ item.status_label }}
+                </span>
               </td>
 
               <!-- Lifecycle State (Rule 9.6: Badges reserved for lifecycle state) -->
@@ -859,10 +869,27 @@ onUnmounted(() => {
   font-weight: 500;
   border-radius: 9999px;
 }
-.status-pill-active {
+.status-pill-active,
+.status-pill-approved {
   background-color: #ecfdf5;
   color: #059669;
 }
+
+.status-pill-entity {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status-pill-pending {
+  background-color: #fefce8;
+  color: #a16207;
+}
+
+.status-pill-rejected {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
 .status-pill-inactive {
   background-color: #f1f5f9;
   color: #64748b;

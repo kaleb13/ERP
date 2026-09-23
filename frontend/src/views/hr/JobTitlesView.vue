@@ -65,7 +65,7 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'name', label: 'Job Title / Role', visible: true, sortable: true },
   { key: 'category', label: 'Position Category', visible: true, sortable: true },
   { key: 'entity', label: 'Owning Entity', visible: true, sortable: true },
-  { key: 'status', label: 'Governance Approval', visible: true, sortable: true },
+  { key: 'status', label: 'Status', visible: true, sortable: true },
   { key: 'positions_count', label: 'Active Positions', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
@@ -413,7 +413,7 @@ onUnmounted(() => {
               :options="['All', 'Non-Management', 'Management', 'Executive']"
             />
             <FormSelect
-              label="Governance Approval"
+              label="Status"
               v-model="filterStatus"
               :options="['All', 'Approved for All Entities', 'Approved for This Entity Only']"
             />
@@ -450,7 +450,12 @@ onUnmounted(() => {
               <!-- Subsequent Columns strictly in Tertiary Color -->
               <th v-if="isColumnVisible('category')" class="col-category">Position Category</th>
               <th v-if="isColumnVisible('entity')" class="col-entity">Owning Entity</th>
-              <th v-if="isColumnVisible('status')" class="col-status">Governance Approval</th>
+              <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Status</span>
+                  <ArrowUpDown :size="12" class="sort-icon" />
+                </div>
+              </th>
               <th v-if="isColumnVisible('positions_count')" class="col-count">Active Positions</th>
               <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
@@ -500,7 +505,17 @@ onUnmounted(() => {
               </td>
 
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span class="text-tertiary">{{ item.status_label }}</span>
+                <span 
+                  class="status-pill"
+                  :class="{
+                    'status-pill-approved': item.status === 'acceptForAll',
+                    'status-pill-entity': item.status === 'acceptForThis',
+                    'status-pill-pending': item.status === 'pending',
+                    'status-pill-rejected': item.status === 'rejected'
+                  }"
+                >
+                  {{ item.status_label }}
+                </span>
               </td>
 
               <td v-if="isColumnVisible('positions_count')" class="col-count">
@@ -790,9 +805,25 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.status-pill-active {
+.status-pill-active,
+.status-pill-approved {
   background-color: #ecfdf5;
   color: #059669;
+}
+
+.status-pill-entity {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status-pill-pending {
+  background-color: #fefce8;
+  color: #a16207;
+}
+
+.status-pill-rejected {
+  background-color: #fef2f2;
+  color: #dc2626;
 }
 
 .status-pill-inactive {

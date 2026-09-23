@@ -478,6 +478,83 @@ const initialEmployees: EmployeeRecord[] = [
     salary_structure: 'Standard Commercial Staff Grade',
     notes: 'Handles major banking operations and treasury disbursements.',
     state: 'active'
+  },
+  {
+    id: 4,
+    uuid: 'emp_0031',
+    employee_id: 31,
+    tenant_id: 1,
+    entity_id: 9,
+    entity_name: 'Haleta Hawassa Hub',
+    employee_number: 'EMP-0031',
+    employee_name: 'Dawit Haile',
+    first_name: 'Dawit',
+    middle_name: 'Haile',
+    last_name: 'Gebre',
+    job_title: 'Junior Inventory Controller',
+    job_grade: 'Grade C2',
+    job_grade_step: 'Step 1',
+    department_name: 'Supply Chain & Logistics',
+    reports_to: 'Procurement Officer',
+    hire_date: '2026-02-17',
+    probation_end_date: '2026-08-17',
+    employment_type: 'contract',
+    employment_status: 'probation',
+    pension_number: 'PN-068224',
+    tin: '0068224531',
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    work_email: 'd.haile@haleta.et',
+    personal_email: 'dawit.haile@gmail.com',
+    phone: '+251 92 345 6789',
+    fayda_id: 'FYD-44120938172',
+    gender: 'Male',
+    basic_amount: 18000,
+    transport_allowance: 1500,
+    housing_allowance: 2000,
+    other_allowance: 0,
+    currency: 'ETB',
+    payroll_group: 'Hawassa Branch Payroll',
+    salary_structure: 'Branch Operations Staff Grade',
+    state: 'active'
+  },
+  {
+    id: 5,
+    uuid: 'emp_0044',
+    employee_id: 44,
+    tenant_id: 1,
+    entity_id: 3,
+    entity_name: 'Haleta Addis Ababa HQ',
+    employee_number: 'EMP-0044',
+    employee_name: 'Kassahun Tadesse',
+    first_name: 'Kassahun',
+    middle_name: 'Tadesse',
+    last_name: 'Mengistu',
+    job_title: 'Senior Operations Officer',
+    job_grade: 'Grade B2',
+    job_grade_step: 'Step 5',
+    department_name: 'Operations',
+    reports_to: 'Operations Director',
+    hire_date: '2020-03-02',
+    confirmation_date: '2020-05-02',
+    employment_type: 'permanent',
+    employment_status: 'separated',
+    pension_number: 'PN-002774',
+    tin: '0027745690',
+    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    work_email: 'k.tadesse@haleta.et',
+    personal_email: 'kassahun.t@gmail.com',
+    phone: '+251 91 876 5432',
+    fayda_id: 'FYD-88291048123',
+    gender: 'Male',
+    basic_amount: 38000,
+    transport_allowance: 2500,
+    housing_allowance: 4000,
+    other_allowance: 0,
+    currency: 'ETB',
+    payroll_group: 'Executive & Management',
+    salary_structure: 'Standard Commercial Staff Grade',
+    notes: 'Separation finalized in Jan 2026. Clearance items completed.',
+    state: 'inactive'
   }
 ];
 
@@ -516,6 +593,7 @@ const breadcrumbItems = computed(() => {
 // ─── Table Search & Filter State ───
 const searchQuery = ref('');
 const filterStatus = ref('All');
+const filterState = ref('All');
 const filterType = ref('All');
 const filterDepartment = ref('All');
 const currentSort = ref('name');
@@ -524,6 +602,7 @@ const sortOrder = ref<'asc' | 'desc'>('asc');
 const activeFilterCount = computed(() => {
   let count = 0;
   if (filterStatus.value !== 'All') count++;
+  if (filterState.value !== 'All') count++;
   if (filterType.value !== 'All') count++;
   if (filterDepartment.value !== 'All') count++;
   return count;
@@ -541,7 +620,8 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'fayda', label: 'Fayda ID (NIDP)', visible: false, sortable: false },
   { key: 'tin', label: 'TIN Number', visible: false, sortable: false },
   { key: 'pension', label: 'POESSA Pension', visible: false, sortable: false },
-  { key: 'status', label: 'State', visible: true, sortable: true }
+  { key: 'status', label: 'Status', visible: true, sortable: true },
+  { key: 'state', label: 'State', visible: true, sortable: true }
 ]);
 
 const handleToggleColumn = (colKey: string) => {
@@ -603,7 +683,11 @@ const filteredEmployees = computed(() => {
         return false;
       }
     }
-    if (filterStatus.value !== 'All' && emp.employment_status !== filterStatus.value.toLowerCase()) return false;
+    if (filterStatus.value !== 'All') {
+      const targetStatus = filterStatus.value === 'In Service' ? 'active' : filterStatus.value.toLowerCase().replace(/[\s_]+/g, '_');
+      if (emp.employment_status !== targetStatus) return false;
+    }
+    if (filterState.value !== 'All' && emp.state !== filterState.value.toLowerCase()) return false;
     if (filterType.value !== 'All' && emp.employment_type !== filterType.value.toLowerCase()) return false;
     if (filterDepartment.value !== 'All' && emp.department_name !== filterDepartment.value) return false;
     return true;
@@ -613,6 +697,8 @@ const filteredEmployees = computed(() => {
       return a.employee_name.localeCompare(b.employee_name) * factor;
     } else if (currentSort.value === 'status') {
       return a.employment_status.localeCompare(b.employment_status) * factor;
+    } else if (currentSort.value === 'state') {
+      return a.state.localeCompare(b.state) * factor;
     } else if (currentSort.value === 'department') {
       return a.department_name.localeCompare(b.department_name) * factor;
     } else if (currentSort.value === 'position') {
@@ -1044,7 +1130,7 @@ const handleFloatingDeactivateEmployees = () => {
 
 const getStatusPillClass = (status: EmploymentStatus) => {
   switch (status) {
-    case 'active': return 'status-active';
+    case 'active': return 'status-inservice';
     case 'probation': return 'status-probation';
     case 'suspended': return 'status-suspended';
     case 'on_leave': return 'status-leave';
@@ -1056,7 +1142,7 @@ const getStatusPillClass = (status: EmploymentStatus) => {
 
 const formatStatus = (status: EmploymentStatus) => {
   switch (status) {
-    case 'active': return 'Active';
+    case 'active': return 'In Service';
     case 'probation': return 'Probation';
     case 'suspended': return 'Suspended';
     case 'on_leave': return 'On Leave';
@@ -1120,9 +1206,14 @@ onUnmounted(() => {
         <template #filter>
           <div class="filter-grid">
             <FormSelect
-              label="Employment Status"
+              label="Status"
               v-model="filterStatus"
-              :options="['All', 'Active', 'Probation', 'Suspended', 'On_Leave', 'Separated', 'Draft']"
+              :options="['All', 'In Service', 'Probation', 'Suspended', 'On Leave', 'Separated', 'Draft']"
+            />
+            <FormSelect
+              label="System State"
+              v-model="filterState"
+              :options="['All', 'Active', 'Inactive']"
             />
             <FormSelect
               label="Contract Type"
@@ -1181,6 +1272,13 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('pension')" class="col-pension">Pension No.</th>
 
               <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Status</span>
+                  <ArrowUpDown :size="12" class="sort-icon" />
+                </div>
+              </th>
+
+              <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
                   <ArrowUpDown :size="12" class="sort-icon" />
@@ -1261,6 +1359,12 @@ onUnmounted(() => {
                 <span :class="['status-pill', getStatusPillClass(item.employment_status)]">
                   <span class="status-dot"></span>
                   {{ formatStatus(item.employment_status) }}
+                </span>
+              </td>
+
+              <td v-if="isColumnVisible('state')" class="col-state">
+                <span :class="['status-pill', item.state === 'active' ? 'state-active' : 'state-inactive']">
+                  {{ item.state === 'active' ? 'Active' : 'Inactive' }}
                 </span>
               </td>
 
@@ -2526,12 +2630,15 @@ onUnmounted(() => {
   background-color: currentColor;
 }
 
-.status-active { background-color: #ecfdf5; color: #059669; }
+.status-inservice, .status-active { background-color: #ecfdf5; color: #059669; }
 .status-probation { background-color: #eff6ff; color: #0284c7; }
 .status-suspended { background-color: #fef2f2; color: #dc2626; }
 .status-leave { background-color: #fefce8; color: #ca8a04; }
 .status-separated { background-color: #f1f5f9; color: #64748b; }
 .status-draft { background-color: #f8fafc; color: #94a3b8; }
+
+.state-active { background-color: #ecfdf5; color: #059669; }
+.state-inactive { background-color: #f1f5f9; color: #64748b; }
 
 .btn-primary-create {
   display: inline-flex;

@@ -75,7 +75,7 @@ const breadcrumbItems = computed(() => {
 const viewMode = ref<'list' | 'tree'>('list');
 const selectedStructure = ref<OrgStructureRecord | null>(null);
 const searchQuery = ref('');
-const filterState = ref('All');
+const filterStatus = ref('All');
 const filterEntity = ref('All');
 const filterLifecycle = ref('All');
 const currentSort = ref('name');
@@ -93,8 +93,8 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'entity', label: 'Owning Entity', visible: true, sortable: true },
   { key: 'effective_period', label: 'Effective Timeline', visible: true, sortable: true },
   { key: 'units_count', label: 'Mapped Units', visible: true, sortable: true },
+  { key: 'status', label: 'Status', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
-  { key: 'structure_state', label: 'Version State', visible: false, sortable: true },
   { key: 'superseded_by', label: 'Successor Blueprint', visible: false, sortable: false },
   { key: 'description', label: 'Scope Description', visible: false, sortable: false },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
@@ -293,7 +293,7 @@ const hierarchyTrees = ref<Record<number, StructureTreeNode>>({
 // ─── Filtering & Sorting ───
 const activeFilterCount = computed(() => {
   let count = 0;
-  if (filterState.value !== 'All') count++;
+  if (filterStatus.value !== 'All') count++;
   if (filterEntity.value !== 'All') count++;
   if (filterLifecycle.value !== 'All') count++;
   return count;
@@ -309,9 +309,12 @@ const filteredStructures = computed(() => {
       const matchesEntity = s.entity_name.toLowerCase().includes(q);
       if (!matchesCode && !matchesName && !matchesEntity) return false;
     }
-    // Filter State
-    if (filterState.value !== 'All' && s.structure_state_lookup_value_id !== filterState.value.toLowerCase()) {
-      return false;
+    // Filter Status
+    if (filterStatus.value !== 'All') {
+      const target = filterStatus.value === 'Published' ? 'active' : filterStatus.value.toLowerCase();
+      if (s.structure_state_lookup_value_id !== target) {
+        return false;
+      }
     }
     // Filter Entity
     if (filterEntity.value !== 'All' && s.entity_name !== filterEntity.value) {
@@ -586,9 +589,9 @@ onUnmounted(() => {
         <template #filter-panel>
           <div class="filter-grid">
             <FormSelect
-              label="Version State"
-              v-model="filterState"
-              :options="['All', 'Active', 'Draft', 'Superseded']"
+              label="Status"
+              v-model="filterStatus"
+              :options="['All', 'Published', 'Draft', 'Superseded']"
             />
             <FormSelect
               label="Owning Entity"
@@ -596,7 +599,7 @@ onUnmounted(() => {
               :options="['All', 'Haleta Addis Ababa HQ', 'Haleta Grand Hotel & Suites']"
             />
             <FormSelect
-              label="Record State"
+              label="State"
               v-model="filterLifecycle"
               :options="['All', 'Active', 'Inactive']"
             />
@@ -629,14 +632,19 @@ onUnmounted(() => {
 
               <th v-if="isColumnVisible('units_count')" class="col-units">Mapped Units</th>
 
-              <th v-if="isColumnVisible('state')" class="col-status sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+              <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Status</span>
+                  <ArrowUpDown :size="12" class="sort-icon" />
+                </div>
+              </th>
+
+              <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
                   <ArrowUpDown :size="12" class="sort-icon" />
                 </div>
               </th>
-
-              <th v-if="isColumnVisible('structure_state')" class="col-state">Version State</th>
 
               <th v-if="isColumnVisible('superseded_by')" class="col-successor">Successor Blueprint</th>
 
@@ -681,23 +689,23 @@ onUnmounted(() => {
                 <span class="text-tertiary">{{ item.units_count }} Units</span>
               </td>
 
-              <td v-if="isColumnVisible('state')" class="col-status">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
-                  {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-
-              <td v-if="isColumnVisible('structure_state')" class="col-state">
+              <td v-if="isColumnVisible('status')" class="col-status">
                 <span 
                   class="version-pill"
                   :class="{
-                    'state-active': item.structure_state_lookup_value_id === 'active',
+                    'state-published': item.structure_state_lookup_value_id === 'active',
                     'state-draft': item.structure_state_lookup_value_id === 'draft',
                     'state-superseded': item.structure_state_lookup_value_id === 'superseded'
                   }"
                 >
                   <span class="dot-indicator"></span>
-                  <span class="capitalize">{{ item.structure_state_lookup_value_id }}</span>
+                  <span>{{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}</span>
+                </span>
+              </td>
+
+              <td v-if="isColumnVisible('state')" class="col-state">
+                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                  {{ item.state === 'active' ? 'Active' : 'Inactive' }}
                 </span>
               </td>
 
@@ -1236,12 +1244,14 @@ onUnmounted(() => {
   color: #64748b;
 }
 
-.state-active {
+.state-active,
+.state-published {
   background-color: #ecfdf5;
   color: #059669;
   border: 1px solid #a7f3d0;
 }
-.state-active .dot-indicator { background-color: #10b981; }
+.state-active .dot-indicator,
+.state-published .dot-indicator { background-color: #10b981; }
 
 .state-draft {
   background-color: #fffbeb;

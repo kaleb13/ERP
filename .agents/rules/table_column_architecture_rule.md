@@ -178,4 +178,20 @@ const isColVisible = (key: string) => {
     - ✅ **Mandatory**: Render ONLY the clean plain text name of the person or entity (e.g. `Dawit Tadesse`, `Raleh Girma`, `Solomon Mengistu`) in the tertiary color (`#737373`).
     - The user can click into the record's detail view to inspect full profile photos, IDs, titles, and appointment history.
 
+---
+
+## 10. Strict Separation of "State" vs "Status" & Absolute Prohibition of Active/Inactive on Status Columns
+- **"Active" and "Inactive" Belong Exclusively to "State"**:
+  - The words **`Active`** and **`Inactive`** are strictly and exclusively reserved for the **State** column (`state`), which represents the mechanical system record lifecycle (active vs soft-deleted/dormant).
+- **Zero "Active" / "Inactive" on Status Columns**:
+  - A **Status** column (`status_lookup_value_id`, `employment_status_lookup_value_id`, `approval_status`, etc.) MUST NEVER display "Active" or "Inactive" badges.
+- **Translating Schema Status Lookups**:
+  - When the underlying database schema defines an enum or lookup value named `active` for an entity's status column:
+    - ❌ **Forbidden**: Rendering an `Active` badge in the Status column (causes confusing collision with the State column).
+    - ✅ **Mandatory**: The UI must synthesize an appropriate business domain term:
+      - **Employees (`EMPLOYMENT_STATUS`)**: `active` ➔ **`In Service`** (e.g. `In Service`, `Probation`, `Suspended`, `On Leave`, `Separated`).
+      - **Governance Catalogues (`status_lookup_value_id`)**: `acceptForAll` ➔ **`Approved for All Entities`**, `acceptForThis` ➔ **`Approved for This Entity Only`**, `pending` ➔ **`Pending Approval`**.
+      - **Versioned Blueprints (`structure_state_lookup_value_id`)**: `active` ➔ **`Current / In Effect`**, `draft` ➔ **`Draft`**, `superseded` ➔ **`Superseded`**.
+
+
 

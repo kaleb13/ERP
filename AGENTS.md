@@ -97,6 +97,10 @@
     - Avatars belong **exclusively** on the far-left primary identity column of that entity's *own* primary directory table (e.g., in `EmployeesView.vue`).
     - In referencing tables, simply render the plain text name of the person or entity in the tertiary color (`#737373`).
     - Deep details (photo, ID, job title) are inspected on-demand by clicking into the detail view.
+- **Rule 9: Strict Separation of "State" vs "Status" & Absolute Prohibition of Active/Inactive on Status Columns**:
+  - `Active` and `Inactive` are strictly and exclusively reserved for the **State** column (`state`).
+  - The **Status** column (lifecycle, employment status, approval status, etc.) MUST NEVER display "Active" or "Inactive" badges.
+  - When the underlying database schema defines `active` as an enum/lookup value for a status column (e.g. `EMPLOYMENT_STATUS = active`), the UI MUST map it to a domain-appropriate business term (e.g. `In Service` for staff/employees, `Approved` for governance, `Published` / `Current` for versioned blueprints), keeping `Active` and `Inactive` solely on `State`.
 
 ## 10. Entity Directory Page & Table Header Architecture Standard
 - **Rule 1: Unified Table Card Layout (No Redundant Outer Headers / Metrics)**:
