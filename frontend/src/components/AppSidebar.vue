@@ -5,7 +5,8 @@ import {
   Box, ChevronDown, ChevronUp, ChevronRight,
   HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
   UserCheck, LayoutGrid, Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key,
-  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap, BadgeCheck
+  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap, BadgeCheck,
+  ClipboardList, Activity
 } from 'lucide-vue-next';
 
 interface Props {
@@ -116,7 +117,9 @@ const iconsMap: Record<string, any> = {
   FolderTree,
   Network,
   GraduationCap,
-  BadgeCheck
+  BadgeCheck,
+  ClipboardList,
+  Activity
 };
 
 // Active link matching helper
@@ -197,7 +200,9 @@ const activeModule = computed(() => {
         { isHeader: true, label: 'Job & Position Architecture' },
         { to: '/hr/job-positions', label: 'Job Positions', icon: 'Briefcase' },
         { to: '/hr/job-titles', label: 'Job Titles & Roles', icon: 'BadgeCheck' },
-        { to: '/hr/job-levels', label: 'Job Levels', icon: 'Layers' }
+        { to: '/hr/job-levels', label: 'Job Levels', icon: 'Layers' },
+        { to: '/hr/headcount-planning', label: 'Headcount Planning', icon: 'ClipboardList' },
+        { to: '/hr/headcount-monitoring', label: 'Headcount Monitoring', icon: 'Activity' }
       ]
     };
   } else if (path.startsWith('/company-setup')) {

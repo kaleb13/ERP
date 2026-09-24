@@ -12,6 +12,7 @@ import {
 import BaseTabs from '../components/BaseTabs.vue';
 import BaseButton from '../components/BaseButton.vue';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import SaveStateBadge from '../components/SaveStateBadge.vue';
 
 // Routing
 const router = useRouter();
@@ -288,6 +289,7 @@ const toggleEntity = (entityId: number) => {
 // Interactive UI State
 const activeActionMenuId = ref<number | null>(null);
 const showFullForm = ref(false);
+const isSaved = ref(false);
 const editMode = ref(false);
 const selectedId = ref<number | null>(null);
 const isFullscreen = ref(false);
@@ -491,6 +493,7 @@ const openAddForm = () => {
     warranty_type: '',
     warranty_period: ''
   };
+  isSaved.value = false;
   showFullForm.value = true;
   closeAllMenus();
 };
@@ -545,6 +548,7 @@ const triggerEdit = (item: any) => {
     warranty_type: item.warranty_type || '',
     warranty_period: item.warranty_period || ''
   };
+  isSaved.value = false;
   showFullForm.value = true;
   closeAllMenus();
 };
@@ -662,6 +666,7 @@ const handleSave = () => {
     });
   }
 
+  isSaved.value = true;
   saveToLocalStorage();
   showFullForm.value = false;
 };
@@ -1238,9 +1243,7 @@ const toggleFullscreen = () => {
           ]" 
         >
           <template #extra>
-            <span class="status-badge-orange bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2">
-              Not Saved
-            </span>
+            <SaveStateBadge :isSaved="isSaved" />
           </template>
         </AppBreadcrumb>
 

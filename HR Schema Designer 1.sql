@@ -1205,7 +1205,7 @@
 		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
 		- entity_id               -- FK Entity -- owning tenant/branch
 		- organization_unit_id    -- FK OrganizationUnit nullable -- organization-level budget (roll-up)
-		- fiscal_year             -- integer -- Ethiopian FY end year in GC (2027 = FY2019 EC = Hamle 2018 to Sene 2019 EC)
+		- fiscal_year             -- String -- Ethiopian FY end year in GC (2027 = FY2019 EC = Hamle 2018 to Sene 2019 EC)
 		- period_start            -- date
 		- period_end              -- date
 		- filled_headcount        -- integer -- cache/denormalized; recomputed nightly and on hire/separation

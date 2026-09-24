@@ -31,6 +31,9 @@ import JobPositionCreate from '../views/hr/JobPositionCreate.vue';
 import JobTitlesView from '../views/hr/JobTitlesView.vue';
 import JobTitleCreate from '../views/hr/JobTitleCreate.vue';
 import JobLevelsView from '../views/hr/JobLevelsView.vue';
+import HeadcountPlanningView from '../views/hr/HeadcountPlanningView.vue';
+import HeadcountPlanCreate from '../views/hr/HeadcountPlanCreate.vue';
+import HeadcountMonitoringView from '../views/hr/HeadcountMonitoringView.vue';
 
 
 const router = createRouter({
@@ -244,7 +247,30 @@ const router = createRouter({
       name: 'hrJobLevels',
       component: JobLevelsView
     },
-
+    {
+      path: '/hr/headcount-planning',
+      name: 'hrHeadcountPlanning',
+      component: HeadcountPlanningView
+    },
+    {
+      path: '/hr/headcount-planning/create',
+      name: 'hrHeadcountPlanCreate',
+      component: HeadcountPlanCreate
+    },
+    {
+      path: '/hr/headcount-monitoring',
+      name: 'hrHeadcountMonitoring',
+      component: HeadcountMonitoringView
+    },
+    // Redirects from legacy headcount-budgets route
+    {
+      path: '/hr/headcount-budgets',
+      redirect: '/hr/headcount-planning'
+    },
+    {
+      path: '/hr/headcount-budgets/create',
+      redirect: '/hr/headcount-planning/create'
+    }
   ]
 });
 

@@ -12,6 +12,7 @@ interface Props {
   readonly?: boolean;
   error?: string;
   helperText?: string;
+  hint?: string;
   icon?: Component;
   id?: string;
   autocomplete?: string;
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   readonly: false,
   error: '',
   helperText: '',
+  hint: '',
   icon: undefined,
   id: undefined,
   autocomplete: 'off',
@@ -37,6 +39,8 @@ const props = withDefaults(defineProps<Props>(), {
   max: undefined,
   step: 1
 });
+
+const displayHelper = computed(() => props.hint || props.helperText || '');
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string | number): void;
@@ -139,7 +143,7 @@ const decrement = () => {
     <p v-if="rangeWarning" class="range-warning-text">⚠ {{ rangeWarning }}</p>
     <!-- Error or helper -->
     <p v-else-if="error" class="error-text">{{ error }}</p>
-    <p v-else-if="helperText" class="helper-text">{{ helperText }}</p>
+    <p v-else-if="displayHelper" class="helper-text">{{ displayHelper }}</p>
   </div>
 </template>
 

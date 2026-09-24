@@ -218,9 +218,9 @@ const handleEditScale = () => {
   router.push(`/hr/salary-scales/create?edit=${currentScale.value.id}`);
 };
 
-// Breadcrumb (Clean Page Names ONLY: Rule 3.2 - Matching Screenshot)
+// Breadcrumb (Clean Page Names ONLY: Exact Sidebar Page Name)
 const breadcrumbItems = computed(() => [
-  { label: 'Salary Scale', to: '/hr/salary-scales' },
+  { label: 'Salary Scales', to: '/hr/salary-scales' },
   { label: currentScale.value.id === 3 ? 'Haleta Addis Ababa' : currentScale.value.entity_name }
 ]);
 

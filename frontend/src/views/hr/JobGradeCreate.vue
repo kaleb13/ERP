@@ -4,14 +4,16 @@ import { useRouter, useRoute } from 'vue-router';
 import { 
   Monitor, ChevronRight, X, Award, Sliders,
   Plus, Trash2, Calendar, ChevronDown, Columns,
-  Maximize2, Check, Calculator, Sparkles, Layers
+  Maximize2, Check, Calculator, Sparkles, Layers,
+  List, Table, Link as LinkIcon, Image as ImageIcon,
+  Undo, Redo
 } from 'lucide-vue-next';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
-import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -217,9 +219,7 @@ onMounted(() => {
           <router-link to="/hr/job-grades" class="bc-link">Job Grades & Pay Scales</router-link>
           <ChevronRight :size="13" class="bc-sep" />
           <span class="bc-current">Create Job Grade</span>
-          <span :class="['state-pill', isSaved ? 'state-saved' : 'state-unsaved']">
-            {{ isSaved ? 'Saved' : 'Not Saved' }}
-          </span>
+          <SaveStateBadge :isSaved="isSaved" />
         </div>
       </div>
 
@@ -327,13 +327,56 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Description Textarea (Schema line 1070: jsonb/text description) -->
-        <div class="form-group-full mt-4">
-          <FormTextarea
-            label="Grade Scope & Definition"
-            v-model="form.description"
-            rows="4"
-          />
+        <!-- Grade Scope & Definition Rich Text Editor (Mandatory Rich Text Rule) -->
+        <div class="biography-section mt-4">
+          <label class="info-field-label">Grade Scope &amp; Definition</label>
+          <div class="rich-editor-container">
+            <!-- Toolbar -->
+            <div class="editor-toolbar">
+              <div class="toolbar-dropdown">
+                <span>Paragraph</span>
+                <ChevronDown :size="12" />
+              </div>
+              <div class="toolbar-divider"></div>
+              <div class="toolbar-dropdown">
+                <span>Font Type</span>
+                <ChevronDown :size="12" />
+              </div>
+              <div class="toolbar-divider"></div>
+              <div class="toolbar-icon-group">
+                <button type="button" class="editor-icon-btn" title="List"><List :size="14" /><ChevronDown :size="10" /></button>
+                <button type="button" class="editor-icon-btn font-bold" title="Bold">B</button>
+                <button type="button" class="editor-icon-btn italic" title="Italic">I</button>
+                <button type="button" class="editor-icon-btn underline" title="Underline">U</button>
+                <button type="button" class="editor-icon-btn line-through" title="Strikethrough">S</button>
+                <button type="button" class="editor-icon-btn" title="Code">&lt;&gt;</button>
+                <button type="button" class="editor-icon-btn" title="Table"><Table :size="14" /></button>
+              </div>
+              <div class="toolbar-divider"></div>
+              <div class="toolbar-icon-group">
+                <button type="button" class="editor-color-box" title="Text Color"></button>
+                <button type="button" class="editor-icon-btn" title="Insert Link"><LinkIcon :size="14" /></button>
+                <button type="button" class="editor-icon-btn" title="Insert Image"><ImageIcon :size="14" /></button>
+              </div>
+              <div class="toolbar-icon-group ml-auto">
+                <button type="button" class="editor-icon-btn" title="Undo"><Undo :size="14" /></button>
+                <button type="button" class="editor-icon-btn" title="Redo"><Redo :size="14" /></button>
+              </div>
+            </div>
+
+            <!-- Text Area -->
+            <textarea
+              v-model="form.description"
+              rows="5"
+              class="editor-textarea"
+            ></textarea>
+
+            <!-- Footer Bar with Character Counter -->
+            <div class="editor-footer">
+              <span class="char-count-pill">{{ form.description.length }} / 5,000 Characters</span>
+              <div class="editor-resize-handle">//</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -888,5 +931,123 @@ onMounted(() => {
 
 .mt-4 {
   margin-top: 16px;
+}
+
+/* Rich Text Editor Standard */
+.biography-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.rich-editor-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rich-editor-container:focus-within {
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.toolbar-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #404040;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  margin: 0 4px;
+}
+
+.toolbar-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.editor-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: #404040;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.editor-icon-btn:hover {
+  background: #e2e8f0;
+}
+
+.editor-color-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: #0B529C;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  margin: 0 4px;
+}
+
+.editor-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: #404040;
+  border: none;
+  outline: none;
+  resize: vertical;
+  min-height: 120px;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.char-count-pill {
+  font-size: 11.5px;
+  color: #737373;
+}
+
+.editor-resize-handle {
+  font-size: 11px;
+  color: #94a3b8;
+  user-select: none;
 }
 </style>

@@ -68,17 +68,16 @@ export interface OrganizationUnitRecord {
   state: RowState;
 }
 
-// ─── Breadcrumb Configuration ───
+// ─── Breadcrumb Configuration (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
 const breadcrumbItems = computed(() => {
   if (viewMode.value === 'detail' && selectedUnit.value) {
     return [
-      { label: 'Organization Units', to: '#' },
+      { label: 'Organization Units', onClick: () => { viewMode.value = 'list'; selectedUnit.value = null; } },
       { label: selectedUnit.value.name, current: true }
     ];
   }
   return [
-    { label: 'Organization', to: '/hr/org-units' },
-    { label: 'Organization Units', current: true }
+    { label: 'Organization Units' }
   ];
 });
 
@@ -779,7 +778,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('name')" class="col-name sortable" @click="currentSort = 'name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Name</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'name'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 

@@ -12,9 +12,11 @@ Every entity creation flow MUST adhere to the following rule based on the number
 When an entity can be created with 5 or fewer essential fields (e.g. Customer, Organization Unit, Job Title, Leave Type, Shift, Supplier, Product Group):
 1. Clicking the **"+ Add / Create"** button MUST open a **`<QuickCreateModal />`**.
 2. The modal presents only the essential fields (e.g. Name, Code, Type, Status, Primary Identifier).
-3. **Footer Action Hierarchy:**
+3. **No Notes/Descriptions in Quick Modals**: Descriptions, remarks, long texts, or note sections MUST NEVER appear in `<QuickCreateModal />`. They belong strictly in dedicated expanded full-form creation pages.
+4. **"Save as draft" Prohibition in Quick Modals**: The "Save as draft" action will NEVER appear in a quick create modal. It is strictly reserved for expanded full creation pages.
+5. **Footer Action Hierarchy:**
    - **Bottom-Left**: **"Expand Full Form"** styled as a **Secondary Button** (`<Maximize2 />` icon) $\rightarrow$ Navigates/switches to the dedicated full creation page/drawer, carrying over any already-typed state.
-   - **Bottom-Right**: **"Save"** styled as the **Primary Button** (with check icon) $\rightarrow$ Instantly validates, creates the record, adds it to the table/directory, and closes the modal. (Cancel button is omitted; modal dismisses via Esc/Close/Backdrop).
+   - **Bottom-Right**: **"Save"** styled as the **Primary Button** (strictly plain text **"Save"**, **ZERO icons**) $\rightarrow$ Instantly validates, creates the record, adds it to the table/directory, and closes the modal. (Cancel button is omitted; modal dismisses via Esc/Close/Backdrop).
 
 ### **Case B: $> 5$ Required Fields $\rightarrow$ Direct Page / Wizard Form**
 When an entity fundamentally requires more than 5 complex or multi-stage required fields (e.g. Full Employee Onboarding with statutory Fayda/Pension/Bank/Contract, Gate Pass with multi-item packing slips, Complex Product with Matrix Variants):
@@ -112,6 +114,7 @@ When the user clicks **"Expand Full Form"** from `<QuickCreateModal />` (or navi
    - Breadcrumbs: `[Monitor Root Icon] > [Module / Directory Link] > Create [Entity]`.
    - Status Pill: `Not Saved` (amber background `#fef3c7`, text `#d97706`) in draft state, dynamically switching to `Saved` (`#ecfdf5`, `#059669`) once saved.
    - Right Actions:
+     - **Dynamic 3-Dots More Menu `[ ⋮ ]`**: Placed on the far left of the actions block (`[ ⋮ ] [ ✕ Clear Form ] [ Save ]`). This 3-dots button **MUST ONLY appear on creation pages where the schema entity supports a `draft` lifecycle state** (e.g. `EmployeeCreate` for `EMPLOYMENT_STATUS = draft`, `OrgStructureCreate` for `ORG_STRUCTURE_STATE = draft`, `LeaveRequest`, `LeaveAllocation`, `OvertimeRequest`, `HeadcountBudget`). Clicking `[ ⋮ ]` opens a popup dropdown containing `"Save as Draft"`. Pages without draft in their schema enum omit this 3-dots button and display only `[ ✕ Clear Form ] [ Save ]`.
      - `✕ Clear Form`: Secondary outline button with `<X />` icon (resets form).
      - `Save`: Primary `#0B529C` brand-blue button (validates, compiles, and persists record).
 2. **Top-Level Tabs (`<BaseTabs />`)**:

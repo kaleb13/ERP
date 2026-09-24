@@ -15,7 +15,36 @@
 
 ## 3. Breadcrumb Navigation Standard
 - **Component**: `<AppBreadcrumb />` (`src/components/AppBreadcrumb.vue`).
-- **Rule**: Desktop/Monitor root icon MUST always navigate to the Home page (`/home`).
+- **Rule 1: Desktop/Monitor Root Navigation**: The root Desktop/Monitor icon MUST always navigate to the Home page (`/home`).
+- **Rule 2: ZERO Sidebar Section Titles**:
+  - Sidebar group headers and category section titles (e.g. `Job Architecture`, `Job & Position Architecture`, `Organization & Structure`, `Workforce & Profile`, `Compensation & Pay`) **MUST NEVER appear in the breadcrumb trail**.
+  - Crumb items represent reachable pages, never navigational grouping headers.
+- **Rule 3: First Navigation Breadcrumb = Exact Sidebar Page Name Only**:
+  - When navigating to any primary page/directory, the breadcrumb trail MUST consist of strictly **the root Monitor icon and the exact Page Name as written in the sidebar** — nothing else.
+  - Correct Examples on Directory/Listing Pages:
+    - `[Monitor] > Headcount Budgets` (NOT `[Monitor] > Job Architecture > Headcount & Position Budgets`)
+    - `[Monitor] > Job Positions` (NOT `[Monitor] > Job Architecture > Job Positions`)
+    - `[Monitor] > Job Titles & Roles` (NOT `[Monitor] > Job Architecture > Job Titles`)
+    - `[Monitor] > Job Levels`
+    - `[Monitor] > Org Structures` (NOT `[Monitor] > Organization > Organization Structures`)
+    - `[Monitor] > Organization Units`
+    - `[Monitor] > Salary Scales`
+    - `[Monitor] > Salary Matrices`
+    - `[Monitor] > Employee Directory`
+- **Rule 4: Child Page Breadcrumb (If and Only If Inside a Sub-page)**:
+  - If and ONLY if the user navigates into an expanded full creation page (`.../create`), a detail profile view, or an inspection mode, a subsequent crumb appears:
+    - Expanded Creation Pages: `[Monitor] > [Parent Page Name] > Create [Entity]`
+      - e.g. `[Monitor] > Headcount Budgets > Create Headcount Budget`
+      - e.g. `[Monitor] > Job Positions > Create Job Position`
+      - e.g. `[Monitor] > Job Titles & Roles > Create Job Title`
+      - e.g. `[Monitor] > Org Structures > Create Org Structure`
+      - e.g. `[Monitor] > Salary Scales > Create Salary Scale`
+      - e.g. `[Monitor] > Employee Directory > Create Employee`
+    - Detail & Profile Views: `[Monitor] > [Parent Page Name] > [Entity Identifier / Name]`
+      - e.g. `[Monitor] > Salary Scales > Haleta Addis Ababa`
+      - e.g. `[Monitor] > Employee Directory > EMP-001 - Abebe Kebede`
+      - e.g. `[Monitor] > Organization Units > Human Resources`
+      - e.g. `[Monitor] > Org Structures > Corporate 2027`
 
 ## 4. Creation Flow Standard (<= 5 vs. > 5 Required Fields)
 - **Entities with <= 5 Required Fields**: Clicking "+ Add / Create" MUST open `<QuickCreateModal />` (`src/components/QuickCreateModal.vue`) featuring:
@@ -26,7 +55,9 @@
 - **Dedicated Full Creation Page Architecture (Expand Full Form Flow)**:
   - **Entity Domain Naming Rule**: Always name pages, breadcrumbs, tabs, and form blocks using the exact entity domain name (e.g. `Party`, `Party Details`, `Create Party`, `Party Information`, `Create Customer`). **NEVER** use generic terms like `User` or `User Details` because a Party represents either an individual person or an organization/company.
   - When "Expand Full Form" is clicked from `<QuickCreateModal />`, navigate to the dedicated creation route (e.g. `/hr/parties/create`), preserving any typed values via route query.
-  - **Top Bar**: Breadcrumbs (`[Monitor] > Entity Management > Create [Entity]`) + `Not Saved` / `Saved` status pill + Right Actions (`✕ Clear Form` secondary button + `Save` primary blue `#0B529C` button).
+  - **Top Bar**: Breadcrumbs (`[Monitor] > Entity Management > Create [Entity]`) + `Not Saved` / `Saved` status pill + Right Actions:
+    - **Dynamic 3-Dots More Menu `[ ⋮ ]`**: Placed on the far left of the actions block (`[ ⋮ ] [ ✕ Clear Form ] [ Save ]`). This 3-dots button **MUST ONLY appear on creation pages where the schema entity supports a `draft` lifecycle state** (e.g., `EmployeeCreate` for `EMPLOYMENT_STATUS = draft`, `OrgStructureCreate` for `ORG_STRUCTURE_STATE = draft`, `LeaveRequest`, `LeaveAllocation`, `OvertimeRequest`, `HeadcountBudget`). Clicking `[ ⋮ ]` opens a popup dropdown containing `"Save as Draft"`. Pages without draft in their schema enum omit this 3-dots button and display only `[ ✕ Clear Form ] [ Save ]`.
+    - `✕ Clear Form` secondary button + `Save` primary blue `#0B529C` button.
   - **Top Tabs**: `<BaseTabs />` capsule pills across top for switching between primary details and 1:N relations (e.g. `Party Details`, `Addresses`, `Dependents`, `Qualifications`, `Work Experience`, `Skills & Languages`).
   - **Master Creation Card**:
     - Avatar / Logo circular preview (90px diameter with "No Media" fallback state) + "Upload New Photo / Logo" button + resolution advice text.
@@ -47,6 +78,12 @@
 - **Form Label**: `12.5px`, Medium (`font-weight: 500`), `#404040`, `margin-bottom: 3px` to `4px` (compact gap to input).
 - **Placeholder Rule**: **Text inputs (`<FormInput />`, `<input>`, `<textarea>`) MUST NEVER contain placeholder text.** ONLY dropdown selections (`<FormSelect />`) display a placeholder saying `"Select"`.
 - **Boolean & Checkbox Standard**: **All form booleans, toggles, and modal flags MUST use `<FormCheckbox />` with BOTH a clear Title (`label`) and an explanatory business Description (`description`).** (For example: explaining what designating an address as primary or a dependent as eligible accomplishes). Standalone or bare checkboxes without description text are strictly prohibited in creation forms, sub-tables, and expansion modals.
+- **Contextual Input Hint Text Standard (Strict Selectivity & Zero Redundancy)**:
+  - **Selective Ambiguity Only**: **NEVER put hint text on self-evident, simple, or clear inputs** (such as standard date pickers like `Approval Date`, `Effective From / Until Date`, `Date of Birth`, or basic selectors like `Gender`, `Currency`, `Owning Entity`, `Organization Unit`, standard names, phones, or emails). Blanket or indiscriminate hint placement creates silly visual clutter and is strictly prohibited.
+  - **When to Use**: Reserve hint text **strictly and exclusively** for inputs that might genuinely confuse the user or require specific formatting guidance (e.g. `Fiscal Year` requiring statutory format context like `2026/27 or 2026`, specific quota ceilings vs limits, statutory tax identifiers, or non-obvious business calculations). Most form fields MUST remain clean without any hint text.
+  - **Component Support**: Use `:hint="..."` on `<FormInput />` and `<FormSelect />`, or `<p class="field-hint-text">...</p>` below custom inputs when genuinely warranted.
+  - **Typography & Color**: `font-size: 11.5px`, `color: #737373` (`--alias-color-text-tertiary`), `line-height: 1.4` to `1.45`, `margin-top: 4px` (or `2px` inside compact wrappers).
+  - **Content Rule**: When used, hint text must be concise, crisp, and directly clarify the ambiguous aspect. Never use filler or developer jargon.
 
 ## 6. Button & Corner Radius Standard
 - **Buttons (Primary, Secondary, Action, Modal buttons)**: MUST have a **well-rounded rectangle shape** (`border-radius: 8px` to `10px`).
@@ -224,3 +261,80 @@ Every core business domain in Haleta ERP is structured around three canonical, c
 - **Rule**: Textareas, biography blocks, and description/scope inputs MUST NEVER appear inside `<QuickCreateModal />`.
 - **Placement**: Descriptions belong exclusively to **Expanded Forms** (such as dedicated master creation pages like `OrgStructureCreate.vue`, `SalaryScaleCreate.vue`, `EmployeeCreate.vue`, `PartyCreate.vue`, or dedicated full edit pages) featuring the standardized rich text editor (`.rich-editor-container`) with toolbar and character counter.
 - **Rationale**: Quick Create Modals are strictly optimized for rapid, compact creation using the core <= 5 scanning attributes. Extended narratives, legal scopes, and rich descriptions belong naturally in the expanded full form.
+
+## 21. Status Lookup Classification & Metric Card Mandate
+- **Two Distinct Status Types in Schema**:
+  - **Type A: Admin Multi-Entity Governance Status (`acceptForAll`, `acceptForThis`, `pending`, `reject`)**:
+    - Appears on multi-tenant catalogs and master definitions (e.g. `JobLevel`, `JobTitle`, `FieldOfStudy`, `Institution`).
+    - Managed centrally by system administrators.
+    - **UI Standard**: Render standard canonical directory table card (`<AppDataTable />`) **WITHOUT** top KPI / Metric Cards.
+  - **Type B: Entity Operational / Workflow Lifecycle Status (`draft`, `approved`, `active` / `Published`, `closed`, `probation`, `in_service`, `suspended`, `on_leave`, `separated`, `deactivated`)**:
+    - Appears on entity-managed operational workforce entities and fiscal capacity records (e.g. `HeadcountBudget`, `EmployeeDetail` / `EmployeeProfile`, `LeaveRequest`, `OvertimeRequest`).
+    - Managed and approved by the entity/organization itself.
+    - **UI Standard**: **MUST include a Top KPI / Metric Cards Grid (`<MetricCard />`)** directly above the `<AppDataTable />`, summarizing key capacities, active utilization, pipeline requisitions/probations, and total rolled-up financial amounts.
+- **Documented Rule**: `.agents/rules/status_classification_and_metrics_rule.md`.
+
+## 22. Universal Date Formatting Standard (`MMM D, YYYY`)
+- **Rule**: ALL dates displayed across the UI (tables, detail views, mini-tables, audit stamps, subtexts, and profile headers) MUST strictly follow the standardized business date format: **`MMM D, YYYY`** (short month name, day of month, full 4-digit year).
+- **Examples**:
+  - `Sep 23, 2026`
+  - `Jul 8, 2026`
+  - `Jan 15, 2027`
+  - Date ranges: `Jul 8, 2026 – Jul 7, 2027`
+- **Prohibited**: Raw ISO timestamps (`2026-07-08`), numeric slashes (`08/07/2026` or `07/08/2026`), or unformatted database strings.
+- **Helper**: Always use a standard formatter `formatDate(str)` with `{ month: 'short', day: 'numeric', year: 'numeric' }` in `en-US` locale.
+
+## 23. Calendar Input Single Left Icon Standard
+- **Rule**: Calendar and date inputs MUST ONLY have a calendar icon on the left section (`<Calendar :size="15" class="date-icon" />`).
+- **Suppression of Right Indicator**: Any duplicate calendar icon on the right section (including native browser WebKit calendar picker indicators `input[type="date"]::-webkit-calendar-picker-indicator` or duplicate right icons) MUST be suppressed and removed.
+- **Right Area Reserved for `[GC]`**: The right section of date inputs is reserved strictly for the Gregorian pill tag (`<span class="gc-pill-tag">GC</span>`), never a calendar icon.
+
+## 24. Mini Creation Form & Quick Create Modal Notes/Text Prohibition
+- **Rule**: In a mini creation form / `<QuickCreateModal />`, if an entity has a description section, a text block, remarks, or a note section, it **WILL NOT appear** in the modal.
+- **Placement**: Notes, descriptions, and extended texts belong **EXCLUSIVELY** to the expandable section / dedicated full creation page (`.../create`).
+- **Rationale**: Keeps the quick create modal ultra-compact, focused, and frictionless for the $\le 5$ core fields.
+
+## 25. Mandatory Rich Text Editor for All Notes & Descriptions
+- **Rule**: ALL note, description, remarks, scope, and extended text inputs across the entire Haleta ERP system MUST use the standardized Haleta ERP rich text editor component (`.rich-editor-container`), NEVER a plain text input or bare `<textarea>`.
+- **Standard Layout**: Features a top formatting toolbar (Paragraph, Font Type, Bullet Lists, B, I, U, S, Code, Table, Color Box, Link, Image, Undo, Redo), a clean text editing area, and a bottom footer with live character counter (`0 / 5,000 Characters`) and resize handle `//`.
+
+## 26. "Save as Draft" Prohibition in Quick Forms
+- **Rule**: The "Save as draft" button will **NEVER appear in quick create forms or quick create modals**.
+- **Placement**: "Save as draft" is strictly reserved for expanded full-form pages (via the dynamic 3-dots more menu `[ ⋮ ]` in the top action bar, and ONLY where the underlying schema entity supports a `draft` lifecycle state).
+
+## 27. Save Button Zero-Icon Standard
+- **Rule**: The Save button across the entire system (in top action bars, modals, child drawers, expansion dialogs, or sub-forms) MUST NEVER have an icon (no checkmarks `<Check />`, pluses, floppy disks, or symbols).
+- **Text Standard**: It MUST strictly display the plain text **`"Save"`**, no icons.
+
+## 28. Table Header Sort Arrow Inline Alignment Standard
+- **Rule**: In table headers, the append down arrow / sorting icon (`<ArrowUpDown>`, `<ChevronDown>`) will **ONLY appear if it is needed** (i.e. when that column is actively sorted `v-if="currentSort === colKey"`, or on hover). Unconditional sorting arrows on every inactive column are strictly prohibited.
+- **Inline Alignment**: When the sort arrow appears, it MUST appear strictly on the **right side of the text, inline with the header title (`.th-content`)**, NEVER on a separate line or wrapped below the title (as previously occurred on "Organization Unit" in headcount tables).
+- **CSS Architecture**: Enforce `.th-content { display: inline-flex !important; align-items: center !important; gap: 5px !important; white-space: nowrap !important; vertical-align: middle !important; }`.
+
+## 29. Top Action & Breadcrumb Navigation Bar Zero-Background Standard
+- **Rule**: The top header section containing breadcrumb navigation and right-hand action controls (`Clear Form`, `Save`, 3-dots draft menu) **MUST NEVER have a background card, border, or box-shadow** (`background: transparent; border: none; box-shadow: none; padding: 0;`).
+- **Placement**: It sits directly and cleanly on the page background, seamlessly separated from the cards/tabs below.
+
+## 30. Inline "Saved / Not Saved" Status Badge Standard (<SaveStateBadge />)
+- **Component**: `<SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />` (`src/components/SaveStateBadge.vue`).
+- **Rule**: Every create page and expanded creation form requiring a "Not Saved" / "Saved" status badge MUST use `<SaveStateBadge />`. Ad-hoc HTML/CSS badges are strictly prohibited.
+- **Placement**: Sits immediately following the current page title in the breadcrumb navigation bar (`margin-left: 10px`), inline with the text.
+- **Strict Appearance**:
+  - Pill shape: Fully rounded (`border-radius: 9999px`), compact padding (`2.5px 11px`), `font-size: 11.5px`, `font-weight: 500`.
+  - Zero border (`border: none;`).
+  - **Not Saved**: Background color **`#FEF3C6`**, Text color **`#BB4D00`**.
+  - **Saved**: Background color **`#ecfdf5`**, Text color **`#059669`**.
+  - **Draft**: Background color **`#eff6ff`**, Text color **`#1d4ed8`**.
+
+## 31. Action Button Sizing Standard (Expanded Forms & Directory Toolbar)
+- **Rule**: Master action buttons across top creation bars and directory table toolbars must maintain comfortable enterprise sizing:
+  - Primary Save Button (`.btn-primary-save`) and Create Button (`.btn-primary-create`): `height: 38px`, `padding: 0 18px` to `0 22px`, `font-size: 13.5px`, `font-weight: 500` or `600`, `border-radius: 8px`.
+  - Secondary Clear Action Button (`.btn-secondary-clear`): `height: 38px`, `padding: 0 16px`, `font-size: 13px`, `border-radius: 8px`.
+  - Dynamic 3-Dots Action Button (`.btn-icon-more`): `width: 38px`, `height: 38px`, `border-radius: 8px`.
+
+## 32. Creation Form Section Risers Standard (Zero Page-Level Header Redundancy)
+- **Rule**: Master creation cards MUST NOT include giant page-level `<h2>` titles and redundant paragraph descriptions that repeat the tab or page header.
+- **Structure**: Render a concise card title row (`<span class="card-section-title">Budget Details</span>`), followed by structured **Section Risers** (`.form-section-riser`) separating distinct functional clusters:
+  - Clear section title (e.g. `Work Location & Unit Allocation`, `Fiscal Capacity & Period`, `Financial Authorization & Ceilings`, `Budget Justification & Scope`).
+  - Subtle horizontal divider line (`.riser-line`) extending across the card.
+  - Logical 2-column or 3-column input grids nestled directly under each section riser.

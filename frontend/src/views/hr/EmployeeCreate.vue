@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
   Monitor, ChevronRight, ChevronDown, X, Check, Loader2, Image as ImageIcon,
   User, Briefcase, Landmark, GraduationCap, ShieldCheck, Heart,
   Calendar, UploadCloud, Upload, Info, Plus, Trash2, List, ListOrdered,
   Square, Link, Undo2, Redo2, Table, Expand, Copy, ArrowDown, ArrowUp,
-  ShieldAlert, MapPin
+  ShieldAlert, MapPin, MoreVertical, FileText
 } from 'lucide-vue-next';
 import BaseTabs from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -14,6 +14,7 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormCombobox, { type ComboboxOption } from '../../components/FormCombobox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -1861,7 +1862,28 @@ const handleSave = () => {
   }, 400);
 };
 
+const showMoreMenu = ref(false);
+
+const handleSaveAsDraft = () => {
+  showMoreMenu.value = false;
+  if ('employment_status' in form.value) {
+    (form.value as any).employment_status = 'draft';
+  }
+  isSaved.value = true;
+  setTimeout(() => {
+    router.push('/hr/employees');
+  }, 400);
+};
+
+const onDocumentClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.header-more-menu-wrapper')) {
+    showMoreMenu.value = false;
+  }
+};
+
 onMounted(() => {
+  document.addEventListener('click', onDocumentClick);
   if (route.query.name) {
     const parts = String(route.query.name).trim().split(' ');
     form.value.first_name = parts[0] || '';
@@ -1872,6 +1894,10 @@ onMounted(() => {
   if (route.query.phone) form.value.phone = String(route.query.phone);
   if (route.query.title) form.value.job_title = String(route.query.title);
   if (route.query.type) form.value.employment_type = String(route.query.type);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick);
 });
 </script>
 
@@ -1888,13 +1914,30 @@ onMounted(() => {
           <router-link to="/hr/employees" class="bc-link">Employee Directory</router-link>
           <ChevronRight :size="13" class="bc-sep" />
           <span class="bc-current">Create Employee</span>
-          <span :class="['state-pill', isSaved ? 'state-saved' : 'state-unsaved']">
-            {{ isSaved ? 'Saved' : 'Not Saved' }}
-          </span>
+          <SaveStateBadge :isSaved="isSaved" />
         </div>
       </div>
 
       <div class="header-actions">
+        <!-- 3-Dots Action Menu (Available for Draft support) -->
+        <div class="header-more-menu-wrapper">
+          <button 
+            type="button" 
+            class="btn-more-action" 
+            @click.stop="showMoreMenu = !showMoreMenu"
+            aria-label="More Options"
+          >
+            <MoreVertical :size="16" />
+          </button>
+          
+          <div v-if="showMoreMenu" class="header-more-dropdown" @click.stop>
+            <button type="button" class="more-menu-item" @click="handleSaveAsDraft">
+              <FileText :size="14" class="menu-item-icon" />
+              <span>Save as Draft</span>
+            </button>
+          </div>
+        </div>
+
         <button type="button" class="btn-clear-action" @click="clearForm">
           <X :size="14" />
           <span>Clear Form</span>
@@ -4830,28 +4873,76 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.state-pill {
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: 12px;
-  margin-left: 4px;
-}
 
-.state-unsaved {
-  background-color: #fef3c7;
-  color: #b45309;
-}
-
-.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.header-more-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-more-action {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #404040;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-more-action:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.header-more-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 4px 0;
+  z-index: 50;
+  animation: fadeIn 0.12s ease-in-out;
+}
+
+.more-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+}
+.more-menu-item:hover {
+  background-color: #f8fafc;
+  color: #0B529C;
+}
+
+.menu-item-icon {
+  color: #64748b;
+}
+.more-menu-item:hover .menu-item-icon {
+  color: #0B529C;
 }
 
 .btn-clear-action {

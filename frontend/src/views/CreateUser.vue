@@ -11,11 +11,13 @@ import {
 import BaseTabs from '../components/BaseTabs.vue';
 import UnderlineTabs from '../components/UnderlineTabs.vue';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import SaveStateBadge from '../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
 
 const isEditMode = computed(() => !!route.params.id);
+const isSaved = ref(false);
 
 // Active Tab navigation using BaseTabs
 type UserTab = 'details' | 'roles' | 'assigned_roles' | 'grant' | 'granted';
@@ -658,6 +660,7 @@ const handleClearForm = () => {
 };
 
 const handleSave = () => {
+  isSaved.value = true;
   alert('User information saved successfully!');
   router.push('/company-setup/user-and-access');
 };
@@ -675,7 +678,7 @@ const handleSave = () => {
         ]"
       >
         <template #extra>
-          <span class="not-saved-pill">Not Saved</span>
+          <SaveStateBadge :isSaved="isSaved" />
         </template>
       </AppBreadcrumb>
 
@@ -2067,16 +2070,7 @@ const handleSave = () => {
 .breadcrumb-arrow { color: #94a3b8; }
 .breadcrumb-active { color: #1e293b; font-weight: 500; }
 
-.not-saved-pill {
-  background-color: #fff7ed;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 600;
-  margin-left: 4px;
-}
+
 
 .header-action-buttons {
   display: flex;

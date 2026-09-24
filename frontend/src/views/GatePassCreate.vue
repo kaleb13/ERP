@@ -7,6 +7,7 @@ import {
   Send, ArrowDownLeft, Printer, ScanLine, ZoomIn, ZoomOut, MoreVertical, Check, X, ArrowUpRight
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
+import SaveStateBadge from '../components/SaveStateBadge.vue';
 
 // State management
 const documentState = ref<'new_unsaved' | 'draft' | 'draft_modified' | 'approved'>('new_unsaved');
@@ -377,9 +378,7 @@ const statusBadgeClass = computed(() => {
         <span class="breadcrumb-active">Create Gate Pass</span>
         
         <!-- Dynamic Status Badge -->
-        <span class="status-badge" :class="statusBadgeClass">
-          {{ statusBadgeText }}
-        </span>
+        <SaveStateBadge :state="documentState" />
       </div>
 
       <!-- Action buttons on top right -->
@@ -907,9 +906,7 @@ const statusBadgeClass = computed(() => {
           
           <div class="summary-footer">
             <span class="stat-label">Status</span>
-            <span class="status-badge" :class="statusBadgeClass">
-              {{ statusBadgeText }}
-            </span>
+            <SaveStateBadge :state="documentState" />
           </div>
         </div>
 

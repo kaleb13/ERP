@@ -17,6 +17,7 @@ interface Props {
   disabled?: boolean;
   error?: string;
   helperText?: string;
+  hint?: string;
   id?: string;
 }
 
@@ -29,8 +30,11 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   error: '',
   helperText: '',
+  hint: '',
   id: undefined
 });
+
+const displayHelper = computed(() => props.hint || props.helperText || '');
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: any): void;
@@ -92,7 +96,7 @@ const handleChange = (e: Event) => {
 
     <!-- Error Message or Helper Text -->
     <p v-if="error" class="error-text">{{ error }}</p>
-    <p v-else-if="helperText" class="helper-text">{{ helperText }}</p>
+    <p v-else-if="displayHelper" class="helper-text">{{ displayHelper }}</p>
   </div>
 </template>
 

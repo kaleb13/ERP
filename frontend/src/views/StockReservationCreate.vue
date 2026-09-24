@@ -5,6 +5,7 @@ import {
   Download, Columns, Undo2, Printer, ScanLine, ZoomIn, ZoomOut, MoreVertical, Check, X, ArrowUpRight
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
+import SaveStateBadge from '../components/SaveStateBadge.vue';
 
 // State management
 const documentState = ref<'new_unsaved' | 'draft' | 'draft_modified' | 'approved'>('new_unsaved');
@@ -363,10 +364,7 @@ watch(hasChangesFromDraft, (changed) => {
         <span class="breadcrumb-active">Create Stock Reservation</span>
         
         <!-- Status Badges -->
-        <span v-if="documentState === 'new_unsaved'" class="status-badge badge-notsaved">Not Saved</span>
-        <span v-else-if="documentState === 'draft'" class="status-badge badge-draft">Draft</span>
-        <span v-else-if="documentState === 'draft_modified'" class="status-badge badge-notsaved">Not Saved</span>
-        <span v-else-if="documentState === 'approved'" class="status-badge badge-approved">Approved</span>
+        <SaveStateBadge :state="documentState" />
       </div>
       
       <!-- Action Buttons -->

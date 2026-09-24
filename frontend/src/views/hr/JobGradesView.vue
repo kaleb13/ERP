@@ -795,7 +795,7 @@ onUnmounted(() => {
                 <th v-if="isColumnVisible('name')" class="col-name sortable" @click="currentSort = 'name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                   <div class="th-content">
                     <span>Name</span>
-                    <ArrowUpDown :size="12" class="sort-icon" />
+                    <ArrowUpDown v-if="currentSort === 'name'" :size="12" class="sort-icon active-sort" />
                   </div>
                 </th>
 
@@ -803,19 +803,19 @@ onUnmounted(() => {
                 <th v-if="isColumnVisible('level')" class="col-level sortable" @click="currentSort = 'level'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                   <div class="th-content">
                     <span>Seniority Level</span>
-                    <ArrowUpDown :size="12" class="sort-icon" />
+                    <ArrowUpDown v-if="currentSort === 'level'" :size="12" class="sort-icon active-sort" />
                   </div>
                 </th>
                 <th v-if="isColumnVisible('base_salary')" class="col-salary sortable" @click="currentSort = 'base_salary'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                   <div class="th-content">
                     <span>Base Floor (ETB)</span>
-                    <ArrowUpDown :size="12" class="sort-icon" />
+                    <ArrowUpDown v-if="currentSort === 'base_salary'" :size="12" class="sort-icon active-sort" />
                   </div>
                 </th>
                 <th v-if="isColumnVisible('ceiling_salary')" class="col-salary sortable" @click="currentSort = 'ceiling_salary'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                   <div class="th-content">
                     <span>Ceiling Salary (ETB)</span>
-                    <ArrowUpDown :size="12" class="sort-icon" />
+                    <ArrowUpDown v-if="currentSort === 'ceiling_salary'" :size="12" class="sort-icon active-sort" />
                   </div>
                 </th>
                 <th v-if="isColumnVisible('steps_count')" class="col-steps">Discrete Steps</th>
@@ -823,7 +823,7 @@ onUnmounted(() => {
                 <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                   <div class="th-content">
                     <span>State</span>
-                    <ArrowUpDown :size="12" class="sort-icon" />
+                    <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
                   </div>
                 </th>
                 <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>

@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
   Monitor, ChevronRight, X, GitBranch, FolderTree,
   Plus, Trash2, Calendar, ChevronDown, Columns,
   List, Table, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo
+  Undo, Redo, MoreVertical, FileText
 } from 'lucide-vue-next';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -33,6 +34,7 @@ const tabs = computed<TabItem[]>(() => [
 const form = ref({
   name: '',
   entity_id: '',
+  structure_state_lookup_value_id: 'active',
   effective_from: new Date().toISOString().split('T')[0],
   effective_to: '',
   description: ''
@@ -168,13 +170,37 @@ const showToast = (msg: string) => {
   }, 4000);
 };
 
+const showMoreMenu = ref(false);
+
+const handleSaveAsDraft = () => {
+  showMoreMenu.value = false;
+  form.value.structure_state_lookup_value_id = 'draft';
+  isSaved.value = true;
+  quickActionToast.value = 'Organization structure saved as Draft.';
+  setTimeout(() => {
+    router.push('/hr/org-structures');
+  }, 500);
+};
+
+const onDocumentClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.header-more-menu-wrapper')) {
+    showMoreMenu.value = false;
+  }
+};
+
 // ─── Mounted: Hydrate from Route Query if expanded ───
 onMounted(() => {
+  document.addEventListener('click', onDocumentClick);
   if (route.query.name) form.value.name = String(route.query.name);
   if (route.query.entity_id) form.value.entity_id = String(route.query.entity_id);
   if (route.query.effective_from) form.value.effective_from = String(route.query.effective_from);
   if (route.query.effective_to) form.value.effective_to = String(route.query.effective_to);
   if (route.query.description) form.value.description = String(route.query.description);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick);
 });
 </script>
 
@@ -188,16 +214,33 @@ onMounted(() => {
             <Monitor :size="15" />
           </router-link>
           <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/org-structures" class="bc-link">Organization Structures</router-link>
+          <router-link to="/hr/org-structures" class="bc-link">Org Structures</router-link>
           <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Organization Structures</span>
-          <span :class="['state-pill', isSaved ? 'state-saved' : 'state-unsaved']">
-            {{ isSaved ? 'Saved' : 'Not Saved' }}
-          </span>
+          <span class="bc-current">Create Org Structure</span>
+          <SaveStateBadge :isSaved="isSaved" :isDraft="form.structure_state === 'draft'" />
         </div>
       </div>
 
       <div class="header-actions">
+        <!-- 3-Dots Action Menu (Available for Draft support) -->
+        <div class="header-more-menu-wrapper">
+          <button 
+            type="button" 
+            class="btn-more-action" 
+            @click.stop="showMoreMenu = !showMoreMenu"
+            aria-label="More Options"
+          >
+            <MoreVertical :size="16" />
+          </button>
+          
+          <div v-if="showMoreMenu" class="header-more-dropdown" @click.stop>
+            <button type="button" class="more-menu-item" @click="handleSaveAsDraft">
+              <FileText :size="14" class="menu-item-icon" />
+              <span>Save as Draft</span>
+            </button>
+          </div>
+        </div>
+
         <button 
           type="button" 
           class="btn-clear-action" 
@@ -551,6 +594,70 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.header-more-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-more-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #404040;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-more-action:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.header-more-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 4px 0;
+  z-index: 50;
+  animation: fadeIn 0.12s ease-in-out;
+}
+
+.more-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+}
+.more-menu-item:hover {
+  background-color: #f8fafc;
+  color: #0B529C;
+}
+
+.menu-item-icon {
+  color: #64748b;
+}
+.more-menu-item:hover .menu-item-icon {
+  color: #0B529C;
 }
 
 .btn-clear-action {

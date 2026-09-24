@@ -597,4 +597,41 @@ table.data-table tr:hover {
   background-color: #f3f4f6;
 }
 
+/* ─── Calendar Date Input Standard (Rule 23: Zero Duplicate Right Calendar Icon) ─── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
+/* ─── Table Header Sort Standard (Rule 28: Inline Right-Side Alignment Only) ─── */
+.th-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+
+.th-content span {
+  display: inline-block !important;
+}
+
+.th-content .sort-icon {
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  color: #94a3b8;
+}
+
+.th-content .sort-icon.active-sort {
+  color: #0B529C !important;
+}
+
+
 

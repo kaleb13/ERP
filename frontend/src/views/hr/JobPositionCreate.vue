@@ -12,6 +12,7 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -467,9 +468,7 @@ onMounted(() => {
           <router-link to="/hr/job-positions" class="bc-link">Job Positions</router-link>
           <ChevronRight :size="13" class="bc-sep" />
           <span class="bc-current">Create Job Position</span>
-          <span :class="['state-pill', isSaved ? 'state-saved' : 'state-unsaved']">
-            {{ isSaved ? 'Saved' : 'Not Saved' }}
-          </span>
+          <SaveStateBadge :isSaved="isSaved" />
         </div>
       </div>
 

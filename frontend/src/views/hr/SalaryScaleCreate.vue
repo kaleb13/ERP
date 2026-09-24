@@ -10,6 +10,7 @@ import {
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 
@@ -254,9 +255,9 @@ const handleSave = () => {
   showToast('Salary scale saved successfully.');
 };
 
-// Breadcrumb strictly page names only (Rule 3.2: zero section names)
+// Breadcrumb strictly page names only (Rule: Exact Page Name from Sidebar Only, Zero Section Titles)
 const breadcrumbItems = [
-  { label: 'Salary Scale', to: '/hr/salary-scales' },
+  { label: 'Salary Scales', to: '/hr/salary-scales' },
   { label: 'Create Salary Scale' }
 ];
 </script>
@@ -267,9 +268,7 @@ const breadcrumbItems = [
     <div class="top-action-bar">
       <div class="top-bar-left">
         <AppBreadcrumb :items="breadcrumbItems" />
-        <span :class="['save-status-pill', isSaved ? 'status-saved' : 'status-unsaved']">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <SaveStateBadge :isSaved="isSaved" />
       </div>
       <div class="top-bar-right">
         <button type="button" class="btn-secondary-action" @click="clearForm">
@@ -277,7 +276,6 @@ const breadcrumbItems = [
           <span>Clear Form</span>
         </button>
         <button type="button" class="btn-primary-action" @click="handleSave">
-          <Check :size="14" />
           <span>Save</span>
         </button>
       </div>

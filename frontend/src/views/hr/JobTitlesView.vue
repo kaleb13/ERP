@@ -42,10 +42,9 @@ export interface JobTitleRecord {
   state: RowState;
 }
 
-// ─── Breadcrumbs ───
+// ─── Breadcrumbs (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
 const breadcrumbItems = [
-  { label: 'Job Architecture', to: '/hr/job-positions' },
-  { label: 'Job Titles & Roles', current: true }
+  { label: 'Job Titles & Roles' }
 ];
 
 // ─── State Management ───
@@ -443,7 +442,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('name')" class="col-name sortable" @click="currentSort = 'name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Job Title / Role</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'name'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 
@@ -453,14 +452,14 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Status</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'status'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('positions_count')" class="col-count">Active Positions</th>
               <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>

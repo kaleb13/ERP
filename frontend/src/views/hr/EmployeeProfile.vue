@@ -608,6 +608,32 @@ const activeFilterCount = computed(() => {
   return count;
 });
 
+// ─── Operational Metrics Summary (Rule 21: Status Classification Mandate) ───
+const totalWorkforceCount = computed(() => {
+  return `${employees.value.length} Staff`;
+});
+
+const inServiceCount = computed(() => {
+  const count = employees.value.filter(e => e.employment_status === 'active' && e.state === 'active').length;
+  return `${count} Employees`;
+});
+
+const inServiceRate = computed(() => {
+  if (!employees.value.length) return '0%';
+  const count = employees.value.filter(e => e.employment_status === 'active' && e.state === 'active').length;
+  return `${Math.round((count / employees.value.length) * 100)}% Active`;
+});
+
+const probationCount = computed(() => {
+  const count = employees.value.filter(e => e.employment_status === 'probation').length;
+  return `${count} Staff`;
+});
+
+const inactiveOrSeparatedCount = computed(() => {
+  const count = employees.value.filter(e => e.employment_status === 'separated' || e.employment_status === 'deactivated' || e.state === 'inactive').length;
+  return `${count} Staff`;
+});
+
 // ─── Table Columns Configuration ───
 const tableColumns = ref<ColumnDef[]>([
   { key: 'identity', label: 'Employee Name & Identity', visible: true, sortable: true },
@@ -1177,6 +1203,40 @@ onUnmounted(() => {
 
     <!-- VIEW 1: CANONICAL EMPLOYEE DIRECTORY (APPDATATABLE) -->
     <div v-if="viewMode === 'list'" class="directory-view-wrapper">
+      <!-- Operational KPI Metric Cards Grid (Rule 21: Operational Workflow Status Mandate) -->
+      <div class="metrics-summary-grid">
+        <MetricCard
+          label="Total Workforce"
+          :value="totalWorkforceCount"
+          subtext="Registered Master Profiles"
+          :icon="Users"
+          :showMenu="false"
+        />
+        <MetricCard
+          label="In-Service Staff"
+          :value="inServiceCount"
+          subtext="Active Operational Capacity"
+          :trend="inServiceRate"
+          trendType="up"
+          :icon="TrendingUp"
+          :showMenu="false"
+        />
+        <MetricCard
+          label="On Probation"
+          :value="probationCount"
+          subtext="Pending Confirmation Review"
+          :icon="Clock"
+          :showMenu="false"
+        />
+        <MetricCard
+          label="Separated / Inactive"
+          :value="inactiveOrSeparatedCount"
+          subtext="Completed Clearances & Offboarding"
+          :icon="AlertTriangle"
+          :showMenu="false"
+        />
+      </div>
+
       <AppDataTable
         title="Employee Directory"
         subtitle="Manage organizational staff master records, employment lifecycle events, statutory POESSA pension & tax filings, compensation bank accounts, and surety guarantees."
@@ -2513,6 +2573,26 @@ onUnmounted(() => {
 
 .directory-view-wrapper {
   animation: fadeIn 0.15s ease;
+}
+
+/* Operational Metrics Summary Grid (Rule 21) */
+.metrics-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1024px) {
+  .metrics-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Quick Action Toast */

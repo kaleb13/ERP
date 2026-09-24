@@ -9,6 +9,7 @@ import {
 } from 'lucide-vue-next';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -378,9 +379,7 @@ onMounted(() => {
           <router-link to="/hr/salary-matrices" class="bc-link">Salary Matrices</router-link>
           <ChevronRight :size="13" class="bc-sep" />
           <span class="bc-current">{{ form.entity_id || 'Entity' }} — Pay Scale Matrix</span>
-          <span :class="['state-pill', isSaved ? 'state-saved' : 'state-unsaved']">
-            {{ isSaved ? 'Saved' : 'Draft / Unsaved' }}
-          </span>
+          <SaveStateBadge :isSaved="isSaved" />
         </div>
       </div>
 
@@ -405,8 +404,7 @@ onMounted(() => {
           class="btn-save-action" 
           @click="handleSave"
         >
-          <Check :size="14" />
-          <span>Save Salary Matrix</span>
+          <span>Save</span>
         </button>
       </div>
     </div>

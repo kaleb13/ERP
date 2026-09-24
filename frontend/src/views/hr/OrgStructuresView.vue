@@ -57,17 +57,16 @@ export interface StructureTreeNode {
   children?: StructureTreeNode[];
 }
 
-// ─── Breadcrumb Configuration ───
+// ─── Breadcrumb Configuration (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
 const breadcrumbItems = computed(() => {
   if (viewMode.value === 'tree' && selectedStructure.value) {
     return [
-      { label: 'Organization Structures', to: '#' },
+      { label: 'Org Structures', onClick: () => { viewMode.value = 'list'; } },
       { label: selectedStructure.value.name, current: true }
     ];
   }
   return [
-    { label: 'Organization', to: '/hr/org-structures' },
-    { label: 'Organization Structures', current: true }
+    { label: 'Org Structures' }
   ];
 });
 
@@ -622,7 +621,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('name')" class="col-name sortable" @click="currentSort = 'name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Name</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'name'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 
@@ -635,14 +634,14 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Status</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'status'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 
               <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 

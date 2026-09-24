@@ -61,10 +61,9 @@ export interface JobPositionRecord {
   state: RowState;
 }
 
-// ─── Breadcrumbs ───
+// ─── Breadcrumbs (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
 const breadcrumbItems = [
-  { label: 'Job Architecture', to: '/hr/job-positions' },
-  { label: 'Job Positions', current: true }
+  { label: 'Job Positions' }
 ];
 
 // ─── State Management ───
@@ -589,7 +588,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('name')" class="col-name sortable" @click="currentSort = 'title_name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Position Seat</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'title_name'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 
@@ -603,7 +602,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>

@@ -496,7 +496,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('entity')" class="col-entity sortable" @click="currentSort = 'entity_name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Owning Entity</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'entity_name'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
 
@@ -504,13 +504,13 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('effective_timeline')" class="col-period sortable" @click="currentSort = 'effective_from'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Effective Timeline</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'effective_from'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('steps_per_grade')" class="col-steps sortable" @click="currentSort = 'number_of_steps'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>Steps per Grade</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'number_of_steps'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('grades_count')" class="col-grades">Mapped Grades</th>
@@ -519,7 +519,7 @@ onUnmounted(() => {
               <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
                   <span>State</span>
-                  <ArrowUpDown :size="12" class="sort-icon" />
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
                 </div>
               </th>
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { X, Maximize2, Check, Loader2 } from 'lucide-vue-next';
+import { X, Maximize2, Loader2 } from 'lucide-vue-next';
 
 interface Props {
   /** Controls modal visibility (use with v-model:show or v-model). */
@@ -45,7 +45,6 @@ const emit = defineEmits<{
 }>();
 
 const router = useRouter();
-
 const handleClose = () => {
   emit('update:show', false);
   emit('cancel');
@@ -124,22 +123,24 @@ watch(
             <slot />
           </div>
 
-          <!-- MODAL FOOTER (Bottom-Left: Secondary Button Expand Full Form | Bottom-Right: Primary Save) -->
+          <!-- MODAL FOOTER (Bottom-Left: Secondary Actions | Bottom-Right: Primary Save) -->
           <div class="quick-modal-footer">
             <!-- Bottom-Left: Secondary Button (Expand Full Form) -->
             <div class="footer-left">
-              <button 
-                v-if="showExpandButton" 
-                type="button" 
-                class="btn-secondary-action" 
-                @click="handleExpand"
-              >
-                <Maximize2 :size="13" />
-                <span>{{ expandLabel }}</span>
-              </button>
+              <slot name="footer-left">
+                <button 
+                  v-if="showExpandButton" 
+                  type="button" 
+                  class="btn-secondary-action" 
+                  @click="handleExpand"
+                >
+                  <Maximize2 :size="13" />
+                  <span>{{ expandLabel }}</span>
+                </button>
+              </slot>
             </div>
 
-            <!-- Bottom-Right: Primary Button (Save) -->
+            <!-- Bottom-Right: Primary Button (Save - Strictly Plain Text, Zero Icons) -->
             <div class="footer-right">
               <button 
                 type="button" 
@@ -148,7 +149,6 @@ watch(
                 @click="$emit('save')"
               >
                 <Loader2 v-if="loading" :size="14" class="animate-spin" />
-                <Check v-else :size="14" stroke-width="2.5" />
                 <span>{{ saveLabel }}</span>
               </button>
             </div>
@@ -250,6 +250,71 @@ watch(
 .footer-left {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.quick-draft-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-quick-more {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #404040;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-quick-more:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.quick-draft-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 4px 0;
+  z-index: 60;
+  animation: fadeIn 0.12s ease-in-out;
+}
+
+.quick-draft-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+}
+.quick-draft-item:hover {
+  background-color: #f8fafc;
+  color: #0B529C;
+}
+
+.quick-draft-icon {
+  color: #64748b;
+}
+.quick-draft-item:hover .quick-draft-icon {
+  color: #0B529C;
 }
 
 .footer-right {

@@ -14,6 +14,7 @@ import QuickCreateModal from '../components/QuickCreateModal.vue';
 import FormInput from '../components/FormInput.vue';
 import FormSelect from '../components/FormSelect.vue';
 import FormCheckbox from '../components/FormCheckbox.vue';
+import SaveStateBadge from '../components/SaveStateBadge.vue';
 
 // Data State
 const customers = ref([
@@ -61,6 +62,7 @@ const customerGroups = ref([
 const activeActionMenuId = ref<number | null>(null);
 const showQuickModal = ref(false);
 const showFullForm = ref(false);
+const isSaved = ref(false);
 const showViewModal = ref(false);
 const editMode = ref(false);
 const selectedId = ref<number | null>(null);
@@ -172,6 +174,7 @@ const openAddForm = () => {
 const expandFullForm = () => {
   showQuickModal.value = false;
   showFullForm.value = true;
+  isSaved.value = false;
 };
 
 const handleSave = () => {
@@ -277,7 +280,7 @@ const handleRefresh = () => {
           ]"
         >
           <template #extra>
-            <span class="status-badge-detailed">Not Saved</span>
+            <SaveStateBadge :isSaved="isSaved" />
           </template>
         </AppBreadcrumb>
         

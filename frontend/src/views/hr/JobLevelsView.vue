@@ -13,7 +13,6 @@ import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
-import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 
 const router = useRouter();
@@ -38,10 +37,9 @@ export interface JobLevelRecord {
   state: RowState;
 }
 
-// ─── Breadcrumbs ───
+// ─── Breadcrumbs (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
 const breadcrumbItems = [
-  { label: 'Job Architecture', to: '/hr/job-positions' },
-  { label: 'Job Levels', current: true }
+  { label: 'Job Levels' }
 ];
 
 // ─── State Management ───
@@ -635,15 +633,6 @@ onUnmounted(() => {
             v-model="quickForm.entity_id"
             :options="entityOptions"
             required
-          />
-        </div>
-
-        <!-- Description (Scope of Autonomy) -->
-        <div class="form-row">
-          <FormTextarea
-            label="Scope of Autonomy &amp; Seniority"
-            v-model="quickForm.description"
-            rows="3"
           />
         </div>
       </div>
