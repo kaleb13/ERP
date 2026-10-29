@@ -3631,7 +3631,6 @@
 		- document_type_id        -- FK DocumentType -- core doc type + numbering via DocumentSequence
 		- body                    -- jsonb (localized) -- rich text with {{merge_fields}}: {{employee_name}}, {{position}}, {{basic_salary}}, {{hire_date}}
 		- requires_approval       -- bool -- issue flow gates through core Workflow
-		- is_system               -- platform-seeded row
 		- status_lookup_value_id  -- FK LookupValue (core governance: pending | acceptForAll | acceptForThis | reject)
 		- user_id                 -- FK User -- who created the row
 		- state                   -- active / inactive

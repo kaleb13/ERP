@@ -2,60 +2,63 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
-  Monitor, ChevronRight, X, Plus, Trash2, 
-  List, Undo, Redo, MoreVertical, FileText, CheckCircle2,
-  Calendar, Layers, FileSpreadsheet, Maximize2
+  Monitor, ChevronRight, X, Check, Calendar,
+  ShieldCheck, User, CheckCircle2, FileText,
+  Clock, CornerUpLeft, Bold, Italic, Underline,
+  Strikethrough, Code, List, ListOrdered, Link, Image,
+  Table, Undo, Redo
 } from 'lucide-vue-next';
-import BaseTabs from '../../components/BaseTabs.vue';
-import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
-import SaveStateBadge from '../../components/SaveStateBadge.vue';
-import TableFloatingBar from '../../components/TableFloatingBar.vue';
 
 const router = useRouter();
 const route = useRoute();
 
+// ─── Dual Role Persona (Executive Approver vs Department Creator) ───
+const userRole = ref<'approver' | 'creator'>('creator');
+
 // ─── Lifecycle & Save State ───
 const isSaved = ref(false);
-const showDraftMenu = ref(false);
 const quickActionToast = ref('');
+const planId = ref<number | null>(null);
 
-// ─── Tab System (Rule 1: BaseTabs Capsule) ───
-type TabId = 'details' | 'positions';
-const activeTab = ref<TabId>('details');
-
-const tabs = [
-  { id: 'details' as const, label: 'Plan Details', icon: FileSpreadsheet },
-  { id: 'positions' as const, label: 'Position Allocations', icon: Layers }
-];
-
-// ─── Master Form State (Planning Parameters ONLY; String fiscal_year) ───
+// ─── Master Form State (Direct 1:1 Mapping to hr_headcount_budgets Schema) ───
 const form = ref({
   entity_id: 7,
-  organization_unit_id: 3,
-  fiscal_year: '2027',
-  period_start: '2026-07-08',
-  period_end: '2027-07-07',
-  approved_headcount: 12,
-  annual_budget_amount: 936000,
+  organization_unit_id: 5,
+  fiscal_year: 'FY 2026/27',
+  period_start: '2026-08-07', // 07/08/2026
+  period_end: '2027-07-07',   // 07/07/2027
+  approved_headcount: 5,
+  annual_budget_amount: 900000,
   currency_id: 'ETB',
-  budget_state: 'draft' as 'draft' | 'approved' | 'active',
-  notes: 'Strategic operational headcount allocation for unit growth and hiring quotas.'
+  budget_state: 'draft' as 'draft' | 'approved' | 'active' | 'closed',
+  notes: 'Urgent workforce request to establish a dedicated in-house Talent Acquisition and People Operations team to oversee recruitment, staffing, onboarding, employee relations, and workforce planning across regional hospitality branches, ensuring each location has the right talent and operational support to meet business needs.'
 });
 
-// Dynamic Computed Tag for Fiscal Year
-const computedFiscalYear = computed(() => {
-  if (!form.value.fiscal_year) return 'FY-PENDING';
-  return `FY-${form.value.fiscal_year}`;
+// Submitter Context for Approver Review Banner (Matching Image 5)
+const submitterInfo = ref({
+  name: 'Almaz Ayana',
+  title: 'Head of People & Operation',
+  unit: 'People & Culture (HR-PEOPLE)',
+  initials: 'AA',
+  submitted_at: '12/06/2026 at 15:40 GC',
+  fiscal_target: 'FY-2027',
+  branch: 'Haleta Addis Ababa Hospitality',
+  monthly_cap: '75,000 ETB / mo',
+  line_allocations: '5/5 Seats Distributed',
+  seat_buffer: '0 Seats',
+  justification: 'Urgent workforce request to establish a dedicated in-house Talent Acquisition and People Operations team to oversee recruitment, staffing, onboarding, employee relations, and workforce planning across regional hospitality branches, ensuring each location has the right talent and operational support to meet business needs.'
 });
 
-// Monthly Payroll Cap (Derived: annual_budget / 12)
-const monthlyBudgetCap = computed(() => {
-  const annual = Number(form.value.annual_budget_amount) || 0;
-  return Math.round(annual / 12);
+// Derived Monthly Cap Calculation for Creator Mode (annual / 12)
+const computedMonthlyCapDisplay = computed(() => {
+  const annual = Number(form.value.annual_budget_amount);
+  if (!annual || isNaN(annual) || annual === 0) return '---- ETB / mo';
+  const monthly = Math.round(annual / 12);
+  return `${monthly.toLocaleString()} ${form.value.currency_id} / mo`;
 });
 
-// Entity & Org Unit Options
+// Options for Dropdowns
 const entityOptions = [
   { value: 7, label: 'Haleta Addis Ababa Hospitality' },
   { value: 3, label: 'Haleta Technologies Group' },
@@ -63,200 +66,35 @@ const entityOptions = [
 ];
 
 const orgUnitOptions = [
-  { value: 3, label: 'Commercial & Sales Operations (COMM-OPS)' },
+  { value: 5, label: 'People & Culture (HR-PEOPLE)' },
+  { value: 3, label: 'Commercial Sales (COMM-SALES)' },
   { value: 2, label: 'Engineering & Technology (ENG-TECH)' },
-  { value: 1, label: 'Finance & Compliance (FIN-CORP)' },
-  { value: 5, label: 'People & Culture (HR-PEOPLE)' }
+  { value: 1, label: 'Finance & Compliance (FIN-CORP)' }
 ];
 
 const currencyOptions = [
-  { value: 'ETB', label: 'ETB — Ethiopian Birr' },
-  { value: 'USD', label: 'USD — US Dollar' },
-  { value: 'EUR', label: 'EUR — Euro' }
+  { value: 'ETB', label: 'ETB' },
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' }
 ];
-
-// ─── Child Sub-Table: Position Allocations ───
-export interface PositionAllocationLine {
-  id: number;
-  job_position_id: number;
-  position_name: string;
-  position_code: string;
-  job_grade: string;
-  allocated_seats: number;
-  avg_monthly_salary: number;
-  notes?: string;
-}
-
-const positionAllocations = ref<PositionAllocationLine[]>([
-  {
-    id: 1,
-    job_position_id: 101,
-    position_name: 'Guest Relations Specialist',
-    position_code: 'POS-GRS-01',
-    job_grade: 'L3 / Specialist',
-    allocated_seats: 4,
-    avg_monthly_salary: 18000,
-    notes: 'Front-desk check-in and VIP reception staff.'
-  },
-  {
-    id: 2,
-    job_position_id: 102,
-    position_name: 'Lead Catering Coordinator',
-    position_code: 'POS-LCC-02',
-    job_grade: 'L4 / Senior',
-    allocated_seats: 2,
-    avg_monthly_salary: 25000,
-    notes: 'Banquet event sales and kitchen logistics.'
-  },
-  {
-    id: 3,
-    job_position_id: 103,
-    position_name: 'Hospitality Service Associate',
-    position_code: 'POS-HSA-03',
-    job_grade: 'L2 / Associate',
-    allocated_seats: 6,
-    avg_monthly_salary: 12000,
-    notes: 'Shift service associates for floor management.'
-  }
-]);
-
-const selectedPositionIds = ref<number[]>([]);
-const isPositionModalOpen = ref(false);
-const editingPositionIndex = ref<number | null>(null);
-
-const positionForm = ref({
-  job_position_id: 101,
-  allocated_seats: 2,
-  avg_monthly_salary: 15000,
-  notes: ''
-});
-
-const jobPositionCatalog = [
-  { id: 101, name: 'Guest Relations Specialist', code: 'POS-GRS-01', grade: 'L3 / Specialist' },
-  { id: 102, name: 'Lead Catering Coordinator', code: 'POS-LCC-02', grade: 'L4 / Senior' },
-  { id: 103, name: 'Hospitality Service Associate', code: 'POS-HSA-03', grade: 'L2 / Associate' },
-  { id: 104, name: 'Senior Software Engineer', code: 'POS-SWE-01', grade: 'L5 / Lead' },
-  { id: 105, name: 'Financial Accountant', code: 'POS-ACC-01', grade: 'L3 / Specialist' }
-];
-
-// Sub-table Selection
-const isAllPositionsSelected = computed(() => {
-  return positionAllocations.value.length > 0 && selectedPositionIds.value.length === positionAllocations.value.length;
-});
-
-const toggleSelectAllPositions = () => {
-  if (isAllPositionsSelected.value) {
-    selectedPositionIds.value = [];
-  } else {
-    selectedPositionIds.value = positionAllocations.value.map(p => p.id);
-  }
-};
-
-const togglePositionSelection = (id: number) => {
-  const index = selectedPositionIds.value.indexOf(id);
-  if (index > -1) selectedPositionIds.value.splice(index, 1);
-  else selectedPositionIds.value.push(id);
-};
-
-const handleBatchDeletePositions = () => {
-  if (!confirm(`Delete ${selectedPositionIds.value.length} selected position allocation lines?`)) return;
-  positionAllocations.value = positionAllocations.value.filter(p => !selectedPositionIds.value.includes(p.id));
-  selectedPositionIds.value = [];
-  showToast('Position allocation lines removed.');
-};
-
-const openAddPositionModal = () => {
-  editingPositionIndex.value = null;
-  positionForm.value = {
-    job_position_id: 101,
-    allocated_seats: 1,
-    avg_monthly_salary: 15000,
-    notes: ''
-  };
-  isPositionModalOpen.value = true;
-};
-
-const openEditPositionModal = (index: number) => {
-  editingPositionIndex.value = index;
-  const item = positionAllocations.value[index];
-  positionForm.value = {
-    job_position_id: item.job_position_id,
-    allocated_seats: item.allocated_seats,
-    avg_monthly_salary: item.avg_monthly_salary,
-    notes: item.notes || ''
-  };
-  isPositionModalOpen.value = true;
-};
-
-const handleSavePosition = () => {
-  const catalogItem = jobPositionCatalog.find(c => c.id === positionForm.value.job_position_id) || jobPositionCatalog[0];
-  if (editingPositionIndex.value !== null) {
-    positionAllocations.value[editingPositionIndex.value] = {
-      id: positionAllocations.value[editingPositionIndex.value].id,
-      job_position_id: catalogItem.id,
-      position_name: catalogItem.name,
-      position_code: catalogItem.code,
-      job_grade: catalogItem.grade,
-      allocated_seats: Number(positionForm.value.allocated_seats),
-      avg_monthly_salary: Number(positionForm.value.avg_monthly_salary),
-      notes: positionForm.value.notes
-    };
-  } else {
-    positionAllocations.value.push({
-      id: Date.now(),
-      job_position_id: catalogItem.id,
-      position_name: catalogItem.name,
-      position_code: catalogItem.code,
-      job_grade: catalogItem.grade,
-      allocated_seats: Number(positionForm.value.allocated_seats),
-      avg_monthly_salary: Number(positionForm.value.avg_monthly_salary),
-      notes: positionForm.value.notes
-    });
-  }
-  isPositionModalOpen.value = false;
-  showToast('Position quota updated.');
-};
 
 // Rich Text Editor Commands
-const execFormat = (cmd: string, value: string | undefined = undefined) => {
-  document.execCommand(cmd, false, value);
+const execFormat = (cmd: string, val: string | undefined = undefined) => {
+  document.execCommand(cmd, false, val);
 };
 
 // Toast
 const showToast = (msg: string) => {
   quickActionToast.value = msg;
-  setTimeout(() => { quickActionToast.value = ''; }, 3000);
+  setTimeout(() => { quickActionToast.value = ''; }, 3500);
 };
 
-// ─── Save & Clear Actions ───
-const handleSave = () => {
-  if (!form.value.approved_headcount || !form.value.organization_unit_id) {
-    alert('Please fill all mandatory headcount fields.');
-    return;
-  }
-  isSaved.value = true;
-  form.value.budget_state = 'active';
-  showToast('Headcount budget plan published successfully.');
-  setTimeout(() => {
-    router.push('/hr/headcount-planning');
-  }, 1000);
-};
-
-const handleSaveAsDraft = () => {
-  isSaved.value = true;
-  form.value.budget_state = 'draft';
-  showDraftMenu.value = false;
-  showToast('Headcount budget saved as Draft.');
-  setTimeout(() => {
-    router.push('/hr/headcount-planning');
-  }, 1000);
-};
-
+// Actions
 const handleClearForm = () => {
   form.value = {
-    entity_id: 7,
-    organization_unit_id: 3,
-    fiscal_year: '2027',
+    entity_id: 0,
+    organization_unit_id: 0,
+    fiscal_year: '',
     period_start: '',
     period_end: '',
     approved_headcount: 0,
@@ -265,125 +103,422 @@ const handleClearForm = () => {
     budget_state: 'draft',
     notes: ''
   };
-  positionAllocations.value = [];
   isSaved.value = false;
   showToast('Form cleared.');
 };
+
+const handleSave = () => {
+  isSaved.value = true;
+  form.value.budget_state = 'draft';
+  showToast('Headcount budget proposal saved.');
+  setTimeout(() => {
+    router.push('/hr/headcount-planning');
+  }, 1000);
+};
+
+const handleApprove = () => {
+  form.value.budget_state = 'approved';
+  isSaved.value = true;
+  showToast('Headcount budget formally sanctioned and approved.');
+  setTimeout(() => {
+    router.push('/hr/headcount-planning');
+  }, 1000);
+};
+
+const handleCancel = () => {
+  router.push('/hr/headcount-planning');
+};
+
+onMounted(() => {
+  if (route.query.role === 'approver') {
+    userRole.value = 'approver';
+  } else if (route.query.role === 'creator') {
+    userRole.value = 'creator';
+  } else if (route.query.id || route.params.id) {
+    userRole.value = 'approver';
+  }
+});
 </script>
 
 <template>
-  <div class="headcount-plan-create-page">
-    <!-- Top Action & Breadcrumb Navigation Bar (Rule 29: Zero Background) -->
+  <div class="headcount-create-page">
+    <!-- Top Action & Breadcrumb Navigation Bar (Exact to Image 3 & Image 5) -->
     <div class="page-top-action-bar">
-      <!-- Breadcrumbs: Home -> Headcount Planning -> Create Headcount Plan (Rule 3/4) -->
+      <!-- Breadcrumbs Cluster -->
       <div class="breadcrumb-cluster">
         <router-link to="/home" class="breadcrumb-root-btn" title="Home">
           <Monitor :size="16" />
         </router-link>
         <ChevronRight :size="14" class="breadcrumb-separator" />
-        <span class="breadcrumb-link" @click="router.push('/hr/headcount-planning')">Headcount Planning</span>
+        <span class="breadcrumb-link" @click="router.push('/hr/headcount-planning')">Headcount Budgets</span>
         <ChevronRight :size="14" class="breadcrumb-separator" />
-        <span class="breadcrumb-current">Create Headcount Plan</span>
         
-        <!-- Standardized SaveStateBadge (Rule 30: #FEF3C6 / #BB4D00, borderless pill) -->
-        <SaveStateBadge :isSaved="isSaved" :isDraft="form.budget_state === 'draft'" />
+        <!-- Current Page Title -->
+        <span class="breadcrumb-current">
+          {{ userRole === 'approver' ? 'Approve Headcount Budgets' : 'Create Headcount Budgets' }}
+        </span>
+
+        <!-- Status Badge -->
+        <span v-if="userRole === 'creator'" class="status-pill status-pill-not-saved">
+          Not Saved
+        </span>
+        <span v-else-if="form.budget_state === 'draft'" class="status-pill status-pill-draft">
+          Draft
+        </span>
+        <span v-else-if="form.budget_state === 'approved'" class="status-pill status-pill-approved">
+          Approved
+        </span>
       </div>
 
-      <!-- Right Action Cluster (Rule 4: [⋮ More] [✕ Clear Form] [Save]) -->
+      <!-- Right Action Cluster -->
       <div class="top-actions-cluster">
-        <!-- Dynamic 3-Dots More Menu for Draft-Capable Schema (Rule 4 Standard) -->
-        <div class="draft-menu-container">
+        <!-- Role Persona Switcher (For Interactive Testing between Image 3 & Image 5) -->
+        <div class="role-pill-group">
           <button 
             type="button" 
-            class="btn-icon-more" 
-            @click.stop="showDraftMenu = !showDraftMenu"
-            title="More Options"
+            class="role-pill-btn"
+            :class="{ 'role-active': userRole === 'creator' }"
+            @click="userRole = 'creator'"
+            title="Switch to Creator Mode (Image 3)"
           >
-            <MoreVertical :size="16" />
+            <User :size="13" />
+            <span>Creator</span>
+          </button>
+          <button 
+            type="button" 
+            class="role-pill-btn"
+            :class="{ 'role-active': userRole === 'approver' }"
+            @click="userRole = 'approver'"
+            title="Switch to Approver Mode (Image 5)"
+          >
+            <ShieldCheck :size="13" />
+            <span>Approver</span>
+          </button>
+        </div>
+
+        <!-- Creator Actions (Image 3: "[ ✕ Clear Form ] [ Save ]") -->
+        <template v-if="userRole === 'creator'">
+          <button 
+            type="button" 
+            class="btn-secondary-action" 
+            @click="handleClearForm"
+          >
+            <X :size="14" />
+            <span>Clear Form</span>
           </button>
 
-          <div v-if="showDraftMenu" class="draft-popover-menu" @click.stop>
-            <button 
-              type="button" 
-              class="draft-menu-item"
-              @click="handleSaveAsDraft"
-            >
-              <FileText :size="14" />
-              <span>Save as Draft</span>
-            </button>
+          <button 
+            type="button" 
+            class="btn-primary-action" 
+            @click="handleSave"
+          >
+            <span>Save</span>
+          </button>
+        </template>
+
+        <!-- Approver Actions (Image 5: "[ Cancel ] [ Approve ]") -->
+        <template v-else>
+          <button 
+            type="button" 
+            class="btn-secondary-action" 
+            @click="handleCancel"
+          >
+            <span>Cancel</span>
+          </button>
+
+          <button 
+            type="button" 
+            class="btn-primary-action" 
+            @click="handleApprove"
+          >
+            <span>Approve</span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Quick Toast Notification -->
+    <transition name="fade-slide">
+      <div v-if="quickActionToast" class="quick-toast-banner">
+        <CheckCircle2 :size="15" class="toast-icon" />
+        <span>{{ quickActionToast }}</span>
+      </div>
+    </transition>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODE A: CREATOR FORM (Exact to Image 3: "Create Headcount Budgets") -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div v-if="userRole === 'creator'" class="form-master-card">
+      <!-- Row 1: Owning Entity (2 cols) -->
+      <div class="form-grid-2col">
+        <FormSelect
+          label="Owning Entity"
+          v-model="form.entity_id"
+          :options="entityOptions"
+          placeholder="Select Entity"
+        />
+
+        <FormSelect
+          label="Organization Unit *"
+          v-model="form.organization_unit_id"
+          :options="orgUnitOptions"
+          placeholder="Select Unit"
+          required
+        />
+      </div>
+
+      <!-- Row 2: Effective Dates & Fiscal Year (3 cols) -->
+      <div class="form-grid-3col">
+        <!-- Effective From Date * -->
+        <div class="form-field-wrap">
+          <label class="field-label">Effective From Date <span class="required-star">*</span></label>
+          <div class="date-composite-input">
+            <Calendar :size="15" class="date-cal-icon" />
+            <input 
+              type="date" 
+              v-model="form.period_start" 
+              class="date-field-inner"
+              required 
+            />
+            <span class="gc-badge">GC</span>
           </div>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-secondary-clear" 
-          @click="handleClearForm"
-        >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <!-- Effective Until Date * -->
+        <div class="form-field-wrap">
+          <label class="field-label">Effective Until Date <span class="required-star">*</span></label>
+          <div class="date-composite-input">
+            <Calendar :size="15" class="date-cal-icon" />
+            <input 
+              type="date" 
+              v-model="form.period_end" 
+              class="date-field-inner"
+              required 
+            />
+            <span class="gc-badge">GC</span>
+          </div>
+        </div>
 
-        <button 
-          type="button" 
-          class="btn-primary-save" 
-          @click="handleSave"
-        >
-          <span>Save</span>
-        </button>
+        <!-- Fiscal Year with helper subtext -->
+        <div class="form-field-wrap">
+          <label class="field-label">Fiscal Year</label>
+          <input 
+            type="text" 
+            v-model="form.fiscal_year"
+            class="standard-text-input"
+          />
+          <p class="field-helper-hint">
+            This section takes the Fiscal year text Two starting letters FY and mentions the year that the effecting date will be on.
+          </p>
+        </div>
+      </div>
+
+      <!-- Row 3: Targeted Headcount Capacity (Seats) * (3 cols grid with col 1 populated) -->
+      <div class="form-grid-3col">
+        <div class="form-field-wrap">
+          <label class="field-label">Targeted Headcount Capacity (Seats) <span class="required-star">*</span></label>
+          <input 
+            type="number" 
+            v-model.number="form.approved_headcount" 
+            class="standard-text-input font-mono"
+            min="0"
+            required 
+          />
+        </div>
+        <div></div>
+        <div></div>
+      </div>
+
+      <!-- Row 4: Currency *, Annual Salary Budget *, Est. Monthly Payroll Cap (3 cols) -->
+      <div class="form-grid-3col">
+        <FormSelect
+          label="Currency *"
+          v-model="form.currency_id"
+          :options="currencyOptions"
+          required
+        />
+
+        <div class="form-field-wrap">
+          <label class="field-label">Annual Rolled-up Salary Budget <span class="required-star">*</span></label>
+          <input 
+            type="number" 
+            v-model.number="form.annual_budget_amount" 
+            class="standard-text-input font-mono"
+            min="0"
+            required 
+          />
+        </div>
+
+        <div class="form-field-wrap">
+          <label class="field-label">Est. Monthly Payroll Cap (Derived)</label>
+          <div class="derived-readonly-box font-mono">
+            {{ computedMonthlyCapDisplay }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 5: Capacity Justification with WYSIWYG Editor Toolbar -->
+      <div class="form-field-wrap full-width mt-2">
+        <label class="field-label">Capacity Justification</label>
+        
+        <div class="wysiwyg-container">
+          <!-- Toolbar (Matching Image 3) -->
+          <div class="wysiwyg-toolbar">
+            <div class="toolbar-group">
+              <select class="toolbar-select" @change="execFormat('formatBlock', ($event.target as HTMLSelectElement).value)">
+                <option value="p">Paragraph</option>
+                <option value="h3">Heading 3</option>
+                <option value="h4">Heading 4</option>
+              </select>
+              <select class="toolbar-select" @change="execFormat('fontName', ($event.target as HTMLSelectElement).value)">
+                <option value="Inter">Font Type</option>
+                <option value="Inter">Inter</option>
+                <option value="monospace">Mono</option>
+              </select>
+            </div>
+
+            <div class="toolbar-divider"></div>
+
+            <div class="toolbar-group">
+              <button type="button" class="toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet List">
+                <List :size="14" />
+              </button>
+              <button type="button" class="toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered List">
+                <ListOrdered :size="14" />
+              </button>
+            </div>
+
+            <div class="toolbar-divider"></div>
+
+            <div class="toolbar-group">
+              <button type="button" class="toolbar-btn font-bold" @click="execFormat('bold')" title="Bold">
+                <Bold :size="13" />
+              </button>
+              <button type="button" class="toolbar-btn italic" @click="execFormat('italic')" title="Italic">
+                <Italic :size="13" />
+              </button>
+              <button type="button" class="toolbar-btn underline" @click="execFormat('underline')" title="Underline">
+                <Underline :size="13" />
+              </button>
+              <button type="button" class="toolbar-btn line-through" @click="execFormat('strikeThrough')" title="Strikethrough">
+                <Strikethrough :size="13" />
+              </button>
+              <button type="button" class="toolbar-btn font-mono" @click="execFormat('formatBlock', 'pre')" title="Code">
+                <Code :size="13" />
+              </button>
+            </div>
+
+            <div class="toolbar-divider"></div>
+
+            <div class="toolbar-group">
+              <button type="button" class="toolbar-btn" title="Table">
+                <Table :size="14" />
+              </button>
+              <button type="button" class="toolbar-btn" title="Link">
+                <Link :size="14" />
+              </button>
+              <button type="button" class="toolbar-btn" title="Image">
+                <Image :size="14" />
+              </button>
+            </div>
+
+            <div class="toolbar-group ml-auto">
+              <button type="button" class="toolbar-btn" @click="execFormat('undo')" title="Undo">
+                <Undo :size="14" />
+              </button>
+              <button type="button" class="toolbar-btn" @click="execFormat('redo')" title="Redo">
+                <Redo :size="14" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Editable Content Area -->
+          <div 
+            class="wysiwyg-content" 
+            contenteditable="true"
+            @input="form.notes = ($event.target as HTMLElement).innerText"
+          >
+            {{ form.notes }}
+          </div>
+
+          <!-- Footer Character Counter -->
+          <div class="wysiwyg-footer">
+            <span class="char-count">{{ form.notes ? form.notes.length : 0 }} / 5,000 Characters</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ quickActionToast }}</span>
-    </div>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MODE B: APPROVER VIEW (Exact to Image 5: "Approve Headcount Budgets")-->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div v-else class="approver-view-container">
+      <!-- Card 1: Submitter Context & Justification Card (Matching Image 5) -->
+      <div class="approver-summary-card">
+        <!-- Submitter Top Row -->
+        <div class="submitter-row">
+          <div class="submitter-identity-cluster">
+            <!-- Avatar photo/circle -->
+            <div class="submitter-photo-circle">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80" alt="Almaz Ayana" class="submitter-avatar-img" />
+            </div>
 
-    <!-- Top Navigation Tabs (Rule 1: BaseTabs Capsule) -->
-    <div class="top-tabs-wrapper">
-      <BaseTabs 
-        v-model="activeTab" 
-        :tabs="tabs" 
-      />
-    </div>
+            <div class="submitter-info-stack">
+              <div class="name-and-tags-row">
+                <span class="submitter-display-name">{{ submitterInfo.name }}</span>
+                <span class="tag-title-gray">{{ submitterInfo.title }}</span>
+                <span class="tag-unit-blue">{{ submitterInfo.unit }}</span>
+              </div>
+              <div class="meta-subtext-line">
+                <span>Submitted on {{ submitterInfo.submitted_at }}</span>
+                <span class="meta-dot">•</span>
+                <span>Fiscal Target: <strong>{{ submitterInfo.fiscal_target }}</strong></span>
+                <span class="meta-dot">•</span>
+                <span>Branch: <strong>{{ submitterInfo.branch }}</strong></span>
+              </div>
+            </div>
+          </div>
 
-    <!-- TAB 1: PLAN DETAILS -->
-    <div v-if="activeTab === 'details'" class="tab-content-container">
-      <div class="clean-master-card">
-        <div class="card-section-title-row">
-          <span class="card-section-title">Budget Plan Specifications</span>
+          <!-- Awaiting Executive Approval Status Pill (Far Right) -->
+          <div class="status-right-col">
+            <span class="awaiting-approval-pill">
+              <Clock :size="12" />
+              <span>Awaiting Executive Approval</span>
+            </span>
+          </div>
         </div>
 
-        <!-- Section 1 Riser: Work Location & Unit Allocation -->
-        <div class="form-section-riser">
-          <span class="riser-title">Work Location & Unit Allocation</span>
-          <div class="riser-line"></div>
+        <!-- Derived Stats Pill Row (Capsule Container from Image 5) -->
+        <div class="derived-stats-capsule-box">
+          <div class="stat-capsule-item">
+            <span class="stat-capsule-text">Derived Monthly Run-Rate Cap: <strong>{{ submitterInfo.monthly_cap }}</strong></span>
+          </div>
+          <div class="stat-capsule-item">
+            <span class="stat-capsule-text">Position Line Allocations: <strong>{{ submitterInfo.line_allocations }}</strong></span>
+          </div>
+          <div class="stat-capsule-item">
+            <span class="stat-capsule-text">unallocated Seat Buffer: <strong>{{ submitterInfo.seat_buffer }}</strong></span>
+          </div>
         </div>
 
-        <div class="form-grid-2col">
-          <FormSelect
-            label="Owning Entity"
-            v-model="form.entity_id"
-            :options="entityOptions"
-            required
-          />
-
-          <FormSelect
-            label="Organization Unit"
-            v-model="form.organization_unit_id"
-            :options="orgUnitOptions"
-            required
-          />
+        <!-- Capacity Justification Callout Box (Matching Image 5) -->
+        <div class="justification-callout-panel">
+          <div class="callout-header-row">
+            <FileText :size="14" class="text-slate-500" />
+            <span class="callout-header-title">Capacity Justification</span>
+          </div>
+          <p class="callout-body-paragraph">
+            {{ submitterInfo.justification }}
+          </p>
         </div>
+      </div>
 
-        <!-- Section 2 Riser: Fiscal Capacity & Period -->
-        <div class="form-section-riser">
-          <span class="riser-title">Fiscal Capacity & Period</span>
-          <div class="riser-line"></div>
-        </div>
+      <!-- Card 2: Budget Plan Specifications - Approver Editable (Matching Image 5) -->
+      <div class="plan-specifications-card">
+        <h3 class="specifications-card-title">Budget Plan Specifications - Approver Editable</h3>
 
+        <!-- Row 1: Effective From Date *, Effective Until Date *, Fiscal Year * -->
         <div class="form-grid-3col">
-          <!-- Effective From Date with [GC] Badge -->
           <div class="form-field-wrap">
             <label class="field-label">Effective From Date <span class="required-star">*</span></label>
             <div class="date-composite-input">
@@ -398,7 +533,6 @@ const handleClearForm = () => {
             </div>
           </div>
 
-          <!-- Effective Until Date with [GC] Badge -->
           <div class="form-field-wrap">
             <label class="field-label">Effective Until Date <span class="required-star">*</span></label>
             <div class="date-composite-input">
@@ -413,267 +547,90 @@ const handleClearForm = () => {
             </div>
           </div>
 
-          <!-- Fiscal Year: String input with Dynamic FY Pill Tag and selective format hint -->
           <div class="form-field-wrap">
-            <div class="field-label-with-tag">
-              <label class="field-label">Fiscal Year <span class="required-star">*</span></label>
-              <span class="fy-tag-pill">{{ computedFiscalYear }}</span>
-            </div>
-            <FormInput
+            <label class="field-label">Fiscal Year <span class="required-star">*</span></label>
+            <input 
+              type="text" 
               v-model="form.fiscal_year"
-              hint="Statutory financial calendar cycle (e.g. 2026/27 or 2026)."
-              required
+              class="standard-text-input"
+              required 
+            />
+            <p class="field-helper-hint">
+              This section takes the Fiscal year text Two starting letters FY and mentions the year that the effecting date will be on.
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 2: Targeted Headcount Capacity (Seats) *, Currency *, Annual Rolled-up Salary Budget * -->
+        <div class="form-grid-3col mt-3">
+          <div class="form-field-wrap">
+            <label class="field-label">Targeted Headcount Capacity (Seats) <span class="required-star">*</span></label>
+            <input 
+              type="number" 
+              v-model.number="form.approved_headcount" 
+              class="standard-text-input font-mono"
+              min="0"
+              required 
             />
           </div>
 
-          <!-- Target Capacity (Seats) -->
-          <FormInput
-            label="Target Headcount Capacity (Seats)"
-            v-model="form.approved_headcount"
-            type="number"
-            required
-          />
-        </div>
-
-        <!-- Section 3 Riser: Financial Authorization & Ceilings -->
-        <div class="form-section-riser">
-          <span class="riser-title">Financial Authorization & Ceilings</span>
-          <div class="riser-line"></div>
-        </div>
-
-        <div class="form-grid-3col">
           <FormSelect
-            label="Currency"
+            label="Currency *"
             v-model="form.currency_id"
             :options="currencyOptions"
             required
           />
 
-          <FormInput
-            label="Annual Rolled-up Salary Budget"
-            v-model="form.annual_budget_amount"
-            type="number"
-            required
-          />
-
-          <!-- Estimated Monthly Cap (Derived) -->
           <div class="form-field-wrap">
-            <label class="field-label">Est. Monthly Payroll Cap (Derived)</label>
-            <div class="derived-field-display font-mono">
-              {{ monthlyBudgetCap.toLocaleString() }} {{ form.currency_id }} / mo
-            </div>
-          </div>
-        </div>
-
-        <!-- Section 4 Riser: Budget Justification & Scope -->
-        <div class="form-section-riser">
-          <span class="riser-title">Budget Justification & Scope</span>
-          <div class="riser-line"></div>
-        </div>
-
-        <!-- Strategic Description & Justification -->
-        <div class="rich-editor-section">
-          <div class="rich-editor-container">
-            <div class="editor-toolbar">
-              <button type="button" class="toolbar-btn font-bold" @click="execFormat('bold')" title="Bold">B</button>
-              <button type="button" class="toolbar-btn italic" @click="execFormat('italic')" title="Italic">I</button>
-              <button type="button" class="toolbar-btn underline" @click="execFormat('underline')" title="Underline">U</button>
-              <div class="toolbar-divider"></div>
-              <button type="button" class="toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet List">
-                <List :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" @click="execFormat('undo')" title="Undo">
-                <Undo :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" @click="execFormat('redo')" title="Redo">
-                <Redo :size="14" />
-              </button>
-            </div>
-
-            <div 
-              class="editor-editable-area" 
-              contenteditable="true"
-              @input="(e: any) => form.notes = e.target.innerText"
-            >
-              Strategic operational headcount allocation for unit growth, capacity management, and hiring quotas under the approved corporate fiscal plan.
-            </div>
-
-            <div class="editor-footer">
-              <span class="char-count">{{ form.notes ? form.notes.length : 124 }} / 5,000 Characters</span>
-              <span class="resize-handle">//</span>
-            </div>
+            <label class="field-label">Annual Rolled-up Salary Budget <span class="required-star">*</span></label>
+            <input 
+              type="number" 
+              v-model.number="form.annual_budget_amount" 
+              class="standard-text-input font-mono"
+              min="0"
+              required 
+            />
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TAB 2: POSITION ALLOCATIONS (Rule 11/19 Dynamic Child Sub-Table) -->
-    <div v-if="activeTab === 'positions'" class="tab-content-container">
-      <div class="clean-master-card">
-        <div class="card-section-title-row">
-          <span class="card-section-title">Planned Job Position Allocations</span>
-          <button 
-            type="button" 
-            class="btn-add-item-header"
-            @click="openAddPositionModal"
-          >
-            <Plus :size="14" />
-            <span>Add Position Quota</span>
-          </button>
-        </div>
+      <!-- Section 3: Headcount Plan Audit Trail (Matching Image 5) -->
+      <div class="audit-trail-section">
+        <h3 class="audit-section-heading">Headcount Plan Audit Trail</h3>
 
-        <!-- Dynamic Sub-Table -->
-        <div class="child-subtable-wrapper">
-          <table class="child-erp-table">
-            <thead>
-              <tr>
-                <th class="col-th-check">
-                  <input 
-                    type="checkbox" 
-                    class="custom-checkbox" 
-                    :checked="isAllPositionsSelected" 
-                    @change="toggleSelectAllPositions" 
-                  />
-                </th>
-                <th class="col-th-no">#</th>
-                <th class="col-th-position">Job Position</th>
-                <th class="col-th-grade">Target Grade</th>
-                <th class="col-th-seats">Allocated Seats</th>
-                <th class="col-th-salary">Est. Monthly Salary</th>
-                <th class="col-th-subtotal">Monthly Subtotal</th>
-                <th class="col-th-notes">Notes</th>
-                <th class="col-th-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="(pos, idx) in positionAllocations" 
-                :key="pos.id"
-                class="child-table-row"
-                :class="{ 'child-row-selected': selectedPositionIds.includes(pos.id) }"
-              >
-                <td class="col-th-check" @click.stop>
-                  <input 
-                    type="checkbox" 
-                    class="custom-checkbox" 
-                    :checked="selectedPositionIds.includes(pos.id)" 
-                    @change="togglePositionSelection(pos.id)" 
-                  />
-                </td>
-                <td class="col-th-no text-tertiary font-mono">{{ idx + 1 }}</td>
-                <td class="col-th-position">
-                  <div class="position-cell-stack">
-                    <span class="table-name-primary">{{ pos.position_name }}</span>
-                    <span class="table-code-subtext font-mono">{{ pos.position_code }}</span>
-                  </div>
-                </td>
-                <td class="col-th-grade text-tertiary">{{ pos.job_grade }}</td>
-                <td class="col-th-seats font-medium text-slate-700">{{ pos.allocated_seats }} Seats</td>
-                <td class="col-th-salary font-mono text-tertiary">{{ pos.avg_monthly_salary.toLocaleString() }} ETB</td>
-                <td class="col-th-subtotal font-mono font-medium text-slate-700">
-                  {{ (pos.allocated_seats * pos.avg_monthly_salary).toLocaleString() }} ETB
-                </td>
-                <td class="col-th-notes text-tertiary text-xs">{{ pos.notes || '—' }}</td>
-                <td class="col-th-actions" @click.stop>
-                  <div class="row-actions-group">
-                    <button 
-                      type="button" 
-                      class="btn-row-action" 
-                      @click="openEditPositionModal(idx)"
-                      title="Edit"
-                    >
-                      <Maximize2 :size="13" />
-                    </button>
-                    <button 
-                      type="button" 
-                      class="btn-row-action text-rose-500 hover:text-rose-700" 
-                      @click="positionAllocations.splice(idx, 1); showToast('Removed position allocation.');"
-                      title="Delete"
-                    >
-                      <Trash2 :size="13" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-
-              <!-- Empty State -->
-              <tr v-if="positionAllocations.length === 0">
-                <td colspan="9" class="child-empty-state">
-                  <p>No position allocations added yet. Click "+ Add Position Quota" to distribute seats.</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="add-row-action-footer">
-          <button 
-            type="button" 
-            class="btn-add-row"
-            @click="openAddPositionModal"
-          >
-            <Plus :size="14" />
-            <span>Add Position Quota</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Floating Batch Bar for Child Sub-Table -->
-    <TableFloatingBar
-      :count="selectedPositionIds.length"
-      @delete="handleBatchDeletePositions"
-    />
-
-    <!-- Position Allocation Modal (Expand Modal) -->
-    <div v-if="isPositionModalOpen" class="modal-backdrop" @click="isPositionModalOpen = false">
-      <div class="modal-card" @click.stop>
-        <div class="modal-header">
-          <h3 class="modal-title">{{ editingPositionIndex !== null ? 'Edit Position Quota' : 'Add Position Quota' }}</h3>
-          <button type="button" class="btn-modal-close" @click="isPositionModalOpen = false">
-            <X :size="16" />
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <FormSelect
-            label="Job Position"
-            v-model="positionForm.job_position_id"
-            :options="jobPositionCatalog.map(p => ({ value: p.id, label: `${p.name} (${p.code}) — ${p.grade}` }))"
-            required
-          />
-
-          <div class="modal-row-grid">
-            <FormInput
-              label="Allocated Seats"
-              v-model="positionForm.allocated_seats"
-              type="number"
-              required
-            />
-
-            <FormInput
-              label="Estimated Monthly Salary (ETB)"
-              v-model="positionForm.avg_monthly_salary"
-              type="number"
-              required
-            />
+        <div class="audit-timeline-container">
+          <!-- Step 1: Headcount Planed Submitted -->
+          <div class="timeline-step-row">
+            <div class="timeline-bullet-col">
+              <div class="bullet-dot-black"></div>
+              <div class="timeline-line-connector"></div>
+            </div>
+            <div class="timeline-body-col">
+              <div class="timeline-headline">
+                <span class="font-bold text-slate-800">Headcount Planed Submitted</span>
+                <span class="text-slate-600"> on 12/06/2026 at 15:40 GC</span>
+              </div>
+              <div class="timeline-sub-detail">
+                Initiated by Almaz Ayana (Head of People & Operation)
+              </div>
+            </div>
           </div>
 
-          <div class="form-field-wrap">
-            <label class="field-label">Allocation Notes & Justification</label>
-            <textarea 
-              v-model="positionForm.notes" 
-              class="simple-textarea"
-              rows="3"
-            ></textarea>
+          <!-- Step 2: Executive Sanction Pending -->
+          <div class="timeline-step-row">
+            <div class="timeline-bullet-col">
+              <div class="bullet-dot-black"></div>
+            </div>
+            <div class="timeline-body-col">
+              <div class="timeline-headline">
+                <span class="font-bold text-slate-800">Executive Sanction Pending</span>
+                <span class="text-slate-600"> Awaiting Decision</span>
+              </div>
+              <div class="timeline-sub-detail">
+                Awaiting formal review and signature from Corporate Executive Authority.
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary-clear" @click="isPositionModalOpen = false">Cancel</button>
-          <button type="button" class="btn-primary-save" @click="handleSavePosition">
-            <span>Save</span>
-          </button>
         </div>
       </div>
     </div>
@@ -681,610 +638,646 @@ const handleClearForm = () => {
 </template>
 
 <style scoped>
-.headcount-plan-create-page {
+.headcount-create-page {
   padding: 0;
-  animation: fadeIn 0.15s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Rule 29: Top Action Bar Zero Background */
+/* Page Top Action Bar (Rule 29: Clean transparent header) */
 .page-top-action-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-  margin-bottom: 20px;
+  padding: 4px 0 8px 0;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .breadcrumb-cluster {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
 }
 
 .breadcrumb-root-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: #737373;
-  text-decoration: none;
+  transition: color 0.15s ease;
 }
+
 .breadcrumb-root-btn:hover {
-  color: #0B529C;
+  color: #404040;
 }
 
 .breadcrumb-separator {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .breadcrumb-link {
+  font-size: 13.5px;
   color: #737373;
   cursor: pointer;
+  transition: color 0.15s ease;
 }
+
 .breadcrumb-link:hover {
   color: #0B529C;
 }
 
 .breadcrumb-current {
+  font-size: 13.5px;
+  font-weight: 500;
   color: #404040;
-  font-weight: 600;
 }
 
+/* Status Pills next to breadcrumbs */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.status-pill-not-saved {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+
+.status-pill-draft {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.status-pill-approved {
+  background-color: #DCFCE7;
+  color: #16A34A;
+}
+
+/* Right Actions Cluster */
 .top-actions-cluster {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.btn-icon-more {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e2e8f0;
+.role-pill-group {
+  display: inline-flex;
+  background-color: #f1f5f9;
+  padding: 2px;
   border-radius: 8px;
-  background-color: #ffffff;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-icon-more:hover {
-  background-color: #f8fafc;
-  color: #0f172a;
+  gap: 2px;
 }
 
-.btn-secondary-clear {
-  height: 38px;
-  padding: 0 16px;
-  display: flex;
+.role-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.role-pill-btn.role-active {
+  background-color: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary-action {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background-color: #ffffff;
-  color: #404040;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
+  color: #404040;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-secondary-clear:hover {
+
+.btn-secondary-action:hover {
   background-color: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.btn-primary-save {
-  height: 38px;
-  padding: 0 22px;
-  display: flex;
+.btn-primary-action {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 20px;
+  background-color: #0B529C;
   border: none;
   border-radius: 8px;
-  background-color: #0B529C;
-  color: #ffffff;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
+  color: #ffffff;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(11, 82, 156, 0.2);
   transition: background-color 0.15s ease;
 }
-.btn-primary-save:hover {
+
+.btn-primary-action:hover {
   background-color: #09427d;
 }
 
-.draft-menu-container {
-  position: relative;
-}
-
-.draft-popover-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
+/* Master Form Card (Image 3) */
+.form-master-card {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 4px;
-  min-width: 140px;
-  z-index: 100;
-}
-
-.draft-menu-item {
+  border-radius: 10px;
+  padding: 24px;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background: none;
-  font-size: 12.5px;
-  color: #404040;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-}
-.draft-menu-item:hover {
-  background-color: #f1f5f9;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  color: #065f46;
-}
-
-.toast-icon {
-  color: #059669;
-  flex-shrink: 0;
-}
-
-.top-tabs-wrapper {
-  margin-bottom: 16px;
-}
-
-.clean-master-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 22px 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.card-section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.card-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.form-section-riser {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 22px;
-  margin-bottom: 14px;
-}
-.form-section-riser:first-of-type {
-  margin-top: 4px;
-}
-
-.riser-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #0B529C;
-  white-space: nowrap;
-}
-
-.riser-line {
-  flex: 1;
-  height: 1px;
-  background-color: #f1f5f9;
-}
-
+/* Form Grids */
 .form-grid-2col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 20px;
-  margin-bottom: 18px;
+  gap: 16px;
 }
 
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px 20px;
-  margin-bottom: 24px;
+  gap: 16px;
 }
 
-.field-label-with-tag {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.fy-tag-pill {
-  font-size: 11px;
-  font-weight: 600;
-  background-color: #eff6ff;
-  color: #0284c7;
-  padding: 1.5px 7px;
-  border-radius: 100px;
+@media (max-width: 840px) {
+  .form-grid-2col,
+  .form-grid-3col {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-field-wrap {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.form-field-wrap.full-width {
+  width: 100%;
 }
 
 .field-label {
   font-size: 12.5px;
   font-weight: 500;
   color: #404040;
-  margin-bottom: 4px;
 }
 
 .required-star {
   color: #ef4444;
 }
 
-.date-composite-input {
-  display: flex;
-  align-items: center;
+.standard-text-input {
   height: 38px;
+  padding: 0 12px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 0 10px;
+  font-size: 13.5px;
+  color: #404040;
+  outline: none;
   background-color: #ffffff;
   transition: border-color 0.15s ease;
 }
+
+.standard-text-input:focus {
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+}
+
+.field-helper-hint {
+  font-size: 11.5px;
+  color: #737373;
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Date Composite Input with GC Badge */
+.date-composite-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
 .date-composite-input:focus-within {
   border-color: #0B529C;
   box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 
 .date-cal-icon {
-  color: #737373;
-  margin-right: 8px;
+  color: #94a3b8;
+  margin-right: 6px;
   flex-shrink: 0;
 }
 
 .date-field-inner {
-  flex: 1;
   border: none;
   outline: none;
   font-size: 13px;
   color: #404040;
+  flex: 1;
   background: transparent;
-}
-
-.date-field-inner::-webkit-calendar-picker-indicator {
-  display: none;
-  -webkit-appearance: none;
 }
 
 .gc-badge {
   font-size: 10.5px;
   font-weight: 600;
-  background-color: #f1f5f9;
   color: #64748b;
+  background-color: #f1f5f9;
   padding: 2px 6px;
   border-radius: 4px;
-  user-select: none;
 }
 
-.derived-field-display {
+/* Derived Readonly Display Box */
+.derived-readonly-box {
+  height: 38px;
   display: flex;
   align-items: center;
-  height: 38px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
   padding: 0 12px;
-  background-color: #f8fafc;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-/* Rich Text Editor Section */
-.rich-editor-section {
-  margin-top: 10px;
-}
-
-.rich-editor-container {
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background-color: #ffffff;
-  overflow: hidden;
+  font-size: 13px;
+  color: #64748b;
 }
 
-.editor-toolbar {
+/* WYSIWYG Editor Styling (Image 3) */
+.wysiwyg-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.wysiwyg-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   padding: 8px 12px;
   background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: #cbd5e1;
+  margin: 0 4px;
+}
+
+.toolbar-select {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #404040;
+  outline: none;
+  background-color: #ffffff;
 }
 
 .toolbar-btn {
-  display: flex;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 13px;
+  border-radius: 4px;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
+
 .toolbar-btn:hover {
   background-color: #e2e8f0;
   color: #0f172a;
 }
 
-.toolbar-divider {
-  width: 1px;
-  height: 16px;
-  background-color: #cbd5e1;
-  margin: 0 4px;
-}
-
-.editor-editable-area {
-  min-height: 120px;
-  padding: 12px 14px;
-  font-size: 13px;
+.wysiwyg-content {
+  min-height: 150px;
+  padding: 14px;
+  font-size: 13.5px;
   color: #404040;
-  line-height: 1.6;
+  line-height: 1.55;
   outline: none;
 }
 
-.editor-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
+.wysiwyg-footer {
+  padding: 6px 14px;
   border-top: 1px solid #f1f5f9;
-  background-color: #fafafa;
-  font-size: 11px;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.char-count {
+  font-size: 11.5px;
   color: #94a3b8;
 }
 
-/* Child Sub-Table */
-.btn-add-item-header {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  background-color: #eff6ff;
-  color: #0B529C;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-add-item-header:hover {
-  background-color: #0B529C;
-  color: #ffffff;
-}
-
-.child-subtable-wrapper {
-  overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.child-erp-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.child-erp-table th {
-  height: 34px;
-  padding: 6px 14px;
-  background-color: #f8fafc;
-  color: #737373;
-  font-size: 12px;
-  font-weight: 500;
-  border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
-}
-
-.child-erp-table td {
-  height: 38px;
-  padding: 6px 14px;
-  font-size: 12.5px;
-  color: #404040;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.child-row-selected td {
-  background-color: #f0f7ff;
-}
-
-.col-th-check { width: 36px; text-align: center; }
-.col-th-no { width: 40px; }
-.col-th-actions { width: 70px; text-align: right; }
-
-.position-cell-stack {
+/* ═══════════════════════════════════════════════════════════════════ */
+/* MODE B: APPROVER STYLES (Image 5)                                  */
+/* ═══════════════════════════════════════════════════════════════════ */
+.approver-view-container {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
-.table-name-primary {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.table-code-subtext {
-  font-size: 11px;
-  color: #737373;
-}
-
-.text-tertiary {
-  color: #737373;
-}
-
-.row-actions-group {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.btn-row-action {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-}
-.btn-row-action:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-.child-empty-state {
-  text-align: center;
-  padding: 32px 16px;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-.add-row-action-footer {
-  margin-top: 10px;
-}
-
-.btn-add-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
+/* Card 1: Submitter Context & Justification Card */
+.approver-summary-card {
   background-color: #ffffff;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  font-size: 12.5px;
-  color: #475569;
-  cursor: pointer;
-}
-.btn-add-row:hover {
-  background-color: #f8fafc;
-  border-color: #0B529C;
-  color: #0B529C;
-}
-
-/* Modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(15, 23, 42, 0.45);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.modal-card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 520px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.modal-header {
+.submitter-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.modal-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.btn-modal-close {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-}
-
-.modal-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
-.modal-row-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.submitter-identity-cluster {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.simple-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #404040;
-  outline: none;
-  resize: vertical;
-  font-family: inherit;
-}
-.simple-textarea:focus {
-  border-color: #0B529C;
+.submitter-photo-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 100px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.modal-footer {
+.submitter-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.submitter-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.name-and-tags-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 20px;
-  border-top: 1px solid #f1f5f9;
-  background-color: #fafafa;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.submitter-display-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tag-title-gray {
+  font-size: 11.5px;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.tag-unit-blue {
+  font-size: 11.5px;
+  color: #0284c7;
+  background-color: #e0f2fe;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.meta-subtext-line {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meta-dot {
+  color: #94a3b8;
+}
+
+.status-right-col {
+  display: flex;
+  align-items: center;
+}
+
+.awaiting-approval-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #FEF3C7;
+  color: #D97706;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Derived Stats Capsule Box (Image 5) */
+.derived-stats-capsule-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-capsule-item {
+  font-size: 12px;
+  color: #475569;
+}
+
+.stat-capsule-text strong {
+  color: #0f172a;
+}
+
+/* Capacity Justification Callout Panel (Image 5) */
+.justification-callout-panel {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.callout-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.callout-header-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.callout-body-paragraph {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Card 2: Budget Plan Specifications - Approver Editable */
+.plan-specifications-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.specifications-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+/* Section 3: Headcount Plan Audit Trail */
+.audit-trail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 4px 16px 4px;
+}
+
+.audit-section-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+.audit-timeline-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-step-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.timeline-bullet-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 14px;
+}
+
+.bullet-dot-black {
+  width: 7px;
+  height: 7px;
+  background-color: #0f172a;
+  border-radius: 100px;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.timeline-line-connector {
+  width: 1.5px;
+  flex: 1;
+  background-color: #cbd5e1;
+  margin: 3px 0;
+  min-height: 24px;
+}
+
+.timeline-body-col {
+  padding-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-headline {
+  font-size: 13px;
+}
+
+.timeline-sub-detail {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.toast-icon {
+  color: #10b981;
+}
+
+.quick-toast-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+  z-index: 100;
 }
 </style>

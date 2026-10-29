@@ -112,11 +112,12 @@ if (typeof window !== 'undefined') {
 <template>
   <div :class="['table-section-card', { 'is-fullscreen': isFullscreen }]">
     <!-- Optional Header Title & Subtitle -->
-    <div v-if="props.title || $slots.header" class="table-header-title-block">
+    <div v-if="props.title || $slots.header || $slots['header-extra']" class="table-header-title-block">
       <slot name="header">
         <h2 class="table-block-title">{{ props.title }}</h2>
         <p v-if="props.subtitle" class="table-block-subtitle">{{ props.subtitle }}</p>
       </slot>
+      <slot name="header-extra" />
     </div>
 
     <!-- Action Controls Toolbar -->

@@ -20,18 +20,21 @@ withDefaults(
     homeTitle?: string;
     /** Optional custom icon for the root link (defaults to Monitor). */
     homeIcon?: Component;
+    /** Suppress bottom margin (useful when placed inside action bars / top headers). */
+    noMargin?: boolean;
   }>(),
   {
     items: () => [],
     homeTo: '/home',
     homeTitle: 'Home',
-    homeIcon: undefined
+    homeIcon: undefined,
+    noMargin: false
   }
 );
 </script>
 
 <template>
-  <nav aria-label="Breadcrumb" class="breadcrumb-nav">
+  <nav aria-label="Breadcrumb" class="breadcrumb-nav" :class="{ 'no-margin': noMargin }">
     <!-- Root Home / Dashboard Icon Link -->
     <router-link :to="homeTo" class="breadcrumb-root-link" :title="homeTitle">
       <component :is="homeIcon || Monitor" :size="15" />
@@ -59,6 +62,10 @@ withDefaults(
       </span>
     </template>
 
+    <!-- Inline slot immediately following current page title (e.g. SaveStateBadge) -->
+    <slot name="badge" />
+    <slot />
+
     <!-- Optional Right-aligned Breadcrumb Extra Slot -->
     <div v-if="$slots.extra" class="breadcrumb-extra">
       <slot name="extra" />
@@ -75,6 +82,15 @@ withDefaults(
   margin-bottom: 20px;
   user-select: none;
   font-family: inherit;
+}
+
+.breadcrumb-nav.no-margin {
+  margin-bottom: 0 !important;
+}
+
+.breadcrumb-nav :deep(.save-state-badge) {
+  margin-left: 2px;
+  align-self: center;
 }
 
 .breadcrumb-root-link {

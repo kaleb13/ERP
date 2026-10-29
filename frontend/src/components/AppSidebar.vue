@@ -6,7 +6,9 @@ import {
   HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
   UserCheck, LayoutGrid, Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key,
   Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap, BadgeCheck,
-  ClipboardList, Activity
+  ClipboardList, Activity, Calendar, Clock, Repeat, CalendarRange, ArrowLeftRight, CalendarDays,
+  Umbrella, GitCommit, PieChart, Banknote, ListFilter, Fingerprint,
+  UserMinus, CheckSquare, Receipt, ClipboardCheck, Calculator, Megaphone, LifeBuoy
 } from 'lucide-vue-next';
 
 interface Props {
@@ -35,7 +37,9 @@ const expandedGroups = ref<Record<string, boolean>>({
   'Setup': true,
   'Product & Pricing': true,
   'User And Access': true,
-  'Items Setup': false
+  'Items Setup': false,
+  'Leave': true,
+  'Attendance': true
 });
 
 const isGroupExpanded = (item: any) => {
@@ -119,7 +123,27 @@ const iconsMap: Record<string, any> = {
   GraduationCap,
   BadgeCheck,
   ClipboardList,
-  Activity
+  Activity,
+  Calendar,
+  Clock,
+  Repeat,
+  CalendarRange,
+  ArrowLeftRight,
+  CalendarDays,
+  Umbrella,
+  GitCommit,
+  PieChart,
+  Banknote,
+  ListFilter,
+  Fingerprint,
+  UserMinus,
+  ClipboardCheck,
+  Calculator,
+  Receipt,
+  CheckSquare,
+  Settings,
+  Megaphone,
+  LifeBuoy
 };
 
 // Active link matching helper
@@ -185,13 +209,24 @@ const activeModule = computed(() => {
   } else if (path.startsWith('/hr')) {
     return {
       id: 'hr',
-      name: 'Human Resources',
+      name: 'Human Resource',
       icon: 'Users',
       iconColor: 'var(--primitive-color-indigo-500)',
       iconBg: 'var(--primitive-color-indigo-50)',
       menu: [
-        { isHeader: true, label: 'Workforce & Profile' },
-        { to: '/hr/employees', label: 'Employee Directory', icon: 'Users' },
+        { isHeader: true, label: 'MENU' },
+        { to: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+        { isHeader: true, label: 'USER AND ACCESS' },
+        {
+          label: 'Employees',
+          icon: 'Users',
+          isGroup: true,
+          children: [
+            { to: '/hr/employees', label: 'Employee Directory', icon: 'User' },
+            { to: '/hr/movements', label: 'Employee Movement', icon: 'ArrowLeftRight' },
+            { to: '/hr/movements/admin', label: 'Movement Admin', icon: 'ShieldCheck' }
+          ]
+        },
         { isHeader: true, label: 'Organization & Structure' },
         { to: '/hr/org-structures', label: 'Org Structures', icon: 'Network' },
         { to: '/hr/org-units', label: 'Organization Units', icon: 'FolderTree' },
@@ -202,7 +237,57 @@ const activeModule = computed(() => {
         { to: '/hr/job-titles', label: 'Job Titles & Roles', icon: 'BadgeCheck' },
         { to: '/hr/job-levels', label: 'Job Levels', icon: 'Layers' },
         { to: '/hr/headcount-planning', label: 'Headcount Planning', icon: 'ClipboardList' },
-        { to: '/hr/headcount-monitoring', label: 'Headcount Monitoring', icon: 'Activity' }
+        { to: '/hr/headcount-monitoring', label: 'Headcount Monitoring', icon: 'Activity' },
+        { isHeader: true, label: 'Academic & Qualifications' },
+        { to: '/hr/fields-of-study', label: 'Fields of Study', icon: 'GraduationCap' },
+        { to: '/hr/institutions', label: 'Institutions', icon: 'Building2' },
+        { isHeader: true, label: 'Governance & Committees' },
+        { to: '/hr/committees', label: 'Committees', icon: 'ShieldCheck' },
+        { isHeader: true, label: 'Work Calendar & Shifts' },
+        { to: '/hr/work-calendars', label: 'Work Calendar Setup', icon: 'Calendar' },
+        { to: '/hr/calendar', label: 'Calendar', icon: 'CalendarDays' },
+        { to: '/hr/shifts', label: 'Work Shifts', icon: 'Clock' },
+        { to: '/hr/shift-patterns', label: 'Shift Patterns', icon: 'Repeat' },
+        { to: '/hr/my-shifts', label: 'My Shifts', icon: 'UserCheck' },
+        { to: '/hr/shift-assignments', label: 'Shift Assignments', icon: 'CalendarRange' },
+        {
+          label: 'Attendance',
+          icon: 'Activity',
+          isGroup: true,
+          children: [
+            { to: '/hr/attendance', label: 'Daily Attendance', icon: 'Clock' },
+            { to: '/hr/attendance-devices', label: 'Biometric Devices', icon: 'Fingerprint' }
+          ]
+        },
+        { to: '/hr/overtime-requests', label: 'Overtime Requests', icon: 'Clock' },
+        { to: '/hr/shift-swaps', label: 'Shift Swaps', icon: 'ArrowLeftRight' },
+        { to: '/hr/holidays', label: 'Holidays', icon: 'Umbrella' },
+        { isHeader: true, label: 'Leave & Absence' },
+        { to: '/hr/leave-requests', label: 'Leave Requests', icon: 'CalendarDays' },
+        { to: '/hr/leave-allocations', label: 'Leave Allocations', icon: 'Award' },
+        { to: '/hr/leave-balances', label: 'Leave Balances', icon: 'PieChart' },
+        { to: '/hr/leave-encashments', label: 'Leave Encashments', icon: 'Banknote' },
+        {
+          label: 'Leave',
+          icon: 'UserCheck',
+          isGroup: true,
+          children: [
+            { to: '/hr/leave-policies', label: 'Leave Policies', icon: 'Sliders' },
+            { to: '/hr/leave-types', label: 'Leave Type', icon: 'ListFilter' }
+          ]
+        },
+        { isHeader: true, label: 'Separation & Settlement' },
+        { to: '/hr/separations', label: 'Employee Separations', icon: 'UserMinus' },
+        { to: '/hr/exit-clearance', label: 'Exit Clearance', icon: 'ClipboardCheck' },
+        { to: '/hr/final-settlements', label: 'Final Settlements', icon: 'Calculator' },
+        { isHeader: true, label: 'Letters & Communications' },
+        { to: '/hr/letters', label: 'Employee Letters', icon: 'FileText' },
+        { to: '/hr/letter-templates', label: 'Letter Templates', icon: 'Sliders' },
+        { to: '/hr/announcements', label: 'Announcements', icon: 'Megaphone' },
+        { to: '/hr/service-requests', label: 'HR Service Requests', icon: 'LifeBuoy' },
+        { isHeader: true, label: 'Multi-Entity Workforce' },
+        { to: '/hr/service-agreements', label: 'HR Service Agreements', icon: 'FileText' },
+        { to: '/hr/client-assignments', label: 'Client Assignments', icon: 'Building2' }
       ]
     };
   } else if (path.startsWith('/company-setup')) {

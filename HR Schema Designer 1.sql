@@ -1980,3 +1980,382 @@
 			| 223 | OT-2026-0223 | 31          | 2026-07-27 | night          | pending       | 180           | --           | --       | active |
 			| 224 | OT-2026-0224 | 22          | 2026-09-11 | public_holiday | draft         | 240           | --           | --       | active |
 			| 225 | OT-2026-0225 | 14          | 2026-07-13 | weekend        | rejected      | 240           | --           | 7        | active |
+#12. HR -- Separation and settlement
+
+	## lookups first used in this section
+		- SEPARATION_STATUS           : draft | pending | approved | in_clearance | cleared | settled | cancelled
+		- SEPARATION_TYPE             : resignation | termination | end_of_contract | retirement | death | redundancy | mutual_agreement
+		- CLEARANCE_ITEM_STATE        : pending | cleared | flagged | waived
+		- SETTLEMENT_STATE            : draft | calculated | approved | paid
+		- SETTLEMENT_LINE_TYPE        : prorated_salary | severance | notice_pay | leave_encashment | bonus | loan_recovery | deduction | other
+
+	### EmployeeSeparation [DIST] -- one row per exit document (any leaving mode); approval via core Workflow, drives clearance + final settlement
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- via DocumentSequence (SEP-2026-0011)
+		- employee_id             -- FK Employee -- the person leaving
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- entity_id               -- FK Entity -- owning tenant/branch
+		- separation_type_lookup_value_id -- FK LookupValue (SEPARATION_TYPE: resignation | termination | end_of_contract | retirement | death | redundancy | mutual_agreement)
+		- separation_state_lookup_value_id -- FK LookupValue (SEPARATION_STATUS: draft | pending | approved | in_clearance | cleared | settled | cancelled)
+		- notice_date             -- date -- when notice was given
+		- last_working_date       -- date
+		- reason                  -- jsonb nullable -- resignation letter summary; letter scan via DocumentAttachment ('HR:EmployeeSeparation')
+		- disciplinary_action_id  -- FK DisciplinaryAction nullable -- set when termination originates from discipline
+		- is_rehire_eligible      -- bool nullable -- exit verdict for future applications
+		- exit_interview_note     -- jsonb nullable
+		- employee_movement_id   -- FK EmployeeMovement nullable -- the separation movement effected
+		- approved_by_employee_id -- FK Employee nullable
+		- approved_at             -- timestamp nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		> examples:
+			| id | code          | employee_id | separation_type | separation_state | notice_date | last_working_date | is_rehire_eligible | state  |
+			| -- | ------------- | ----------- | --------------- | ---------------- | ----------- | ----------------- | ------------------ | ------ |
+			| 11 | SEP-2026-0011 | 18          | termination     | settled          | 2026-02-01  | 2026-03-02        | false              | active |
+			| 12 | SEP-2026-0012 | 19          | resignation     | in_clearance     | 2026-07-01  | 2026-07-31        | true               | active |
+			| 13 | SEP-2026-0013 | 20          | end_of_contract | approved         | 2026-07-15  | 2026-08-16        | true               | active |
+			| 14 | SEP-2026-0014 | 21          | retirement      | cleared          | 2026-05-01  | 2026-06-30        | --                 | active |
+			| 15 | SEP-2026-0015 | 15          | resignation     | draft            | 2026-07-28  | 2026-08-27        | --                 | active |
+
+	### ClearanceItem [LINE] -- one row per departmental sign-off before settlement (assets, finance, IT access, keys)
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
+		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
+		- employee_separation_id   -- FK EmployeeSeparation -- parent exit
+		- organization_unit_id           -- FK OrganizationUnit -- clearing department
+		- clearance_state_lookup_value_id -- FK LookupValue (CLEARANCE_ITEM_STATE: pending | cleared | flagged | waived)
+		- title                   -- jsonb (localized) -- "Return laptop", "Settle till float"
+		- flagged_amount          -- numeric(15,4) nullable -- recoverable value when flagged; feeds a FinalSettlementLine deduction
+		- cleared_by_employee_id  -- FK Employee nullable
+		- cleared_at              -- timestamp nullable
+		- notes                   -- jsonb nullable
+		- state                   -- active / inactive
+		- order 				  -- integer -- display order within the separation clearance checklist
+		- user_id                 -- FK User -- who created the row
+		> examples:
+			| id | employee_separation_id | organization_unit_id | clearance_state | title (en)         | flagged_amount | cleared_by | state  |
+			| -- | --------------------- | ---------------------- | --------------- | ------------------ | -------------- | ---------- | ------ |
+			| 1  | 12                    | 5                      | cleared         | Revoke ERP access  | --             | 7          | active |
+			| 2  | 12                    | 4                      | pending         | Return laptop      | --             | --         | active |
+			| 3  | 12                    | 2                      | flagged         | Outstanding advance| 4333.3400      | 22         | active |
+			| 4  | 14                    | 2                      | cleared         | Till reconciliation| --             | 22         | active |
+			| 5  | 11                    | 3                      | cleared         | Uniform return     | --             | 14         | active |
+
+	### FinalSettlement [DIST] -- one row per terminal pay computation; executes as a final_settlement PayrollRun + PaymentBatch
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- via DocumentSequence (FST-2026-0008)
+		- employee_separation_id   -- FK EmployeeSeparation -- UNIQUE
+		- employee_id             -- FK Employee -- the person settled
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- entity_id               -- FK Entity -- owning tenant/branch
+		- settlement_state_lookup_value_id -- FK LookupValue (SETTLEMENT_STATE: draft | calculated | approved | paid)
+		- service_years           -- numeric(5,2) -- computed tenure for severance
+		- gross_amount            -- numeric(15,4) -- cache/denormalized sum of earning lines
+		- deduction_amount        -- numeric(15,4) -- cache sum: loans, clearance flags, tax
+		- net_amount              -- numeric(15,4)
+		- currency_id             -- FK Currency
+		- payroll_run_id          -- FK PayrollRun nullable -- the final_settlement run that paid it
+		- approved_by_employee_id -- FK Employee nullable
+		- approved_at             -- timestamp nullable
+		- paid_at                 -- timestamp nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		> examples:
+			| id | code          | employee_separation_id | employee_id | settlement_state | service_years | gross       | deductions | net         | state  |
+			| -- | ------------- | --------------------- | ----------- | ---------------- | ------------- | ----------- | ---------- | ----------- | ------ |
+			| 8  | FST-2026-0008 | 11                    | 18          | paid             | 3.50          | 42100.0000  | 9400.0000  | 32700.0000  | active |
+			| 9  | FST-2026-0009 | 14                    | 21          | approved         | 21.30         | 386000.0000 | 41200.0000 | 344800.0000 | active |
+			| 10 | FST-2026-0010 | 12                    | 19          | calculated       | 2.10          | 21500.0000  | 6800.0000  | 14700.0000  | active |
+			| 11 | FST-2026-0011 | 13                    | 20          | draft            | 1.00          | 11800.0000  | 2100.0000  | 9700.0000   | active |
+			| 12 | FST-2025-0012 | 9                     | 25          | paid             | 0.80          | 8200.0000   | 1500.0000  | 6700.0000   | active |
+
+	### FinalSettlementLine [LINE] -- one row per itemized settlement line (severance from StatutoryRule, leave encashment from LeaveBalance...)
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs  -- new
+		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
+		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
+		- final_settlement_id     -- FK FinalSettlement -- parent settlement
+		- line_type_lookup_value_id -- FK LookupValue (SETTLEMENT_LINE_TYPE: prorated_salary | severance | notice_pay | leave_encashment | bonus | loan_recovery | deduction | other)
+		- payroll_component_id    -- FK PayrollComponent nullable -- posting component
+		- description             -- jsonb -- human line label
+		- quantity                -- numeric(10,2) nullable -- e.g. encashed days
+		- rate                    -- numeric(15,6) nullable -- e.g. daily wage
+		- amount                  -- numeric(15,4) -- signed: earnings +, deductions -
+		- source_type             -- text -- originating document class: 'LeaveAllocation' | 'EmployeeLoan' | 'ClearanceItem'
+		- source_id               -- integer -- primary key of that document
+		- order                   -- integer
+		- state                   -- active / inactive
+		> examples:
+			| id | final_settlement_id | line_type        | description (en)          | quantity | rate      | amount      | order | state  |
+			| -- | ------------------- | ---------------- | ------------------------- | -------- | --------- | ----------- | ----- | ------ |
+			| 1  | 9                   | severance        | Severance (21.3 yrs, cap) | --       | --        | 288000.0000 | 1     | active |
+			| 2  | 9                   | leave_encashment | 30 unused annual days     | 30.00    | 1230.7692 | 36923.0800  | 2     | active |
+			| 3  | 10                  | prorated_salary  | July worked days          | 22.00    | 250.0000  | 5500.0000   | 1     | active |
+			| 4  | 10                  | loan_recovery    | Salary advance balance    | --       | --        | -4333.3400  | 3     | active |
+			| 5  | 8                   | notice_pay       | Notice period pay         | 30.00    | 216.6667  | 6500.0000   | 2     | active |
+
+
+#13. HR -- Letters, announcements and employee services
+
+	## lookups first used in this section
+		- LETTER_TYPE                 : employment_confirmation | experience | salary_certificate | offer | warning | promotion | transfer | termination | bank_reference
+		- EMPLOYEE_LETTER_STATE       : draft | pending_approval | approved | issued | revoked
+		- LETTER_DIRECTION            : outgoing | incoming
+		- ANNOUNCEMENT_AUDIENCE       : all | organization_unit | grade | position | employee_list
+		- ANNOUNCEMENT_STATE          : draft | scheduled | published | archived
+		- HR_SERVICE_REQUEST_CATEGORY : letter | id_card | payslip_copy | data_correction | benefit_inquiry | general
+		- HR_SERVICE_REQUEST_STATE    : open | assigned | in_progress | resolved | closed | cancelled
+
+	### LetterTemplate [REF] -- one row per merge-field template for HR letters; rendered PDFs stored via DocumentAttachment on the target row
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- human-readable business code, unique per entity (LT-EXP, LT-SALCERT)
+		- name                    -- jsonb (localized)
+		- description             -- jsonb (localized) nullable
+		- entity_id               -- FK Entity nullable -- NULL = platform seed; letterhead/logo come from EntityDetail at render time
+		- letter_type_lookup_value_id -- FK LookupValue (LETTER_TYPE: employment_confirmation | experience | salary_certificate | offer | warning | promotion | transfer | termination | bank_reference)
+		- document_type_id        -- FK DocumentType -- core doc type + numbering via DocumentSequence
+		- body                    -- jsonb (localized) -- rich text with {{merge_fields}}: {{employee_name}}, {{position}}, {{basic_salary}}, {{hire_date}}
+		- requires_approval       -- bool -- issue flow gates through core Workflow
+		- is_system               -- platform-seeded row
+		- status_lookup_value_id  -- FK LookupValue (core governance: pending | acceptForAll | acceptForThis | reject)
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		> examples:
+			| id | code       | name (en)               | letter_type            | entity_id | requires_approval | is_system | state  |
+			| -- | ---------- | ----------------------- | ---------------------- | --------- | ----------------- | --------- | ------ |
+			| 1  | LT-EXP     | Experience Letter       | experience             | --        | true              | true      | active |
+			| 2  | LT-SALCERT | Salary Certificate      | salary_certificate     | --        | true              | true      | active |
+			| 3  | LT-CONF    | Employment Confirmation | employment_confirmation| --        | false             | true      | active |
+			| 4  | LT-WARN    | Warning Letter          | warning                | --        | true              | true      | active |
+			| 5  | LT-BANKREF | Bank Reference          | bank_reference         | 3         | true              | false     | active |
+
+	### EmployeeLetter [DIST] -- one row per issued letter instance (self-service requestable); PDF via DocumentAttachment ('HR:EmployeeLetter')
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- direction_lookup_value_id -- FK LookupValue (LETTER_DIRECTION: outgoing | incoming) -- default outgoing; incoming = received from an external party (guarantee letter, undertaking)
+		- remind_on_separation    -- bool default false -- HR is reminded to review this letter when the employee separates (bonds, guarantees, undertakings)
+		- code                    -- via DocumentSequence (LTR-2026-0067)
+		- employee_id             -- FK Employee -- subject of the letter
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- entity_id               -- FK Entity -- issuing entity
+		- letter_template_id      -- FK LetterTemplate -- template rendered
+		- letter_state_lookup_value_id -- FK LookupValue (EMPLOYEE_LETTER_STATE: draft | pending_approval | approved | issued | revoked)
+		- merge_data              -- jsonb -- merge values frozen at issue time (salary, position, dates)
+		- addressed_to            -- jsonb nullable -- { organization: "CBE Bole Branch", attention: "Loan Officer" }
+		- purpose                 -- jsonb nullable -- why requested
+		- requested_by_employee_id -- FK Employee -- usually self
+		- issued_by_employee_id   -- FK Employee nullable
+		- issued_at               -- timestamp nullable
+		- revoked_at              -- timestamp nullable
+		- revoke_reason           -- jsonb nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		> examples:
+			| id | code          | employee_id | letter_template_id | letter_state     | addressed_to (org)   | requested_by | issued_by | issued_at            | state  |
+			| -- | ------------- | ----------- | ------------------ | ---------------- | -------------------- | ------------ | --------- | -------------------- | ------ |
+			| 67 | LTR-2026-0067 | 22          | 2                  | issued           | CBE Bole Branch      | 22           | 7         | 2026-07-21T08:30:00Z | active |
+			| 68 | LTR-2026-0068 | 14          | 3                  | issued           | --                   | 14           | 7         | 2026-07-15T10:00:00Z | active |
+			| 69 | LTR-2026-0069 | 44          | 5                  | pending_approval | Awash Bank Bole      | 44           | --        | --                   | active |
+			| 70 | LTR-2026-0070 | 18          | 1                  | issued           | --                   | 18           | 7         | 2026-03-05T09:00:00Z | active |
+			| 71 | LTR-2026-0071 | 15          | 4                  | draft            | --                   | 7            | --        | --                   | active |
+
+	### Announcement [DIST] -- one row per HR notice with acknowledgment tracking; delivery rides the Notification engine, this row is the record
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- via DocumentSequence (HRA-2026-0021)
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- entity_id               -- FK Entity -- owning tenant/branch
+		- title                   -- jsonb (localized)
+		- body                    -- jsonb (localized)
+		- audience_lookup_value_id -- FK LookupValue (ANNOUNCEMENT_AUDIENCE: all | organization_unit | grade | position | employee_list)
+		- publish_from            -- timestamp
+		- publish_to              -- timestamp nullable -- NULL = stays up until archived
+		- requires_acknowledgment -- bool -- TRUE = every targeted employee must confirm reading (policy-publication compliance proof)
+		- acknowledgment_deadline -- date nullable
+		- announcement_state_lookup_value_id -- FK LookupValue (ANNOUNCEMENT_STATE: draft | scheduled | published | archived)
+		- published_by_employee_id -- FK Employee nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		  -- note: attachments via DocumentAttachment ('HR:Announcement').
+		> examples:
+			| id | code          | title (en)               | audience      | targets (pivot)      | publish_from         | requires_ack | ack_deadline | ann_state | state  |
+			| -- | ------------- | ------------------------ | ------------- | -------------------- | -------------------- | ------------ | ------------ | --------- | ------ |
+			| 21 | HRA-2026-0021 | Updated Safety Policy    | all           | --                   | 2026-07-01T06:00:00Z | true         | 2026-07-15   | published | active |
+			| 22 | HRA-2026-0022 | Meskel Holiday Closure   | all           | --                   | 2026-09-20T06:00:00Z | false        | --           | scheduled | active |
+			| 23 | HRA-2026-0023 | New Leave Policy FY2027  | all           | --                   | 2026-07-08T06:00:00Z | true         | 2026-07-31   | published | active |
+			| 24 | HRA-2026-0024 | Finance month-end freeze | organization_unit | 2 (Finance)           | 2026-07-25T06:00:00Z | false      | --           | published | active |
+			| 25 | HRA-2026-0025 | Cashier uniform standard | position      | position 24            | 2026-08-01T06:00:00Z | true       | 2026-08-20   | draft     | active |
+
+	### AnnouncementTarget [LINE] -- new -- one row per audience target of a non-'all' announcement; replaces the audience_config jsonb (queryable: who has not acknowledged, per unit)
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
+		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
+		- announcement_id         -- FK Announcement -- parent notice
+		- organization_unit_id    -- FK OrganizationUnit nullable -- unit-audience target
+		- job_grade_id            -- FK JobGrade nullable -- grade-audience target
+		- job_position_id         -- FK JobPosition nullable -- position-audience target
+		- employee_id             -- FK Employee nullable -- employee_list target
+		- state                   -- active / inactive
+		  -- note: exactly ONE of the four target FKs is set per row; an audience = all announcement has no rows here.
+		> examples:
+			| id | announcement_id | organization_unit_id | job_grade_id | job_position_id | employee_id | state  |
+			| -- | --------------- | -------------------- | ------------ | --------------- | ----------- | ------ |
+			| 1  | 24              | 2 (Finance)          | --           | --              | --          | active |
+			| 2  | 25              | --                   | --           | 24              | --          | active |
+
+	### AnnouncementAcknowledgment [LINE] -- one row per targeted employee; NULL acknowledged_at = not yet read (the compliance exposure list)
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs  -- new
+		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
+		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
+		- announcement_id         -- FK Announcement -- UNIQUE (announcement_id, employee_id)
+		- employee_id             -- FK Employee -- targeted reader
+		- acknowledged_at         -- timestamp nullable -- NULL until the employee confirms
+		- state                   -- active / inactive
+		> examples:
+			| id  | announcement_id | employee_id | acknowledged_at      | state  |
+			| --- | --------------- | ----------- | -------------------- | ------ |
+			| 1   | 21              | 22          | 2026-07-02T08:15:00Z | active |
+			| 2   | 21              | 14          | 2026-07-03T09:40:00Z | active |
+			| 3   | 21              | 31          | --                   | active |
+			| 4   | 23              | 22          | 2026-07-09T10:05:00Z | active |
+			| 5   | 23              | 44          | 2026-07-08T14:30:00Z | active |
+
+	### HRServiceRequest [DIST] -- one row per employee-to-HR service ticket (ID card, payslip copy, data correction, benefit inquiry); big flows like leave keep their own typed tables
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- via DocumentSequence (HSR-2026-0102)
+		- employee_id             -- FK Employee -- requester
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- entity_id               -- FK Entity -- owning tenant/branch
+		- category_lookup_value_id -- FK LookupValue (HR_SERVICE_REQUEST_CATEGORY: letter | id_card | payslip_copy | data_correction | benefit_inquiry | general)
+		- subject                 -- jsonb -- one-line ask ({ en: "Salary certificate for CBE mortgage" })
+		- description             -- jsonb nullable
+		- request_state_lookup_value_id -- FK LookupValue (HR_SERVICE_REQUEST_STATE: open | assigned | in_progress | resolved | closed | cancelled)
+		- assigned_to_employee_id -- FK Employee nullable -- HR handler
+		- linked_reference        -- jsonb nullable -- fulfilment record ({ employee_letter_id: 67 })
+		- resolution_note         -- jsonb nullable
+		- resolved_at             -- timestamp nullable
+		- user_id                 -- FK User -- who created the row (self-service)
+		- state                   -- active / inactive
+		  -- note: a letter-category ticket is fulfilled by issuing an EmployeeLetter and linking it back here; grievances are never tickets -- they go to GrievanceCase.
+		> examples:
+
+			| id  | code          | employee_id | category        | subject (en)                       | request_state | assigned_to | linked_reference       | state  |
+			| --- | ------------- | ----------- | --------------- | ---------------------------------- | ------------- | ----------- | ---------------------- | ------ |
+			| 102 | HSR-2026-0102 | 22          | letter          | Salary certificate for CBE loan    | resolved      | 7           | employee_letter_id=67  | active |
+			| 103 | HSR-2026-0103 | 14          | id_card         | Replace lost staff ID card         | in_progress   | 7           | --                     | active |
+			| 104 | HSR-2026-0104 | 31          | data_correction | Birth date wrong on my profile     | assigned      | 7           | --                     | active |
+			| 105 | HSR-2026-0105 | 44          | benefit_inquiry | Add newborn to NIB medical cover   | open          | --          | --                     | active |
+			| 106 | HSR-2026-0106 | 15          | payslip_copy    | June + July payslip copies         | closed        | 7           | --                     | active |
+
+#19. HR -- Multi-entity workforce (HR service provider / staffing / employer-of-record)
+
+	-- SEPARATION PRINCIPLE -------------------------------------------------------
+	-- Five independent facts, never assumed equal: who employs (Employee.entity_id
+	-- + EmploymentContract), who receives the service (ClientAssignment client),
+	-- where the work happens (client branch / department), who is responsible for
+	-- payroll (HRServiceAgreement.payroll_responsibility), and who funds the
+	-- payment (PaymentBatch.funding_entity_id). Clients are Haleta tenants
+	-- (client_entity_id set; branch facts ride Entity FKs) or external companies
+	-- (client_party_id only; billed via the provider's Sales module). Leased staff
+	-- stay under the PROVIDER's tenancy; client access is Entity.path-scoped.
+	-- ---------------------------------------------------------------------------
+
+	## lookups first used in this section
+		- AGREEMENT_STATE             : draft | pending_approval | active | suspended | expired | terminated
+		- AGREEMENT_TYPE              : staffing | outsourcing | employer_of_record | secondment_out | consultancy
+		- PAYROLL_RESPONSIBILITY      : employer_pays | client_funds_employer_pays | client_pays_directly
+		- SERVICE_FEE_TYPE            : percent_of_payroll | fixed_per_employee | fixed_monthly | markup_percent
+		- CLIENT_ASSIGNMENT_STATE     : draft | active | completed | recalled | terminated
+
+	### HRServiceAgreement [DIST] -- one row per contract between a workforce provider and a client; approval via core Workflow, signed contract via DocumentAttachment ('HR:HRServiceAgreement')
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- code                    -- via DocumentSequence (HSA-2026-0003)
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- provider_entity_id      -- FK Entity -- the tenant employing and supplying the staff
+		  -- this IS the table's entity_id (owning branch); the column is named for its role, so there is no separate entity_id
+		- client_party_id         -- FK Party -- client identity, always set; Party carries name / tin / contacts
+		  -- always set because it is the ONLY client identity an external (non-tenant) client has
+		- client_entity_id        -- FK Entity nullable -- set ONLY when the client is also a Haleta tenant; unlocks branch-level FKs + cross-entity payroll funding
+		  -- when set, its Entity.party_id MUST equal client_party_id -- one client, one identity, two ways to reach it
+		  -- it is what gates ClientAssignment.client_branch_entity_id / client_organization_unit_id / client_position_id
+		  -- and PaymentBatch.funding_entity_id; an external client leaves all of those NULL and is billed via Sales
+		  -- CHECK: client_entity_id <> provider_entity_id -- a provider cannot contract with itself
+		- agreement_type_lookup_value_id -- FK LookupValue (AGREEMENT_TYPE: staffing | outsourcing | employer_of_record | secondment_out | consultancy)
+		- agreement_state_lookup_value_id -- FK LookupValue (AGREEMENT_STATE: draft | pending_approval | active | suspended | expired | terminated)
+		- start_date              -- date
+		- end_date                -- date nullable -- NULL = open-ended
+		- max_employees           -- integer nullable -- headcount ceiling under this agreement; NULL = uncapped
+		- payroll_responsibility_lookup_value_id -- FK LookupValue (PAYROLL_RESPONSIBILITY: employer_pays | client_funds_employer_pays | client_pays_directly)
+		- service_fee_type_lookup_value_id -- FK LookupValue (SERVICE_FEE_TYPE: percent_of_payroll | fixed_per_employee | fixed_monthly | markup_percent) nullable
+		- service_fee_value       -- numeric(15,4) nullable -- percent or amount per the fee type
+		- billing_currency_id     -- FK Currency
+		- notes                   -- jsonb nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		> examples:
+			| id | code          | provider_entity_id | client_party_id       | client_entity_id | agreement_type     | agr_state | start_date | payroll_responsibility      | fee                  | state  |
+			| -- | ------------- | ------------------ | --------------------- | ---------------- | ------------------ | --------- | ---------- | --------------------------- | -------------------- | ------ |
+			| 3  | HSA-2026-0003 | 20 (Selam Workforce)| 940 (Haleta Group)   | 1                | staffing           | active    | 2026-01-01 | client_funds_employer_pays  | percent_of_payroll 8 | active |
+			| 4  | HSA-2026-0004 | 20 (Selam Workforce)| 960 (Nyala Insurance)| --               | employer_of_record | active    | 2026-03-01 | employer_pays               | fixed_per_employee 1500 | active |
+			| 5  | HSA-2026-0005 | 20 (Selam Workforce)| 961 (Habesha Brew.)  | --               | outsourcing        | active    | 2026-02-01 | employer_pays               | fixed_monthly 45000  | active |
+			| 6  | HSA-2025-0006 | 20 (Selam Workforce)| 940 (Haleta Group)   | 1                | staffing           | expired   | 2025-01-01 | client_funds_employer_pays  | percent_of_payroll 7 | active |
+			| 7  | HSA-2026-0007 | 1  (Haleta Group)  | 962 (Zafir Hotels)   | --               | secondment_out     | pending_approval | 2026-09-01 | client_funds_employer_pays | markup_percent 12 | active |
+
+	### ClientAssignment [DIST] -- one row per employee leased to one client for a period, under an agreement; the history answers who worked where, for whom, when
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs
+		- tenant_id               -- FK Entity (tenant root) -- NOT NULL, indexed; stamped by ModelTrait, never from a payload  -- new
+		- code                    -- via DocumentSequence (CAS-2026-0041)
+		- employee_id             -- FK Employee -- legal employment stays with the provider; this row never changes the employer
+		- hr_service_agreement_id -- FK HRServiceAgreement -- governs the assignment; the agreement carries client + payroll responsibility
+		- client_branch_entity_id -- FK Entity nullable -- the client's branch (tenant clients only; Entity IS the branch granularity)
+		- client_organization_unit_id    -- FK OrganizationUnit nullable -- unit inside the client's structure (tenant clients only)
+		- client_position_id      -- FK JobPosition nullable -- seat in the client's structure (tenant clients only)
+		- client_role_title       -- text nullable -- verbatim role at an EXTERNAL client, like EmployeeExperience.position_title; internal clients use client_position_id
+		- duty_station_admin_unit_id -- FK AdminUnit nullable -- physical location; covers external clients whose structure is not modelled
+		- assignment_state_lookup_value_id -- FK LookupValue (CLIENT_ASSIGNMENT_STATE: draft | active | completed | recalled | terminated)
+		- start_date              -- date
+		- end_date                -- date nullable -- NULL = current; history rows are never edited, a move to another client inserts a new row
+		- notes                   -- jsonb nullable
+		- user_id                 -- FK User -- who created the row
+		- state                   -- active / inactive
+		  -- note: application rule -- one ACTIVE assignment per employee at a time, unless the agreement allows split placements.
+		> examples: (employee 61 Kebede moves client B -> client C with full history; employees belong to provider entity 20)
+			| id | code          | employee_id | hr_service_agreement_id | client_branch_entity_id | client_position_id | client_role_title | duty_station | ca_state  | start_date | end_date   | state  |
+			| -- | ------------- | ----------- | ----------------------- | ----------------------- | ------------------ | ----------------- | ------------ | --------- | ---------- | ---------- | ------ |
+			| 41 | CAS-2026-0041 | 61          | 3                       | 7 (Bole Branch)         | 24 (Senior Cashier)| --                | 315          | completed | 2026-01-05 | 2026-06-30 | active |
+			| 42 | CAS-2026-0042 | 61          | 4                       | --                      | --                 | Claims Clerk      | 305          | active    | 2026-07-01 | --         | active |
+			| 43 | CAS-2026-0043 | 62          | 3                       | 9 (Bahir Dar Branch)    | 24 (Senior Cashier)| --                | 401          | active    | 2026-02-01 | --         | active |
+			| 44 | CAS-2026-0044 | 63          | 5                       | --                      | --                 | Site Cleaner      | 320          | active    | 2026-02-15 | --         | active |
+			| 45 | CAS-2025-0045 | 62          | 6                       | 12 (Piazza Shop)        | 24 (Senior Cashier)| --                | 320          | completed | 2025-03-01 | 2025-12-31 | active |
+
+	### PayslipCostAllocation [LINE] -- one row per share of a payslip's employer cost, split across branches / units / client assignments; no rows = 100% to the assignment entity
+		- id                      -- primary key
+		- uuid                    -- public identifier used in URLs and APIs  -- new
+		- tenant_id               -- FK Entity (tenant root) -- copied from the header via Tenancy::LINES  -- new
+		- entity_id               -- FK Entity -- copied from the header via Tenancy::LINES  -- new
+		- payslip_id              -- FK Payslip -- the cost being split
+		- target_entity_id        -- FK Entity nullable -- target branch / cost center (Entity node); plain entity_id stays the tenancy copy of the payslip's
+		- organization_unit_id    -- FK OrganizationUnit nullable -- target org unit
+		- client_assignment_id    -- FK ClientAssignment nullable -- target client + agreement (leased staff)
+		- percent                 -- numeric(7,4) nullable -- share of gross employer cost; one payslip's rows sum to 100
+		- amount                  -- numeric(15,4) nullable -- fixed-amount alternative; a payslip uses percent OR amount rows, never mixed
+		- order                   -- integer
+		- state                   -- active / inactive
+		  -- note: exactly ONE of target_entity_id / organization_unit_id / client_assignment_id is set per row.
+		> examples: (payslip 7742 = 30,000 ETB gross split across two branches and one project unit)
+			| id | payslip_id | target_entity_id     | organization_unit_id   | client_assignment_id | percent  | amount     | order | state  |
+			| -- | ---------- | -------------------- | ---------------------- | -------------------- | -------- | ---------- | ----- | ------ |
+			| 1  | 7742       | 7 (Bole Branch)      | --                     | --                   | 50.0000  | --         | 1     | active |
+			| 2  | 7742       | 9 (Bahir Dar Branch) | --                     | --                   | 33.3300  | --         | 2     | active |
+			| 3  | 7742       | --                   | 11 (Project X)         | --                   | 16.6700  | --         | 3     | active |
+			| 4  | 7755       | --                   | --                     | 41                   | 100.0000 | --         | 1     | active |
+			| 5  | 7761       | 7 (Bole Branch)      | --                     | --                   | --       | 15000.0000 | 1     | active |

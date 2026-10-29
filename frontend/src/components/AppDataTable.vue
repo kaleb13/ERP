@@ -86,6 +86,7 @@ const emit = defineEmits<{
     @resetFilter="() => emit('resetFilter')"
   >
     <template v-if="$slots.header" #header><slot name="header" /></template>
+    <template v-if="$slots['header-extra']" #header-extra><slot name="header-extra" /></template>
     <template v-if="$slots['toolbar-left']" #toolbar-left><slot name="toolbar-left" /></template>
     <template v-if="$slots['toolbar-right']" #toolbar-right><slot name="toolbar-right" /></template>
     <template v-if="$slots.actions" #actions><slot name="actions" /></template>

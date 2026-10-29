@@ -23,10 +23,26 @@ Use dynamic sub-tables for all standard list-like child data where rows share a 
 
 ### Layout & Behavior
 1. **Compact Cell Standard**: 38px cell height, padding `8px 16px`, text `#404040`, font size 13px.
-2. **Atomic Scanning Columns**: Display strictly 3 to 5 core high-frequency scanning columns inline.
-3. **Selection & Batch Actions**: Row checkboxes (`table-checkbox`) + Select-All header checkbox. When one or more rows are selected, render the bottom-anchored floating bar (`<TableFloatingBar />`) for instant batch deletion.
-4. **Expand Modal (`<Expand />`)**: Secondary attributes (effectivity dates, calculations, certificates, attachments, notes) must NOT crowd the row; they belong exclusively in the Expand Row modal.
-5. **Add Row Button**: Placed directly below the table (`.btn-add-row`).
+2. **Atomic Scanning Columns with Direct Rapid Inline Entry**: Display strictly 3 to 5 core mandatory scanning columns inline. Cells contain direct form controls (`.child-inline-select`, `.child-inline-input`) so users can type or select values directly without being forced into a modal.
+3. **The Single "Add Row" Button (Always Below Table)**:
+   - There MUST be strictly **ONE** button associated with the dynamic table, located **directly beneath the table** (`.btn-add-row`).
+   - The button label is strictly **`Add Row`** (`<Plus :size="13" /> <span>Add Row</span>`).
+   - Card headers, toolbars, and section titles MUST NEVER contain an "+ Add [Item]" button.
+   - When clicked, a new blank/default row is **immediately appended directly below** in the table for immediate typing.
+4. **Selection & Batch Actions**: Row checkboxes (`table-checkbox`) + Select-All header checkbox (`child-th-check`). When one or more rows are selected, render the bottom-anchored floating bar (`<TableFloatingBar />`) for instant batch deletion.
+5. **Expand Row Modal (`<Expand :size="14" />`)**:
+   - Secondary attributes (effectivity dates, calculations, certificates, attachments, notes, rollover rules) must NOT crowd the row; they belong exclusively in the Expand Row modal.
+   - **Distinct from QuickCreateModal**: This is an internal row inspection and fine-tuning modal (`.row-modal-overlay` ➔ `.row-modal-container`), not a creation wizard.
+   - **Modal Header**: Strictly titled `[Entity/Section Name] (Row [Index])`, e.g., `"Academic Qualification (Row 1)"`, `"Entitlement Rule (Row 1)"`.
+   - **Modal Body**: Organized cleanly in a 2-column grid (`.modal-grid-2`) with standard inputs, selects, and checkboxes with descriptions.
+   - **Canonical Row Controls Footer (`.row-modal-footer`)**:
+     - **Left**: `Delete` button (`.btn-modal-delete`).
+     - **Right (`.row-modal-actions-right`)**:
+       - `Move Down` icon button (`<ArrowDown :size="15" />`, disabled on last row).
+       - `Move Up` icon button (`<ArrowUp :size="15" />`, disabled on first row).
+       - `Duplicate Row` button (`<Copy :size="13" />`).
+       - `Insert Above` button (`<Plus :size="13" />`).
+       - `Insert Below` button (`<Plus :size="13" />`).
 
 ---
 

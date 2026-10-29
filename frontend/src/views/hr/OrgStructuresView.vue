@@ -2,11 +2,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
-  Network, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
+  Table, Network, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
   MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
   CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
   Building2, Layers, GitBranch, ArrowRight, FolderTree,
-  CornerDownRight, Users, ShieldCheck, Clock
+  CornerDownRight, Users, ShieldCheck, Clock, ZoomIn, ZoomOut,
+  RotateCcw, PanelLeftClose, PanelLeftOpen, Printer
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -20,7 +21,7 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 
 const router = useRouter();
 
-// ─── Lookups & Types (HR_Schema_final-v4.sql lines 968–990) ───
+// ─── Lookups & Types (HR_Schema_final-v4.sql lines 968–1043) ───
 export type OrgStructureState = 'draft' | 'active' | 'superseded';
 export type RowState = 'active' | 'inactive';
 
@@ -38,7 +39,6 @@ export interface OrgStructureRecord {
   effective_to?: string | null;
   superseded_by_id?: number | null;
   superseded_by_code?: string | null;
-  units_count: number;
   created_at: string;
   state: RowState;
 }
@@ -48,86 +48,39 @@ export interface StructureTreeNode {
   code: string;
   name: string;
   type: string;
-  head_name?: string;
-  head_avatar?: string;
-  head_title?: string;
+  head_name: string;
+  head_avatar: string;
+  head_title: string;
   order: number;
   path: string;
   is_visible: boolean;
   children?: StructureTreeNode[];
 }
 
-// ─── Breadcrumb Configuration (Rule: Exact Page Name from Sidebar Only, Zero Section Titles) ───
-const breadcrumbItems = computed(() => {
-  if (viewMode.value === 'tree' && selectedStructure.value) {
-    return [
-      { label: 'Org Structures', onClick: () => { viewMode.value = 'list'; } },
-      { label: selectedStructure.value.name, current: true }
-    ];
-  }
-  return [
-    { label: 'Org Structures' }
-  ];
-});
-
-// ─── State Management ───
-const viewMode = ref<'list' | 'tree'>('list');
-const selectedStructure = ref<OrgStructureRecord | null>(null);
-const searchQuery = ref('');
-const filterStatus = ref('All');
-const filterEntity = ref('All');
-const filterLifecycle = ref('All');
-const currentSort = ref('name');
-const sortOrder = ref<'asc' | 'desc'>('asc');
-const selectedRowIds = ref<number[]>([]);
-const activeActionMenuId = ref<number | null>(null);
-const showQuickCreate = ref(false);
-const showCloneModal = ref(false);
-const structureToClone = ref<OrgStructureRecord | null>(null);
-const quickActionToast = ref<string | null>(null);
-
-// ─── Table Columns Definition (Single Information & Name-First Rule) ───
-const tableColumns = ref<ColumnDef[]>([
-  { key: 'name', label: 'Name', visible: true, sortable: true },
-  { key: 'entity', label: 'Owning Entity', visible: true, sortable: true },
-  { key: 'effective_period', label: 'Effective Timeline', visible: true, sortable: true },
-  { key: 'units_count', label: 'Mapped Units', visible: true, sortable: true },
-  { key: 'status', label: 'Status', visible: true, sortable: true },
-  { key: 'state', label: 'State', visible: true, sortable: true },
-  { key: 'superseded_by', label: 'Successor Blueprint', visible: false, sortable: false },
-  { key: 'description', label: 'Scope Description', visible: false, sortable: false },
-  { key: 'actions', label: 'Actions', visible: true, sortable: false }
+// ─── Breadcrumb ───
+const breadcrumbItems = computed(() => [
+  { label: 'Organization Structures' }
 ]);
 
-const isColumnVisible = (key: string) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  return col ? col.visible !== false : true;
-};
+// ─── Top Tabs: Org Table vs Org Three View (Screenshots 1 & 2) ───
+const activeMainTab = ref<'table' | 'tree'>('table');
 
-const handleToggleColumn = (colKey: string) => {
-  const col = tableColumns.value.find(c => c.key === colKey);
-  if (col) {
-    col.visible = !col.visible;
-  }
-};
-
-// ─── Mock Database Data (Aligned Exactly with Screenshot 1) ───
+// ─── Structures Database Records (Aligned with Screenshots) ───
 const structures = ref<Array<OrgStructureRecord>>([
   {
     id: 1,
     uuid: 'org-str-001',
     code: 'CORP - 2027',
-    name: 'Corporate 2027',
-    description: 'Enterprise baseline structure covering executive management and business units.',
+    name: 'Corporate Blueprint',
+    description: 'Master organizational blueprint covering corporate governance and regional directorates.',
     tenant_id: 1,
     entity_id: 1,
-    entity_name: 'QMT Bole',
+    entity_name: 'QMT Bole Branch',
     structure_state_lookup_value_id: 'active',
     effective_from: 'May 4, 2026',
     effective_to: null,
     superseded_by_id: null,
     superseded_by_code: null,
-    units_count: 16,
     created_at: '2026-05-04',
     state: 'active'
   },
@@ -135,17 +88,16 @@ const structures = ref<Array<OrgStructureRecord>>([
     id: 2,
     uuid: 'org-str-002',
     code: 'CORP - 2027',
-    name: 'Corporate Baseline',
-    description: 'Corporate organizational blueprint for Mekanisa operations.',
+    name: 'Corporate 2027',
+    description: 'Upcoming restructuring plan for Hawassa regional integration.',
     tenant_id: 1,
     entity_id: 2,
-    entity_name: 'QMT Mekanisa',
-    structure_state_lookup_value_id: 'active',
+    entity_name: 'QMT Hawassa Branch',
+    structure_state_lookup_value_id: 'draft',
     effective_from: 'May 4, 2026',
     effective_to: null,
     superseded_by_id: null,
     superseded_by_code: null,
-    units_count: 11,
     created_at: '2026-05-04',
     state: 'active'
   },
@@ -153,31 +105,46 @@ const structures = ref<Array<OrgStructureRecord>>([
     id: 3,
     uuid: 'org-str-003',
     code: 'CORP - 2027',
-    name: 'Corporate Blueprint',
-    description: 'Prior organizational model for Koye entity.',
+    name: 'Corporate Baseline',
+    description: 'Prior operational hierarchy baseline across New York overseas branch.',
     tenant_id: 1,
     entity_id: 3,
-    entity_name: 'QMT koye',
+    entity_name: 'QMT Newyork Branch',
     structure_state_lookup_value_id: 'superseded',
     effective_from: 'May 4, 2026',
     effective_to: 'May 4, 2026',
     superseded_by_id: 1,
     superseded_by_code: 'CORP-2027',
-    units_count: 8,
     created_at: '2026-05-04',
     state: 'inactive'
   }
 ]);
 
-// ─── Mock Hierarchy Trees per Structure ───
+// ─── Active Selected Structure for Org Three View ───
+const selectedStructureId = ref<number>(1);
+const selectedStructure = computed(() => {
+  return structures.value.find(s => s.id === selectedStructureId.value) || structures.value[0];
+});
+
+// ─── Available Staff Pool ───
+const availableEmployees = [
+  { id: 1, name: 'Almaz Ayana', code: 'EMP-00124', title: 'Chief Executive Officer', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80' },
+  { id: 2, name: 'Dawit Tadesse', code: 'EMP-00185', title: 'Director of Operations', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
+  { id: 3, name: 'Rahel Girma', code: 'EMP-00088', title: 'Chief Financial Officer', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+  { id: 4, name: 'Fitsum Assefa', code: 'EMP-00101', title: 'Managing Director', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
+  { id: 5, name: 'Solomon Mengistu', code: 'EMP-00142', title: 'HR Director', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80' },
+  { id: 6, name: 'Samuel Bekele', code: 'EMP-00198', title: 'Logistics Manager', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80' }
+];
+
+// ─── Hierarchy Trees per Structure (Aligned Exactly with Screenshot 2) ───
 const hierarchyTrees = ref<Record<number, StructureTreeNode>>({
   1: {
     id: 101,
-    code: 'OU-EXEC',
-    name: 'Executive Board & CEO Office',
-    type: 'Board / Office',
-    head_name: 'Fitsum Assefa',
-    head_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    code: 'OU - EAST',
+    name: 'East Region Operations',
+    type: 'Department',
+    head_name: 'Almaz Ayana',
+    head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
     head_title: 'Chief Executive Officer',
     order: 1,
     path: '101',
@@ -185,122 +152,164 @@ const hierarchyTrees = ref<Record<number, StructureTreeNode>>({
     children: [
       {
         id: 102,
-        code: 'OU-OPS',
-        name: 'Operations & Supply Chain Division',
-        type: 'Division',
-        head_name: 'Dawit Tadesse',
-        head_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-        head_title: 'Director of Operations',
+        code: 'OU - EAST',
+        name: 'East Region Operations',
+        type: 'Department',
+        head_name: 'Almaz Ayana',
+        head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        head_title: 'Chief Executive Officer',
         order: 1,
         path: '101/102',
         is_visible: true,
         children: [
           {
             id: 105,
-            code: 'OU-LOG',
-            name: 'Logistics & Warehousing',
+            code: 'OU - EAST',
+            name: 'East Region Operations',
             type: 'Department',
-            head_name: 'Samuel Bekele',
-            head_avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
-            head_title: 'Logistics Manager',
+            head_name: 'Almaz Ayana',
+            head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+            head_title: 'Chief Executive Officer',
             order: 1,
             path: '101/102/105',
-            is_visible: true
-          },
-          {
-            id: 106,
-            code: 'OU-PROC',
-            name: 'Procurement & Vendor Management',
-            type: 'Department',
-            head_name: 'Bethlehem Hailu',
-            head_avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=100&auto=format&fit=crop&q=80',
-            head_title: 'Procurement Lead',
-            order: 2,
-            path: '101/102/106',
             is_visible: true
           }
         ]
       },
       {
         id: 103,
-        code: 'OU-FIN',
-        name: 'Finance & Corporate Services Division',
-        type: 'Division',
-        head_name: 'Rahel Girma',
+        code: 'OU - EAST',
+        name: 'East Region Operations',
+        type: 'Department',
+        head_name: 'Almaz Ayana',
         head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-        head_title: 'Chief Financial Officer',
+        head_title: 'Chief Executive Officer',
         order: 2,
         path: '101/103',
         is_visible: true,
         children: [
           {
-            id: 107,
-            code: 'OU-ACC',
-            name: 'General Accounting & Audit',
+            id: 106,
+            code: 'OU - EAST',
+            name: 'East Region Operations',
             type: 'Department',
             head_name: 'Almaz Ayana',
             head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-            head_title: 'Senior Accountant',
+            head_title: 'Chief Executive Officer',
             order: 1,
-            path: '101/103/107',
-            is_visible: true
-          },
-          {
-            id: 108,
-            code: 'OU-PAY',
-            name: 'Payroll & Statutory Benefits',
-            type: 'Section',
-            head_name: 'Tigist Alemu',
-            head_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-            head_title: 'Payroll Officer',
-            order: 2,
-            path: '101/103/108',
-            is_visible: true
-          }
-        ]
-      },
-      {
-        id: 104,
-        code: 'OU-HR',
-        name: 'People, Culture & Talent Division',
-        type: 'Division',
-        head_name: 'Solomon Mengistu',
-        head_avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-        head_title: 'Human Resources Director',
-        order: 3,
-        path: '101/104',
-        is_visible: true,
-        children: [
-          {
-            id: 109,
-            code: 'OU-REC',
-            name: 'Talent Acquisition & Onboarding',
-            type: 'Section',
-            head_name: 'Hanna Worku',
-            head_avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
-            head_title: 'Recruitment Specialist',
-            order: 1,
-            path: '101/104/109',
-            is_visible: true
+            path: '101/103/106',
+            is_visible: true,
+            children: [
+              {
+                id: 107,
+                code: 'OU - EAST',
+                name: 'East Region Operations',
+                type: 'Department',
+                head_name: 'Almaz Ayana',
+                head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+                head_title: 'Chief Executive Officer',
+                order: 1,
+                path: '101/103/106/107',
+                is_visible: true
+              }
+            ]
           }
         ]
       }
     ]
+  },
+  2: {
+    id: 201,
+    code: 'OU - HAW',
+    name: 'Hawassa Regional Office',
+    type: 'Division',
+    head_name: 'Dawit Tadesse',
+    head_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    head_title: 'Regional Operations Director',
+    order: 1,
+    path: '201',
+    is_visible: true,
+    children: []
+  },
+  3: {
+    id: 301,
+    code: 'OU - NY',
+    name: 'New York Branch Office',
+    type: 'Branch',
+    head_name: 'Rahel Girma',
+    head_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    head_title: 'Branch Director',
+    order: 1,
+    path: '301',
+    is_visible: true,
+    children: []
   }
 });
 
-// ─── Filtering & Sorting ───
-const activeFilterCount = computed(() => {
-  let count = 0;
-  if (filterStatus.value !== 'All') count++;
-  if (filterEntity.value !== 'All') count++;
-  if (filterLifecycle.value !== 'All') count++;
+// ─── Tree Recursive Helpers ───
+const countTreeNodes = (node?: StructureTreeNode): number => {
+  if (!node) return 0;
+  let count = 1;
+  if (node.children) {
+    for (const child of node.children) {
+      count += countTreeNodes(child);
+    }
+  }
   return count;
+};
+
+const activeUnitsMappedCount = computed(() => {
+  const tree = hierarchyTrees.value[selectedStructureId.value];
+  return countTreeNodes(tree);
 });
 
-const filteredStructures = computed(() => {
+const findNode = (current: StructureTreeNode, targetId: number): StructureTreeNode | null => {
+  if (current.id === targetId) return current;
+  if (current.children) {
+    for (const child of current.children) {
+      const res = findNode(child, targetId);
+      if (res) return res;
+    }
+  }
+  return null;
+};
+
+const deleteNode = (current: StructureTreeNode, targetId: number): boolean => {
+  if (!current.children) return false;
+  const idx = current.children.findIndex(c => c.id === targetId);
+  if (idx > -1) {
+    current.children.splice(idx, 1);
+    return true;
+  }
+  for (const child of current.children) {
+    if (deleteNode(child, targetId)) return true;
+  }
+  return false;
+};
+
+// ─── Search & Filters for Tree Left Card & Table ───
+const searchQuery = ref('');
+const treeSearchQuery = ref('');
+const filterStatus = ref('All');
+const filterEntity = ref('All');
+const filterLifecycle = ref('All');
+const currentSort = ref('name');
+const sortOrder = ref<'asc' | 'desc'>('asc');
+const selectedRowIds = ref<number[]>([]);
+const quickActionToast = ref<string | null>(null);
+
+const filteredTreeStructures = computed(() => {
+  if (!treeSearchQuery.value.trim()) return structures.value;
+  const q = treeSearchQuery.value.toLowerCase();
+  return structures.value.filter(s => 
+    s.name.toLowerCase().includes(q) || 
+    s.entity_name.toLowerCase().includes(q) ||
+    s.code.toLowerCase().includes(q)
+  );
+});
+
+const filteredTableStructures = computed(() => {
   return structures.value.filter(s => {
-    // Search query
     if (searchQuery.value.trim()) {
       const q = searchQuery.value.toLowerCase();
       const matchesCode = s.code.toLowerCase().includes(q);
@@ -308,21 +317,12 @@ const filteredStructures = computed(() => {
       const matchesEntity = s.entity_name.toLowerCase().includes(q);
       if (!matchesCode && !matchesName && !matchesEntity) return false;
     }
-    // Filter Status
     if (filterStatus.value !== 'All') {
       const target = filterStatus.value === 'Published' ? 'active' : filterStatus.value.toLowerCase();
-      if (s.structure_state_lookup_value_id !== target) {
-        return false;
-      }
+      if (s.structure_state_lookup_value_id !== target) return false;
     }
-    // Filter Entity
-    if (filterEntity.value !== 'All' && s.entity_name !== filterEntity.value) {
-      return false;
-    }
-    // Filter Lifecycle
-    if (filterLifecycle.value !== 'All' && s.state !== filterLifecycle.value.toLowerCase()) {
-      return false;
-    }
+    if (filterEntity.value !== 'All' && s.entity_name !== filterEntity.value) return false;
+    if (filterLifecycle.value !== 'All' && s.state !== filterLifecycle.value.toLowerCase()) return false;
     return true;
   }).sort((a, b) => {
     let valA: any = a[currentSort.value as keyof OrgStructureRecord] ?? '';
@@ -336,190 +336,478 @@ const filteredStructures = computed(() => {
   });
 });
 
-// ─── Selection Management ───
+// ─── Table Columns (Strict Rule 9 & Rule 14 Compliant) ───
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'name', label: 'Name', visible: true, sortable: true },
+  { key: 'entity', label: 'Owning Entity', visible: true, sortable: true },
+  { key: 'effective_from', label: 'Effective From', visible: true, sortable: true },
+  { key: 'effective_to', label: 'Effective Until', visible: true, sortable: true },
+  { key: 'status', label: 'Status', visible: true, sortable: true },
+  { key: 'state', label: 'State', visible: true, sortable: true },
+  { key: 'actions', label: 'Actions', visible: true, sortable: false }
+]);
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
+};
+
+const handleToggleColumn = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  if (col) col.visible = !col.visible;
+};
+
+// ─── Selection for Table ───
 const isAllSelected = computed(() => {
-  return filteredStructures.value.length > 0 && 
-    filteredStructures.value.every(s => selectedRowIds.value.includes(s.id));
+  return filteredTableStructures.value.length > 0 && 
+    filteredTableStructures.value.every(s => selectedRowIds.value.includes(s.id));
 });
 
 const toggleSelectAll = () => {
   if (isAllSelected.value) {
     selectedRowIds.value = [];
   } else {
-    selectedRowIds.value = filteredStructures.value.map(s => s.id);
+    selectedRowIds.value = filteredTableStructures.value.map(s => s.id);
   }
 };
 
 const toggleRowSelection = (id: number) => {
   const index = selectedRowIds.value.indexOf(id);
-  if (index > -1) {
-    selectedRowIds.value.splice(index, 1);
+  if (index > -1) selectedRowIds.value.splice(index, 1);
+  else selectedRowIds.value.push(id);
+};
+
+const handleBatchDelete = () => {
+  structures.value = structures.value.filter(s => !selectedRowIds.value.includes(s.id));
+  selectedRowIds.value = [];
+  showToast('Selected blueprints removed.');
+};
+
+// ─── 3-Dot Menus State Management (Screenshots 3 & 4) ───
+const activeStructureMenuId = ref<number | null>(null);
+const activeNodeMenuId = ref<number | null>(null);
+const activeTableMenuId = ref<number | null>(null);
+
+const toggleStructureMenu = (id: number, e: MouseEvent) => {
+  e.stopPropagation();
+  closeAllMenus();
+  activeStructureMenuId.value = id;
+};
+
+const toggleNodeMenu = (id: number, e: MouseEvent) => {
+  e.stopPropagation();
+  closeAllMenus();
+  activeNodeMenuId.value = id;
+};
+
+const toggleTableMenu = (id: number, e: MouseEvent) => {
+  e.stopPropagation();
+  closeAllMenus();
+  activeTableMenuId.value = id;
+};
+
+const closeAllMenus = () => {
+  activeStructureMenuId.value = null;
+  activeNodeMenuId.value = null;
+  activeTableMenuId.value = null;
+};
+
+// ─── Structure Modal (Create & Edit) ───
+const showStructureModal = ref(false);
+const isEditingStructure = ref(false);
+const structureForm = ref({
+  id: 0,
+  name: '',
+  entity_id: '1',
+  effective_from: new Date().toISOString().split('T')[0],
+  effective_to: '',
+  structure_state: 'active' as OrgStructureState
+});
+
+const handleOpenCreateStructure = () => {
+  closeAllMenus();
+  isEditingStructure.value = false;
+  structureForm.value = {
+    id: 0,
+    name: '',
+    entity_id: '1',
+    effective_from: new Date().toISOString().split('T')[0],
+    effective_to: '',
+    structure_state: 'active'
+  };
+  showStructureModal.value = true;
+};
+
+const handleEditStructure = (item: OrgStructureRecord) => {
+  closeAllMenus();
+  isEditingStructure.value = true;
+  structureForm.value = {
+    id: item.id,
+    name: item.name,
+    entity_id: String(item.entity_id),
+    effective_from: item.effective_from,
+    effective_to: item.effective_to || '',
+    structure_state: item.structure_state_lookup_value_id
+  };
+  showStructureModal.value = true;
+};
+
+const handleSaveStructure = () => {
+  if (!structureForm.value.name.trim()) return;
+
+  const entityNameLookup: Record<string, string> = {
+    '1': 'QMT Bole Branch',
+    '2': 'QMT Hawassa Branch',
+    '3': 'QMT Newyork Branch',
+    '4': 'Haleta Addis Ababa HQ'
+  };
+
+  if (isEditingStructure.value) {
+    const target = structures.value.find(s => s.id === structureForm.value.id);
+    if (target) {
+      target.name = structureForm.value.name.trim();
+      target.entity_id = Number(structureForm.value.entity_id);
+      target.entity_name = entityNameLookup[structureForm.value.entity_id] || target.entity_name;
+      target.effective_from = structureForm.value.effective_from;
+      target.effective_to = structureForm.value.effective_to || null;
+      target.structure_state_lookup_value_id = structureForm.value.structure_state;
+      showToast(`Structure "${target.name}" updated successfully.`);
+    }
   } else {
-    selectedRowIds.value.push(id);
+    const cleanName = structureForm.value.name.trim().toUpperCase();
+    const prefix = cleanName.replace(/[^A-Z]/g, '').slice(0, 4) || 'CORP';
+    const autoCode = `${prefix} - 2027`;
+    const newId = Date.now();
+
+    const newRecord: OrgStructureRecord = {
+      id: newId,
+      uuid: `org-str-${Date.now().toString().slice(-4)}`,
+      code: autoCode,
+      name: structureForm.value.name.trim(),
+      tenant_id: 1,
+      entity_id: Number(structureForm.value.entity_id),
+      entity_name: entityNameLookup[structureForm.value.entity_id] || 'QMT Bole Branch',
+      structure_state_lookup_value_id: structureForm.value.structure_state,
+      effective_from: structureForm.value.effective_from,
+      effective_to: structureForm.value.effective_to || null,
+      created_at: new Date().toISOString().split('T')[0],
+      state: 'active'
+    };
+
+    structures.value.unshift(newRecord);
+    selectedStructureId.value = newId;
+
+    // Seed default root node
+    hierarchyTrees.value[newId] = {
+      id: Date.now() + 10,
+      code: `OU - ROOT`,
+      name: `${newRecord.name} Executive Office`,
+      type: 'Department',
+      head_name: 'Almaz Ayana',
+      head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      head_title: 'Chief Executive Officer',
+      order: 1,
+      path: '1',
+      is_visible: true,
+      children: []
+    };
+
+    showToast(`Blueprint "${newRecord.name}" created successfully.`);
+  }
+
+  showStructureModal.value = false;
+};
+
+const handleDeleteStructure = (id: number) => {
+  closeAllMenus();
+  structures.value = structures.value.filter(s => s.id !== id);
+  if (selectedStructureId.value === id && structures.value.length > 0) {
+    selectedStructureId.value = structures.value[0].id;
+  }
+  showToast('Structure removed from blueprint registry.');
+};
+
+// ─── Focus Mode & Active Tree Node Selection ───
+const isSidebarCollapsed = ref(false);
+const selectedNodeId = ref<number | null>(null);
+
+const toggleSelectNode = (nodeId: number) => {
+  if (selectedNodeId.value === nodeId) {
+    selectedNodeId.value = null;
+  } else {
+    selectedNodeId.value = nodeId;
   }
 };
 
-// ─── Actions & Modals ───
-const toggleActionMenu = (id: number, e: MouseEvent) => {
-  e.stopPropagation();
-  activeActionMenuId.value = activeActionMenuId.value === id ? null : id;
-};
-
-const closeActionMenu = () => {
-  activeActionMenuId.value = null;
-};
-
-const viewStructureTree = (item: OrgStructureRecord) => {
-  closeActionMenu();
-  selectedStructure.value = item;
-  viewMode.value = 'tree';
-};
-
-const handleBackToList = () => {
-  viewMode.value = 'list';
-  selectedStructure.value = null;
-};
-
-// Quick Create Form State (Org Structure - Schema Lines 968-990)
-const entityNameMap: Record<string, string> = {
-  '1': 'QMT Bole',
-  '2': 'QMT Mekanisa',
-  '3': 'QMT koye',
-  '4': 'Haleta Addis Ababa HQ'
-};
-
-const quickForm = ref({
+// ─── Copy Structure Logic (Image 3) ───
+const showCopyModal = ref(false);
+const sourceStructureToCopy = ref<OrgStructureRecord | null>(null);
+const copyForm = ref({
   name: '',
-  entity_id: '4',
+  entity_id: '1',
   effective_from: new Date().toISOString().split('T')[0],
-  effective_to: '',
-  structure_state: 'active' as OrgStructureState,
-  description: ''
+  clone_hierarchy: true,
+  structure_state: 'draft' as OrgStructureState
 });
 
-const handleExpandToFullForm = () => {
-  showQuickCreate.value = false;
-  router.push({
-    path: '/hr/org-structures/create',
-    query: {
-      name: quickForm.value.name,
-      entity_id: quickForm.value.entity_id,
-      effective_from: quickForm.value.effective_from,
-      effective_to: quickForm.value.effective_to,
-      description: quickForm.value.description
-    }
-  });
+const handleOpenCopyStructure = (item: OrgStructureRecord) => {
+  closeAllMenus();
+  sourceStructureToCopy.value = item;
+  copyForm.value = {
+    name: `${item.name} - Copy`,
+    entity_id: String(item.entity_id),
+    effective_from: new Date().toISOString().split('T')[0],
+    clone_hierarchy: true,
+    structure_state: 'draft'
+  };
+  showCopyModal.value = true;
 };
 
-const handleSaveQuickStructure = () => {
-  if (!quickForm.value.name.trim()) return;
+// Recursive clone helper for tree nodes
+const cloneTreeNode = (node: StructureTreeNode, parentPath: string = ''): StructureTreeNode => {
+  const newId = Date.now() + Math.floor(Math.random() * 10000);
+  const currentPath = parentPath ? `${parentPath}/${newId}` : `${newId}`;
+  return {
+    ...node,
+    id: newId,
+    path: currentPath,
+    children: node.children ? node.children.map(child => cloneTreeNode(child, currentPath)) : []
+  };
+};
 
-  const cleanName = quickForm.value.name.trim().toUpperCase();
-  const yearMatch = cleanName.match(/\b(20\d{2})\b/);
-  const year = yearMatch ? yearMatch[1] : new Date().getFullYear();
+const handleSaveCopyStructure = () => {
+  if (!sourceStructureToCopy.value || !copyForm.value.name.trim()) return;
+
+  const entityNameLookup: Record<string, string> = {
+    '1': 'QMT Bole Branch',
+    '2': 'QMT Hawassa Branch',
+    '3': 'QMT Newyork Branch',
+    '4': 'Haleta Addis Ababa HQ'
+  };
+
+  const newId = Date.now();
+  const cleanName = copyForm.value.name.trim().toUpperCase();
   const prefix = cleanName.replace(/[^A-Z]/g, '').slice(0, 4) || 'CORP';
-  const autoCode = `${prefix} - ${year}`;
-
-  const entId = Number(quickForm.value.entity_id) || 4;
-  const entName = entityNameMap[quickForm.value.entity_id] || 'Haleta Addis Ababa HQ';
+  const autoCode = `${prefix} - 2027`;
 
   const newRecord: OrgStructureRecord = {
-    id: Date.now(),
+    id: newId,
     uuid: `org-str-${Date.now().toString().slice(-4)}`,
     code: autoCode,
-    name: quickForm.value.name.trim(),
-    description: quickForm.value.description.trim() || undefined,
-    tenant_id: 1,
-    entity_id: entId,
-    entity_name: entName,
-    structure_state_lookup_value_id: quickForm.value.structure_state,
-    effective_from: quickForm.value.effective_from || new Date().toISOString().split('T')[0],
-    effective_to: quickForm.value.effective_to ? quickForm.value.effective_to : null,
-    superseded_by_id: null,
-    superseded_by_code: null,
-    units_count: 0,
-    created_at: new Date().toISOString().split('T')[0],
-    state: quickForm.value.structure_state === 'active' ? 'active' : 'inactive'
-  };
-
-  structures.value.unshift(newRecord);
-  showQuickCreate.value = false;
-
-  // Reset form
-  quickForm.value = {
-    name: '',
-    entity_id: '4',
-    effective_from: new Date().toISOString().split('T')[0],
-    effective_to: '',
-    structure_state: 'active' as OrgStructureState,
-    description: ''
-  };
-
-  showToast(`Organization Structure "${newRecord.name}" created successfully.`);
-};
-
-// Clone / Restructure Workflow
-const handleOpenCloneModal = (item: OrgStructureRecord) => {
-  closeActionMenu();
-  structureToClone.value = item;
-  showCloneModal.value = true;
-};
-
-const handleConfirmClone = () => {
-  if (!structureToClone.value) return;
-
-  const source = structureToClone.value;
-  const successorCode = source.code.replace(/(\d{4})/, (year) => String(Number(year) + 1));
-
-  const cloneRecord: OrgStructureRecord = {
-    id: Date.now(),
-    uuid: `org-str-${Date.now().toString().slice(-4)}`,
-    code: successorCode !== source.code ? successorCode : `${source.code}-DRAFT`,
-    name: `${source.name} (Restructure Plan)`,
-    description: `Successor restructure drafted from ${source.code}. Preserves full parent-child hierarchy baseline for revision.`,
-    tenant_id: source.tenant_id,
-    entity_id: source.entity_id,
-    entity_name: source.entity_name,
+    name: copyForm.value.name.trim(),
+    tenant_id: sourceStructureToCopy.value.tenant_id,
+    entity_id: Number(copyForm.value.entity_id),
+    entity_name: entityNameLookup[copyForm.value.entity_id] || sourceStructureToCopy.value.entity_name,
     structure_state_lookup_value_id: 'draft',
-    effective_from: '2027-01-01',
+    effective_from: copyForm.value.effective_from,
     effective_to: null,
-    superseded_by_id: null,
-    superseded_by_code: null,
-    units_count: source.units_count,
     created_at: new Date().toISOString().split('T')[0],
     state: 'active'
   };
 
-  // Populate mock tree if source exists
-  if (hierarchyTrees.value[source.id]) {
-    hierarchyTrees.value[cloneRecord.id] = JSON.parse(JSON.stringify(hierarchyTrees.value[source.id]));
+  structures.value.unshift(newRecord);
+  selectedStructureId.value = newId;
+
+  if (copyForm.value.clone_hierarchy && hierarchyTrees.value[sourceStructureToCopy.value.id]) {
+    hierarchyTrees.value[newId] = cloneTreeNode(hierarchyTrees.value[sourceStructureToCopy.value.id]);
+  } else {
+    hierarchyTrees.value[newId] = {
+      id: Date.now() + 10,
+      code: `OU - ROOT`,
+      name: `${newRecord.name} Executive Office`,
+      type: 'Department',
+      head_name: 'Almaz Ayana',
+      head_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      head_title: 'Chief Executive Officer',
+      order: 1,
+      path: '1',
+      is_visible: true,
+      children: []
+    };
   }
 
-  structures.value.unshift(cloneRecord);
-  showCloneModal.value = false;
-  showToast(`Created restructure blueprint draft ${cloneRecord.code} based on ${source.code}.`);
+  showCopyModal.value = false;
+  activeMainTab.value = 'tree';
+  showToast(`Blueprint "${newRecord.name}" cloned with full hierarchy in Draft state.`);
 };
 
-// Set as Active
-const handleSetActive = (item: OrgStructureRecord) => {
-  closeActionMenu();
-  // Find current active for this entity
-  const currentActive = structures.value.find(s => 
-    s.entity_id === item.entity_id && 
-    s.structure_state_lookup_value_id === 'active' && 
-    s.id !== item.id
-  );
-
-  if (currentActive) {
-    currentActive.structure_state_lookup_value_id = 'superseded';
-    currentActive.effective_to = new Date().toISOString().split('T')[0];
-    currentActive.superseded_by_id = item.id;
-    currentActive.superseded_by_code = item.code;
-  }
-
+// ─── Publish Blueprint Action ───
+const handlePublishStructure = (item: OrgStructureRecord) => {
+  closeAllMenus();
   item.structure_state_lookup_value_id = 'active';
-  showToast(`${item.code} is now the Active Organization Blueprint for ${item.entity_name}.`);
+  showToast(`Blueprint "${item.name}" has been published and set to Active.`);
 };
+
+// ─── Print / Export Diagram ───
+const handlePrintDiagram = () => {
+  window.print();
+};
+
+// ─── Dynamic Unit Hierarchy Parent Options ───
+const flatUnitOptions = computed(() => {
+  const tree = hierarchyTrees.value[selectedStructureId.value];
+  if (!tree) return [{ label: '- (Root)', value: '' }];
+  const list: { label: string; value: string }[] = [{ label: '- (Root)', value: '' }];
+  const collect = (node: StructureTreeNode, level = 0) => {
+    const indent = level > 0 ? '— '.repeat(level) : '';
+    list.push({ label: `${indent}${node.name} (${node.type})`, value: String(node.id) });
+    if (node.children) {
+      for (const child of node.children) {
+        collect(child, level + 1);
+      }
+    }
+  };
+  collect(tree);
+  return list;
+});
+
+// ─── Unit Modal (Create & Edit) ───
+const showUnitModal = ref(false);
+const isEditingNode = ref(false);
+const targetNodeParent = ref<StructureTreeNode | null>(null);
+const editingNodeRef = ref<StructureTreeNode | null>(null);
+
+const unitForm = ref({
+  name: '',
+  type: 'Department',
+  head_employee_id: '1',
+  parent_id: '',
+  order: 1,
+  is_visible: true
+});
+
+const handleOpenCreateUnitsGlobal = () => {
+  closeAllMenus();
+  isEditingNode.value = false;
+  targetNodeParent.value = null;
+  editingNodeRef.value = null;
+
+  unitForm.value = {
+    name: 'East Region Operations',
+    type: 'Department',
+    head_employee_id: '1',
+    parent_id: selectedNodeId.value ? String(selectedNodeId.value) : '',
+    order: 1,
+    is_visible: true
+  };
+  showUnitModal.value = true;
+};
+
+const handleOpenAddUnitForStructure = (item: OrgStructureRecord) => {
+  closeAllMenus();
+  selectedStructureId.value = item.id;
+  activeMainTab.value = 'tree';
+  handleOpenCreateUnitsGlobal();
+};
+
+const handleAddDivisionToNode = (node: StructureTreeNode) => {
+  closeAllMenus();
+  isEditingNode.value = false;
+  targetNodeParent.value = node;
+  editingNodeRef.value = null;
+
+  unitForm.value = {
+    name: 'East Region Operations',
+    type: 'Department',
+    head_employee_id: '1',
+    parent_id: String(node.id),
+    order: (node.children?.length ?? 0) + 1,
+    is_visible: true
+  };
+  showUnitModal.value = true;
+};
+
+const handleEditNode = (node: StructureTreeNode) => {
+  closeAllMenus();
+  isEditingNode.value = true;
+  editingNodeRef.value = node;
+  targetNodeParent.value = null;
+
+  const emp = availableEmployees.find(e => e.name === node.head_name);
+  unitForm.value = {
+    name: node.name,
+    type: node.type,
+    head_employee_id: emp ? String(emp.id) : '1',
+    parent_id: '',
+    order: node.order,
+    is_visible: node.is_visible
+  };
+  showUnitModal.value = true;
+};
+
+const handleSaveUnit = () => {
+  if (!unitForm.value.name.trim()) return;
+  const tree = hierarchyTrees.value[selectedStructureId.value];
+  const emp = availableEmployees.find(e => String(e.id) === unitForm.value.head_employee_id) || availableEmployees[0];
+
+  if (isEditingNode.value && editingNodeRef.value) {
+    editingNodeRef.value.name = unitForm.value.name.trim();
+    editingNodeRef.value.type = unitForm.value.type;
+    editingNodeRef.value.head_name = emp.name;
+    editingNodeRef.value.head_avatar = emp.avatar;
+    editingNodeRef.value.head_title = emp.title;
+    editingNodeRef.value.order = unitForm.value.order;
+    editingNodeRef.value.is_visible = unitForm.value.is_visible;
+    showToast(`Unit "${editingNodeRef.value.name}" updated successfully.`);
+  } else {
+    const newUnitId = Date.now();
+    const newNode: StructureTreeNode = {
+      id: newUnitId,
+      code: 'OU - EAST',
+      name: unitForm.value.name.trim(),
+      type: unitForm.value.type,
+      head_name: emp.name,
+      head_avatar: emp.avatar,
+      head_title: emp.title,
+      order: unitForm.value.order,
+      path: '',
+      is_visible: unitForm.value.is_visible,
+      children: []
+    };
+
+    if (!tree) {
+      hierarchyTrees.value[selectedStructureId.value] = newNode;
+    } else if (targetNodeParent.value) {
+      if (!targetNodeParent.value.children) targetNodeParent.value.children = [];
+      targetNodeParent.value.children.push(newNode);
+    } else if (unitForm.value.parent_id) {
+      const parent = findNode(tree, Number(unitForm.value.parent_id));
+      if (parent) {
+        if (!parent.children) parent.children = [];
+        parent.children.push(newNode);
+      } else {
+        if (!tree.children) tree.children = [];
+        tree.children.push(newNode);
+      }
+    } else {
+      if (!tree.children) tree.children = [];
+      tree.children.push(newNode);
+    }
+    showToast(`Unit "${newNode.name}" added to ${selectedStructure.value.name}.`);
+  }
+
+  showUnitModal.value = false;
+};
+
+const handleDeleteNode = (nodeId: number) => {
+  closeAllMenus();
+  const tree = hierarchyTrees.value[selectedStructureId.value];
+  if (!tree) return;
+  if (tree.id === nodeId) {
+    showToast('Root executive unit cannot be deleted directly.');
+    return;
+  }
+  const deleted = deleteNode(tree, nodeId);
+  if (deleted) {
+    showToast('Unit removed from hierarchy tree.');
+  }
+};
+
+// ─── Canvas Zoom Controls ───
+const zoomLevel = ref(0.8);
+const handleZoomIn = () => { if (zoomLevel.value < 1.4) zoomLevel.value = +(zoomLevel.value + 0.1).toFixed(1); };
+const handleZoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value = +(zoomLevel.value - 0.1).toFixed(1); };
+const handleResetZoom = () => { zoomLevel.value = 0.8; };
 
 const showToast = (msg: string) => {
   quickActionToast.value = msg;
@@ -528,19 +816,12 @@ const showToast = (msg: string) => {
   }, 4000);
 };
 
-// Floating bar actions
-const handleBatchDelete = () => {
-  structures.value = structures.value.filter(s => !selectedRowIds.value.includes(s.id));
-  selectedRowIds.value = [];
-  showToast('Selected organization blueprints removed.');
-};
-
 onMounted(() => {
-  window.addEventListener('click', closeActionMenu);
+  window.addEventListener('click', closeAllMenus);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('click', closeActionMenu);
+  window.removeEventListener('click', closeAllMenus);
 });
 </script>
 
@@ -557,16 +838,63 @@ onUnmounted(() => {
       <span>{{ quickActionToast }}</span>
     </div>
 
-    <!-- VIEW 1: STRUCTURE DIRECTORY TABLE -->
-    <div v-if="viewMode === 'list'" class="directory-view-wrapper">
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MASTER PAGE HEADER & TOP TABS (Screenshots 1 & 2)         -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="master-header-card">
+      <div class="header-text-block">
+        <h1 class="header-main-title">Organization Structures</h1>
+        <p class="header-subtitle">
+          Manage macro organizational blueprints, effective-dated versions, restructuring plans, and structural hierarchy baselines across enterprise entities.
+        </p>
+      </div>
+
+      <div class="header-controls-row">
+        <!-- Capsule Tab Bar (Org Table vs Org Three View) -->
+        <div class="capsule-tabs-container">
+          <button 
+            type="button" 
+            class="capsule-tab-pill" 
+            :class="{ 'active': activeMainTab === 'table' }"
+            @click="activeMainTab = 'table'"
+          >
+            <Table :size="14" />
+            <span>Org Table</span>
+          </button>
+          <button 
+            type="button" 
+            class="capsule-tab-pill" 
+            :class="{ 'active': activeMainTab === 'tree' }"
+            @click="activeMainTab = 'tree'"
+          >
+            <Network :size="14" />
+            <span>Org Three View</span>
+          </button>
+        </div>
+
+        <!-- Primary Top Action Button: + Create Structure -->
+        <button 
+          type="button" 
+          class="btn-primary-create-struct" 
+          @click="handleOpenCreateStructure"
+        >
+          <Plus :size="15" />
+          <span>Create Structure</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- VIEW 1: ORG TABLE TAB (Screenshot 1)                       -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div v-if="activeMainTab === 'table'" class="table-view-section">
       <AppDataTable
-        title="Organization Structures"
-        subtitle="Manage macro organizational blueprints, effective-dated versions, restructuring plans, and structural hierarchy baselines across enterprise entities."
+        title=""
         v-model:searchQuery="searchQuery"
         searchPlaceholder="Search Name..."
         :showSearch="true"
         :showFilter="true"
-        :filterCount="activeFilterCount"
+        :filterCount="0"
         :showSort="true"
         v-model:currentSort="currentSort"
         v-model:sortOrder="sortOrder"
@@ -574,17 +902,6 @@ onUnmounted(() => {
         :columns="tableColumns"
         @toggleColumn="handleToggleColumn"
       >
-        <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="showQuickCreate = true"
-          >
-            <Plus :size="15" />
-            <span>Create Structure</span>
-          </button>
-        </template>
-
         <template #filter-panel>
           <div class="filter-grid">
             <FormSelect
@@ -595,7 +912,7 @@ onUnmounted(() => {
             <FormSelect
               label="Owning Entity"
               v-model="filterEntity"
-              :options="['All', 'Haleta Addis Ababa HQ', 'Haleta Grand Hotel & Suites']"
+              :options="['All', 'QMT Bole Branch', 'QMT Hawassa Branch', 'QMT Newyork Branch']"
             />
             <FormSelect
               label="State"
@@ -627,9 +944,19 @@ onUnmounted(() => {
 
               <th v-if="isColumnVisible('entity')" class="col-entity">Owning Entity</th>
 
-              <th v-if="isColumnVisible('effective_period')" class="col-period">Effective Timeline</th>
+              <th v-if="isColumnVisible('effective_from')" class="col-period sortable" @click="currentSort = 'effective_from'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Effective From</span>
+                  <ArrowUpDown v-if="currentSort === 'effective_from'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
 
-              <th v-if="isColumnVisible('units_count')" class="col-units">Mapped Units</th>
+              <th v-if="isColumnVisible('effective_to')" class="col-period sortable" @click="currentSort = 'effective_to'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Effective Until</span>
+                  <ArrowUpDown v-if="currentSort === 'effective_to'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
 
               <th v-if="isColumnVisible('status')" class="col-status sortable" @click="currentSort = 'status'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
                 <div class="th-content">
@@ -645,20 +972,16 @@ onUnmounted(() => {
                 </div>
               </th>
 
-              <th v-if="isColumnVisible('superseded_by')" class="col-successor">Successor Blueprint</th>
-
-              <th v-if="isColumnVisible('description')" class="col-desc">Scope Description</th>
-
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr 
-              v-for="item in filteredStructures" 
+              v-for="item in filteredTableStructures" 
               :key="item.id"
               class="erp-row cursor-pointer"
               :class="{ 'row-selected': selectedRowIds.includes(item.id) }"
-              @click="viewStructureTree(item)"
+              @click="selectedStructureId = item.id; activeMainTab = 'tree'"
             >
               <td class="col-checkbox" @click.stop>
                 <input 
@@ -680,25 +1003,24 @@ onUnmounted(() => {
                 <span class="text-tertiary">{{ item.entity_name }}</span>
               </td>
 
-              <td v-if="isColumnVisible('effective_period')" class="col-period">
-                <span class="text-tertiary">{{ item.effective_from }} - {{ item.effective_to || 'Current' }}</span>
+              <td v-if="isColumnVisible('effective_from')" class="col-period">
+                <span class="text-tertiary">{{ item.effective_from }}</span>
               </td>
 
-              <td v-if="isColumnVisible('units_count')" class="col-units">
-                <span class="text-tertiary">{{ item.units_count }} Units</span>
+              <td v-if="isColumnVisible('effective_to')" class="col-period">
+                <span class="text-tertiary">{{ item.effective_to || '— (Current)' }}</span>
               </td>
 
               <td v-if="isColumnVisible('status')" class="col-status">
                 <span 
-                  class="version-pill"
+                  class="status-pill"
                   :class="{
-                    'state-published': item.structure_state_lookup_value_id === 'active',
-                    'state-draft': item.structure_state_lookup_value_id === 'draft',
-                    'state-superseded': item.structure_state_lookup_value_id === 'superseded'
+                    'pill-published': item.structure_state_lookup_value_id === 'active',
+                    'pill-draft': item.structure_state_lookup_value_id === 'draft',
+                    'pill-superseded': item.structure_state_lookup_value_id === 'superseded'
                   }"
                 >
-                  <span class="dot-indicator"></span>
-                  <span>{{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}</span>
+                  {{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
                 </span>
               </td>
 
@@ -708,283 +1030,556 @@ onUnmounted(() => {
                 </span>
               </td>
 
-              <td v-if="isColumnVisible('superseded_by')" class="col-successor">
-                <span v-if="item.superseded_by_code" class="successor-tag font-mono">
-                  {{ item.superseded_by_code }}
-                </span>
-                <span v-else class="text-slate-400">—</span>
-              </td>
-
-              <td v-if="isColumnVisible('description')" class="col-desc">
-                <span class="table-text-muted text-xs truncate max-w-xs block">{{ item.description || '—' }}</span>
-              </td>
-
               <td v-if="isColumnVisible('actions')" class="col-actions" @click.stop>
                 <div class="action-cell-wrapper">
                   <button 
                     type="button" 
                     class="btn-action-dots" 
-                    @click="toggleActionMenu(item.id, $event)"
+                    @click="toggleTableMenu(item.id, $event)"
                     title="Structure Actions"
                   >
                     <MoreVertical :size="15" />
                   </button>
 
-                  <div v-if="activeActionMenuId === item.id" class="action-dropdown-menu">
-                    <button class="action-menu-item" @click="viewStructureTree(item)">
-                      <Eye :size="13" />
-                      <span>View Hierarchy Tree</span>
+                  <div v-if="activeTableMenuId === item.id" class="dropdown-popover-menu" @click.stop>
+                    <button class="popover-menu-item" @click="handleEditStructure(item)">
+                      <Edit2 :size="15" />
+                      <span>Edit</span>
                     </button>
-                    <button class="action-menu-item" @click="handleOpenCloneModal(item)">
-                      <Copy :size="13" />
-                      <span>Draft Restructure Successor</span>
+                    <button class="popover-menu-item" @click="handleOpenAddUnitForStructure(item)">
+                      <Plus :size="15" />
+                      <span>Add Unit</span>
                     </button>
-                    <button 
-                      v-if="item.structure_state_lookup_value_id !== 'active'" 
-                      class="action-menu-item text-emerald-700" 
-                      @click="handleSetActive(item)"
-                    >
-                      <ShieldCheck :size="13" />
-                      <span>Promote to Active</span>
+                    <button class="popover-menu-item" @click="handleOpenCopyStructure(item)">
+                      <Copy :size="15" />
+                      <span>Copy Structure</span>
+                    </button>
+                    <button v-if="item.structure_state_lookup_value_id === 'draft'" class="popover-menu-item item-publish" @click="handlePublishStructure(item)">
+                      <CheckCircle2 :size="15" class="text-emerald-600" />
+                      <span>Publish</span>
+                    </button>
+                    <button class="popover-menu-item item-delete" @click="handleDeleteStructure(item.id)">
+                      <Trash2 :size="15" />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
-              </td>
-            </tr>
-
-            <tr v-if="filteredStructures.length === 0">
-              <td colspan="10" class="empty-state-cell">
-                <Network :size="24" class="empty-icon" />
-                <p>No organization structures match the current filters.</p>
               </td>
             </tr>
           </tbody>
         </table>
       </AppDataTable>
 
-      <!-- Floating Bar for Selection -->
       <TableFloatingBar 
         :show="selectedRowIds.length > 0"
         :selected-count="selectedRowIds.length"
-        :total-count="filteredStructures.length"
+        :total-count="structures.length"
         @delete="handleBatchDelete"
         @close="selectedRowIds = []"
       />
     </div>
 
-    <!-- VIEW 2: INTERACTIVE HIERARCHY TREE EXPLORER -->
-    <div v-else-if="viewMode === 'tree' && selectedStructure" class="tree-view-wrapper">
-      <!-- Back Bar -->
-      <div class="tree-top-bar">
-        <button type="button" class="btn-back" @click="handleBackToList">
-          <ChevronLeft :size="16" />
-          <span>Back to Organization Structures</span>
-        </button>
-
-        <div class="tree-top-actions">
-          <button 
-            type="button" 
-            class="btn-secondary-action" 
-            @click="router.push('/hr/org-units')"
-          >
-            <FolderTree :size="14" />
-            <span>Manage Units in Directory</span>
-          </button>
-          <button 
-            v-if="selectedStructure.structure_state_lookup_value_id !== 'active'" 
-            type="button" 
-            class="btn-primary-action"
-            @click="handleSetActive(selectedStructure)"
-          >
-            <ShieldCheck :size="14" />
-            <span>Set as Active Blueprint</span>
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- VIEW 2: ORG THREE VIEW TAB (Screenshots 2, 3, 4)           -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div v-else-if="activeMainTab === 'tree'" class="tree-view-split-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+      <!-- ─── LEFT CARD: STRUCTURES LISTER (Screenshot 2) ─── -->
+      <div v-show="!isSidebarCollapsed" class="tree-left-card">
+        <!-- Search & Filter Row -->
+        <div class="left-search-filter-row">
+          <div class="input-search-wrapper">
+            <Search :size="14" class="icon-search" />
+            <input 
+              type="text" 
+              v-model="treeSearchQuery" 
+              placeholder="Search Name..." 
+              class="search-text-input"
+            />
+          </div>
+          <button type="button" class="btn-filter-toggle">
+            <Filter :size="14" />
+            <span>Filter</span>
           </button>
         </div>
-      </div>
 
-      <!-- Structure Master Hero Card -->
-      <div class="structure-hero-card">
-        <div class="hero-left">
-          <div class="hero-title-row">
-            <span class="hero-code-tag font-mono">{{ selectedStructure.code }}</span>
-            <h1 class="hero-name">{{ selectedStructure.name }}</h1>
-            <span 
-              class="version-pill"
-              :class="{
-                'state-active': selectedStructure.structure_state_lookup_value_id === 'active',
-                'state-draft': selectedStructure.structure_state_lookup_value_id === 'draft',
-                'state-superseded': selectedStructure.structure_state_lookup_value_id === 'superseded'
-              }"
-            >
-              <span class="dot-indicator"></span>
-              <span class="capitalize">{{ selectedStructure.structure_state_lookup_value_id }}</span>
-            </span>
-          </div>
+        <!-- Vertical Stack of Structure Cards -->
+        <div class="structures-vertical-stack">
+          <div 
+            v-for="item in filteredTreeStructures" 
+            :key="item.id"
+            class="tree-structure-item-card"
+            :class="{ 'item-selected': selectedStructureId === item.id }"
+            @click="selectedStructureId = item.id"
+          >
+            <!-- Card Top Row: Name + Status Pill + 3-Dot Button -->
+            <div class="item-card-top-row">
+              <div class="item-title-cluster">
+                <span class="structure-card-title">{{ item.name }}</span>
+                <span 
+                  class="status-pill-subtle"
+                  :class="{
+                    'pill-published': item.structure_state_lookup_value_id === 'active',
+                    'pill-draft': item.structure_state_lookup_value_id === 'draft',
+                    'pill-superseded': item.structure_state_lookup_value_id === 'superseded'
+                  }"
+                >
+                  {{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
+                </span>
+              </div>
 
-          <p class="hero-desc">{{ selectedStructure.description }}</p>
+              <!-- 3-Dot Menu Button on Structure Card (Screenshot 3) -->
+              <div class="menu-relative-wrapper" @click.stop>
+                <button 
+                  type="button" 
+                  class="btn-card-dots" 
+                  @click="toggleStructureMenu(item.id, $event)"
+                  title="Structure Options"
+                >
+                  <MoreVertical :size="15" />
+                </button>
 
-          <div class="hero-meta-grid">
-            <div class="meta-item">
-              <span class="meta-label">Owning Entity:</span>
-              <span class="meta-value">{{ selectedStructure.entity_name }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Effective From:</span>
-              <span class="meta-value font-mono">{{ selectedStructure.effective_from }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Effective To:</span>
-              <span class="meta-value font-mono">{{ selectedStructure.effective_to || 'Current (Open)' }}</span>
-            </div>
-            <div v-if="selectedStructure.superseded_by_code" class="meta-item">
-              <span class="meta-label">Superseded By:</span>
-              <span class="meta-value font-mono text-primary font-semibold">{{ selectedStructure.superseded_by_code }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-stat-card">
-          <div class="stat-number">{{ selectedStructure.units_count }}</div>
-          <div class="stat-label">Mapped Hierarchy Units</div>
-          <div class="stat-subtext">Structure ID: #{{ selectedStructure.id }}</div>
-        </div>
-      </div>
-
-      <!-- Tree Canvas Panel -->
-      <div class="tree-canvas-panel">
-        <div class="tree-panel-header">
-          <div class="panel-header-left">
-            <h2 class="panel-title">Hierarchy Blueprint Graph</h2>
-            <p class="panel-subtitle">Explore operational reporting relationships and organizational placements effective within this structure version.</p>
-          </div>
-          <div class="panel-header-legend">
-            <span class="legend-item"><span class="legend-box level-board"></span> Board & Exec</span>
-            <span class="legend-item"><span class="legend-box level-division"></span> Division</span>
-            <span class="legend-item"><span class="legend-box level-department"></span> Department</span>
-            <span class="legend-item"><span class="legend-box level-section"></span> Section</span>
-          </div>
-        </div>
-
-        <!-- Render Hierarchy Tree Nodes -->
-        <div class="tree-nodes-flow">
-          <div v-if="hierarchyTrees[selectedStructure.id]" class="tree-root-container">
-            <!-- Level 0: Root Node -->
-            <div class="tree-node-card node-board">
-              <div class="node-badge-type">{{ hierarchyTrees[selectedStructure.id].type }}</div>
-              <div class="node-main-title">{{ hierarchyTrees[selectedStructure.id].name }}</div>
-              <div class="node-code-path font-mono">{{ hierarchyTrees[selectedStructure.id].code }}</div>
-
-              <div class="node-head-info" v-if="hierarchyTrees[selectedStructure.id].head_name">
-                <img :src="hierarchyTrees[selectedStructure.id].head_avatar" class="node-head-avatar" alt="" />
-                <div class="node-head-meta">
-                  <span class="node-head-name">{{ hierarchyTrees[selectedStructure.id].head_name }}</span>
-                  <span class="node-head-role">{{ hierarchyTrees[selectedStructure.id].head_title }}</span>
+                <!-- Structure 3-Dot Floating Menu (Screenshot 3) -->
+                <div v-if="activeStructureMenuId === item.id" class="dropdown-popover-menu" @click.stop>
+                  <button class="popover-menu-item" @click="handleEditStructure(item)">
+                    <Edit2 :size="16" />
+                    <span>Edit</span>
+                  </button>
+                  <button class="popover-menu-item" @click="handleOpenAddUnitForStructure(item)">
+                    <Plus :size="16" />
+                    <span>Add Unit</span>
+                  </button>
+                  <button class="popover-menu-item" @click="handleOpenCopyStructure(item)">
+                    <Copy :size="16" />
+                    <span>Copy Structure</span>
+                  </button>
+                  <button v-if="item.structure_state_lookup_value_id === 'draft'" class="popover-menu-item item-publish" @click="handlePublishStructure(item)">
+                    <CheckCircle2 :size="16" class="text-emerald-600" />
+                    <span>Publish</span>
+                  </button>
+                  <button class="popover-menu-item item-delete" @click="handleDeleteStructure(item.id)">
+                    <Trash2 :size="16" />
+                    <span>Delete</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- Children connector -->
-            <div class="tree-children-wrapper" v-if="hierarchyTrees[selectedStructure.id].children">
-              <div 
-                v-for="divNode in hierarchyTrees[selectedStructure.id].children" 
-                :key="divNode.id" 
-                class="division-column"
-              >
-                <!-- Level 1: Division Node -->
-                <div class="tree-node-card node-division">
-                  <div class="node-badge-type">{{ divNode.type }}</div>
-                  <div class="node-main-title">{{ divNode.name }}</div>
-                  <div class="node-code-path font-mono">{{ divNode.code }}</div>
+            <!-- Card Bottom Row: Branch Subtitle -->
+            <div class="structure-card-branch-text">
+              {{ item.entity_name }}
+            </div>
+          </div>
+        </div>
+      </div>
 
-                  <div class="node-head-info" v-if="divNode.head_name">
-                    <img :src="divNode.head_avatar" class="node-head-avatar" alt="" />
-                    <div class="node-head-meta">
-                      <span class="node-head-name">{{ divNode.head_name }}</span>
-                      <span class="node-head-role">{{ divNode.head_title }}</span>
+      <!-- ─── RIGHT CARD: HIERARCHY DIAGRAM CANVAS (Screenshot 2) ─── -->
+      <div class="tree-right-card">
+        <!-- Right Card Header Row -->
+        <div class="right-card-header-bar">
+          <div class="right-header-left">
+            <div class="active-struct-title-row">
+              <span class="active-struct-name">{{ selectedStructure.name }}</span>
+              <span 
+                class="status-pill-subtle"
+                :class="{
+                  'pill-published': selectedStructure.structure_state_lookup_value_id === 'active',
+                  'pill-draft': selectedStructure.structure_state_lookup_value_id === 'draft',
+                  'pill-superseded': selectedStructure.structure_state_lookup_value_id === 'superseded'
+                }"
+              >
+                {{ selectedStructure.structure_state_lookup_value_id === 'active' ? 'Published' : (selectedStructure.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
+              </span>
+            </div>
+            <p class="active-struct-subtext">
+              {{ selectedStructure.entity_name }} - Effective: {{ selectedStructure.effective_from }} - {{ selectedStructure.effective_to || 'Current' }} - {{ activeUnitsMappedCount }} Units Mapped
+            </p>
+          </div>
+
+          <div class="right-header-actions-group">
+            <!-- Publish Button for Draft Structures -->
+            <button 
+              v-if="selectedStructure.structure_state_lookup_value_id === 'draft'"
+              type="button" 
+              class="btn-publish-blueprint" 
+              @click="handlePublishStructure(selectedStructure)"
+              title="Publish this draft blueprint"
+            >
+              <CheckCircle2 :size="14" />
+              <span>Publish</span>
+            </button>
+
+            <!-- Quick Copy Structure -->
+            <button 
+              type="button" 
+              class="btn-header-action" 
+              @click="handleOpenCopyStructure(selectedStructure)"
+              title="Copy / Clone Structure"
+            >
+              <Copy :size="14" />
+              <span>Copy</span>
+            </button>
+
+            <!-- Focus Mode Toggle (Hide/Show Left List) -->
+            <button 
+              type="button" 
+              class="btn-header-action" 
+              @click="isSidebarCollapsed = !isSidebarCollapsed"
+              :title="isSidebarCollapsed ? 'Show Structures List' : 'Focus Mode (Hide List)'"
+            >
+              <PanelLeftOpen v-if="isSidebarCollapsed" :size="14" />
+              <PanelLeftClose v-else :size="14" />
+              <span>{{ isSidebarCollapsed ? 'List' : 'Focus' }}</span>
+            </button>
+
+            <!-- + Create Units Action Button -->
+            <button 
+              type="button" 
+              class="btn-secondary-create-units" 
+              @click="handleOpenCreateUnitsGlobal"
+            >
+              <Plus :size="15" />
+              <span>Create Units</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Body with Floating Zoom Tools -->
+        <div class="diagram-canvas-viewport">
+          <!-- Floating Zoom Bar on Top Right (Screenshot 2) -->
+          <div class="floating-zoom-tools">
+            <button type="button" class="zoom-btn" @click="handleZoomOut" title="Zoom Out">
+              <ZoomOut :size="14" />
+            </button>
+            <span class="zoom-level-text">{{ Math.round(zoomLevel * 100) }}%</span>
+            <button type="button" class="zoom-btn" @click="handleZoomIn" title="Zoom In">
+              <ZoomIn :size="14" />
+            </button>
+            <div class="zoom-divider"></div>
+            <button type="button" class="zoom-btn" @click="handleResetZoom" title="Reset Zoom">
+              <RotateCcw :size="13" />
+            </button>
+            <div class="zoom-divider"></div>
+            <button type="button" class="zoom-btn" @click="handlePrintDiagram" title="Print / Export Org Chart">
+              <Printer :size="13" />
+            </button>
+          </div>
+
+          <!-- Scaled Diagram Area -->
+          <div 
+            class="diagram-zoom-wrapper"
+            :style="{
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: 'top center',
+              transition: 'transform 0.15s ease-out'
+            }"
+          >
+            <div v-if="hierarchyTrees[selectedStructure.id]" class="tree-hierarchy-flow">
+              <!-- LEVEL 0: ROOT NODE CARD (Screenshot 2) -->
+              <div class="tree-node-wrapper">
+                <div 
+                  class="org-unit-node-card cursor-pointer"
+                  :class="{ 'node-active': selectedNodeId === hierarchyTrees[selectedStructure.id].id }"
+                  @click="toggleSelectNode(hierarchyTrees[selectedStructure.id].id)"
+                >
+                  <div class="node-card-header">
+                    <span class="node-unit-name">{{ hierarchyTrees[selectedStructure.id].name }}</span>
+                    
+                    <!-- 3-Dot Menu on Node (Screenshot 4) -->
+                    <div class="menu-relative-wrapper" @click.stop>
+                      <button 
+                        type="button" 
+                        class="btn-node-dots" 
+                        @click="toggleNodeMenu(hierarchyTrees[selectedStructure.id].id, $event)"
+                        title="Unit Options"
+                      >
+                        <MoreVertical :size="14" />
+                      </button>
+
+                      <div v-if="activeNodeMenuId === hierarchyTrees[selectedStructure.id].id" class="dropdown-popover-menu" @click.stop>
+                        <button class="popover-menu-item" @click="handleEditNode(hierarchyTrees[selectedStructure.id])">
+                          <Edit2 :size="16" />
+                          <span>Edit</span>
+                        </button>
+                        <button class="popover-menu-item" @click="handleAddDivisionToNode(hierarchyTrees[selectedStructure.id])">
+                          <Plus :size="16" />
+                          <span>Add Division</span>
+                        </button>
+                        <button class="popover-menu-item item-delete" @click="handleDeleteNode(hierarchyTrees[selectedStructure.id].id)">
+                          <Trash2 :size="16" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="node-unit-type-subtext">
+                    Type: {{ hierarchyTrees[selectedStructure.id].type }}
+                  </div>
+
+                  <!-- Squircle Avatar + Head Manager Info -->
+                  <div class="node-profile-row">
+                    <img 
+                      :src="hierarchyTrees[selectedStructure.id].head_avatar" 
+                      class="node-squircle-avatar" 
+                      alt="" 
+                    />
+                    <div class="node-profile-meta">
+                      <span class="node-profile-name">{{ hierarchyTrees[selectedStructure.id].head_name }}</span>
+                      <span class="node-profile-title">{{ hierarchyTrees[selectedStructure.id].head_title }}</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Level 2: Sub-units (Departments & Sections) -->
-                <div class="sub-nodes-stack" v-if="divNode.children">
-                  <div 
-                    v-for="deptNode in divNode.children" 
-                    :key="deptNode.id" 
-                    class="tree-node-card node-dept"
-                  >
-                    <div class="node-header-row">
-                      <span class="node-badge-type text-xs">{{ deptNode.type }}</span>
-                      <span class="node-code-path font-mono text-xs">{{ deptNode.code }}</span>
-                    </div>
-                    <div class="node-main-title text-sm">{{ deptNode.name }}</div>
+                <!-- Vertical stem line -->
+                <div 
+                  v-if="hierarchyTrees[selectedStructure.id].children && hierarchyTrees[selectedStructure.id].children!.length > 0" 
+                  class="connector-stem-vertical"
+                ></div>
+              </div>
 
-                    <div class="node-head-info" v-if="deptNode.head_name">
-                      <img :src="deptNode.head_avatar" class="node-head-avatar-sm" alt="" />
-                      <div class="node-head-meta">
-                        <span class="node-head-name text-xs">{{ deptNode.head_name }}</span>
-                        <span class="node-head-role text-xs">{{ deptNode.head_title }}</span>
+              <!-- LEVEL 1: CHILDREN ROW (Screenshot 2) -->
+              <div 
+                v-if="hierarchyTrees[selectedStructure.id].children && hierarchyTrees[selectedStructure.id].children!.length > 0" 
+                class="tree-children-branches-row"
+              >
+                <div 
+                  v-for="childNode in hierarchyTrees[selectedStructure.id].children" 
+                  :key="childNode.id"
+                  class="tree-branch-column"
+                >
+                  <!-- Child Node Card -->
+                  <div 
+                    class="org-unit-node-card cursor-pointer"
+                    :class="{ 'node-active': selectedNodeId === childNode.id }"
+                    @click="toggleSelectNode(childNode.id)"
+                  >
+                    <div class="node-card-header">
+                      <span class="node-unit-name">{{ childNode.name }}</span>
+                      
+                      <!-- 3-Dot Menu on Child Node -->
+                      <div class="menu-relative-wrapper" @click.stop>
+                        <button 
+                          type="button" 
+                          class="btn-node-dots" 
+                          @click="toggleNodeMenu(childNode.id, $event)"
+                          title="Unit Options"
+                        >
+                          <MoreVertical :size="14" />
+                        </button>
+
+                        <div v-if="activeNodeMenuId === childNode.id" class="dropdown-popover-menu" @click.stop>
+                          <button class="popover-menu-item" @click="handleEditNode(childNode)">
+                            <Edit2 :size="16" />
+                            <span>Edit</span>
+                          </button>
+                          <button class="popover-menu-item" @click="handleAddDivisionToNode(childNode)">
+                            <Plus :size="16" />
+                            <span>Add Division</span>
+                          </button>
+                          <button class="popover-menu-item item-delete" @click="handleDeleteNode(childNode.id)">
+                            <Trash2 :size="16" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="node-unit-type-subtext">
+                      Type: {{ childNode.type }}
+                    </div>
+
+                    <div class="node-profile-row">
+                      <img 
+                        :src="childNode.head_avatar" 
+                        class="node-squircle-avatar" 
+                        alt="" 
+                      />
+                      <div class="node-profile-meta">
+                        <span class="node-profile-name">{{ childNode.head_name }}</span>
+                        <span class="node-profile-title">{{ childNode.head_title }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Connector from Child to Sub-Children -->
+                  <div 
+                    v-if="childNode.children && childNode.children.length > 0" 
+                    class="connector-stem-vertical-sm"
+                  ></div>
+
+                  <!-- LEVEL 2: SUB-CHILDREN STACK (Screenshot 2 right side) -->
+                  <div 
+                    v-if="childNode.children && childNode.children.length > 0" 
+                    class="sub-children-stack"
+                  >
+                    <div 
+                      v-for="subNode in childNode.children" 
+                      :key="subNode.id"
+                      class="sub-node-branch-item"
+                    >
+                      <div 
+                        class="org-unit-node-card cursor-pointer"
+                        :class="{ 'node-active': selectedNodeId === subNode.id }"
+                        @click="toggleSelectNode(subNode.id)"
+                      >
+                        <div class="node-card-header">
+                          <span class="node-unit-name">{{ subNode.name }}</span>
+                          
+                          <!-- 3-Dot Menu on Sub Node -->
+                          <div class="menu-relative-wrapper" @click.stop>
+                            <button 
+                              type="button" 
+                              class="btn-node-dots" 
+                              @click="toggleNodeMenu(subNode.id, $event)"
+                              title="Unit Options"
+                            >
+                              <MoreVertical :size="14" />
+                            </button>
+
+                            <div v-if="activeNodeMenuId === subNode.id" class="dropdown-popover-menu" @click.stop>
+                              <button class="popover-menu-item" @click="handleEditNode(subNode)">
+                                <Edit2 :size="16" />
+                                <span>Edit</span>
+                              </button>
+                              <button class="popover-menu-item" @click="handleAddDivisionToNode(subNode)">
+                                <Plus :size="16" />
+                                <span>Add Division</span>
+                              </button>
+                              <button class="popover-menu-item item-delete" @click="handleDeleteNode(subNode.id)">
+                                <Trash2 :size="16" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="node-unit-type-subtext">
+                          Type: {{ subNode.type }}
+                        </div>
+
+                        <div class="node-profile-row">
+                          <img 
+                            :src="subNode.head_avatar" 
+                            class="node-squircle-avatar" 
+                            alt="" 
+                          />
+                          <div class="node-profile-meta">
+                            <span class="node-profile-name">{{ subNode.head_name }}</span>
+                            <span class="node-profile-title">{{ subNode.head_title }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Sub-sub children connector -->
+                      <div v-if="subNode.children && subNode.children.length > 0" class="connector-stem-vertical-sm"></div>
+
+                      <div v-if="subNode.children && subNode.children.length > 0" class="sub-children-stack">
+                        <div 
+                          v-for="deepNode in subNode.children" 
+                          :key="deepNode.id"
+                          class="org-unit-node-card cursor-pointer"
+                          :class="{ 'node-active': selectedNodeId === deepNode.id }"
+                          @click="toggleSelectNode(deepNode.id)"
+                        >
+                          <div class="node-card-header">
+                            <span class="node-unit-name">{{ deepNode.name }}</span>
+                            <div class="menu-relative-wrapper" @click.stop>
+                              <button 
+                                type="button" 
+                                class="btn-node-dots" 
+                                @click="toggleNodeMenu(deepNode.id, $event)"
+                              >
+                                <MoreVertical :size="14" />
+                              </button>
+
+                              <div v-if="activeNodeMenuId === deepNode.id" class="dropdown-popover-menu" @click.stop>
+                                <button class="popover-menu-item" @click="handleEditNode(deepNode)">
+                                  <Edit2 :size="16" />
+                                  <span>Edit</span>
+                                </button>
+                                <button class="popover-menu-item" @click="handleAddDivisionToNode(deepNode)">
+                                  <Plus :size="16" />
+                                  <span>Add Division</span>
+                                </button>
+                                <button class="popover-menu-item item-delete" @click="handleDeleteNode(deepNode.id)">
+                                  <Trash2 :size="16" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="node-unit-type-subtext">Type: {{ deepNode.type }}</div>
+                          <div class="node-profile-row">
+                            <img :src="deepNode.head_avatar" class="node-squircle-avatar" alt="" />
+                            <div class="node-profile-meta">
+                              <span class="node-profile-name">{{ deepNode.head_name }}</span>
+                              <span class="node-profile-title">{{ deepNode.head_title }}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div v-else class="tree-empty-state">
-            <Layers :size="32" class="text-slate-400 mb-2" />
-            <p class="font-medium text-slate-700">No organizational units attached yet to {{ selectedStructure.code }}.</p>
-            <p class="text-xs text-slate-500 max-w-sm text-center mt-1">
-              Add operational departments or navigate to Organization Units to assign placements to this blueprint.
-            </p>
-            <button 
-              type="button" 
-              class="btn-primary-action mt-3"
-              @click="router.push('/hr/org-units')"
-            >
-              <Plus :size="14" />
-              <span>Create Organization Unit</span>
-            </button>
+            <!-- Empty State for Structure with 0 Units -->
+            <div v-else class="canvas-empty-state">
+              <FolderTree :size="36" class="text-slate-400 mb-2" />
+              <h3 class="font-semibold text-slate-700">No Units Attached</h3>
+              <p class="text-xs text-slate-500 mt-1 max-w-sm text-center">
+                This structure has no departments yet. Click below to add the root operational unit.
+              </p>
+              <button 
+                type="button" 
+                class="btn-secondary-create-units mt-3" 
+                @click="handleOpenCreateUnitsGlobal"
+              >
+                <Plus :size="14" />
+                <span>Create Units</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- QUICK CREATE MODAL (Org Structure Architecture - HR_Schema_final-v4.sql lines 968-990) -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: CREATE / EDIT STRUCTURE                             -->
+    <!-- ══════════════════════════════════════════════════════════ -->
     <QuickCreateModal
-      v-model:show="showQuickCreate"
-      title="Create Organization Structure"
+      v-model:show="showStructureModal"
+      :title="isEditingStructure ? 'Edit Organization Structure' : 'Create Organization Structure'"
       saveLabel="Save"
-      :showExpandButton="true"
-      @save="handleSaveQuickStructure"
-      @expand="handleExpandToFullForm"
-      @cancel="showQuickCreate = false"
+      :showExpandButton="false"
+      @save="handleSaveStructure"
+      @cancel="showStructureModal = false"
     >
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormInput 
           label="Structure Name" 
-          v-model="quickForm.name" 
+          v-model="structureForm.name" 
           required 
         />
         <FormSelect
           label="Owning Entity"
-          v-model="quickForm.entity_id"
+          v-model="structureForm.entity_id"
           placeholder="Select Entity"
           :options="[
-            { label: 'Haleta Addis Ababa HQ', value: '4' },
-            { label: 'QMT Bole', value: '1' },
-            { label: 'QMT Mekanisa', value: '2' },
-            { label: 'QMT Koye', value: '3' }
+            { label: 'QMT Bole Branch', value: '1' },
+            { label: 'QMT Hawassa Branch', value: '2' },
+            { label: 'QMT Newyork Branch', value: '3' },
+            { label: 'Haleta Addis Ababa HQ', value: '4' }
           ]"
-          required
         />
         <div class="gc-date-field">
-          <label class="gc-field-label">Effective From Date <span class="required-star">*</span></label>
+          <label class="gc-field-label">Effective From <span class="required-star">*</span></label>
           <div class="gc-date-input-wrap">
-            <Calendar :size="15" class="gc-cal-icon" />
+            <Calendar :size="14" class="gc-cal-icon" />
             <input
               type="date"
-              v-model="quickForm.effective_from"
+              v-model="structureForm.effective_from"
               class="gc-date-input"
               required
             />
@@ -992,61 +1587,144 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="gc-date-field">
-          <label class="gc-field-label">Effective To Date</label>
+          <label class="gc-field-label">Effective Until</label>
           <div class="gc-date-input-wrap">
-            <Calendar :size="15" class="gc-cal-icon" />
+            <Calendar :size="14" class="gc-cal-icon" />
             <input
               type="date"
-              v-model="quickForm.effective_to"
+              v-model="structureForm.effective_to"
               class="gc-date-input"
             />
             <span class="gc-pill-tag">GC</span>
           </div>
         </div>
-        <div class="md:col-span-2">
-          <FormSelect
-            label="Version State"
-            v-model="quickForm.structure_state"
-            placeholder="Select State"
-            :options="[
-              { label: 'Active', value: 'active' },
-              { label: 'Draft', value: 'draft' }
-            ]"
-            required
+      </div>
+    </QuickCreateModal>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: CREATE / EDIT UNIT (Screenshots 1 & 2 Inputs)        -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <QuickCreateModal
+      v-model:show="showUnitModal"
+      :title="isEditingNode ? 'Edit Organization Unit' : 'Create Organization Unit'"
+      saveLabel="Save"
+      :showExpandButton="false"
+      @save="handleSaveUnit"
+      @cancel="showUnitModal = false"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormInput 
+          label="Unit Name" 
+          v-model="unitForm.name" 
+          required 
+        />
+        <FormSelect
+          label="Unit Type"
+          v-model="unitForm.type"
+          placeholder="Select Type"
+          :options="[
+            { label: 'Department', value: 'Department' },
+            { label: 'Division', value: 'Division' },
+            { label: 'Section', value: 'Section' },
+            { label: 'Region', value: 'Region' },
+            { label: 'Branch', value: 'Branch' }
+          ]"
+          required
+        />
+        <FormInput 
+          label="Org Structure" 
+          :model-value="selectedStructure.name" 
+          disabled 
+        />
+        <FormSelect
+          label="Unit Head Manager"
+          v-model="unitForm.head_employee_id"
+          placeholder="Select Head"
+          :options="availableEmployees.map(e => ({ label: `${e.name} (${e.title})`, value: String(e.id) }))"
+        />
+        <FormSelect
+          label="Parent Unit"
+          v-model="unitForm.parent_id"
+          placeholder="Select Unit"
+          :options="flatUnitOptions"
+        />
+        <FormInput
+          label="Order"
+          type="number"
+          v-model.number="unitForm.order"
+        />
+        <div class="md:col-span-2 pt-1">
+          <FormCheckbox
+            label="Show in Organization Diagrams"
+            description="When enabled, this operational unit is rendered visually on top-level corporate organizational charts and department reporting trees."
+            v-model="unitForm.is_visible"
           />
         </div>
       </div>
     </QuickCreateModal>
 
-    <!-- CLONE / DRAFT RESTRUCTURE MODAL -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: COPY / CLONE STRUCTURE (Image 3 Workflow)           -->
+    <!-- ══════════════════════════════════════════════════════════ -->
     <QuickCreateModal
-      v-model:show="showCloneModal"
-      title="Draft Restructure Successor"
-      saveLabel="Create Restructure Blueprint"
+      v-model:show="showCopyModal"
+      title="Copy Organization Structure"
+      saveLabel="Clone Blueprint"
       :showExpandButton="false"
-      @save="handleConfirmClone"
-      @cancel="showCloneModal = false"
+      @save="handleSaveCopyStructure"
+      @cancel="showCopyModal = false"
     >
-      <div class="clone-modal-content" v-if="structureToClone">
-        <p class="text-sm text-slate-600 mb-3">
-          Cloning creates a new <strong>draft successor row</strong> in the <code>OrgStructure</code> table based on 
-          <span class="font-mono font-semibold">{{ structureToClone.code }}</span>. 
-          Historical baselines remain preserved and queryable forever.
-        </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <div class="copy-source-banner">
+            <Copy :size="15" class="text-blue-600 flex-shrink-0" />
+            <span class="text-xs text-slate-700">
+              Cloning from source blueprint: <strong>{{ sourceStructureToCopy?.name }}</strong> ({{ sourceStructureToCopy?.entity_name }})
+            </span>
+          </div>
+        </div>
 
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 flex flex-col gap-1.5">
-          <div class="flex justify-between">
-            <span class="text-slate-500">Source Structure:</span>
-            <span class="font-mono font-medium">{{ structureToClone.code }} ({{ structureToClone.name }})</span>
+        <FormInput 
+          label="New Structure Name" 
+          v-model="copyForm.name" 
+          required 
+        />
+        <FormSelect
+          label="Target Owning Entity"
+          v-model="copyForm.entity_id"
+          placeholder="Select Entity"
+          :options="[
+            { label: 'QMT Bole Branch', value: '1' },
+            { label: 'QMT Hawassa Branch', value: '2' },
+            { label: 'QMT Newyork Branch', value: '3' },
+            { label: 'Haleta Addis Ababa HQ', value: '4' }
+          ]"
+        />
+        <div class="gc-date-field">
+          <label class="gc-field-label">Effective From <span class="required-star">*</span></label>
+          <div class="gc-date-input-wrap">
+            <Calendar :size="14" class="gc-cal-icon" />
+            <input
+              type="date"
+              v-model="copyForm.effective_from"
+              class="gc-date-input"
+              required
+            />
+            <span class="gc-pill-tag">GC</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">Initial State:</span>
-            <span class="text-amber-700 font-semibold">Draft</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">Units Preserved:</span>
-            <span>{{ structureToClone.units_count }} operational units</span>
-          </div>
+        </div>
+        <FormInput
+          label="Lifecycle State"
+          model-value="Draft (Restructuring Plan)"
+          disabled
+        />
+
+        <div class="md:col-span-2 pt-1">
+          <FormCheckbox
+            label="Clone Complete Unit Hierarchy"
+            description="Duplicates all departments, divisions, reporting managers, and organizational trees from the source blueprint into this new draft."
+            v-model="copyForm.clone_hierarchy"
+          />
         </div>
       </div>
     </QuickCreateModal>
@@ -1055,17 +1733,106 @@ onUnmounted(() => {
 
 <style scoped>
 .org-structures-page {
-  padding: 16px 24px;
-  background-color: var(--primitive-color-neutral-50, #f8fafc);
+  padding: 16px 24px 32px;
+  background-color: #f8fafc;
   min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .page-breadcrumb-bar {
-  margin-bottom: 12px;
+  margin-bottom: 2px;
 }
 
-.directory-view-wrapper, .tree-view-wrapper {
-  animation: fadeIn 0.15s ease;
+/* ─── Master Header Card (Screenshots 1 & 2) ─── */
+.master-header-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.header-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-main-title {
+  font-size: 19px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #737373;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.header-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Capsule Tab Bar (Screenshots 1 & 2) */
+.capsule-tabs-container {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.capsule-tab-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.capsule-tab-pill.active {
+  background-color: #ffffff;
+  color: #404040;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary-create-struct {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  background-color: #0B529C;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary-create-struct:hover {
+  background-color: #094380;
 }
 
 /* Toast */
@@ -1076,161 +1843,80 @@ onUnmounted(() => {
   background-color: #ecfdf5;
   border: 1px solid #a7f3d0;
   color: #065f46;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
-/* Custom Checkbox */
-.custom-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #d1d5db;
-  background-color: #ffffff;
-  cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  position: relative;
-  vertical-align: middle;
-  outline: none;
-  margin: 0;
-  padding: 0;
-  transition: all 0.15s ease;
-}
-.custom-checkbox:hover:not(:checked) {
-  border-color: #9ca3af;
-  background-color: #f9fafb;
-}
-.custom-checkbox:checked {
-  background-color: #0B529C;
-  border-color: #0B529C;
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 5.5'/%3e%3c/svg%3e");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 75% 75%;
+/* ─── Table Section ─── */
+.table-view-section {
+  display: flex;
+  flex-direction: column;
 }
 
-/* ERP Table Styles */
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background-color: #fafbfc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
 .erp-table {
   width: 100%;
   border-collapse: collapse;
 }
 
 .erp-table th {
-  height: 34px;
-  padding: 6px 14px;
   background-color: #fafafa;
+  color: #737373;
   font-size: 12px;
   font-weight: 500;
-  color: #737373;
+  padding: 8px 16px;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
+  height: 34px;
 }
 
 .erp-table td {
-  height: 38px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   font-size: 13px;
-  color: #737373; /* Tertiary color for all subsequent columns */
+  color: #404040;
   border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
+  height: 38px;
 }
 
 .erp-row:hover td {
   background-color: #f8fafc;
 }
 
-.row-selected td {
-  background-color: #eff6ff !important;
-}
-
-.col-checkbox {
-  width: 40px;
-  text-align: center;
-}
-
-.col-name {
-  color: #404040;
-}
-
 .name-cell-stack {
   display: flex;
   flex-direction: column;
-  gap: 1px;
 }
 
 .table-name-primary {
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040; /* Secondary color for the primary identity */
-  line-height: 1.25;
+  font-weight: 600;
+  color: #404040;
 }
 
 .table-code-subtext {
   font-size: 11px;
-  color: #737373; /* Tertiary color for metadata */
-  line-height: 1.2;
-}
-
-.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-.sortable:hover {
-  background-color: #f1f5f9;
-}
-.th-content {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.sort-icon {
-  color: #94a3b8;
-}
-
-.entity-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  color: #737373; /* Tertiary color */
-}
-
-.version-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 9px;
-  border-radius: 12px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-.version-pill .dot-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  color: #737373;
 }
 
 .text-tertiary {
   color: #737373;
-  font-size: 13px;
 }
 
 .status-pill {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   padding: 2px 10px;
   border-radius: 9999px;
   font-size: 11.5px;
   font-weight: 500;
-  line-height: 1.3;
 }
 
 .status-pill-active {
@@ -1243,67 +1929,394 @@ onUnmounted(() => {
   color: #64748b;
 }
 
-.state-active,
-.state-published {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
-.state-active .dot-indicator,
-.state-published .dot-indicator { background-color: #10b981; }
-
-.state-draft {
-  background-color: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
-}
-.state-draft .dot-indicator { background-color: #f59e0b; }
-
-.state-superseded {
-  background-color: #f1f5f9;
+.btn-action-dots {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
   color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-.state-superseded .dot-indicator { background-color: #94a3b8; }
-
-.successor-tag {
-  font-size: 11.5px;
-  padding: 1.5px 6px;
-  border-radius: 4px;
-  background-color: #f1f5f9;
-  color: #737373;
-}
-
-.units-badge {
-  display: inline-flex;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+}
+
+.btn-action-dots:hover {
+  background-color: #f1f5f9;
+}
+
+.action-cell-wrapper {
+  position: relative;
+}
+
+/* ─── ORG THREE VIEW SPLIT LAYOUT (Screenshot 2) ─── */
+.tree-view-split-layout {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 220px);
+  min-height: 600px;
+}
+
+/* Left Card: Structures Lister */
+.tree-left-card {
+  width: 320px;
+  min-width: 320px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.left-search-filter-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-search-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon-search {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-text-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #404040;
+  outline: none;
+}
+
+.search-text-input:focus {
+  border-color: #0B529C;
+}
+
+.btn-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #404040;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-filter-toggle:hover {
+  background-color: #f8fafc;
+}
+
+.structures-vertical-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.tree-structure-item-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.tree-structure-item-card:hover {
+  border-color: #cbd5e1;
+  background-color: #fafbfc;
+}
+
+.tree-structure-item-card.item-selected {
+  border: 1.5px solid #0B529C;
+  background-color: #f0f7ff;
+  box-shadow: 0 2px 8px rgba(11, 82, 156, 0.08);
+}
+
+.tree-structure-item-card.item-selected .structure-card-title {
+  color: #0B529C;
+  font-weight: 700;
+}
+
+.tree-structure-item-card.item-selected:hover {
+  background-color: #e8f2fe;
+}
+
+.item-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.item-title-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.structure-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.structure-card-branch-text {
   font-size: 12px;
   color: #737373;
 }
 
-/* Actions */
-.btn-primary-create {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  background-color: #0B529C;
-  color: #ffffff;
-  font-size: 12.5px;
-  font-weight: 500;
+.btn-card-dots,
+.btn-node-dots {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: none;
-  border-radius: 8px;
+  background: transparent;
+  color: #737373;
   cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.btn-primary-create:hover { background-color: #094482; }
-
-.btn-action-dots {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.btn-card-dots:hover,
+.btn-node-dots:hover {
+  background-color: #f1f5f9;
+  color: #404040;
+}
+
+/* ─── 3-Dot Floating Popover Menus (Screenshots 3 & 4) ─── */
+.menu-relative-wrapper {
+  position: relative;
+}
+
+.dropdown-popover-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  min-width: 155px;
+  padding: 6px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popover-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #404040;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+
+.popover-menu-item:hover {
+  background-color: #f8fafc;
+}
+
+.popover-menu-item.item-delete {
+  color: #e11d48;
+}
+
+.popover-menu-item.item-delete:hover {
+  background-color: #fff1f2;
+}
+
+/* ─── Right Card: Diagram Studio (Screenshot 2) ─── */
+.tree-right-card {
+  flex: 1;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.right-card-header-bar {
+  padding: 16px 22px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.right-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.active-struct-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-struct-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.active-struct-subtext {
+  font-size: 12px;
+  color: #737373;
+  margin: 0;
+}
+
+.right-header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-header-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  background-color: #ffffff;
+  color: #404040;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-header-action:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-publish-blueprint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-publish-blueprint:hover {
+  background-color: #d1fae5;
+  border-color: #6ee7b7;
+}
+
+.popover-menu-item.item-publish {
+  color: #059669;
+}
+
+.popover-menu-item.item-publish:hover {
+  background-color: #ecfdf5;
+}
+
+.copy-source-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.btn-secondary-create-units {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background-color: #ffffff;
+  color: #404040;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary-create-units:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* ─── Diagram Viewport & Node Cards (Screenshot 2) ─── */
+.diagram-canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  padding: 36px 24px 60px;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+}
+
+/* Floating Zoom Bar */
+.floating-zoom-tools {
+  position: absolute;
+  top: 16px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 3px 6px;
+  gap: 4px;
+  z-index: 30;
+}
+
+.zoom-btn {
   width: 26px;
   height: 26px;
   border-radius: 6px;
@@ -1311,431 +2324,239 @@ onUnmounted(() => {
   background: transparent;
   color: #64748b;
   cursor: pointer;
-}
-.btn-action-dots:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.action-cell-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.action-dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 4px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 4px;
-  min-width: 190px;
-  z-index: 50;
-}
-
-.action-menu-item {
-  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border: none;
-  background: transparent;
+  justify-content: center;
+}
+
+.zoom-btn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.zoom-level-text {
   font-size: 12px;
-  color: #404040;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-}
-.action-menu-item:hover {
-  background-color: #f8fafc;
-  color: #0B529C;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  padding: 10px 14px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.empty-state-cell {
-  padding: 28px 16px;
-  text-align: center;
-  color: #737373;
-}
-.empty-icon {
-  margin: 0 auto 6px;
-  color: #94a3b8;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   VIEW 2: TREE EXPLORER & BLUEPRINT CANVAS STYLES
-   ═══════════════════════════════════════════════════════════ */
-.tree-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
+  font-weight: 600;
   color: #475569;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  min-width: 36px;
+  text-align: center;
 }
-.btn-back:hover {
+
+.zoom-divider {
+  width: 1px;
+  height: 16px;
   background-color: #e2e8f0;
-  color: #0f172a;
 }
 
-.tree-top-actions {
+.diagram-zoom-wrapper {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.tree-hierarchy-flow {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0;
 }
 
-.btn-secondary-action {
-  display: inline-flex;
+.tree-node-wrapper {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
+}
+
+/* ─── Individual Org Node Card (Screenshots 2 & 4) ─── */
+.org-unit-node-card {
+  width: 250px;
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #404040;
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.btn-secondary-action:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.btn-primary-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  background-color: #0B529C;
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.btn-primary-action:hover {
-  background-color: #094482;
-}
-
-.structure-hero-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-
-.hero-left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hero-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.hero-code-tag {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0B529C;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-
-.hero-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
-}
-
-.hero-desc {
-  font-size: 12.5px;
-  color: #64748b;
-  max-width: 680px;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.hero-meta-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.meta-label {
-  color: #737373;
-}
-.meta-value {
-  color: #404040;
-  font-weight: 500;
-}
-
-.hero-stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 18px;
-  min-width: 140px;
-  flex-shrink: 0;
-}
-.stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: #0B529C;
-}
-.stat-label {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #475569;
-}
-.stat-subtext {
-  font-size: 10.5px;
-  color: #94a3b8;
-  margin-top: 2px;
-}
-
-/* Tree Canvas Panel */
-.tree-canvas-panel {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 18px 20px;
-  overflow-x: auto;
-}
-
-.tree-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 20px;
-}
-
-.panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
-}
-.panel-subtitle {
-  font-size: 12px;
-  color: #737373;
-  margin: 2px 0 0;
-}
-
-.panel-header-legend {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11.5px;
-  color: #64748b;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.legend-box {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-.level-board { background-color: #0B529C; }
-.level-division { background-color: #0284c7; }
-.level-department { background-color: #0d9488; }
-.level-section { background-color: #64748b; }
-
-/* Tree Nodes Flow */
-.tree-root-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-.tree-node-card {
-  border-radius: 8px;
   padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   transition: all 0.15s ease;
-}
-.tree-node-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
+  position: relative;
 }
 
-.node-board {
-  min-width: 280px;
-  border-top: 3px solid #0B529C;
-  text-align: center;
-}
-.node-division {
-  min-width: 240px;
-  border-top: 3px solid #0284c7;
-}
-.node-dept {
-  border-left: 3px solid #0d9488;
-  background-color: #f8fafc;
+.org-unit-node-card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
 }
 
-.node-badge-type {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #64748b;
-  margin-bottom: 2px;
+.org-unit-node-card.node-active {
+  border: 1.5px solid #0B529C;
+  background-color: #f0f7ff;
+  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.12), 0 4px 12px rgba(11, 82, 156, 0.08);
 }
 
-.node-main-title {
-  font-size: 13.5px;
+.org-unit-node-card.node-active .node-unit-name {
+  color: #0B529C;
+  font-weight: 700;
+}
+
+@media print {
+  .page-breadcrumb-bar,
+  .master-header-card,
+  .tree-left-card,
+  .right-header-actions-group,
+  .floating-zoom-tools {
+    display: none !important;
+  }
+  .tree-view-split-layout {
+    height: auto !important;
+    display: block !important;
+  }
+  .tree-right-card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .diagram-canvas-viewport {
+    padding: 0 !important;
+  }
+}
+
+.node-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.node-unit-name {
+  font-size: 13px;
   font-weight: 600;
   color: #404040;
 }
 
-.node-code-path {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-bottom: 6px;
+.node-unit-type-subtext {
+  font-size: 11.5px;
+  color: #737373;
+  margin-bottom: 4px;
 }
 
-.node-head-info {
+/* Squircle Profile Avatar (Global Rule 9) */
+.node-profile-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 6px;
-  border-top: 1px solid #f1f5f9;
-  margin-top: 4px;
+  padding-top: 4px;
 }
 
-.node-head-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.node-head-avatar-sm {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+.node-squircle-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
-.node-head-meta {
+.node-profile-meta {
   display: flex;
   flex-direction: column;
-  text-align: left;
 }
-.node-head-name {
+
+.node-profile-name {
   font-size: 12px;
   font-weight: 600;
   color: #404040;
 }
-.node-head-role {
-  font-size: 10.5px;
+
+.node-profile-title {
+  font-size: 11px;
   color: #737373;
 }
 
-.tree-children-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  width: 100%;
-  justify-content: center;
+/* ─── Connecting Tree Lines ─── */
+.connector-stem-vertical {
+  width: 2px;
+  height: 32px;
+  background-color: #cbd5e1;
 }
 
-.division-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  max-width: 320px;
+.connector-stem-vertical-sm {
+  width: 2px;
+  height: 24px;
+  background-color: #cbd5e1;
 }
 
-.sub-nodes-stack {
+.tree-children-branches-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-left: 12px;
-  border-left: 2px dashed #cbd5e1;
-  margin-left: 14px;
+  gap: 36px;
+  position: relative;
+  padding-top: 24px;
 }
 
-.tree-empty-state {
+.tree-children-branches-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 125px;
+  right: 125px;
+  height: 2px;
+  background-color: #cbd5e1;
+}
+
+.tree-branch-column {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
+  position: relative;
 }
 
-/* Modals */
-.quick-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-.col-span-2 {
-  grid-column: span 2;
+.tree-branch-column::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 2px;
+  height: 24px;
+  background-color: #cbd5e1;
+  transform: translateX(-50%);
 }
 
-/* GC Date Field & Textarea */
+.sub-children-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.sub-node-branch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ─── Status Pills ─── */
+.status-pill-subtle {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.pill-published {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.pill-draft {
+  background-color: #fef9c3;
+  color: #d97706;
+}
+
+.pill-superseded {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+/* Ethiopian GC Date field */
 .gc-date-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .gc-field-label {
@@ -1752,69 +2573,54 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  width: 100%;
-  height: 38px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 0 10px;
-  transition: all 0.15s ease;
-  box-sizing: border-box;
-}
-
-.gc-date-input-wrap:focus-within {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 
 .gc-cal-icon {
-  color: #64748b;
-  margin-right: 8px;
-  flex-shrink: 0;
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
 }
 
 .gc-date-input {
-  flex: 1;
-  border: none;
-  height: 100%;
-  font-size: 13px;
-  color: #404040;
-  outline: none;
-  background: transparent;
-}
-
-.gc-pill-tag {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  background-color: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  user-select: none;
-}
-
-.scope-textarea {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #404040;
+  height: 38px;
+  padding: 0 42px 0 32px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background: #ffffff;
+  font-size: 13px;
+  color: #404040;
   outline: none;
-  resize: vertical;
-  transition: all 0.15s ease;
-  font-family: inherit;
-  box-sizing: border-box;
 }
 
-.scope-textarea:focus {
+.gc-date-input:focus {
   border-color: #0B529C;
   box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+.gc-pill-tag {
+  position: absolute;
+  right: 8px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.custom-checkbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.canvas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
 }
 </style>

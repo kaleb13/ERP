@@ -3,9 +3,11 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
   Plus, Edit2, Trash2, Check, X,
-  CheckCircle2, ShieldCheck, ArrowUpDown
+  CheckCircle2, ShieldCheck, ArrowUpDown, User,
+  MoreVertical, Eye
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import MetricCard from '../../components/MetricCard.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
@@ -39,12 +41,14 @@ export interface HeadcountPlanRecord {
   state: RowState;
 }
 
-// ─── Breadcrumbs (Rule: Exact Page Name from Sidebar Only: "Headcount Planning") ───
+// ─── Breadcrumbs (Image 1 & 4: "[Monitor] > Headcount Budgets") ───
 const breadcrumbItems = [
-  { label: 'Headcount Planning' }
+  { label: 'Headcount Budgets' }
 ];
 
 // ─── State Management ───
+// Role Persona: 'approver' sees Metric Cards & approval tools; 'creator' sees clean proposal directory without metric cards
+const userRole = ref<'approver' | 'creator'>('approver');
 const searchQuery = ref('');
 const filterYear = ref('All');
 const filterEntity = ref('All');
@@ -53,159 +57,91 @@ const selectedRows = ref<number[]>([]);
 const currentSort = ref('unit_name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
 const toastMessage = ref('');
+const activeDropdownId = ref<number | null>(null);
 
 // Quick Approval Modal State
 const isApproveModalOpen = ref(false);
 const planToApprove = ref<HeadcountPlanRecord | null>(null);
 const approverNameInput = ref('Sofia Hailu (Chief Human Resources Officer)');
 
-// ─── Canonical Seed Data (Directly aligned with HR Schema Designer 1.sql lines 1227–1234) ───
+// ─── Canonical Seed Data (Matching Image 1 & Image 4) ───
 const plans = ref<HeadcountPlanRecord[]>([
   {
     id: 1,
-    uuid: 'hcb-001-corp-2027',
+    uuid: 'hcb-001-bole-2028',
     tenant_id: 1,
     entity_id: 7,
-    entity_name: 'Haleta Addis Ababa Hospitality',
+    entity_name: 'QMT Bole',
     organization_unit_id: 3,
-    unit_name: 'Commercial & Sales Operations',
-    unit_code: 'COMM-OPS',
-    fiscal_year: '2027',
-    period_start: '08/07/2026',
-    period_end: '07/07/2027',
+    unit_name: 'Commercial Sales',
+    unit_code: 'COMM-SALES',
+    fiscal_year: 'FY 2028',
+    period_start: 'Jul 8, 2028',
+    period_end: 'Jul 7, 2028',
     approved_headcount: 12,
-    annual_budget_amount: 936000,
+    annual_budget_amount: 1404000,
     currency_id: 'ETB',
-    budget_state_lookup_value_id: 'active',
-    budget_state_label: 'Active',
-    approved_by_name: 'Sofia Hailu (CHRO)',
-    approved_at: '15/06/2026',
-    notes: 'Approved operational headcount for hotel hospitality and culinary staff.',
+    budget_state_lookup_value_id: 'draft',
+    budget_state_label: 'Draft',
+    approved_by_name: '-',
+    approved_at: undefined,
+    notes: 'Operational workforce proposal for new commercial hospitality wing.',
     state: 'active'
   },
   {
     id: 2,
-    uuid: 'hcb-002-eng-2027',
+    uuid: 'hcb-002-mekanisa-2026',
     tenant_id: 1,
     entity_id: 3,
-    entity_name: 'Haleta Technologies Group',
+    entity_name: 'QMT Mekanisa',
     organization_unit_id: 2,
-    unit_name: 'Engineering & Technology',
-    unit_code: 'ENG-TECH',
-    fiscal_year: '2027',
-    period_start: '08/07/2026',
-    period_end: '07/07/2027',
-    approved_headcount: 8,
-    annual_budget_amount: 1152000,
-    currency_id: 'ETB',
-    budget_state_lookup_value_id: 'active',
-    budget_state_label: 'Active',
-    approved_by_name: 'Yonas Tadesse (VP Eng)',
-    approved_at: '20/06/2026',
-    notes: 'Expansion headcount for core platform backend and DevOps personnel.',
-    state: 'active'
-  },
-  {
-    id: 3,
-    uuid: 'hcb-003-fin-2027',
-    tenant_id: 1,
-    entity_id: 3,
-    entity_name: 'Haleta Technologies Group',
-    organization_unit_id: 1,
-    unit_name: 'Finance & Compliance',
-    unit_code: 'FIN-CORP',
-    fiscal_year: '2027',
-    period_start: '08/07/2026',
-    period_end: '07/07/2027',
-    approved_headcount: 4,
+    unit_name: 'Senior Cashier',
+    unit_code: 'SR-CASHIER',
+    fiscal_year: 'FY 2026/27',
+    period_start: 'Jul 8, 2026',
+    period_end: 'Jul 7, 2027',
+    approved_headcount: 6,
     annual_budget_amount: 720000,
     currency_id: 'ETB',
     budget_state_lookup_value_id: 'active',
     budget_state_label: 'Active',
-    approved_by_name: 'Abebe Kebede (CFO)',
-    approved_at: '10/06/2026',
-    notes: 'Accounting and tax audit positions approved under corporate quota.',
+    approved_by_name: 'Sofia Hailu (CFO)',
+    approved_at: '15/06/2026',
+    notes: 'Senior Cashier quota approved under corporate branch allocation.',
     state: 'active'
   },
   {
-    id: 4,
-    uuid: 'hcb-004-hosp-2027',
+    id: 3,
+    uuid: 'hcb-003-koye-2025',
     tenant_id: 1,
     entity_id: 9,
-    entity_name: 'Haleta Logistics & Cargo',
-    organization_unit_id: 3,
-    unit_name: 'Fleet Logistics & Freight',
-    unit_code: 'FLEET-LOG',
-    fiscal_year: '2027',
-    period_start: '08/07/2026',
-    period_end: '07/07/2027',
-    approved_headcount: 6,
-    annual_budget_amount: 468000,
+    entity_name: 'QMT koye',
+    organization_unit_id: 5,
+    unit_name: 'Human Resource',
+    unit_code: 'HR-DEPT',
+    fiscal_year: 'FY 2025',
+    period_start: 'Jul 8, 2025',
+    period_end: 'Jul 7, 2025',
+    approved_headcount: 8,
+    annual_budget_amount: 960000,
     currency_id: 'ETB',
     budget_state_lookup_value_id: 'approved',
     budget_state_label: 'Approved',
-    approved_by_name: 'Marta Getachew (Director)',
-    approved_at: '28/06/2026',
-    notes: 'Heavy vehicle operators and freight coordinators quota.',
+    approved_by_name: 'Abebe Mola (Director)',
+    approved_at: '10/06/2025',
+    notes: 'Human Resource regional desk staffing quota.',
     state: 'active'
-  },
-  {
-    id: 5,
-    uuid: 'hcb-005-hr-2027',
-    tenant_id: 1,
-    entity_id: 7,
-    entity_name: 'Haleta Addis Ababa Hospitality',
-    organization_unit_id: 5,
-    unit_name: 'People & Culture',
-    unit_code: 'HR-PEOPLE',
-    fiscal_year: '2027',
-    period_start: '08/07/2026',
-    period_end: '07/07/2027',
-    approved_headcount: 5,
-    annual_budget_amount: 900000,
-    currency_id: 'ETB',
-    budget_state_lookup_value_id: 'draft',
-    budget_state_label: 'Draft',
-    approved_by_name: undefined,
-    approved_at: undefined,
-    notes: 'People operations partners and talent acquisition specialists.',
-    state: 'active'
-  },
-  {
-    id: 6,
-    uuid: 'hcb-006-cs-2026',
-    tenant_id: 1,
-    entity_id: 3,
-    entity_name: 'Haleta Technologies Group',
-    organization_unit_id: 4,
-    unit_name: 'Customer Success & Support',
-    unit_code: 'CS-SUPP',
-    fiscal_year: '2026',
-    period_start: '08/07/2025',
-    period_end: '07/07/2026',
-    approved_headcount: 10,
-    annual_budget_amount: 840000,
-    currency_id: 'ETB',
-    budget_state_lookup_value_id: 'closed',
-    budget_state_label: 'Closed',
-    approved_by_name: 'Sofia Hailu (CHRO)',
-    approved_at: '12/06/2025',
-    notes: 'FY2026 closed operating headcount budget.',
-    state: 'inactive'
   }
 ]);
 
-// ─── Table Columns (Rule 9: Atomic columns, Name-first order, clean plain text) ───
+// ─── Table Columns (Exact to Image 1 & Image 4) ───
 const tableColumns = ref<ColumnDef[]>([
-  { key: 'unit_name', label: 'Organization Unit', visible: true, sortable: true },
-  { key: 'fiscal_year', label: 'Fiscal Year', visible: true, sortable: true },
+  { key: 'unit_name', label: 'Organization Units', visible: true, sortable: true },
   { key: 'entity_name', label: 'Owning Entity', visible: true, sortable: true },
+  { key: 'period', label: 'Fiscal Period', visible: true, sortable: true },
   { key: 'approved_headcount', label: 'Target Capacity', visible: true, sortable: true },
-  { key: 'annual_budget_amount', label: 'Annual Salary Budget', visible: true, sortable: true },
-  { key: 'budget_state_label', label: 'Budget Status', visible: true, sortable: true },
-  { key: 'approved_by_name', label: 'Sanctioned By', visible: true, sortable: true },
-  { key: 'period', label: 'Effective Period', visible: false, sortable: false },
-  { key: 'state', label: 'State', visible: true, sortable: true },
+  { key: 'approved_by_name', label: 'Approved By', visible: true, sortable: true },
+  { key: 'budget_state_label', label: 'Status', visible: true, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
@@ -221,6 +157,11 @@ const uniqueEntities = computed(() => {
 });
 
 const statusOptions = ['All', 'Draft', 'Approved', 'Active', 'Closed'];
+
+// ─── Approver Executive Metric Values (Matching Image 4) ───
+const pendingApprovalCount = computed(() => {
+  return plans.value.filter(p => p.budget_state_lookup_value_id === 'draft').length;
+});
 
 const activeFilterCount = computed(() => {
   let count = 0;
@@ -300,12 +241,13 @@ const showToast = (msg: string) => {
 };
 
 const handleCreate = () => {
-  router.push('/hr/headcount-planning/create');
+  router.push(`/hr/headcount-planning/create?role=${userRole.value}`);
 };
 
 const openApproveModal = (plan: HeadcountPlanRecord) => {
   planToApprove.value = plan;
   isApproveModalOpen.value = true;
+  activeDropdownId.value = null;
 };
 
 const confirmApproval = () => {
@@ -326,6 +268,7 @@ const handleDelete = (id: number) => {
   plans.value = plans.value.filter(p => p.id !== id);
   selectedRows.value = selectedRows.value.filter(rowId => rowId !== id);
   showToast('Headcount budget plan removed.');
+  activeDropdownId.value = null;
 };
 
 const handleBatchDelete = () => {
@@ -335,28 +278,91 @@ const handleBatchDelete = () => {
   selectedRows.value = [];
 };
 
+const toggleDropdown = (id: number) => {
+  activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+
+const closeDropdowns = () => {
+  activeDropdownId.value = null;
+};
+
 const getBudgetStatusBadgeClass = (status: BudgetState) => {
   switch (status) {
-    case 'draft': return 'status-badge-draft';
-    case 'approved': return 'status-badge-approved';
-    case 'active': return 'status-badge-active';
-    case 'closed': return 'status-badge-closed';
-    default: return 'status-badge-draft';
+    case 'draft': return 'badge-status-draft';
+    case 'approved': return 'badge-status-approved';
+    case 'active': return 'badge-status-active';
+    case 'closed': return 'badge-status-closed';
+    default: return 'badge-status-draft';
   }
 };
 </script>
 
 <template>
-  <div class="headcount-planning-page">
-    <!-- Breadcrumb: EXACT Sidebar Page Name Only (Rule 3) -->
-    <AppBreadcrumb :items="breadcrumbItems" />
+  <div class="headcount-planning-page" @click="closeDropdowns">
+    <!-- Top Bar: EXACT Breadcrumb on Left + Role Persona Toggle on Right -->
+    <div class="planning-header-row">
+      <AppBreadcrumb :items="breadcrumbItems" />
 
-    <!-- Unified Table Card Standard (Rule 10: AppDataTable) -->
+      <!-- Role View Persona Switcher (Approver vs Creator for testing) -->
+      <div class="role-switcher-container">
+        <span class="role-switcher-label">View Mode:</span>
+        <div class="role-pill-group">
+          <button 
+            type="button" 
+            class="role-pill-btn"
+            :class="{ 'role-active': userRole === 'approver' }"
+            @click="userRole = 'approver'"
+            title="Switch to Approver view (Image 4)"
+          >
+            <ShieldCheck :size="13" />
+            <span>Approver</span>
+          </button>
+          <button 
+            type="button" 
+            class="role-pill-btn"
+            :class="{ 'role-active': userRole === 'creator' }"
+            @click="userRole = 'creator'"
+            title="Switch to Creator view (Image 1)"
+          >
+            <User :size="13" />
+            <span>Creator</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Metric Cards: VISIBLE FOR APPROVER ONLY (Image 4), HIDDEN FOR CREATOR (Image 1) -->
+    <transition name="fade-slide">
+      <div v-if="userRole === 'approver'" class="planning-kpis-grid">
+        <MetricCard 
+          label="PENDING APPROVAL REQUESTS" 
+          value="1 Plans" 
+          subtext="Awaiting Executive Approval" 
+        />
+        <MetricCard 
+          label="TOTAL PROPOSED SEATS" 
+          value="45 Seats" 
+          subtext="Total Workforce Demanded" 
+        />
+        <MetricCard 
+          label="TOTAL APPROVED CAPACITY" 
+          value="30 Seats" 
+          subtext="Formally Approved headcount" 
+        />
+        <MetricCard 
+          label="CORPORATE SALARY POOL" 
+          value="5,616,000 ETB" 
+          subtext="Total Roll-up Annual Payroll Ceiling" 
+        />
+      </div>
+    </transition>
+
+    <!-- Unified Table Card Standard (Image 1 & Image 4) -->
     <AppDataTable
       title="Headcount Planning"
       subtitle="Annual workforce quota planning, compensation ceilings, and governance approvals per fiscal period."
       v-model:searchQuery="searchQuery"
-      searchPlaceholder="Search by unit name, code, or approver..."
+      searchPlaceholder="Search Name..."
       :showSearch="true"
       :showFilter="true"
       :filterCount="activeFilterCount"
@@ -367,7 +373,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
       :columns="tableColumns"
       @toggleColumn="handleToggleColumn"
     >
-      <!-- Action Slot: Primary Action in Top Right Toolbar -->
+      <!-- Action Slot: Primary Action in Top Right Toolbar (+ Create Budgets) -->
       <template #actions>
         <button 
           type="button" 
@@ -375,7 +381,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
           @click="handleCreate"
         >
           <Plus :size="15" />
-          <span>Create Budget Plan</span>
+          <span>Create Budgets</span>
         </button>
       </template>
 
@@ -405,7 +411,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
         </div>
       </template>
 
-      <!-- Canonical ERP Table Listing -->
+      <!-- Canonical ERP Table Listing (Matching Image 1 & 4) -->
       <table class="erp-table">
         <thead>
           <tr>
@@ -419,36 +425,26 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
               />
             </th>
 
-            <!-- Name Column: Secondary color (#404040), Subtext code in tertiary (#737373) -->
+            <!-- Organization Units Column (Secondary color #404040 500) -->
             <th v-if="isColumnVisible('unit_name')" class="col-unit sortable" @click="currentSort = 'unit_name'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
               <div class="th-content">
-                <span>Organization Unit</span>
+                <span>Organization Units</span>
                 <ArrowUpDown v-if="currentSort === 'unit_name'" :size="12" class="sort-icon active-sort" />
               </div>
             </th>
 
-            <!-- Subsequent Columns strictly in Tertiary Color -->
-            <th v-if="isColumnVisible('fiscal_year')" class="col-fy sortable" @click="currentSort = 'fiscal_year'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+            <th v-if="isColumnVisible('entity_name')" class="col-entity">Owning Entity</th>
+            
+            <th v-if="isColumnVisible('period')" class="col-period sortable" @click="currentSort = 'fiscal_year'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
               <div class="th-content">
-                <span>Fiscal Year</span>
+                <span>Fiscal Period</span>
                 <ArrowUpDown v-if="currentSort === 'fiscal_year'" :size="12" class="sort-icon active-sort" />
               </div>
             </th>
 
-            <th v-if="isColumnVisible('entity_name')" class="col-entity">Owning Entity</th>
             <th v-if="isColumnVisible('approved_headcount')" class="col-capacity">Target Capacity</th>
-            <th v-if="isColumnVisible('annual_budget_amount')" class="col-budget">Annual Salary Budget</th>
-            <th v-if="isColumnVisible('budget_state_label')" class="col-status">Budget Status</th>
-            <th v-if="isColumnVisible('approved_by_name')" class="col-approver">Sanctioned By</th>
-            <th v-if="isColumnVisible('period')" class="col-period">Effective Period</th>
-
-            <th v-if="isColumnVisible('state')" class="col-state sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
-              <div class="th-content">
-                <span>State</span>
-                <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
-              </div>
-            </th>
-
+            <th v-if="isColumnVisible('approved_by_name')" class="col-approver">Approved By</th>
+            <th v-if="isColumnVisible('budget_state_label')" class="col-status">Status</th>
             <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>
           </tr>
         </thead>
@@ -458,7 +454,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
             :key="row.id"
             class="erp-row cursor-pointer"
             :class="{ 'row-selected': selectedRows.includes(row.id) }"
-            @click="router.push(`/hr/headcount-planning/create?id=${row.id}`)"
+            @click="router.push(`/hr/headcount-planning/create?id=${row.id}&role=${userRole}`)"
           >
             <td class="col-checkbox" @click.stop>
               <input 
@@ -470,102 +466,86 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
               />
             </td>
 
-            <!-- Organization Unit (Name First + Subtext Code) -->
+            <!-- Organization Units: Primary Secondary Color (#404040, Medium 500) -->
             <td v-if="isColumnVisible('unit_name')" class="col-unit">
-              <div class="unit-cell-stack">
-                <span class="table-name-primary">{{ row.unit_name }}</span>
-                <span class="table-code-subtext font-mono">{{ row.unit_code }}</span>
-              </div>
+              <span class="table-name-primary">{{ row.unit_name }}</span>
             </td>
 
-            <!-- Fiscal Year (String) -->
-            <td v-if="isColumnVisible('fiscal_year')" class="col-fy">
-              <span class="text-tertiary font-mono">{{ row.fiscal_year }}</span>
-            </td>
-
-            <!-- Owning Entity -->
+            <!-- Owning Entity: Tertiary Color (#737373) -->
             <td v-if="isColumnVisible('entity_name')" class="col-entity">
               <span class="text-tertiary">{{ row.entity_name }}</span>
             </td>
 
-            <!-- Target Capacity -->
+            <!-- Fiscal Period: Stacked (FY on Top in #404040, Dates below in #737373) -->
+            <td v-if="isColumnVisible('period')" class="col-period">
+              <div class="period-cell-stack">
+                <span class="period-fy font-medium text-slate-700">{{ row.fiscal_year }}</span>
+                <span class="period-dates text-tertiary text-xs">{{ row.period_start }} – {{ row.period_end }}</span>
+              </div>
+            </td>
+
+            <!-- Target Capacity: Tertiary Color with Seats suffix -->
             <td v-if="isColumnVisible('approved_headcount')" class="col-capacity">
-              <span class="text-tertiary font-medium text-slate-700">{{ row.approved_headcount }} Seats</span>
+              <span class="text-tertiary">{{ row.approved_headcount }} Seats</span>
             </td>
 
-            <!-- Annual Salary Budget -->
-            <td v-if="isColumnVisible('annual_budget_amount')" class="col-budget">
-              <span class="text-tertiary font-mono">{{ Number(row.annual_budget_amount).toLocaleString() }} {{ row.currency_id }}</span>
+            <!-- Approved By -->
+            <td v-if="isColumnVisible('approved_by_name')" class="col-approver">
+              <span class="text-tertiary">{{ row.approved_by_name || '-' }}</span>
             </td>
 
-            <!-- Budget Status Pill -->
+            <!-- Status Badge (Matching Image 1 & 4) -->
             <td v-if="isColumnVisible('budget_state_label')" class="col-status">
-              <span class="status-pill" :class="getBudgetStatusBadgeClass(row.budget_state_lookup_value_id)">
+              <span class="status-badge-pill" :class="getBudgetStatusBadgeClass(row.budget_state_lookup_value_id)">
                 {{ row.budget_state_label }}
               </span>
             </td>
 
-            <!-- Sanctioned By -->
-            <td v-if="isColumnVisible('approved_by_name')" class="col-approver">
-              <span class="text-tertiary">{{ row.approved_by_name || '—' }}</span>
-            </td>
-
-            <!-- Effective Period -->
-            <td v-if="isColumnVisible('period')" class="col-period">
-              <span class="text-tertiary font-mono text-xs">{{ row.period_start }} – {{ row.period_end }}</span>
-            </td>
-
-            <!-- State Pill -->
-            <td v-if="isColumnVisible('state')" class="col-state">
-              <span 
-                class="status-pill" 
-                :class="row.state === 'active' ? 'state-active' : 'state-inactive'"
-              >
-                {{ row.state === 'active' ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-
-            <!-- Actions -->
+            <!-- Actions: 3-Dots Dropdown Menu -->
             <td v-if="isColumnVisible('actions')" class="col-actions" @click.stop>
-              <div class="table-actions-cluster">
-                <!-- Quick Sanction / Approve Button for Draft budgets -->
+              <div class="actions-dropdown-wrap">
                 <button 
-                  v-if="row.budget_state_lookup_value_id === 'draft'"
                   type="button" 
-                  class="btn-row-sanction"
-                  @click="openApproveModal(row)"
-                  title="Approve / Sanction Plan"
+                  class="btn-action-dots"
+                  @click="toggleDropdown(row.id)"
+                  title="Actions"
                 >
-                  <ShieldCheck :size="13" />
-                  <span>Approve</span>
+                  <MoreVertical :size="15" />
                 </button>
 
-                <!-- Edit -->
-                <button 
-                  type="button" 
-                  class="btn-action-icon"
-                  @click="router.push(`/hr/headcount-planning/create?id=${row.id}`)"
-                  title="Edit Plan"
-                >
-                  <Edit2 :size="13" />
-                </button>
-
-                <!-- Delete -->
-                <button 
-                  type="button" 
-                  class="btn-action-icon text-rose-500 hover:text-rose-700"
-                  @click="handleDelete(row.id)"
-                  title="Delete Plan"
-                >
-                  <Trash2 :size="13" />
-                </button>
+                <div v-if="activeDropdownId === row.id" class="actions-menu-popup" @click.stop>
+                  <button 
+                    type="button" 
+                    class="action-menu-item"
+                    @click="router.push(`/hr/headcount-planning/create?id=${row.id}&role=approver`); activeDropdownId = null"
+                  >
+                    <Eye :size="13" />
+                    <span>View / Review</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="action-menu-item"
+                    @click="router.push(`/hr/headcount-planning/create?id=${row.id}&role=creator`); activeDropdownId = null"
+                  >
+                    <Edit2 :size="13" />
+                    <span>Edit Plan</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="action-menu-item text-danger"
+                    @click="handleDelete(row.id)"
+                  >
+                    <Trash2 :size="13" />
+                    <span>Delete</span>
+                  </button>
+                </div>
               </div>
             </td>
           </tr>
 
           <!-- Empty State -->
           <tr v-if="filteredPlans.length === 0">
-            <td colspan="11" class="table-empty-row">
+            <td colspan="8" class="table-empty-row">
               <div class="empty-state-box">
                 <p class="empty-title">No Headcount Budget Plans Found</p>
                 <p class="empty-subtitle">Adjust your filter options or create a new headcount budget plan.</p>
@@ -574,6 +554,38 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
           </tr>
         </tbody>
       </table>
+
+      <!-- Bottom Pagination Bar (Matching Image 1 & 4) -->
+      <template #pagination>
+        <div class="table-pagination-bar">
+          <div class="pagination-info">
+            <span>Showing 1 to {{ filteredPlans.length }} of {{ filteredPlans.length }} entries</span>
+          </div>
+
+          <div class="pagination-per-page">
+            <span class="per-page-label">Per Page:</span>
+            <select class="per-page-select">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <div class="pagination-controls">
+            <button type="button" class="btn-page-nav" disabled>
+              <span>&larr; Previous</span>
+            </button>
+            <button type="button" class="btn-page-number page-active">1</button>
+            <button type="button" class="btn-page-number">2</button>
+            <span class="page-ellipsis">...</span>
+            <button type="button" class="btn-page-number">9</button>
+            <button type="button" class="btn-page-number">10</button>
+            <button type="button" class="btn-page-nav">
+              <span>Next &rarr;</span>
+            </button>
+          </div>
+        </div>
+      </template>
     </AppDataTable>
 
     <!-- Floating Batch Bar (Rule 11) -->
@@ -649,7 +661,77 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   gap: 16px;
 }
 
-/* Primary Create Button (Rule 6: 8-10px radius) */
+/* Planning Header Row (Breadcrumbs + Role Switcher) */
+.planning-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.role-switcher-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-switcher-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #737373;
+}
+
+.role-pill-group {
+  display: inline-flex;
+  background-color: #f1f5f9;
+  padding: 2px;
+  border-radius: 8px;
+  gap: 2px;
+}
+
+.role-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.role-pill-btn.role-active {
+  background-color: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* KPI Grid for Approver (Rule 2: MetricCard Standard) */
+.planning-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 1024px) {
+  .planning-kpis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .planning-kpis-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Primary Create Action Button in Toolbar */
 .btn-primary-create {
   display: inline-flex;
   align-items: center;
@@ -660,25 +742,26 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s ease;
+  white-space: nowrap;
 }
+
 .btn-primary-create:hover {
   background-color: #09427d;
 }
 
-/* Filters Ribbon */
+/* Filter Row */
 .planning-filters-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
-  padding: 8px 16px;
+  padding: 12px 16px;
   background-color: #f8fafc;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
 }
 
 .filter-item {
@@ -689,131 +772,351 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .filter-label {
   font-size: 12px;
-  color: #737373;
   font-weight: 500;
+  color: #737373;
 }
 
 .filter-select {
-  height: 30px;
+  height: 32px;
   padding: 0 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: #404040;
   background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   outline: none;
 }
 
-/* Unit Cell Stack (Name First + Subtext Code) */
-.unit-cell-stack {
+/* ERP Table Styling */
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.erp-table th {
+  height: 34px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #737373;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+.erp-table th.sortable {
+  cursor: pointer;
+}
+
+.th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-icon {
+  color: #94a3b8;
+}
+
+.sort-icon.active-sort {
+  color: #0B529C;
+}
+
+.erp-table td {
+  height: 48px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #404040;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.erp-row:hover {
+  background-color: #f8fafc;
+}
+
+.row-selected {
+  background-color: #f0f7ff !important;
+}
+
+/* Col Widths */
+.col-checkbox {
+  width: 44px;
+  text-align: center;
+  padding: 8px 12px !important;
+}
+
+.col-unit {
+  min-width: 170px;
+}
+
+.col-entity {
+  min-width: 140px;
+}
+
+.col-period {
+  min-width: 160px;
+}
+
+.col-capacity {
+  min-width: 120px;
+}
+
+.col-approver {
+  min-width: 150px;
+}
+
+.col-status {
+  min-width: 100px;
+}
+
+.col-actions {
+  width: 60px;
+  text-align: center;
+}
+
+/* Cell Elements */
+.custom-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0B529C;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.table-name-primary {
+  font-weight: 500;
+  color: #404040;
+  font-size: 13.5px;
+}
+
+.text-tertiary {
+  color: #737373;
+}
+
+.period-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.period-fy {
+  font-size: 13px;
+  color: #404040;
+}
+
+.period-dates {
+  font-size: 11.5px;
+  color: #737373;
+}
+
+/* Status Badges (Image 1 & 4) */
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.badge-status-draft {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.badge-status-active {
+  background-color: #DCFCE7;
+  color: #16A34A;
+}
+
+.badge-status-approved {
+  background-color: #DBEAFE;
+  color: #2563EB;
+}
+
+.badge-status-closed {
+  background-color: #F1F5F9;
+  color: #64748B;
+}
+
+/* Action Dots & Menu */
+.actions-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-action-dots {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-dots:hover {
+  background-color: #f1f5f9;
+  color: #404040;
+}
+
+.actions-menu-popup {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 140px;
+  z-index: 50;
+  padding: 4px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.table-name-primary {
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.table-code-subtext {
-  font-size: 11px;
-  color: #737373;
-}
-
-.text-tertiary {
-  color: #737373;
-  font-size: 12.5px;
-}
-
-/* Budget Status Badges */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2.5px 9px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.status-badge-draft {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.status-badge-approved {
-  background-color: #faf5ff;
-  color: #7e22ce;
-}
-
-.status-badge-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-badge-closed {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-/* Action Buttons Cluster */
-.table-actions-cluster {
+.action-menu-item {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: #404040;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.action-menu-item:hover {
+  background-color: #f8fafc;
+}
+
+.action-menu-item.text-danger {
+  color: #ef4444;
+}
+
+.action-menu-item.text-danger:hover {
+  background-color: #fef2f2;
+}
+
+/* Pagination Bar (Matching Image 1 & 4) */
+.table-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12.5px;
+  color: #737373;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  color: #737373;
+}
+
+.pagination-per-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.per-page-select {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #404040;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-page-nav {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #404040;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-page-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page-number {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 12px;
+  color: #404040;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-page-number.page-active {
+  background-color: #0B529C;
+  color: #ffffff;
+  border-color: #0B529C;
+  font-weight: 500;
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+  color: #94a3b8;
+}
+
+/* Empty State */
+.table-empty-row {
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
 }
 
-.btn-row-sanction {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 8px;
-  background-color: #eff6ff;
-  color: #0B529C;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-row-sanction:hover {
-  background-color: #0B529C;
-  color: #ffffff;
+.empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
 }
 
-.btn-action-icon {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-action-icon:hover {
-  background-color: #f8fafc;
-  color: #0f172a;
+.empty-subtitle {
+  font-size: 12.5px;
+  color: #737373;
+  margin: 0;
 }
 
-/* Sanction Modal */
+/* Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -821,7 +1124,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 100;
   padding: 16px;
 }
 
@@ -835,17 +1138,18 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 }
 
 .modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
 }
 
 .modal-title {
   font-size: 15px;
   font-weight: 600;
   color: #404040;
+  margin: 0;
 }
 
 .btn-modal-close {
@@ -862,9 +1166,9 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .modal-guidance-text {
   font-size: 13px;
-  color: #404040;
+  color: #64748b;
+  margin: 0 0 16px 0;
   line-height: 1.5;
-  margin-bottom: 14px;
 }
 
 .modal-summary-panel {
@@ -875,11 +1179,11 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 14px;
 }
 
 .summary-line {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   font-size: 12.5px;
 }
@@ -892,50 +1196,24 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   color: #404040;
 }
 
-.form-field-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.field-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.form-input-simple {
-  height: 38px;
-  padding: 0 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #404040;
-  outline: none;
-}
-.form-input-simple:focus {
-  border-color: #0B529C;
-}
-
 .modal-footer {
+  padding: 12px 20px;
+  background-color: #fafafa;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding: 14px 20px;
-  border-top: 1px solid #f1f5f9;
-  background-color: #fafafa;
 }
 
 .btn-secondary-cancel {
   height: 36px;
   padding: 0 14px;
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background-color: #ffffff;
-  color: #404040;
   font-size: 13px;
-  font-weight: 500;
+  color: #404040;
   cursor: pointer;
 }
 
@@ -945,90 +1223,28 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  border: none;
-  border-radius: 8px;
   background-color: #0B529C;
   color: #ffffff;
+  border: none;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
 }
 
-/* Toast */
 .toast-popup {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 10px 18px;
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   font-size: 13px;
-  color: #404040;
-  z-index: 1100;
-}
-/* Table headers & sort */
-.col-checkbox {
-  width: 44px;
-  text-align: center;
-}
-
-.custom-checkbox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  accent-color: #0B529C;
-}
-
-.th-content {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-
-.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.sort-icon {
-  color: #94a3b8;
-}
-
-.active-sort {
-  color: #0B529C;
-}
-
-.row-selected {
-  background-color: #f8fafc !important;
-}
-
-.table-empty-row {
-  padding: 48px 16px !important;
-  text-align: center;
-}
-
-.empty-state-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.empty-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.empty-subtitle {
-  font-size: 12.5px;
-  color: #737373;
+  gap: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 100;
 }
 </style>

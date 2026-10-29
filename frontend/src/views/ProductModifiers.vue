@@ -372,9 +372,6 @@ const handleSave = () => {
               <span class="items-block-title">Applies To (Base Products)</span>
               <HelpCircle :size="13" class="text-gray-400 cursor-pointer" title="Each row links a base product (e.g. Pizza) to the added product this modifier brings (e.g. Cheese)." />
             </div>
-            <button type="button" @click="addItemRow" class="btn-add-row">
-              <Plus :size="14" /> Add Row
-            </button>
           </div>
 
           <table class="items-table">
@@ -412,6 +409,10 @@ const handleSave = () => {
               </tr>
             </tbody>
           </table>
+
+          <button type="button" @click="addItemRow" class="btn-add-row mt-2">
+            <Plus :size="13" /> <span>Add Row</span>
+          </button>
         </div>
       </div>
     </QuickCreateModal>

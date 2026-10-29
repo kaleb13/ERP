@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { X, Maximize2, Loader2 } from 'lucide-vue-next';
 
 interface Props {
   /** Controls modal visibility (use with v-model:show or v-model). */
-  show: boolean;
+  show?: boolean;
+  /** Backwards compatibility alias for show. */
+  isOpen?: boolean;
   /** Modal header title (e.g. 'Create Customer', 'Quick Add Position'). */
   title: string;
   /** Target route when "Expand Full Form" is clicked (optional if @expand is handled). */
@@ -14,6 +16,8 @@ interface Props {
   expandLabel?: string;
   /** Whether to show the bottom-left "Expand Full Form" button. Default is true. */
   showExpandButton?: boolean;
+  /** Backwards compatibility alias for showExpandButton. */
+  showExpand?: boolean;
   /** Save button label. Default is 'Save'. */
   saveLabel?: string;
   /** Cancel button label. Default is 'Cancel'. */
@@ -27,9 +31,12 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  show: undefined,
+  isOpen: undefined,
   expandRoute: undefined,
   expandLabel: 'Expand Full Form',
   showExpandButton: true,
+  showExpand: undefined,
   saveLabel: 'Save',
   cancelLabel: 'Cancel',
   loading: false,
@@ -37,22 +44,38 @@ const props = withDefaults(defineProps<Props>(), {
   width: 'md'
 });
 
+const isModalVisible = computed(() => {
+  if (props.show !== undefined) return props.show;
+  if (props.isOpen !== undefined) return props.isOpen;
+  return false;
+});
+
+const isExpandVisible = computed(() => {
+  if (props.showExpand !== undefined) return props.showExpand;
+  return props.showExpandButton;
+});
+
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void;
+  (e: 'update:isOpen', value: boolean): void;
   (e: 'save'): void;
   (e: 'cancel'): void;
+  (e: 'close'): void;
   (e: 'expand'): void;
 }>();
 
 const router = useRouter();
 const handleClose = () => {
   emit('update:show', false);
+  emit('update:isOpen', false);
   emit('cancel');
+  emit('close');
 };
 
 const handleExpand = () => {
   emit('expand');
   emit('update:show', false);
+  emit('update:isOpen', false);
   if (props.expandRoute) {
     router.push(props.expandRoute);
   }
@@ -65,7 +88,7 @@ const handleBackdropClick = (e: MouseEvent) => {
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && props.show) {
+  if (e.key === 'Escape' && isModalVisible.value) {
     handleClose();
   }
 };
@@ -80,7 +103,7 @@ onUnmounted(() => {
 
 // Lock body scroll when modal is open
 watch(
-  () => props.show,
+  isModalVisible,
   (isOpen) => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -95,7 +118,7 @@ watch(
   <Teleport to="body">
     <Transition name="modal-fade">
       <div 
-        v-if="show" 
+        v-if="isModalVisible" 
         class="quick-modal-backdrop" 
         @click="handleBackdropClick"
       >
@@ -129,7 +152,7 @@ watch(
             <div class="footer-left">
               <slot name="footer-left">
                 <button 
-                  v-if="showExpandButton" 
+                  v-if="isExpandVisible" 
                   type="button" 
                   class="btn-secondary-action" 
                   @click="handleExpand"

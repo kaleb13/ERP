@@ -104,11 +104,12 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'type', label: 'Unit Type', visible: true, sortable: true },
   { key: 'parent', label: 'Parent Unit', visible: true, sortable: true },
   { key: 'current_head', label: 'Current Manager', visible: true, sortable: false },
+  { key: 'state', label: 'State', visible: true, sortable: true },
   { key: 'org_structure', label: 'Blueprint', visible: false, sortable: true },
+  { key: 'order', label: 'Display Order', visible: false, sortable: true },
   { key: 'is_visible', label: 'Diagram Visibility', visible: false, sortable: true },
   { key: 'path', label: 'Path', visible: false, sortable: false },
   { key: 'effective_from', label: 'Effective Date', visible: false, sortable: true },
-  { key: 'state', label: 'State', visible: false, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
@@ -516,11 +517,12 @@ const handleBackToList = () => {
 // Quick Create Form State
 // Quick Create Form State (Zero Manual Code Input Standard)
 const quickForm = ref({
-  org_structure_code: 'CORP-2026',
+  org_structure_code: 'CORP - 2027',
   name: '',
   type: 'department',
   parent_id: '',
   head_employee_id: '',
+  order: 1,
   is_visible: true
 });
 
@@ -567,12 +569,12 @@ const handleSaveQuickUnit = () => {
     entity_id: 1,
     entity_name: 'Haleta Addis Ababa HQ',
     organization_unit_type_lookup_value_id: quickForm.value.type as OrgUnitType,
-    org_structure_id: quickForm.value.org_structure_code === 'CORP-2026' ? 1 : 2,
+    org_structure_id: 1,
     org_structure_code: quickForm.value.org_structure_code,
-    org_structure_name: quickForm.value.org_structure_code === 'CORP-2026' ? 'Corporate Blueprint 2026' : 'Regional Operations 2026',
+    org_structure_name: 'Corporate 2027',
     parent_id: parentUnit ? parentUnit.id : null,
     parent_name: parentUnit ? parentUnit.name : null,
-    order: 1,
+    order: Number(quickForm.value.order) || 1,
     is_visible: quickForm.value.is_visible,
     path: newPath,
     effective_from: new Date().toISOString().split('T')[0],
@@ -587,12 +589,12 @@ const handleSaveQuickUnit = () => {
 
   // Reset form
   quickForm.value = {
-    org_structure_code: 'CORP-2026',
-    code: '',
+    org_structure_code: 'CORP - 2027',
     name: '',
     type: 'department',
     parent_id: '',
     head_employee_id: '',
+    order: 1,
     is_visible: true
   };
 
@@ -788,15 +790,27 @@ onUnmounted(() => {
 
               <th v-if="isColumnVisible('current_head')" class="col-head">Current Manager</th>
 
+              <th v-if="isColumnVisible('state')" class="col-status sortable" @click="currentSort = 'state'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>State</span>
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
               <th v-if="isColumnVisible('org_structure')" class="col-struct">Org Blueprint</th>
+
+              <th v-if="isColumnVisible('order')" class="col-order sortable" @click="currentSort = 'order'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'">
+                <div class="th-content">
+                  <span>Display Order</span>
+                  <ArrowUpDown v-if="currentSort === 'order'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
 
               <th v-if="isColumnVisible('is_visible')" class="col-visible">Diagram Visible</th>
 
               <th v-if="isColumnVisible('path')" class="col-path">Path</th>
 
               <th v-if="isColumnVisible('effective_from')" class="col-effective">Effective Date</th>
-
-              <th v-if="isColumnVisible('state')" class="col-status">State</th>
 
               <th v-if="isColumnVisible('actions')" class="col-actions">Actions</th>
             </tr>
@@ -837,8 +851,18 @@ onUnmounted(() => {
                 <span class="text-tertiary">{{ item.current_head?.employee_name || '—' }}</span>
               </td>
 
+              <td v-if="isColumnVisible('state')" class="col-status">
+                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                  {{ item.state === 'active' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+
               <td v-if="isColumnVisible('org_structure')" class="col-struct">
                 <span class="struct-tag font-mono">{{ item.org_structure_code }}</span>
+              </td>
+
+              <td v-if="isColumnVisible('order')" class="col-order">
+                <span class="font-mono text-xs text-tertiary">{{ item.order }}</span>
               </td>
 
               <td v-if="isColumnVisible('is_visible')" class="col-visible">
@@ -856,10 +880,6 @@ onUnmounted(() => {
 
               <td v-if="isColumnVisible('effective_from')" class="col-effective">
                 <span class="font-mono text-xs">{{ item.effective_from }}</span>
-              </td>
-
-              <td v-if="isColumnVisible('state')" class="col-status">
-                <span class="status-pill status-active capitalize">{{ item.state }}</span>
               </td>
 
               <td v-if="isColumnVisible('actions')" class="col-actions" @click.stop>
@@ -1123,17 +1143,17 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- QUICK CREATE MODAL (Organization Unit Architecture) -->
+    <!-- QUICK CREATE MODAL (Organization Unit Architecture - Aligned 100% with Schema & Screenshot 1) -->
     <QuickCreateModal
       v-model:show="showQuickCreate"
       title="Create Organization Unit"
       saveLabel="Save"
-      :showExpandButton="true"
+      :showExpandButton="false"
       @save="handleSaveQuickUnit"
-      @expand="handleExpandToFullForm"
       @cancel="showQuickCreate = false"
     >
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Row 1: Unit Name * | Unit Type * -->
         <FormInput 
           label="Unit Name" 
           v-model="quickForm.name" 
@@ -1148,10 +1168,14 @@ onUnmounted(() => {
             { label: 'Division', value: 'division' },
             { label: 'Section', value: 'section' },
             { label: 'Region', value: 'region' },
-            { label: 'Branch', value: 'branch' }
+            { label: 'Branch', value: 'branch' },
+            { label: 'Unit', value: 'unit' },
+            { label: 'Team', value: 'team' }
           ]"
           required
         />
+
+        <!-- Row 2: Org Structure * | Unit Head Manager -->
         <FormSelect
           label="Org Structure"
           v-model="quickForm.org_structure_code"
@@ -1164,6 +1188,18 @@ onUnmounted(() => {
           required
         />
         <FormSelect
+          label="Unit Head Manager"
+          v-model="quickForm.head_employee_id"
+          placeholder="Select Head"
+          :options="[
+            { label: 'Dawit Tadesse', value: '4' },
+            { label: 'Raleh Girma', value: '5' },
+            { label: 'Solomon Mengistu', value: '6' }
+          ]"
+        />
+
+        <!-- Row 3: Parent Unit (Optional: root units have parent_id = null) | Order -->
+        <FormSelect
           label="Parent Unit"
           v-model="quickForm.parent_id"
           placeholder="Select Unit"
@@ -1171,21 +1207,15 @@ onUnmounted(() => {
             { label: '- (Root)', value: '' },
             ...units.map(u => ({ label: `${u.name}`, value: String(u.id) }))
           ]"
-          required
         />
-        <div class="md:col-span-1">
-          <FormSelect
-            label="Unit Head Manager"
-            v-model="quickForm.head_employee_id"
-            placeholder="Select Head"
-            :options="[
-              { label: 'Dawit Tadesse', value: '4' },
-              { label: 'Raleh Girma', value: '5' },
-              { label: 'Solomon Mengistu', value: '6' }
-            ]"
-          />
-        </div>
-        <div class="md:col-span-2 pt-2">
+        <FormInput
+          label="Order"
+          type="number"
+          v-model.number="quickForm.order"
+        />
+
+        <!-- Row 4: Diagram Visibility Checkbox -->
+        <div class="md:col-span-2 pt-1">
           <FormCheckbox
             label="Show in Organization Diagrams"
             description="When enabled, this operational unit is rendered visually on top-level corporate organizational charts and department reporting trees."

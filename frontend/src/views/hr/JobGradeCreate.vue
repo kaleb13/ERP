@@ -499,8 +499,8 @@ onMounted(() => {
               class="btn-add-row" 
               @click="handleAddStep"
             >
-              <Plus :size="14" />
-              <span>Add Step</span>
+              <Plus :size="13" />
+              <span>Add Row</span>
             </button>
           </div>
         </div>

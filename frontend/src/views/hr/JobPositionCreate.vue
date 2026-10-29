@@ -5,7 +5,8 @@ import {
   Monitor, ChevronRight, X, Briefcase, GraduationCap,
   Plus, Trash2, Calendar, ChevronDown, Columns,
   List, Table, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo, Maximize2, Check, ShieldAlert, Award
+  Undo, Redo, Maximize2, Check, ShieldAlert, Award,
+  ArrowUp, ArrowDown, Copy
 } from 'lucide-vue-next';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -376,14 +377,112 @@ const handleBatchDeleteReqs = () => {
   showToast('Selected requirements deleted.');
 };
 
+const activeReqIndex = ref<number>(-1);
+
 const openReqModal = (row: PositionRequirementRow) => {
   activeReqRow.value = row;
+  activeReqIndex.value = requirementsList.value.findIndex(r => r.id === row.id);
   showReqModal.value = true;
 };
 
 const closeReqModal = () => {
   showReqModal.value = false;
   activeReqRow.value = null;
+  activeReqIndex.value = -1;
+};
+
+const reqModalTitle = computed(() => {
+  return `Position Requirement (Row ${activeReqIndex.value + 1})`;
+});
+
+const isFirstReqRow = computed(() => activeReqIndex.value <= 0);
+const isLastReqRow = computed(() => activeReqIndex.value >= requirementsList.value.length - 1);
+
+const deleteModalReqRow = () => {
+  if (activeReqIndex.value < 0 || activeReqIndex.value >= requirementsList.value.length) return;
+  requirementsList.value.splice(activeReqIndex.value, 1);
+  if (requirementsList.value.length === 0) {
+    closeReqModal();
+  } else {
+    activeReqIndex.value = Math.min(activeReqIndex.value, requirementsList.value.length - 1);
+    activeReqRow.value = requirementsList.value[activeReqIndex.value];
+  }
+  showToast('Row deleted.');
+};
+
+const moveReqRowUp = () => {
+  const idx = activeReqIndex.value;
+  if (idx <= 0) return;
+  const temp = requirementsList.value[idx];
+  requirementsList.value[idx] = requirementsList.value[idx - 1];
+  requirementsList.value[idx - 1] = temp;
+  activeReqIndex.value = idx - 1;
+};
+
+const moveReqRowDown = () => {
+  const idx = activeReqIndex.value;
+  if (idx >= requirementsList.value.length - 1) return;
+  const temp = requirementsList.value[idx];
+  requirementsList.value[idx] = requirementsList.value[idx + 1];
+  requirementsList.value[idx + 1] = temp;
+  activeReqIndex.value = idx + 1;
+};
+
+const duplicateModalReqRow = () => {
+  const idx = activeReqIndex.value;
+  if (!activeReqRow.value) return;
+  const clone = JSON.parse(JSON.stringify(activeReqRow.value));
+  clone.id = Date.now();
+  requirementsList.value.splice(idx + 1, 0, clone);
+  activeReqIndex.value = idx + 1;
+  activeReqRow.value = clone;
+  showToast('Row duplicated.');
+};
+
+const insertReqRowAbove = () => {
+  const idx = activeReqIndex.value;
+  const newRow: PositionRequirementRow = {
+    id: Date.now(),
+    position_id: 0,
+    requirement_type: 'skill',
+    required_lookup_value_id: 1,
+    min_score: 3.0,
+    is_mandatory: true,
+    weight: 10.0,
+    description: '',
+    min_qualification_level: '',
+    field_of_study_id: null,
+    min_gpa: null,
+    awarding_institution_id: null,
+    validity_years: null
+  };
+  requirementsList.value.splice(idx, 0, newRow);
+  activeReqIndex.value = idx;
+  activeReqRow.value = newRow;
+  showToast('New row inserted above.');
+};
+
+const insertReqRowBelow = () => {
+  const idx = activeReqIndex.value;
+  const newRow: PositionRequirementRow = {
+    id: Date.now(),
+    position_id: 0,
+    requirement_type: 'skill',
+    required_lookup_value_id: 1,
+    min_score: 3.0,
+    is_mandatory: true,
+    weight: 10.0,
+    description: '',
+    min_qualification_level: '',
+    field_of_study_id: null,
+    min_gpa: null,
+    awarding_institution_id: null,
+    validity_years: null
+  };
+  requirementsList.value.splice(idx + 1, 0, newRow);
+  activeReqIndex.value = idx + 1;
+  activeReqRow.value = newRow;
+  showToast('New row inserted below.');
 };
 
 // Total scoring weight
@@ -809,7 +908,7 @@ onMounted(() => {
             </table>
           </div>
 
-          <!-- Bottom Action: + Add Requirement -->
+          <!-- Bottom Action: + Add Row -->
           <div class="add-row-action-bar">
             <button 
               type="button" 
@@ -817,7 +916,7 @@ onMounted(() => {
               @click="addRequirementRow"
             >
               <Plus :size="13" />
-              <span>Add Requirement</span>
+              <span>Add Row</span>
             </button>
           </div>
         </div>
@@ -834,7 +933,7 @@ onMounted(() => {
     <div v-if="showReqModal && activeReqRow" class="row-modal-overlay" @click="closeReqModal">
       <div class="row-modal-container" @click.stop>
         <div class="row-modal-header">
-          <h3 class="row-modal-title">Position Requirement Specification</h3>
+          <h3 class="row-modal-title">{{ reqModalTitle }}</h3>
           <button type="button" class="btn-modal-close" @click="closeReqModal">
             <X :size="16" />
           </button>
@@ -983,9 +1082,53 @@ onMounted(() => {
         </div>
 
         <div class="row-modal-footer">
-          <button type="button" class="btn-done" @click="closeReqModal">
-            Done
+          <button type="button" class="btn-modal-delete" @click="deleteModalReqRow">
+            Delete
           </button>
+          <div class="row-modal-actions-right">
+            <button 
+              type="button" 
+              class="btn-modal-ctrl-icon" 
+              :disabled="isLastReqRow" 
+              @click="moveReqRowDown" 
+              title="Move Down"
+            >
+              <ArrowDown :size="15" />
+            </button>
+            <button 
+              type="button" 
+              class="btn-modal-ctrl-icon" 
+              :disabled="isFirstReqRow" 
+              @click="moveReqRowUp" 
+              title="Move Up"
+            >
+              <ArrowUp :size="15" />
+            </button>
+            <button 
+              type="button" 
+              class="btn-modal-ctrl-action" 
+              @click="duplicateModalReqRow"
+            >
+              <Copy :size="13" />
+              <span>Duplicate Row</span>
+            </button>
+            <button 
+              type="button" 
+              class="btn-modal-ctrl-action" 
+              @click="insertReqRowAbove"
+            >
+              <Plus :size="13" />
+              <span>Insert Above</span>
+            </button>
+            <button 
+              type="button" 
+              class="btn-modal-ctrl-action" 
+              @click="insertReqRowBelow"
+            >
+              <Plus :size="13" />
+              <span>Insert Below</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1544,26 +1687,75 @@ onMounted(() => {
 
 .row-modal-footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   padding: 14px 24px;
-  border-top: 1px solid #e2e8f0;
   background-color: #f8fafc;
+  border-top: 1px solid #f1f5f9;
 }
 
-.btn-done {
-  height: 34px;
-  padding: 0 20px;
-  background-color: #0B529C;
+.btn-modal-delete {
+  background-color: #ef4444;
   color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
+  padding: 8px 18px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-modal-delete:hover {
+  background-color: #dc2626;
 }
 
-.btn-done:hover {
-  background-color: #09427d;
+.row-modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-modal-ctrl-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-modal-ctrl-icon:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.btn-modal-ctrl-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-modal-ctrl-action {
+  height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-modal-ctrl-action:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .field-helper-hint {
