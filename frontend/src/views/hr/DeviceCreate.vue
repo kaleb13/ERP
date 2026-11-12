@@ -5,6 +5,8 @@ import {
   X, Save, MapPin, Navigation, CheckCircle2
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 
@@ -151,22 +153,21 @@ const radiusOptions = [50, 100, 150, 250, 500, 1000];
   <div class="device-create-page">
     <!-- ═══ TOP BAR NAVIGATION (AGENTS.md Rule 4 Standard) ═══ -->
     <div class="top-nav-bar">
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems">
+        <template #badge>
+          <SaveStateBadge :isSaved="isSaved" />
+        </template>
+      </AppBreadcrumb>
 
       <div class="top-actions-cluster">
-        <span class="save-status-pill" :class="isSaved ? 'pill-saved' : 'pill-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <AppButton variant="outline" size="sm" @click="handleClearForm">
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
-        <button type="button" class="btn-secondary-action" @click="handleClearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-
-        <button type="button" class="btn-primary-action" @click="executeSave">
-          <Save :size="15" />
-          <span>Save Terminal</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="executeSave">
+          Save Terminal
+        </AppButton>
       </div>
     </div>
 
@@ -362,8 +363,8 @@ const radiusOptions = [50, 100, 150, 250, 500, 1000];
 .device-create-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

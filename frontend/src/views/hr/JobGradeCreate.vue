@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, Award, Sliders,
-  Plus, Trash2, Calendar, ChevronDown, Columns,
-  Maximize2, Check, Calculator, Sparkles, Layers,
-  List, Table, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo
-} from 'lucide-vue-next';
+import {
+  X, Award, ChevronDown, Calculator,
+  Layers
+} from 'lucide-vue-next';;
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
+import DynamicSubTable, { type DynamicTableColumn } from '../../components/DynamicSubTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = [
+  { label: 'Job Grades & Pay Scales', to: '/hr/job-grades' },
+  { label: 'Create Job Grade' }
+];
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -62,6 +69,53 @@ const stepsList = ref<GradeStepRow[]>([]);
 const selectedStepIds = ref<number[]>([]);
 
 // ─── Sub-table Selection Management ───
+// ─── Discrete Step Ladder Sub-table Specification (Figma Node 5104:71791) ───
+const stepTableColumns: DynamicTableColumn[] = [
+  {
+    key: 'step_number',
+    label: 'Step',
+    width: '90px',
+    tooltipTitle: 'Scale Step',
+    tooltipDesc: 'Ordinal tier/step index within this job grade salary range.'
+  },
+  {
+    key: 'amount',
+    label: 'Monthly Amount (ETB)',
+    minWidth: '180px',
+    tooltipTitle: 'Monthly Base Pay',
+    tooltipDesc: 'Base monthly gross salary entitlement assigned to employees on this step.'
+  },
+  {
+    key: 'increment_years',
+    label: 'Wait Time (Years)',
+    minWidth: '140px',
+    tooltipTitle: 'Time-in-Step Service',
+    tooltipDesc: 'Minimum years of satisfactory service required before progression to next step.'
+  },
+  {
+    key: 'description',
+    label: 'Description / Purpose',
+    minWidth: '220px',
+    tooltipTitle: 'Step Designation',
+    tooltipDesc: 'Administrative designation (e.g. Entry Step, Senior Scale Step, Ceiling Step).'
+  }
+];
+
+const newStepFactory = () => {
+  const nextNo = stepsList.value.length + 1;
+  const lastAmt = stepsList.value.length > 0
+    ? stepsList.value[stepsList.value.length - 1].amount
+    : (Number(form.value.base_salary) || 5000);
+  const inc = Math.round(((Number(form.value.ceiling_salary) || 12000) - (Number(form.value.base_salary) || 5000)) / 4);
+  return {
+    id: Date.now() + Math.random(),
+    step_number: nextNo,
+    amount: Math.min(Number(form.value.ceiling_salary) || 12000, lastAmt + inc),
+    increment_years: nextNo === 1 ? null : 2,
+    description: nextNo === 1 ? 'Entry Step' : `Scale Step ${nextNo}`
+  };
+};
+
 const isAllStepsSelected = computed(() => {
   return stepsList.value.length > 0 && stepsList.value.every(s => selectedStepIds.value.includes(s.id));
 });
@@ -211,34 +265,29 @@ onMounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/job-grades" class="bc-link">Job Grades & Pay Scales</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Job Grade</span>
-          <SaveStateBadge :isSaved="isSaved" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
-        <button 
-          type="button" 
-          class="btn-clear-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="clearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button 
-          type="button" 
-          class="btn-save-action" 
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -327,56 +376,14 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Grade Scope & Definition Rich Text Editor (Mandatory Rich Text Rule) -->
+        <!-- Grade Scope & Definition Rich Text Editor -->
         <div class="biography-section mt-4">
-          <label class="info-field-label">Grade Scope &amp; Definition</label>
-          <div class="rich-editor-container">
-            <!-- Toolbar -->
-            <div class="editor-toolbar">
-              <div class="toolbar-dropdown">
-                <span>Paragraph</span>
-                <ChevronDown :size="12" />
-              </div>
-              <div class="toolbar-divider"></div>
-              <div class="toolbar-dropdown">
-                <span>Font Type</span>
-                <ChevronDown :size="12" />
-              </div>
-              <div class="toolbar-divider"></div>
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-icon-btn" title="List"><List :size="14" /><ChevronDown :size="10" /></button>
-                <button type="button" class="editor-icon-btn font-bold" title="Bold">B</button>
-                <button type="button" class="editor-icon-btn italic" title="Italic">I</button>
-                <button type="button" class="editor-icon-btn underline" title="Underline">U</button>
-                <button type="button" class="editor-icon-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="editor-icon-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="editor-icon-btn" title="Table"><Table :size="14" /></button>
-              </div>
-              <div class="toolbar-divider"></div>
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-color-box" title="Text Color"></button>
-                <button type="button" class="editor-icon-btn" title="Insert Link"><LinkIcon :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Insert Image"><ImageIcon :size="14" /></button>
-              </div>
-              <div class="toolbar-icon-group ml-auto">
-                <button type="button" class="editor-icon-btn" title="Undo"><Undo :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Redo"><Redo :size="14" /></button>
-              </div>
-            </div>
-
-            <!-- Text Area -->
-            <textarea
-              v-model="form.description"
-              rows="5"
-              class="editor-textarea"
-            ></textarea>
-
-            <!-- Footer Bar with Character Counter -->
-            <div class="editor-footer">
-              <span class="char-count-pill">{{ form.description.length }} / 5,000 Characters</span>
-              <div class="editor-resize-handle">//</div>
-            </div>
-          </div>
+          <FormRichText
+            v-model="form.description"
+            label="Grade Scope & Definition"
+            placeholder="Define the scope, expectations, and core criteria for this job grade..."
+            :max-length="5000"
+          />
         </div>
       </div>
     </div>
@@ -412,112 +419,102 @@ onMounted(() => {
         </div>
 
         <div v-show="isStepsSectionOpen" class="accordion-body">
-          <div class="child-subtable-container">
-            <table class="child-table">
-              <thead>
-                <tr>
-                  <th class="child-th child-th-check">
-                    <input 
-                      type="checkbox" 
-                      class="custom-checkbox" 
-                      :checked="isAllStepsSelected" 
-                      @change="toggleSelectAllSteps" 
-                    />
-                  </th>
-                  <th class="child-th child-th-no">#</th>
-                  <th class="child-th child-th-step">Step Number</th>
-                  <th class="child-th child-th-amount">Monthly Amount (ETB)</th>
-                  <th class="child-th child-th-wait">Wait Time (Years)</th>
-                  <th class="child-th child-th-desc">Description / Purpose</th>
-                  <th class="child-th child-th-action">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr 
-                  v-for="(step, idx) in stepsList" 
-                  :key="step.id" 
-                  class="child-tr"
-                  :class="{ 'row-selected': selectedStepIds.includes(step.id) }"
-                >
-                  <td class="child-td child-td-check">
-                    <input 
-                      type="checkbox" 
-                      class="custom-checkbox" 
-                      :checked="selectedStepIds.includes(step.id)" 
-                      @change="toggleStepSelection(step.id)" 
-                    />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td child-td-step">
-                    <span class="font-semibold text-slate-800">Step {{ step.step_number }}</span>
-                  </td>
-                  <td class="child-td child-td-amount">
-                    <input 
-                      type="number" 
-                      v-model.number="step.amount" 
-                      class="child-inline-input font-mono" 
-                    />
-                  </td>
-                  <td class="child-td child-td-wait">
-                    <input 
-                      type="number" 
-                      v-model.number="step.increment_years" 
-                      class="child-inline-input"
-                      placeholder="Entry" 
-                    />
-                  </td>
-                  <td class="child-td child-td-desc">
-                    <input 
-                      type="text" 
-                      v-model="step.description" 
-                      class="child-inline-input" 
-                    />
-                  </td>
-                  <td class="child-td child-td-action">
-                    <button 
-                      type="button" 
-                      class="btn-row-delete" 
-                      @click="handleRemoveStep(idx)" 
-                      title="Delete Step"
-                    >
-                      <Trash2 :size="14" />
-                    </button>
-                  </td>
-                </tr>
+          <DynamicSubTable
+            v-model="stepsList"
+            :columns="stepTableColumns"
+            entity-name="Pay Scale Step"
+            entity-name-plural="Pay Scale Steps"
+            empty-text="No discrete steps defined yet. Click Add Row or Auto-Distribute to populate."
+            :new-row-factory="newStepFactory"
+          >
+            <!-- Custom Cell for step_number -->
+            <template #step_number="{ index }">
+              <span class="font-semibold text-slate-800">Step {{ index + 1 }}</span>
+            </template>
 
-                <tr v-if="stepsList.length === 0">
-                  <td colspan="7" class="child-td-empty">
-                    <span>No discrete steps defined yet. Click below or Auto-Distribute to populate.</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- Custom Cell for amount -->
+            <template #amount="{ row }">
+              <input 
+                type="number" 
+                v-model.number="row.amount" 
+                class="cell-inline-input font-mono text-right" 
+              />
+            </template>
 
-            <!-- Add Row Button directly beneath table -->
-            <button 
-              type="button" 
-              class="btn-add-row" 
-              @click="handleAddStep"
-            >
-              <Plus :size="13" />
-              <span>Add Row</span>
-            </button>
-          </div>
+            <!-- Custom Cell for increment_years -->
+            <template #increment_years="{ row }">
+              <input 
+                type="number" 
+                v-model.number="row.increment_years" 
+                class="cell-inline-input"
+                placeholder="Entry" 
+              />
+            </template>
+
+            <!-- Custom Cell for description -->
+            <template #description="{ row }">
+              <input 
+                type="text" 
+                v-model="row.description" 
+                class="cell-inline-input" 
+              />
+            </template>
+
+            <!-- Expand Modal Slot (Figma 5104:71792 specification) -->
+            <template #expand-modal="{ row, index }">
+              <div class="modal-grid-2">
+                <div class="modal-form-group">
+                  <label class="modal-form-label">Step Number</label>
+                  <input 
+                    type="text" 
+                    :value="`Step ${index + 1}`" 
+                    class="modal-form-input bg-slate-50 text-slate-600 font-semibold" 
+                    readonly 
+                  />
+                </div>
+
+                <div class="modal-form-group">
+                  <label class="modal-form-label">Monthly Gross Amount (ETB) *</label>
+                  <input 
+                    type="number" 
+                    v-model.number="row.amount" 
+                    class="modal-form-input font-mono" 
+                    min="0"
+                  />
+                </div>
+
+                <div class="modal-form-group">
+                  <label class="modal-form-label">Wait Time (Years in Step)</label>
+                  <input 
+                    type="number" 
+                    v-model.number="row.increment_years" 
+                    class="modal-form-input" 
+                    min="0"
+                    placeholder="Entry Step (0)"
+                  />
+                </div>
+
+                <div class="modal-form-group">
+                  <label class="modal-form-label">Step Description & Purpose</label>
+                  <input 
+                    type="text" 
+                    v-model="row.description" 
+                    class="modal-form-input" 
+                    placeholder="e.g. Mid-level progression step"
+                  />
+                </div>
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
     </div>
-
-    <!-- Floating Batch Action Bar -->
-    <TableFloatingBar 
-      :count="selectedStepIds.length" 
-      @delete="handleBatchDeleteSteps" 
-    />
   </div>
 </template>
 
 <style scoped>
 .job-grade-create-page {
-  padding: 20px 32px 64px 32px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -700,7 +697,7 @@ onMounted(() => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .matrix-attached-info-wrap {

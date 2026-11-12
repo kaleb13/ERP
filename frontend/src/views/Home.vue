@@ -4,21 +4,15 @@ import { useRouter } from 'vue-router';
 import { 
   Box, ShoppingCart, DollarSign, ShoppingBag, Users, Tag, 
   Settings, Sliders, Building2, Search, Maximize, Moon, Languages, 
-  Bell, ChevronDown, Check, Lock, X, Laptop, Star, ShieldAlert
+  Bell, ChevronDown, Check, Lock, X, Laptop, ShieldAlert, Receipt
 } from 'lucide-vue-next';
 import BaseTabs from '../components/BaseTabs.vue';
+import AppButton from '../components/AppButton.vue';
 
 const router = useRouter();
 
 // Active tab filter
 const activeFilter = ref<'all' | 'subscribed' | 'unsubscribed'>('all');
-
-// Filter tabs for the toolbar
-const filterTabs: { id: 'all' | 'subscribed' | 'unsubscribed'; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'subscribed', label: 'Subscribed' },
-  { id: 'unsubscribed', label: 'Not Subscribed' }
-];
 
 // Search query
 const searchQuery = ref('');
@@ -35,7 +29,7 @@ const showToast = (message: string, type: 'success' | 'info' | 'warning' = 'succ
   }, 4000);
 };
 
-// Modal for unsubscribed modules
+// Modal for locked modules
 const isModalOpen = ref(false);
 const selectedModule = ref<{ title: string; desc: string } | null>(null);
 
@@ -49,135 +43,142 @@ const closeUpgradeModal = () => {
   selectedModule.value = null;
 };
 
-// Module list matching the design mockup exactly
-// Module list matching the design mockup exactly
+// Module list with distinct colors for each module
 const sections = ref([
   {
-    title: 'Inventory Management',
-    id: 'inventory_management',
+    title: 'Operations & Supply Chain',
+    id: 'operations_supply',
     modules: [
       { 
         id: 'inventory', 
         title: 'Inventory', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
+        desc: 'Tracks stock levels, movements, and warehouse operations across facilities.', 
         icon: Box, 
-        iconColor: 'var(--primitive-color-blue-600)', 
-        iconBg: 'var(--primitive-color-blue-50)', 
+        iconColor: '#0B529C', // Brand Blue (kept for inventory)
+        iconBg: '#EFF6FF', 
         subscribed: true, 
-        route: '/dashboard' 
+        route: '/inventory/stock-summary' 
       },
       { 
         id: 'procurement', 
         title: 'Procurement', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
+        desc: 'Manage spend categories, purchase methods, requisitions, sourcing, and supplier compliance.', 
         icon: ShoppingCart, 
-        iconColor: 'var(--primitive-color-neutral-400)', 
-        iconBg: 'var(--primitive-color-neutral-100)', 
-        subscribed: false 
+        iconColor: '#009966', // Emerald Green (distinct color for procurement)
+        iconBg: '#ECFDF5', 
+        subscribed: true,
+        route: '/procurement/categories'
       },
       { 
-        id: 'accounting_inv', 
-        title: 'Accounting', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
-        icon: DollarSign, 
-        iconColor: 'var(--primitive-color-purple-500)', 
-        iconBg: 'var(--primitive-color-purple-50)', 
-        subscribed: true 
+        id: 'buying', 
+        title: 'Buying', 
+        desc: 'Manage supplier relationships, purchase requests, RFQs, and purchase orders.', 
+        icon: Tag, 
+        iconColor: '#0D9488', // Teal
+        iconBg: '#F0FDFA', 
+        subscribed: false 
       }
     ]
   },
   {
-    title: 'Accounting Management',
-    id: 'accounting_management',
+    title: 'Workforce & Corporate Governance',
+    id: 'workforce_governance',
     modules: [
-      { 
-        id: 'finance', 
-        title: 'Finance', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
-        icon: DollarSign, 
-        iconColor: 'var(--primitive-color-red-500)', 
-        iconBg: 'var(--primitive-color-red-50)', 
-        subscribed: true 
-      },
-      { 
-        id: 'sales', 
-        title: 'Sales', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
-        icon: ShoppingBag, 
-        iconColor: 'var(--primitive-color-orange-500)', 
-        iconBg: 'var(--primitive-color-orange-50)', 
-        subscribed: true,
-        route: '/sales'
-      },
       { 
         id: 'hr', 
         title: 'Human Resources', 
         desc: 'Manage organizational structure, job architecture, positions, and workforce movements.', 
         icon: Users, 
-        iconColor: 'var(--primitive-color-indigo-600)', 
-        iconBg: 'var(--primitive-color-indigo-50)', 
+        iconColor: '#7C3AED', // Vibrant Violet / Purple (distinct color for HR)
+        iconBg: '#F5F3FF', 
         subscribed: true,
         route: '/hr/employees' 
-      }
-    ]
-  },
-  {
-    title: 'Purchasing & Procurement',
-    id: 'purchasing_procurement',
-    modules: [
-      { 
-        id: 'buying', 
-        title: 'Buying', 
-        desc: 'Manage supplier relationships, purchase requests, and procurement.', 
-        icon: Tag, 
-        iconColor: 'var(--primitive-color-emerald-500)', 
-        iconBg: 'var(--primitive-color-emerald-50)', 
-        subscribed: true,
-        route: '/buying'
       },
       { 
-        id: 'selling', 
-        title: 'Selling', 
-        desc: 'Tracks stock levels, movements, and warehouse operations...', 
-        icon: ShoppingBag, 
-        iconColor: 'var(--primitive-color-neutral-400)', 
-        iconBg: 'var(--primitive-color-neutral-100)', 
+        id: 'company_setup', 
+        title: 'Company Setup', 
+        desc: 'Configure business entities, branches, fiscal calendars, and organizational hierarchies.', 
+        icon: Building2, 
+        iconColor: '#525252', // Slate
+        iconBg: '#F5F5F5', 
         subscribed: false 
       }
     ]
   },
   {
-    title: 'Customizations',
-    id: 'customizations',
+    title: 'Sales & Financial Management',
+    id: 'sales_financial',
+    modules: [
+      { 
+        id: 'sales', 
+        title: 'Sales', 
+        desc: 'Customer accounts, pricing agreements, quotations, sales pipelines, and customer segments.', 
+        icon: ShoppingBag, 
+        iconColor: '#FA7014', // Brand Orange
+        iconBg: '#FFF7ED', 
+        subscribed: false 
+      },
+      { 
+        id: 'finance', 
+        title: 'Finance & Accounting', 
+        desc: 'Financial reporting, general ledger, cash flows, and expense allocations.', 
+        icon: DollarSign, 
+        iconColor: '#E7000B', // Crimson Red
+        iconBg: '#FEF2F2', 
+        subscribed: false 
+      },
+      { 
+        id: 'selling', 
+        title: 'Selling & POS', 
+        desc: 'Point-of-sale checkout, customer receipts, credit notes, and counter operations.', 
+        icon: Receipt, 
+        iconColor: '#D97706', // Amber
+        iconBg: '#FEF3C7', 
+        subscribed: false 
+      }
+    ]
+  },
+  {
+    title: 'Platform & Configuration',
+    id: 'platform_config',
     isCustom: true,
     modules: [
       { 
         id: 'sys_config', 
         title: 'System Config', 
-        desc: 'The control tower of the entire platform', 
+        desc: 'The control tower: access controls, security roles, permissions, and audit logs.', 
         icon: Sliders, 
-        iconColor: 'var(--primitive-color-neutral-500)', 
-        iconBg: 'var(--primitive-color-neutral-100)' 
-      },
-      { 
-        id: 'company_setup', 
-        title: 'Company Setup', 
-        desc: 'Where businesses are shaped and structured', 
-        icon: Building2, 
-        iconColor: 'var(--primitive-color-neutral-500)', 
-        iconBg: 'var(--primitive-color-neutral-100)',
-        route: '/company-setup'
+        iconColor: '#0284C7', // Sky Blue
+        iconBg: '#F0F9FF',
+        subscribed: false
       },
       { 
         id: 'settings', 
         title: 'Settings', 
-        desc: 'Explore settings to personalize your experience', 
+        desc: 'System customization, application parameters, themes, and notification rules.', 
         icon: Settings, 
-        iconColor: 'var(--primitive-color-neutral-500)', 
-        iconBg: 'var(--primitive-color-neutral-100)' 
+        iconColor: '#475569', // Charcoal
+        iconBg: '#F1F5F9',
+        subscribed: false
       }
     ]
   }
+]);
+
+// Summary metrics
+const totalCount = computed(() => {
+  return sections.value.reduce((acc, s) => acc + s.modules.length, 0);
+});
+
+const subscribedCount = computed(() => {
+  return sections.value.reduce((acc, s) => acc + s.modules.filter(m => m.subscribed).length, 0);
+});
+
+// Filter tabs for toolbar
+const filterTabs = computed(() => [
+  { id: 'all' as const, label: `All (${totalCount.value})` },
+  { id: 'subscribed' as const, label: `Subscribed (${subscribedCount.value})` },
+  { id: 'unsubscribed' as const, label: `Locked Modules (${totalCount.value - subscribedCount.value})` }
 ]);
 
 // Filtered sections and modules
@@ -186,12 +187,10 @@ const filteredSections = computed(() => {
     let filteredMods = section.modules;
 
     // Filter by tab
-    if (!section.isCustom) {
-      if (activeFilter.value === 'subscribed') {
-        filteredMods = filteredMods.filter(m => m.subscribed);
-      } else if (activeFilter.value === 'unsubscribed') {
-        filteredMods = filteredMods.filter(m => !m.subscribed);
-      }
+    if (activeFilter.value === 'subscribed') {
+      filteredMods = filteredMods.filter(m => m.subscribed);
+    } else if (activeFilter.value === 'unsubscribed') {
+      filteredMods = filteredMods.filter(m => !m.subscribed);
     }
 
     // Filter by search query
@@ -212,23 +211,15 @@ const filteredSections = computed(() => {
 
 // Counts for categories
 const getCategoryCountText = (section: any) => {
-  if (section.isCustom) return '';
   const total = section.modules.length;
   const subscribed = section.modules.filter((m: any) => m.subscribed).length;
-  // If fully filtered, just show the current matches ratio or mockup standard
-  const initialTotal = sections.value.find(s => s.id === section.id)?.modules.length || total;
-  const initialSubscribed = sections.value.find(s => s.id === section.id)?.modules.filter(m => m.subscribed).length || subscribed;
-  return `${initialSubscribed}/${initialTotal}`;
+  return `${subscribed}/${total} unlocked`;
 };
 
 // Handle module card click
 const handleModuleClick = (mod: any) => {
-  if (mod.route) {
+  if (mod.subscribed && mod.route) {
     router.push(mod.route);
-  } else if (mod.subscribed) {
-    showToast(`Launching ${mod.title} Module... Welcome!`, 'success');
-  } else if (mod.isCustomization) {
-    showToast(`Opening ${mod.title}...`, 'info');
   } else {
     openUpgradeModal(mod);
   }
@@ -247,15 +238,15 @@ const handleModuleClick = (mod: any) => {
           </div>
           <div class="brand-info-portal">
             <h1 class="brand-title-portal">Haleta ERP</h1>
-            <p class="brand-subtitle-portal">Admin Dashboard</p>
+            <p class="brand-subtitle-portal">Enterprise Portal</p>
           </div>
         </div>
 
         <div class="topbar-right">
-          <button class="btn-icon-portal"><Maximize :size="18" /></button>
-          <button class="btn-icon-portal"><Moon :size="18" /></button>
-          <button class="btn-icon-portal"><Languages :size="18" /></button>
-          <button class="btn-icon-portal relative mr-2">
+          <button class="btn-icon-portal" title="Fullscreen"><Maximize :size="18" /></button>
+          <button class="btn-icon-portal" title="Toggle Theme"><Moon :size="18" /></button>
+          <button class="btn-icon-portal" title="Language"><Languages :size="18" /></button>
+          <button class="btn-icon-portal relative mr-2" title="Notifications">
             <Bell :size="18" />
             <span class="notification-badge-portal">2</span>
           </button>
@@ -277,15 +268,15 @@ const handleModuleClick = (mod: any) => {
 
       <!-- Welcome Hero Details -->
       <div class="welcome-container">
-        <h2 class="welcome-title">Welcome!</h2>
-        <p class="welcome-subtitle">Select a module to get started.</p>
+        <h2 class="welcome-title">Welcome to Haleta ERP</h2>
+        <p class="welcome-subtitle">Select an available operational module to get started.</p>
         
         <!-- Search bar inside hero -->
         <div class="search-box-wrapper">
           <Search class="search-icon-hero" :size="18" />
           <input 
             type="text" 
-            placeholder="Search Everything..." 
+            placeholder="Search modules and services..." 
             v-model="searchQuery" 
             class="search-input-hero"
           />
@@ -301,7 +292,7 @@ const handleModuleClick = (mod: any) => {
           <BaseTabs v-model="activeFilter" :tabs="filterTabs" />
           
           <div class="subscribed-summary">
-            <span class="summary-text">5 of 10 module subscribed</span>
+            <span class="summary-text">{{ subscribedCount }} of {{ totalCount }} modules unlocked</span>
           </div>
         </div>
 
@@ -316,7 +307,7 @@ const handleModuleClick = (mod: any) => {
             <div class="section-header">
               <h3 class="section-title">
                 {{ section.title }}
-                <span v-if="!section.isCustom" class="category-badge">
+                <span class="category-badge">
                   {{ getCategoryCountText(section) }}
                 </span>
               </h3>
@@ -326,14 +317,17 @@ const handleModuleClick = (mod: any) => {
             <div class="cards-grid">
               <div 
                 v-for="mod in section.modules" 
-                :key="mod.title" 
-                :class="['module-card', { 'unsubscribed-card': !section.isCustom && !mod.subscribed, 'customization-card': section.isCustom }]"
+                :key="mod.id" 
+                :class="['module-card', { 'unsubscribed-card': !mod.subscribed, 'subscribed-card': mod.subscribed }]"
                 @click="handleModuleClick(mod)"
               >
                 <!-- Card Inner Header -->
                 <div class="card-header-row">
                   <div class="card-icon-box" :style="{ backgroundColor: mod.iconBg }">
                     <component :is="mod.icon" :size="20" :style="{ color: mod.iconColor }" />
+                  </div>
+                  <div v-if="!mod.subscribed" class="card-lock-indicator" title="Locked Module">
+                    <Lock :size="14" class="text-neutral-400" />
                   </div>
                 </div>
 
@@ -344,14 +338,14 @@ const handleModuleClick = (mod: any) => {
                 </div>
 
                 <!-- Card Status Footer -->
-                <div v-if="!section.isCustom" class="card-status-footer">
+                <div class="card-status-footer">
                   <div v-if="mod.subscribed" class="subscribed-pill">
-                    <Check :size="12" class="mr-1 text-emerald-500 stroke-[3px]" />
+                    <Check :size="12" class="mr-1 text-emerald-600 stroke-[3px]" />
                     <span>Subscribed</span>
                   </div>
                   <div v-else class="unsubscribed-pill">
-                    <Lock :size="10" class="mr-1 text-gray-400" />
-                    <span>Not Subscribed</span>
+                    <Lock :size="10" class="mr-1 text-neutral-500" />
+                    <span>Locked Module</span>
                   </div>
                 </div>
               </div>
@@ -364,9 +358,9 @@ const handleModuleClick = (mod: any) => {
     <!-- FOOTER -->
     <footer class="portal-footer">
       <div class="footer-links">
-        <span>©2026 Haleta Systems.</span>
+        <span>© 2026 Haleta Systems. All rights reserved.</span>
         <span class="separator">|</span>
-        <a href="#" @click.prevent="showToast('Contacting support...', 'info')">Contact Us</a>
+        <a href="#" @click.prevent="showToast('Contacting Haleta Enterprise Support...', 'info')">Contact Us</a>
         <span class="separator">|</span>
         <a href="#" @click.prevent="showToast('Loading Privacy Policy...', 'info')">Privacy Policy</a>
         <span class="separator">|</span>
@@ -383,60 +377,60 @@ const handleModuleClick = (mod: any) => {
           :class="['toast-alert', `toast-${toast.type}`]"
         >
           <div class="toast-content">
-            <Check v-if="toast.type === 'success'" :size="16" class="toast-icon text-emerald-500" />
-            <Laptop v-else-if="toast.type === 'info'" :size="16" class="toast-icon text-blue-500" />
-            <ShieldAlert v-else :size="16" class="toast-icon text-orange-500" />
+            <Check v-if="toast.type === 'success'" :size="16" class="toast-icon text-emerald-600" />
+            <Laptop v-else-if="toast.type === 'info'" :size="16" class="toast-icon text-blue-600" />
+            <ShieldAlert v-else :size="16" class="toast-icon text-amber-600" />
             <span>{{ toast.message }}</span>
           </div>
         </div>
       </TransitionGroup>
     </div>
 
-    <!-- PREMIUM UPGRADE MODAL -->
+    <!-- LOCKED MODULE MODAL -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeUpgradeModal">
       <div class="modal-card">
-        <button class="modal-close-btn" @click="closeUpgradeModal">
+        <button class="modal-close-btn" @click="closeUpgradeModal" aria-label="Close modal">
           <X :size="18" />
         </button>
         
         <div class="modal-icon-header">
-          <div class="premium-badge-icon">
-            <Star :size="24" class="text-amber-500 fill-amber-500" />
+          <div class="locked-badge-icon">
+            <Lock :size="24" class="text-amber-600" />
           </div>
         </div>
 
         <div class="modal-body-content">
-          <h3 class="modal-title">Unlock {{ selectedModule?.title }}</h3>
-          <p class="modal-subtitle">Enterprise Suite Premium Module</p>
+          <h3 class="modal-title">{{ selectedModule?.title }} is Locked</h3>
+          <p class="modal-subtitle">Enterprise Suite Module</p>
           <p class="modal-description">
-            The <strong>{{ selectedModule?.title }}</strong> module is currently not included in your standard plan. 
-            Upgrade to the Enterprise subscription to get full access to advanced logistics workflows, automated processing, and dedicated integrations.
+            The <strong>{{ selectedModule?.title }}</strong> module is currently locked in your deployment. Active operational modules include <strong>Inventory</strong>, <strong>Procurement</strong>, and <strong>Human Resources</strong>.
           </p>
 
           <div class="premium-features-list">
             <div class="feature-item">
-              <Check :size="14" class="text-emerald-500" />
-              <span>Full read/write permissions for all warehouse personnel</span>
+              <Check :size="14" class="text-emerald-600" />
+              <span>Full read/write permissions for organizational staff</span>
             </div>
             <div class="feature-item">
-              <Check :size="14" class="text-emerald-500" />
-              <span>Advanced auditing, export functionality & analytics</span>
+              <Check :size="14" class="text-emerald-600" />
+              <span>Dedicated audit trail, reporting & data exports</span>
             </div>
             <div class="feature-item">
-              <Check :size="14" class="text-emerald-500" />
-              <span>24/7 dedicated enterprise technical support</span>
+              <Check :size="14" class="text-emerald-600" />
+              <span>Automated workflows and ERP system integration</span>
             </div>
           </div>
         </div>
 
         <div class="modal-footer-row">
-          <button class="btn-modal-secondary" @click="closeUpgradeModal">Maybe Later</button>
-          <button 
-            class="btn-modal-primary" 
-            @click="showToast('Subscription request submitted!', 'success'); closeUpgradeModal()"
+          <AppButton variant="outline" size="md" @click="closeUpgradeModal">Back to Home</AppButton>
+          <AppButton 
+            variant="primary" 
+            size="md"
+            @click="showToast(`Request sent to unlock ${selectedModule?.title}!`, 'success'); closeUpgradeModal()"
           >
-            Upgrade Now
-          </button>
+            Request Access
+          </AppButton>
         </div>
       </div>
     </div>
@@ -448,18 +442,18 @@ const handleModuleClick = (mod: any) => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
-  font-family: 'Inter', sans-serif;
+  background-color: #fafafa;
+  font-family: inherit;
   overflow-x: hidden;
 }
 
 /* BLUE HERO HEADER */
 .hero-section {
-  background: linear-gradient(to right, #0B529C, #0084D1);
+  background: linear-gradient(135deg, #0B529C 0%, #0084D1 100%);
   color: white;
   padding-bottom: 48px;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(11, 82, 156, 0.15);
 }
 
 /* HOME TOP BAR */
@@ -469,11 +463,11 @@ const handleModuleClick = (mod: any) => {
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .logo-box-portal {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   padding: 6px;
   border-radius: 8px;
   display: flex;
@@ -494,14 +488,15 @@ const handleModuleClick = (mod: any) => {
 }
 
 .brand-title-portal {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
+  line-height: 1.2;
 }
 
 .brand-subtitle-portal {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
@@ -521,25 +516,25 @@ const handleModuleClick = (mod: any) => {
 .btn-icon-portal {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
 .btn-icon-portal:hover {
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .topbar-separator-portal {
   width: 1px;
   height: 20px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.25);
   margin: 0 12px;
 }
 
@@ -549,12 +544,12 @@ const handleModuleClick = (mod: any) => {
   gap: 10px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: background 0.2s;
 }
 
 .profile-wrapper-portal:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .avatar-container-portal {
@@ -567,10 +562,7 @@ const handleModuleClick = (mod: any) => {
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
-}
-
-text-indicator-portal {
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
 }
 
 .status-indicator-portal {
@@ -579,7 +571,7 @@ text-indicator-portal {
   right: 0;
   width: 8px;
   height: 8px;
-  background-color: #10b981;
+  background-color: #009966;
   border: 1.5px solid #0B529C;
   border-radius: 50%;
 }
@@ -599,7 +591,7 @@ text-indicator-portal {
   position: absolute;
   top: 4px;
   right: 4px;
-  background: #ef4444;
+  background: #E7000B;
   color: white;
   font-size: 9px;
   min-width: 15px;
@@ -619,18 +611,18 @@ text-indicator-portal {
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-top: 40px;
+  margin-top: 36px;
 }
 
 .welcome-title {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .welcome-subtitle {
-  font-size: 16px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   margin-bottom: 24px;
@@ -647,7 +639,7 @@ text-indicator-portal {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   pointer-events: none;
   z-index: 10;
 }
@@ -657,8 +649,8 @@ text-indicator-portal {
   height: 46px;
   padding: 12px 16px 12px 48px;
   border-radius: 24px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  background-color: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
   font-size: 14px;
   outline: none;
@@ -667,13 +659,13 @@ text-indicator-portal {
 }
 
 .search-input-hero::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .search-input-hero:focus {
-  border-color: rgba(255, 255, 255, 0.85);
-  background-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* PORTAL BODY */
@@ -695,13 +687,15 @@ text-indicator-portal {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #E5E5E5;
   padding-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .subscribed-summary {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   font-weight: 500;
 }
 
@@ -726,7 +720,7 @@ text-indicator-portal {
 .section-title {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: #404040;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -735,16 +729,16 @@ text-indicator-portal {
 .category-badge {
   font-size: 11px;
   font-weight: 500;
-  background-color: #f1f5f9;
-  color: #64748b;
-  padding: 2px 6px;
+  background-color: #F5F5F5;
+  color: #737373;
+  padding: 2px 8px;
   border-radius: 4px;
 }
 
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 20px;
 }
 
 @media (max-width: 900px) {
@@ -762,30 +756,38 @@ text-indicator-portal {
 /* MODULE CARD */
 .module-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
   padding: 20px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   min-height: 180px;
 }
 
-.customization-card {
-  min-height: 130px;
+.module-card:hover {
+  transform: translateY(-2px);
+  border-color: #D4D4D4;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06);
 }
 
-.module-card:hover {
-  transform: translateY(-4px);
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+.subscribed-card:hover {
+  border-color: #0B529C;
+}
+
+.unsubscribed-card {
+  background-color: #FAFAFA;
+}
+
+.unsubscribed-card:hover {
+  border-color: #A3A3A3;
 }
 
 .card-header-row {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -801,6 +803,13 @@ text-indicator-portal {
   transition: all 0.2s;
 }
 
+.card-lock-indicator {
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .card-details {
   flex: 1;
 }
@@ -808,13 +817,17 @@ text-indicator-portal {
 .card-title {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: #404040;
   margin-bottom: 6px;
+}
+
+.unsubscribed-card .card-title {
+  color: #404040;
 }
 
 .card-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.5;
   margin-bottom: 12px;
 }
@@ -824,41 +837,27 @@ text-indicator-portal {
   display: flex;
   align-items: center;
   font-size: 11px;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .subscribed-pill {
-  color: #10b981;
+  color: #009966;
   display: flex;
   align-items: center;
 }
 
 .unsubscribed-pill {
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
-  background-color: #f1f5f9;
+  background-color: #F5F5F5;
   padding: 3px 8px;
   border-radius: 12px;
 }
 
-/* UNSUBSCRIBED CARD SPECIFICS */
-.unsubscribed-card {
-  background-color: #fafbfc;
-  border-style: solid;
-}
-
-.unsubscribed-card .card-title {
-  color: #64748b;
-}
-
-.unsubscribed-card .card-desc {
-  color: #94a3b8;
-}
-
 /* PORTAL FOOTER */
 .portal-footer {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #E5E5E5;
   padding: 24px;
   background-color: #ffffff;
   display: flex;
@@ -872,23 +871,23 @@ text-indicator-portal {
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .footer-links a {
-  color: #64748b;
+  color: #737373;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .footer-links a:hover {
-  color: #0084D1;
+  color: #0B529C;
 }
 
 .separator {
-  color: #cbd5e1;
+  color: #D4D4D4;
 }
 
 /* TOAST ALERTS */
@@ -906,18 +905,18 @@ text-indicator-portal {
 .toast-alert {
   pointer-events: auto;
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 12px 18px;
   min-width: 280px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #009966;
   display: flex;
   align-items: center;
 }
 
-.toast-success { border-left-color: #10b981; }
-.toast-info { border-left-color: #3b82f6; }
-.toast-warning { border-left-color: #f97316; }
+.toast-success { border-left-color: #009966; }
+.toast-info { border-left-color: #0B529C; }
+.toast-warning { border-left-color: #E17100; }
 
 .toast-content {
   display: flex;
@@ -925,7 +924,7 @@ text-indicator-portal {
   gap: 10px;
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: #404040;
 }
 
 .toast-icon {
@@ -934,15 +933,15 @@ text-indicator-portal {
 
 /* Toast Transitions */
 .toast-enter-active, .toast-leave-active {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .toast-enter-from {
   opacity: 0;
-  transform: translateX(50px) scale(0.9);
+  transform: translateX(40px) scale(0.95);
 }
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(-20px) scale(0.9);
+  transform: translateY(-16px) scale(0.95);
 }
 
 /* MODAL OVERLAY */
@@ -952,7 +951,7 @@ text-indicator-portal {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(15, 23, 42, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 1100;
   display: flex;
@@ -969,7 +968,7 @@ text-indicator-portal {
 
 .modal-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 14px;
   width: 100%;
   max-width: 460px;
   padding: 28px;
@@ -977,21 +976,21 @@ text-indicator-portal {
   position: relative;
   display: flex;
   flex-direction: column;
-  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes modalSlideUp {
-  from { transform: translateY(20px) scale(0.95); }
+  from { transform: translateY(16px) scale(0.96); }
   to { transform: translateY(0) scale(1); }
 }
 
 .modal-close-btn {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #737373;
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
@@ -1002,8 +1001,8 @@ text-indicator-portal {
 }
 
 .modal-close-btn:hover {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: #F5F5F5;
+  color: #404040;
 }
 
 .modal-icon-header {
@@ -1012,15 +1011,15 @@ text-indicator-portal {
   margin-bottom: 16px;
 }
 
-.premium-badge-icon {
-  width: 56px;
-  height: 56px;
-  background-color: #fef3c7;
+.locked-badge-icon {
+  width: 52px;
+  height: 52px;
+  background-color: #FEF3C7;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 4px #fffbeb;
+  box-shadow: 0 0 0 4px #FFFBEB;
 }
 
 .modal-body-content {
@@ -1030,18 +1029,18 @@ text-indicator-portal {
 
 .modal-title {
   font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: 700;
+  color: #404040;
   margin-bottom: 4px;
 }
 
 .modal-subtitle {
   font-size: 11px;
   font-weight: 700;
-  color: #b45309;
+  color: #B45309;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background-color: #fef3c7;
+  background-color: #FEF3C7;
   padding: 2px 8px;
   border-radius: 12px;
   display: inline-block;
@@ -1050,17 +1049,17 @@ text-indicator-portal {
 
 .modal-description {
   font-size: 13px;
-  color: #475569;
+  color: #525252;
   line-height: 1.6;
   margin-bottom: 20px;
 }
 
 .premium-features-list {
   text-align: left;
-  background-color: #f8fafc;
+  background-color: #FAFAFA;
   padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid #E5E5E5;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1071,7 +1070,7 @@ text-indicator-portal {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #334155;
+  color: #404040;
   font-weight: 500;
 }
 
@@ -1092,23 +1091,23 @@ text-indicator-portal {
 }
 
 .btn-modal-primary {
-  background-color: var(--alias-color-brand-blue-primary);
+  background-color: #0B529C;
   color: white;
   border: none;
 }
 
 .btn-modal-primary:hover {
-  background-color: var(--alias-color-brand-blue-primary-hover);
+  background-color: #09427D;
 }
 
 .btn-modal-secondary {
   background-color: white;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  color: #404040;
+  border: 1px solid #E5E5E5;
 }
 
 .btn-modal-secondary:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+  background-color: #F5F5F5;
+  border-color: #D4D4D4;
 }
 </style>

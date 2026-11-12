@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  ChevronLeft, ChevronRight, CalendarRange, Wand2, Sparkles,
-  CheckCircle2, AlertCircle, AlertTriangle, Clock, Users,
-  Save, X, Check, ArrowLeft, ArrowLeftRight, RotateCcw
-} from 'lucide-vue-next';
+import {
+  ChevronLeft, ChevronRight, Wand2, CheckCircle2,
+  Save, X, RotateCcw
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -416,37 +416,39 @@ const handlePublishRoster = () => {
     <!-- Top Action Bar -->
     <div class="planner-top-bar">
       <div class="top-bar-left">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :is-saved="isSaved" :is-draft="isDraft" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :is-saved="isSaved" :is-draft="isDraft" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-bar-actions">
-        <button
-          type="button"
-          class="btn-top-secondary"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleClearPlanned"
         >
-          <RotateCcw :size="13" />
-          <span>Clear Draft Shifts</span>
-        </button>
+          <template #icon-left><RotateCcw :size="13" /></template>
+          Clear Draft Shifts
+        </AppButton>
 
-        <button
-          type="button"
-          class="btn-top-secondary"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleSaveDraft"
         >
-          <Save :size="13" />
-          <span>Save Draft</span>
-        </button>
+          <template #icon-left><Save :size="13" /></template>
+          Save Draft
+        </AppButton>
 
-        <button
-          type="button"
-          class="btn-top-primary"
+        <AppButton
+          variant="primary"
+          size="sm"
           @click="handlePublishRoster"
         >
-          <CheckCircle2 :size="14" />
-          <span>Publish Roster</span>
-        </button>
+          Publish Roster
+        </AppButton>
       </div>
     </div>
 
@@ -671,8 +673,8 @@ const handlePublishRoster = () => {
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="showPatternModal = false">Cancel</button>
-          <button type="button" class="btn-confirm" @click="handleApplyPattern">Apply Pattern</button>
+          <AppButton variant="outline" size="sm" @click="showPatternModal = false">Cancel</AppButton>
+          <AppButton variant="primary" size="sm" @click="handleApplyPattern">Apply Pattern</AppButton>
         </div>
       </div>
     </div>
@@ -730,8 +732,8 @@ const handlePublishRoster = () => {
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="showSlotModal = false">Cancel</button>
-          <button type="button" class="btn-confirm" @click="handleSaveSlot">Save Slot</button>
+          <AppButton variant="outline" size="sm" @click="showSlotModal = false">Cancel</AppButton>
+          <AppButton variant="primary" size="sm" @click="handleSaveSlot">Save Slot</AppButton>
         </div>
       </div>
     </div>
@@ -742,8 +744,8 @@ const handlePublishRoster = () => {
 .shift-planner-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

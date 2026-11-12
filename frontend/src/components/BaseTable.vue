@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { 
-  Search, Filter, ArrowUpDown, ChevronDown, Columns, Maximize, RotateCcw 
-} from 'lucide-vue-next';
+import {
+  Search, Filter, ArrowUpDown, ChevronDown,
+  Maximize
+} from 'lucide-vue-next';;
 import BasePagination from './BasePagination.vue';
+import FormCheckbox from './FormCheckbox.vue';
+import IconColumnSolid from './IconColumnSolid.vue';
 
 export interface ColumnDef {
   key: string;
   label: string;
   visible?: boolean;
+  hideable?: boolean;
 }
 
 export interface SortOption {
@@ -59,6 +63,8 @@ const props = withDefaults(defineProps<Props>(), {
   perPageOptions: () => [5, 10, 25, 50],
   showPagination: true
 });
+
+const hideableColumns = computed(() => props.columns.filter((column) => column.hideable !== false));
 
 const emit = defineEmits<{
   (e: 'update:searchQuery', val: string): void;
@@ -113,10 +119,12 @@ if (typeof window !== 'undefined') {
   <div :class="['table-section-card', { 'is-fullscreen': isFullscreen }]">
     <!-- Optional Header Title & Subtitle -->
     <div v-if="props.title || $slots.header || $slots['header-extra']" class="table-header-title-block">
-      <slot name="header">
-        <h2 class="table-block-title">{{ props.title }}</h2>
-        <p v-if="props.subtitle" class="table-block-subtitle">{{ props.subtitle }}</p>
-      </slot>
+      <div class="table-header-title-text">
+        <slot name="header">
+          <h2 class="table-block-title">{{ props.title }}</h2>
+          <p v-if="props.subtitle" class="table-block-subtitle">{{ props.subtitle }}</p>
+        </slot>
+      </div>
       <slot name="header-extra" />
     </div>
 
@@ -190,27 +198,27 @@ if (typeof window !== 'undefined') {
             class="icon-toggle-btn"
             :class="{ 'btn-active': showColumnsDropdown }"
             title="Show / Hide Columns"
+            aria-label="Show or hide columns"
             @click.stop="showColumnsDropdown = !showColumnsDropdown; showSortDropdown = false;"
           >
-            <Columns :size="16" />
+            <IconColumnSolid :size="16" />
           </button>
 
           <div v-if="showColumnsDropdown" class="dropdown-popover columns-popover" @click.stop>
             <div class="popover-title-text">Show / Hide Columns</div>
             <div class="columns-list-container">
-              <label
-                v-for="col in props.columns"
+              <div
+                v-for="col in hideableColumns"
                 :key="col.key"
                 class="column-option-item"
               >
-                <input
-                  type="checkbox"
-                  :checked="col.visible !== false"
-                  class="custom-checkbox"
+                <FormCheckbox
+                  :model-value="col.visible !== false"
+                  :label="col.label"
+                  size="sm"
                   @change="emit('toggleColumn', col.key)"
                 />
-                <span>{{ col.label }}</span>
-              </label>
+              </div>
             </div>
           </div>
         </div>
@@ -262,10 +270,10 @@ if (typeof window !== 'undefined') {
 <style scoped>
 /* TABLE SECTION CARD CONTAINER */
 .table-section-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  background-color: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-2xl, 16px);
+  box-shadow: 0 1px 3px rgba(10, 13, 18, 0.05);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -288,18 +296,26 @@ if (typeof window !== 'undefined') {
 
 /* Table Header Title */
 .table-header-title-block {
-  padding: 20px 24px 12px 24px;
+  padding: var(--alias-spacing-2xl, 20px) var(--alias-spacing-3xl, 24px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.table-header-title-text {
+  flex: 1;
+  min-width: 0;
 }
 .table-block-title {
   font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--alias-color-text-secondary, #404040);
   margin: 0 0 2px 0;
   letter-spacing: -0.01em;
 }
 .table-block-subtitle {
   font-size: 13px;
-  color: #64748b;
+  color: var(--alias-color-text-tertiary, #737373);
   margin: 0;
 }
 
@@ -308,20 +324,20 @@ if (typeof window !== 'undefined') {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  gap: 16px;
+  padding: var(--alias-spacing-xl, 16px) var(--alias-spacing-3xl, 24px);
+  gap: var(--alias-spacing-xl, 16px);
   flex-wrap: wrap;
 }
 
 .table-header-title-block + .toolbar-wrapper {
   padding-top: 0;
-  padding-bottom: 16px;
+  padding-bottom: var(--alias-spacing-xl, 16px);
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--alias-spacing-lg, 12px);
   flex: 1;
   min-width: 280px;
 }
@@ -329,7 +345,7 @@ if (typeof window !== 'undefined') {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--alias-spacing-lg, 12px);
 }
 
 /* Search Box */
@@ -344,7 +360,7 @@ if (typeof window !== 'undefined') {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--qmt-icon-tertiary, #737373);
   pointer-events: none;
 }
 
@@ -352,46 +368,46 @@ if (typeof window !== 'undefined') {
   width: 100%;
   height: 40px;
   padding: 0 14px 0 40px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-lg, 8px);
   font-size: 13.5px;
-  color: #1e293b;
+  color: var(--alias-color-text-secondary, #404040);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .search-box-input:focus {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.12);
+  border-color: var(--primitive-color-brand-blue-700, #0B529C);
+  box-shadow: 0 0 0 3px var(--primitive-color-brand-blue-100, #e1eefd);
 }
 
 /* Toolbar Buttons */
 .toolbar-btn {
   height: 40px;
   padding: 0 14px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-lg, 8px);
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: var(--alias-color-text-secondary, #404040);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--alias-spacing-md, 8px);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toolbar-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0f172a;
+  background: var(--alias-color-background-hover, #f5f5f5);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
+  color: var(--alias-color-text-secondary, #404040);
 }
 
 .btn-active {
   border-color: #0B529C;
-  background-color: #eff6ff;
+  background-color: var(--primitive-color-brand-blue-100, #e1eefd);
   color: #0B529C;
 }
 
@@ -401,17 +417,17 @@ if (typeof window !== 'undefined') {
   font-size: 11px;
   font-weight: 700;
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: var(--alias-radius-full, 9999px);
   margin-left: 2px;
 }
 
 .icon-toggle-btn {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #64748b;
+  border-radius: var(--alias-radius-lg, 8px);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  background: var(--alias-color-background-surface-elevated, #ffffff);
+  color: var(--qmt-icon-tertiary, #737373);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,9 +436,9 @@ if (typeof window !== 'undefined') {
 }
 
 .icon-toggle-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: var(--alias-color-background-hover, #f5f5f5);
+  color: var(--qmt-icon-secondary, #404040);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
 }
 
 /* Dropdown Popovers */
@@ -434,8 +450,8 @@ if (typeof window !== 'undefined') {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 12px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   padding: 12px;
@@ -485,77 +501,48 @@ if (typeof window !== 'undefined') {
 .popover-title-text {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--alias-color-text-tertiary, #737373);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--alias-color-border-subtle, #e5e5e5);
 }
 
 .columns-list-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
   max-height: 280px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 4px;
+  margin: -4px;
 }
 
 .column-option-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #334155;
+  padding: 4px 6px;
+  border-radius: var(--alias-radius-sm, 6px);
   cursor: pointer;
-  user-select: none;
-  transition: color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .column-option-item:hover {
-  color: #0f172a;
+  background-color: var(--alias-color-background-hover, #f5f5f5);
 }
 
-.custom-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 17px;
-  height: 17px;
-  min-width: 17px;
-  min-height: 17px;
-  border-radius: 5px;
-  border: 1.5px solid #d1d5db;
-  background-color: #ffffff;
-  cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  position: relative;
-  vertical-align: middle;
-  outline: none;
+.column-option-item :deep(.qmt-checkbox-wrapper) {
+  width: 100%;
   margin: 0;
   padding: 0;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
+  align-items: center;
 }
 
-.custom-checkbox:hover:not(:checked):not(:disabled) {
-  border-color: #9ca3af;
-  background-color: #f9fafb;
-}
-
-.custom-checkbox:checked {
-  background-color: #0B529C;
-  border-color: #0B529C;
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 5.5'/%3e%3c/svg%3e");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 75% 75%;
-}
-
-.custom-checkbox:checked:hover:not(:disabled) {
-  background-color: #094482;
-  border-color: #094482;
+.column-option-item :deep(.qmt-checkbox-label) {
+  font-size: 13px;
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 400;
 }
 
 /* REVEALING FILTER PANEL */
@@ -650,21 +637,25 @@ if (typeof window !== 'undefined') {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 550;
-  line-height: 1.2;
+  gap: var(--qmt-badge-gap-icon, 4px);
+  padding: var(--qmt-badge-sm-padding-y, 2px) var(--qmt-badge-sm-padding-x, 8px);
+  border-radius: var(--qmt-badge-radius-pill, 9999px);
+  border: var(--qmt-badge-border-width, 1px) solid transparent;
+  font-family: var(--qmt-font-family-sans);
+  font-size: var(--qmt-alias-font-size-xs, 12px);
+  font-weight: var(--qmt-font-weight-semibold, 600);
+  line-height: var(--qmt-alias-line-height-xs, 18px);
+  white-space: nowrap;
 }
 
 :deep(.pill-active) {
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: var(--qmt-badge-success-bg, #d0fae5);
+  color: var(--qmt-badge-success-fg, #007a55);
 }
 
 :deep(.pill-inactive) {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: var(--qmt-badge-gray-bg, #e5e5e5);
+  color: var(--qmt-badge-gray-fg, #404040);
 }
 
 :deep(.btn-action-dots) {

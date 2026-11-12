@@ -5,6 +5,7 @@ import {
   Printer, Calendar, Banknote, X, CheckCircle2
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import UnderlineTabs from '../../components/UnderlineTabs.vue';
 import SalaryScalePrintModal from '../../components/SalaryScalePrintModal.vue';
 
@@ -239,10 +240,10 @@ const tabs = computed(() => [
       </div>
 
       <div class="top-bar-right">
-        <button type="button" class="btn-pdf-export" @click="handleOpenPrint">
-          <Printer :size="14" />
-          <span>Print / PDF Export</span>
-        </button>
+        <AppButton variant="outline" size="sm" @click="handleOpenPrint">
+          <template #icon-left><Printer :size="14" /></template>
+          Print / PDF Export
+        </AppButton>
       </div>
     </div>
 
@@ -584,7 +585,7 @@ const tabs = computed(() => [
 
 .salary-scale-detail-page {
   min-height: 100vh;
-  padding: 24px 28px 60px;
+  padding: 0;
   background-color: #f8fafc;
 }
 

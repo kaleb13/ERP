@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Table, Network, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
-  Building2, Layers, GitBranch, ArrowRight, FolderTree,
-  CornerDownRight, Users, ShieldCheck, Clock, ZoomIn, ZoomOut,
-  RotateCcw, PanelLeftClose, PanelLeftOpen, Printer
-} from 'lucide-vue-next';
+import {
+  Table, Network, Plus, Search,
+  Filter, ArrowUpDown, MoreVertical, Edit2,
+  Trash2, Copy, Calendar, CheckCircle2,
+  FolderTree, ZoomIn, ZoomOut, RotateCcw,
+  PanelLeftClose, PanelLeftOpen, List
+} from 'lucide-vue-next';;
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -62,8 +63,13 @@ const breadcrumbItems = computed(() => [
   { label: 'Organization Structures' }
 ]);
 
-// ─── Top Tabs: Org Table vs Org Three View (Screenshots 1 & 2) ───
-const activeMainTab = ref<'table' | 'tree'>('table');
+// ─── Top Tabs: Primary Tab (Figma Node 5603:2799 / BaseTabs Capsule) ───
+const activeMainTab = ref<'tree' | 'table'>('tree');
+
+const mainTabs = computed<BaseTabItem<'tree' | 'table'>[]>(() => [
+  { id: 'tree', label: 'Tree View', icon: Network },
+  { id: 'table', label: 'List View', icon: List }
+]);
 
 // ─── Structures Database Records (Aligned with Screenshots) ───
 const structures = ref<Array<OrgStructureRecord>>([
@@ -839,48 +845,36 @@ onUnmounted(() => {
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- MASTER PAGE HEADER & TOP TABS (Screenshots 1 & 2)         -->
+    <!-- MASTER PAGE HEADER & SECONDARY TABS (Figma 5520:79074)     -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <div class="master-header-card">
-      <div class="header-text-block">
-        <h1 class="header-main-title">Organization Structures</h1>
-        <p class="header-subtitle">
-          Manage macro organizational blueprints, effective-dated versions, restructuring plans, and structural hierarchy baselines across enterprise entities.
-        </p>
-      </div>
-
-      <div class="header-controls-row">
-        <!-- Capsule Tab Bar (Org Table vs Org Three View) -->
-        <div class="capsule-tabs-container">
-          <button 
-            type="button" 
-            class="capsule-tab-pill" 
-            :class="{ 'active': activeMainTab === 'table' }"
-            @click="activeMainTab = 'table'"
-          >
-            <Table :size="14" />
-            <span>Org Table</span>
-          </button>
-          <button 
-            type="button" 
-            class="capsule-tab-pill" 
-            :class="{ 'active': activeMainTab === 'tree' }"
-            @click="activeMainTab = 'tree'"
-          >
-            <Network :size="14" />
-            <span>Org Three View</span>
-          </button>
+      <div class="header-top-row">
+        <div class="header-text-block">
+          <h1 class="header-main-title">Organization Structures</h1>
+          <p class="header-subtitle">
+            Manage macro organizational blueprints, effective-dated versions, restructuring plans, and structural hierarchy baselines across enterprise entities.
+          </p>
         </div>
 
-        <!-- Primary Top Action Button: + Create Structure -->
         <button 
           type="button" 
           class="btn-primary-create-struct" 
           @click="handleOpenCreateStructure"
         >
-          <Plus :size="15" />
+          <Plus :size="18" />
           <span>Create Structure</span>
         </button>
+      </div>
+
+      <div class="header-tabs-row">
+        <!-- Primary Tab Group (Figma Node 5603:2799 / BaseTabs Capsule) -->
+        <BaseTabs
+          v-model="activeMainTab"
+          :tabs="mainTabs"
+          type="rounded"
+          size="sm"
+          class="org-primary-tabs"
+        />
       </div>
     </div>
 
@@ -1196,29 +1190,6 @@ onUnmounted(() => {
           </div>
 
           <div class="right-header-actions-group">
-            <!-- Publish Button for Draft Structures -->
-            <button 
-              v-if="selectedStructure.structure_state_lookup_value_id === 'draft'"
-              type="button" 
-              class="btn-publish-blueprint" 
-              @click="handlePublishStructure(selectedStructure)"
-              title="Publish this draft blueprint"
-            >
-              <CheckCircle2 :size="14" />
-              <span>Publish</span>
-            </button>
-
-            <!-- Quick Copy Structure -->
-            <button 
-              type="button" 
-              class="btn-header-action" 
-              @click="handleOpenCopyStructure(selectedStructure)"
-              title="Copy / Clone Structure"
-            >
-              <Copy :size="14" />
-              <span>Copy</span>
-            </button>
-
             <!-- Focus Mode Toggle (Hide/Show Left List) -->
             <button 
               type="button" 
@@ -1226,9 +1197,9 @@ onUnmounted(() => {
               @click="isSidebarCollapsed = !isSidebarCollapsed"
               :title="isSidebarCollapsed ? 'Show Structures List' : 'Focus Mode (Hide List)'"
             >
-              <PanelLeftOpen v-if="isSidebarCollapsed" :size="14" />
-              <PanelLeftClose v-else :size="14" />
-              <span>{{ isSidebarCollapsed ? 'List' : 'Focus' }}</span>
+              <PanelLeftOpen v-if="isSidebarCollapsed" :size="15" />
+              <PanelLeftClose v-else :size="15" />
+              <span>Focus</span>
             </button>
 
             <!-- + Create Units Action Button -->
@@ -1243,9 +1214,9 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Canvas Body with Floating Zoom Tools -->
+        <!-- Canvas Body with Floating Zoom Tools (Figma Node 5520:79204) -->
         <div class="diagram-canvas-viewport">
-          <!-- Floating Zoom Bar on Top Right (Screenshot 2) -->
+          <!-- Floating Zoom Bar on Top Right (Figma Node 5520:79204) -->
           <div class="floating-zoom-tools">
             <button type="button" class="zoom-btn" @click="handleZoomOut" title="Zoom Out">
               <ZoomOut :size="14" />
@@ -1256,11 +1227,7 @@ onUnmounted(() => {
             </button>
             <div class="zoom-divider"></div>
             <button type="button" class="zoom-btn" @click="handleResetZoom" title="Reset Zoom">
-              <RotateCcw :size="13" />
-            </button>
-            <div class="zoom-divider"></div>
-            <button type="button" class="zoom-btn" @click="handlePrintDiagram" title="Print / Export Org Chart">
-              <Printer :size="13" />
+              <RotateCcw :size="14" />
             </button>
           </div>
 
@@ -1316,11 +1283,13 @@ onUnmounted(() => {
                     Type: {{ hierarchyTrees[selectedStructure.id].type }}
                   </div>
 
-                  <!-- Squircle Avatar + Head Manager Info -->
+                  <div class="node-card-divider"></div>
+
+                  <!-- Head Manager Profile Row -->
                   <div class="node-profile-row">
                     <img 
                       :src="hierarchyTrees[selectedStructure.id].head_avatar" 
-                      class="node-squircle-avatar" 
+                      class="node-profile-avatar" 
                       alt="" 
                     />
                     <div class="node-profile-meta">
@@ -1388,10 +1357,12 @@ onUnmounted(() => {
                       Type: {{ childNode.type }}
                     </div>
 
+                    <div class="node-card-divider"></div>
+
                     <div class="node-profile-row">
                       <img 
                         :src="childNode.head_avatar" 
-                        class="node-squircle-avatar" 
+                        class="node-profile-avatar" 
                         alt="" 
                       />
                       <div class="node-profile-meta">
@@ -1457,10 +1428,12 @@ onUnmounted(() => {
                           Type: {{ subNode.type }}
                         </div>
 
+                        <div class="node-card-divider"></div>
+
                         <div class="node-profile-row">
                           <img 
                             :src="subNode.head_avatar" 
-                            class="node-squircle-avatar" 
+                            class="node-profile-avatar" 
                             alt="" 
                           />
                           <div class="node-profile-meta">
@@ -1509,8 +1482,9 @@ onUnmounted(() => {
                             </div>
                           </div>
                           <div class="node-unit-type-subtext">Type: {{ deepNode.type }}</div>
+                          <div class="node-card-divider"></div>
                           <div class="node-profile-row">
-                            <img :src="deepNode.head_avatar" class="node-squircle-avatar" alt="" />
+                            <img :src="deepNode.head_avatar" class="node-profile-avatar" alt="" />
                             <div class="node-profile-meta">
                               <span class="node-profile-name">{{ deepNode.head_name }}</span>
                               <span class="node-profile-title">{{ deepNode.head_title }}</span>
@@ -1733,106 +1707,84 @@ onUnmounted(() => {
 
 <style scoped>
 .org-structures-page {
-  padding: 16px 24px 32px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 .page-breadcrumb-bar {
   margin-bottom: 2px;
 }
 
-/* ─── Master Header Card (Screenshots 1 & 2) ─── */
+/* ─── Master Header Card (Figma Node 5520:79074) ─── */
 .master-header-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px 24px 18px;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  gap: 20px;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
 }
 
 .header-text-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .header-main-title {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   color: #404040;
   margin: 0;
+  line-height: 1.3;
 }
 
 .header-subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: #737373;
   line-height: 1.45;
   margin: 0;
 }
 
-.header-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Capsule Tab Bar (Screenshots 1 & 2) */
-.capsule-tabs-container {
+.btn-primary-create-struct {
   display: inline-flex;
   align-items: center;
-  background-color: #f1f5f9;
-  border-radius: 9999px;
-  padding: 3px;
-  gap: 3px;
-}
-
-.capsule-tab-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 16px;
-  border-radius: 9999px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #64748b;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.capsule-tab-pill.active {
-  background-color: #ffffff;
-  color: #404040;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.btn-primary-create-struct {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 18px;
+  gap: 8px;
+  padding: 10px 16px;
   background-color: #0B529C;
-  color: #ffffff;
-  border: none;
+  border: 1px solid #0B529C;
   border-radius: 8px;
-  font-size: 13.5px;
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 20px;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
   cursor: pointer;
   transition: background-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-primary-create-struct:hover {
-  background-color: #094380;
+  background-color: #09427d;
+}
+
+.header-tabs-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 /* Toast */
@@ -1840,9 +1792,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #ecfdf5;
+  background-color: #EBFDF2;
   border: 1px solid #a7f3d0;
-  color: #065f46;
+  color: #009966;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -1859,7 +1811,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 12px;
-  background-color: #fafbfc;
+  background-color: #FAFAFA;
   border-radius: 8px;
   margin-bottom: 8px;
 }
@@ -1870,13 +1822,13 @@ onUnmounted(() => {
 }
 
 .erp-table th {
-  background-color: #fafafa;
+  background-color: #FAFAFA;
   color: #737373;
   font-size: 12px;
   font-weight: 500;
   padding: 8px 16px;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #E5E5E5;
   height: 34px;
 }
 
@@ -1884,12 +1836,12 @@ onUnmounted(() => {
   padding: 8px 16px;
   font-size: 13px;
   color: #404040;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #E5E5E5;
   height: 38px;
 }
 
 .erp-row:hover td {
-  background-color: #f8fafc;
+  background-color: #FAFAFA;
 }
 
 .name-cell-stack {
@@ -1920,13 +1872,13 @@ onUnmounted(() => {
 }
 
 .status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: #EBFDF2;
+  color: #009966;
 }
 
 .status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #FAFAFA;
+  color: #737373;
 }
 
 .btn-action-dots {
@@ -1935,7 +1887,7 @@ onUnmounted(() => {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1943,33 +1895,33 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #FAFAFA;
+  color: #404040;
 }
 
 .action-cell-wrapper {
   position: relative;
 }
 
-/* ─── ORG THREE VIEW SPLIT LAYOUT (Screenshot 2) ─── */
+/* ─── Master-Detail Layout (Figma Node 5520:79083) ─── */
 .tree-view-split-layout {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 220px);
-  min-height: 600px;
+  height: calc(100vh - 230px);
+  min-height: 620px;
 }
 
-/* Left Card: Structures Lister */
+/* Left Card: Structures Lister (Figma Node 5520:79084) */
 .tree-left-card {
-  width: 320px;
-  min-width: 320px;
+  width: 360px;
+  min-width: 360px;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .left-search-filter-row {
@@ -1987,7 +1939,7 @@ onUnmounted(() => {
 .icon-search {
   position: absolute;
   left: 10px;
-  color: #94a3b8;
+  color: #737373;
   pointer-events: none;
 }
 
@@ -1995,10 +1947,11 @@ onUnmounted(() => {
   width: 100%;
   height: 38px;
   padding: 0 12px 0 32px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
   font-size: 13px;
   color: #404040;
+  background-color: #ffffff;
   outline: none;
 }
 
@@ -2007,12 +1960,12 @@ onUnmounted(() => {
 }
 
 .btn-filter-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 38px;
   padding: 0 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
   background-color: #ffffff;
   color: #404040;
@@ -2022,7 +1975,7 @@ onUnmounted(() => {
 }
 
 .btn-filter-toggle:hover {
-  background-color: #f8fafc;
+  background-color: #FAFAFA;
 }
 
 .structures-vertical-stack {
@@ -2034,9 +1987,9 @@ onUnmounted(() => {
 
 .tree-structure-item-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E5E5E5;
   border-radius: 12px;
-  padding: 14px 14px 12px;
+  padding: 14px 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2046,23 +1999,19 @@ onUnmounted(() => {
 }
 
 .tree-structure-item-card:hover {
-  border-color: #cbd5e1;
-  background-color: #fafbfc;
+  border-color: #d4d4d4;
+  background-color: #FAFAFA;
 }
 
 .tree-structure-item-card.item-selected {
   border: 1.5px solid #0B529C;
-  background-color: #f0f7ff;
-  box-shadow: 0 2px 8px rgba(11, 82, 156, 0.08);
+  background-color: #ffffff;
+  box-shadow: 0 1px 4px rgba(11, 82, 156, 0.08);
 }
 
 .tree-structure-item-card.item-selected .structure-card-title {
   color: #0B529C;
-  font-weight: 700;
-}
-
-.tree-structure-item-card.item-selected:hover {
-  background-color: #e8f2fe;
+  font-weight: 600;
 }
 
 .item-card-top-row {
@@ -2078,13 +2027,13 @@ onUnmounted(() => {
 }
 
 .structure-card-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: #404040;
 }
 
 .structure-card-branch-text {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #737373;
 }
 
@@ -2104,11 +2053,11 @@ onUnmounted(() => {
 
 .btn-card-dots:hover,
 .btn-node-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #FAFAFA;
   color: #404040;
 }
 
-/* ─── 3-Dot Floating Popover Menus (Screenshots 3 & 4) ─── */
+/* ─── 3-Dot Floating Popover Menus ─── */
 .menu-relative-wrapper {
   position: relative;
 }
@@ -2118,7 +2067,7 @@ onUnmounted(() => {
   right: 0;
   top: calc(100% + 4px);
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E5E5E5;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   min-width: 155px;
@@ -2146,33 +2095,40 @@ onUnmounted(() => {
 }
 
 .popover-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #FAFAFA;
 }
 
 .popover-menu-item.item-delete {
-  color: #e11d48;
+  color: #E7000B;
 }
 
 .popover-menu-item.item-delete:hover {
-  background-color: #fff1f2;
+  background-color: #FEF3F2;
 }
 
-/* ─── Right Card: Diagram Studio (Screenshot 2) ─── */
+.popover-menu-item.item-publish {
+  color: #009966;
+}
+
+.popover-menu-item.item-publish:hover {
+  background-color: #EBFDF2;
+}
+
+/* ─── Right Card: Tree Studio (Figma Node 5520:79113) ─── */
 .tree-right-card {
   flex: 1;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   position: relative;
 }
 
 .right-card-header-bar {
-  padding: 16px 22px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #E5E5E5;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2181,7 +2137,7 @@ onUnmounted(() => {
 .right-header-left {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .active-struct-title-row {
@@ -2191,13 +2147,13 @@ onUnmounted(() => {
 }
 
 .active-struct-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #404040;
 }
 
 .active-struct-subtext {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #737373;
   margin: 0;
 }
@@ -2205,124 +2161,74 @@ onUnmounted(() => {
 .right-header-actions-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn-header-action {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 36px;
-  padding: 0 12px;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
   background-color: #ffffff;
   color: #404040;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-header-action:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-}
-
-.btn-publish-blueprint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-publish-blueprint:hover {
-  background-color: #d1fae5;
-  border-color: #6ee7b7;
-}
-
-.popover-menu-item.item-publish {
-  color: #059669;
-}
-
-.popover-menu-item.item-publish:hover {
-  background-color: #ecfdf5;
-}
-
-.copy-source-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  padding: 10px 14px;
-  border-radius: 8px;
+  background-color: #FAFAFA;
+  border-color: #d4d4d4;
 }
 
 .btn-secondary-create-units {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
+  height: 38px;
   padding: 0 16px;
   background-color: #ffffff;
   color: #404040;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-secondary-create-units:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
+  background-color: #FAFAFA;
+  border-color: #d4d4d4;
 }
 
-/* ─── Diagram Viewport & Node Cards (Screenshot 2) ─── */
-.diagram-canvas-viewport {
-  flex: 1;
-  position: relative;
-  overflow: auto;
-  padding: 36px 24px 60px;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: center;
-}
-
-/* Floating Zoom Bar */
+/* ─── Floating Zoom Bar (Figma Node 5520:79204) ─── */
 .floating-zoom-tools {
   position: absolute;
   top: 16px;
-  right: 22px;
+  right: 20px;
   display: flex;
   align-items: center;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   padding: 3px 6px;
   gap: 4px;
   z-index: 30;
 }
 
 .zoom-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2330,22 +2236,33 @@ onUnmounted(() => {
 }
 
 .zoom-btn:hover {
-  background-color: #f1f5f9;
-  color: #1e293b;
+  background-color: #FAFAFA;
+  color: #404040;
 }
 
 .zoom-level-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  min-width: 36px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+  min-width: 40px;
   text-align: center;
 }
 
 .zoom-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #E5E5E5;
+}
+
+/* ─── Diagram Viewport ─── */
+.diagram-canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  padding: 40px 24px 60px;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
 }
 
 .diagram-zoom-wrapper {
@@ -2366,35 +2283,241 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* ─── Individual Org Node Card (Screenshots 2 & 4) ─── */
+/* ─── Individual Org Node Card (Figma Node 5520:79115) ─── */
 .org-unit-node-card {
-  width: 250px;
+  width: 280px;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
   transition: all 0.15s ease;
   position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .org-unit-node-card:hover {
-  border-color: #94a3b8;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+  border-color: #d4d4d4;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .org-unit-node-card.node-active {
   border: 1.5px solid #0B529C;
-  background-color: #f0f7ff;
-  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.12), 0 4px 12px rgba(11, 82, 156, 0.08);
+  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.1);
 }
 
-.org-unit-node-card.node-active .node-unit-name {
-  color: #0B529C;
-  font-weight: 700;
+.node-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.node-unit-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.node-unit-type-subtext {
+  font-size: 12px;
+  color: #737373;
+  margin-top: 2px;
+}
+
+.node-card-divider {
+  height: 1px;
+  background-color: #E5E5E5;
+  margin: 10px 0 12px;
+  width: 100%;
+}
+
+.node-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.node-profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.node-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.node-profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.node-profile-title {
+  font-size: 12px;
+  color: #737373;
+}
+
+/* ─── Connecting Tree Lines ─── */
+.connector-stem-vertical {
+  width: 2px;
+  height: 32px;
+  background-color: #E5E5E5;
+}
+
+.connector-stem-vertical-sm {
+  width: 2px;
+  height: 24px;
+  background-color: #E5E5E5;
+}
+
+.tree-children-branches-row {
+  display: flex;
+  gap: 40px;
+  position: relative;
+  padding-top: 24px;
+}
+
+.tree-children-branches-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 140px;
+  right: 140px;
+  height: 2px;
+  background-color: #E5E5E5;
+}
+
+.tree-branch-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.tree-branch-column::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 2px;
+  height: 24px;
+  background-color: #E5E5E5;
+  transform: translateX(-50%);
+}
+
+.sub-children-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.sub-node-branch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ─── Status Pills (Figma Node 5520:79089) ─── */
+.status-pill-subtle {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.pill-published {
+  background-color: #EBFDF2;
+  color: #027A48;
+}
+
+.pill-draft {
+  background-color: #FEF7C3;
+  color: #713F12;
+}
+
+.pill-superseded {
+  background-color: #FEF3F2;
+  color: #B42318;
+}
+
+/* Ethiopian GC Date field */
+.gc-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gc-field-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #404040;
+}
+
+.required-star {
+  color: #E7000B;
+}
+
+.gc-date-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gc-cal-icon {
+  position: absolute;
+  left: 10px;
+  color: #737373;
+  pointer-events: none;
+}
+
+.gc-date-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 42px 0 32px;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #404040;
+  outline: none;
+}
+
+.gc-date-input:focus {
+  border-color: #0B529C;
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+}
+
+.gc-pill-tag {
+  position: absolute;
+  right: 8px;
+  background-color: #FAFAFA;
+  color: #737373;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.custom-checkbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.canvas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
 }
 
 @media print {
@@ -2416,211 +2539,5 @@ onUnmounted(() => {
   .diagram-canvas-viewport {
     padding: 0 !important;
   }
-}
-
-.node-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.node-unit-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.node-unit-type-subtext {
-  font-size: 11.5px;
-  color: #737373;
-  margin-bottom: 4px;
-}
-
-/* Squircle Profile Avatar (Global Rule 9) */
-.node-profile-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 4px;
-}
-
-.node-squircle-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  object-fit: cover;
-}
-
-.node-profile-meta {
-  display: flex;
-  flex-direction: column;
-}
-
-.node-profile-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.node-profile-title {
-  font-size: 11px;
-  color: #737373;
-}
-
-/* ─── Connecting Tree Lines ─── */
-.connector-stem-vertical {
-  width: 2px;
-  height: 32px;
-  background-color: #cbd5e1;
-}
-
-.connector-stem-vertical-sm {
-  width: 2px;
-  height: 24px;
-  background-color: #cbd5e1;
-}
-
-.tree-children-branches-row {
-  display: flex;
-  gap: 36px;
-  position: relative;
-  padding-top: 24px;
-}
-
-.tree-children-branches-row::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 125px;
-  right: 125px;
-  height: 2px;
-  background-color: #cbd5e1;
-}
-
-.tree-branch-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.tree-branch-column::before {
-  content: '';
-  position: absolute;
-  top: -24px;
-  left: 50%;
-  width: 2px;
-  height: 24px;
-  background-color: #cbd5e1;
-  transform: translateX(-50%);
-}
-
-.sub-children-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.sub-node-branch-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* ─── Status Pills ─── */
-.status-pill-subtle {
-  display: inline-block;
-  padding: 1px 7px;
-  border-radius: 9999px;
-  font-size: 10.5px;
-  font-weight: 500;
-}
-
-.pill-published {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.pill-draft {
-  background-color: #fef9c3;
-  color: #d97706;
-}
-
-.pill-superseded {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-/* Ethiopian GC Date field */
-.gc-date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.gc-field-label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.required-star {
-  color: #ef4444;
-}
-
-.gc-date-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.gc-cal-icon {
-  position: absolute;
-  left: 10px;
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.gc-date-input {
-  width: 100%;
-  height: 38px;
-  padding: 0 42px 0 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #404040;
-  outline: none;
-}
-
-.gc-date-input:focus {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
-}
-
-.gc-pill-tag {
-  position: absolute;
-  right: 8px;
-  background-color: #f1f5f9;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.custom-checkbox {
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-}
-
-.canvas-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
 }
 </style>

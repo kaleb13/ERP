@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import BaseButton from './BaseButton.vue';
+import BaseButton, { type ButtonSize, type ButtonVariant } from './BaseButton.vue';
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'outline' | 'icon' | 'destructive' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  iconOnly?: boolean;
+  loading?: boolean;
   active?: boolean;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
@@ -13,6 +15,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   variant: 'primary',
   size: 'md',
+  iconOnly: false,
+  loading: false,
   active: false,
   disabled: false,
   type: 'button',
@@ -28,6 +32,8 @@ const emit = defineEmits<{
   <BaseButton
     :variant="props.variant"
     :size="props.size"
+    :icon-only="props.iconOnly"
+    :loading="props.loading"
     :active="props.active"
     :disabled="props.disabled"
     :type="props.type"

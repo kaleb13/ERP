@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  CheckCircle2, XCircle, Clock, ShieldCheck, 
-  Calendar, Check, X, Printer, AlertCircle, FileText,
-  User, Banknote, Edit3
-} from 'lucide-vue-next';
+import {
+  CheckCircle2, XCircle, ShieldCheck, Calendar,
+  Check, X, Printer, Edit3
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import { 
@@ -141,24 +141,24 @@ const formatDate = (dateStr?: string | null) => {
       </div>
 
       <div class="top-nav-actions">
-        <button
-          type="button"
-          class="btn-secondary-action"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handlePrintSlip"
         >
-          <Printer :size="14" />
-          <span>Print Slip</span>
-        </button>
+          <template #icon-left><Printer :size="14" /></template>
+          Print Slip
+        </AppButton>
 
-        <button
+        <AppButton
           v-if="currentItem.request_state === 'pending' || currentItem.request_state === 'draft'"
-          type="button"
-          class="btn-danger-action"
+          variant="destructive"
+          size="sm"
           @click="handleCancelRequest"
         >
-          <XCircle :size="14" />
-          <span>Cancel Request</span>
-        </button>
+          <template #icon-left><XCircle :size="14" /></template>
+          Cancel Request
+        </AppButton>
       </div>
     </div>
 
@@ -345,18 +345,17 @@ const formatDate = (dateStr?: string | null) => {
 
         <!-- 5. Decision Action Button -->
         <div class="decision-footer">
-          <button
-            type="button"
-            class="btn-submit-verdict"
-            :class="resolution"
+          <AppButton
+            :variant="resolution === 'reject' ? 'destructive' : 'primary'"
+            size="md"
             :disabled="isSubmittingDecision"
+            :loading="isSubmittingDecision"
             @click="handleSubmitDecision"
           >
-            <span v-if="isSubmittingDecision">Processing...</span>
-            <span v-else-if="resolution === 'approve'">Confirm Approval &amp; Lock Rate</span>
+            <span v-if="resolution === 'approve'">Confirm Approval &amp; Lock Rate</span>
             <span v-else-if="resolution === 'modify'">Confirm Adjusted Approval ({{ adjustedDaysInput }}d)</span>
             <span v-else>Confirm Rejection</span>
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -427,7 +426,7 @@ const formatDate = (dateStr?: string | null) => {
 .encashment-approval-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   width: 100%;
 }
 

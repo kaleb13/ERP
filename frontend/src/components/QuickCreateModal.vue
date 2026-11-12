@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { X, Maximize2, Loader2 } from 'lucide-vue-next';
+import { X, Maximize2 } from 'lucide-vue-next';
+import BaseButton from './BaseButton.vue';
 
 interface Props {
   /** Controls modal visibility (use with v-model:show or v-model). */
@@ -151,29 +152,31 @@ watch(
             <!-- Bottom-Left: Secondary Button (Expand Full Form) -->
             <div class="footer-left">
               <slot name="footer-left">
-                <button 
-                  v-if="isExpandVisible" 
-                  type="button" 
-                  class="btn-secondary-action" 
+                <BaseButton
+                  v-if="isExpandVisible"
+                  variant="secondary-gray"
+                  size="sm"
                   @click="handleExpand"
                 >
-                  <Maximize2 :size="13" />
-                  <span>{{ expandLabel }}</span>
-                </button>
+                  <template #icon-left>
+                    <Maximize2 :size="14" />
+                  </template>
+                  {{ expandLabel }}
+                </BaseButton>
               </slot>
             </div>
 
             <!-- Bottom-Right: Primary Button (Save - Strictly Plain Text, Zero Icons) -->
             <div class="footer-right">
-              <button 
-                type="button" 
-                class="btn-primary-action" 
-                :disabled="disabled || loading"
+              <BaseButton
+                variant="primary"
+                size="sm"
+                :loading="loading"
+                :disabled="disabled"
                 @click="$emit('save')"
               >
-                <Loader2 v-if="loading" :size="14" class="animate-spin" />
-                <span>{{ saveLabel }}</span>
-              </button>
+                {{ saveLabel }}
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -199,8 +202,8 @@ watch(
 
 /* MODAL CARD CONTAINER */
 .quick-modal-card {
-  background-color: #ffffff;
-  border-radius: 16px;
+  background-color: var(--alias-color-background-surface-elevated, #ffffff);
+  border-radius: var(--alias-radius-2xl, 16px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -216,11 +219,11 @@ watch(
 
 /* HEADER - Title only, no bottom line, seamless transition */
 .quick-modal-header {
-  padding: 24px 24px 8px 24px;
+  padding: var(--alias-spacing-3xl, 24px) var(--alias-spacing-3xl, 24px) var(--alias-spacing-md, 8px) var(--alias-spacing-3xl, 24px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--alias-spacing-xl, 16px);
 }
 
 .quick-modal-title {
@@ -235,10 +238,10 @@ watch(
 .btn-close-modal {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--alias-color-text-tertiary, #737373);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
+  padding: var(--alias-spacing-sm, 6px);
+  border-radius: var(--alias-radius-lg, 8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,26 +251,26 @@ watch(
 }
 
 .btn-close-modal:hover {
-  color: #0f172a;
-  background-color: #f1f5f9;
+  color: var(--alias-color-text-secondary, #404040);
+  background-color: var(--alias-color-bg-secondary, #f5f5f5);
 }
 
 /* BODY */
 .quick-modal-body {
-  padding: 20px 24px;
+  padding: var(--alias-spacing-2xl, 20px) var(--alias-spacing-3xl, 24px);
   overflow-y: auto;
   flex: 1;
 }
 
 /* FOOTER */
 .quick-modal-footer {
-  padding: 14px 24px;
-  border-top: 1px solid #f1f5f9;
-  background-color: #fafafa;
+  padding: var(--alias-spacing-xl, 16px) var(--alias-spacing-3xl, 24px);
+  border-top: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  background-color: var(--alias-color-bg-primary, #fafafa);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--alias-spacing-xl, 16px);
 }
 
 .footer-left {
@@ -345,71 +348,6 @@ watch(
   align-items: center;
   gap: 10px;
 }
-
-/* BOTTOM-LEFT: SECONDARY ACTION BUTTON (EXPAND FULL FORM - WELL ROUNDED RECTANGLE) */
-.btn-secondary-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  font-size: 13px;
-  font-weight: 550;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  transition: all 0.15s ease;
-}
-
-.btn-secondary-action:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0f172a;
-}
-
-.btn-secondary-action:active {
-  background-color: #f1f5f9;
-}
-
-/* BOTTOM-RIGHT: PRIMARY ACTION BUTTON (SAVE - WELL ROUNDED RECTANGLE) */
-.btn-primary-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 18px;
-  border-radius: 8px;
-  border: none;
-  background-color: #0B529C;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(11, 82, 156, 0.15);
-  transition: all 0.15s ease;
-}
-
-.btn-primary-action:hover:not(:disabled) {
-  background-color: #09427D;
-  box-shadow: 0 3px 6px rgba(11, 82, 156, 0.25);
-  transform: translateY(-0.5px);
-}
-
-.btn-primary-action:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-primary-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-
 
 /* ANIMATIONS */
 @keyframes modalPop {

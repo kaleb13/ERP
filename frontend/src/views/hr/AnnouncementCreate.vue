@@ -2,35 +2,19 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
-  MoreVertical,
-  X,
-  FileText,
-  Users,
-  Building2,
-  Briefcase,
-  Check,
-  Plus,
-  Trash2,
-  ShieldCheck,
-  ChevronDown,
-  Code,
-  Table,
-  Square,
-  Link2,
-  Image as ImageIcon,
-  Undo2,
-  Redo2,
-  List,
-  Calendar,
-  AlertCircle
-} from 'lucide-vue-next';
+  MoreVertical, X, FileText, Users,
+  Building2, Briefcase, Plus, Trash2,
+  Table, AlertCircle
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 
 import {
   announcementsData,
@@ -386,21 +370,25 @@ const saveRecord = (stateToSet: AnnouncementState) => {
     <!-- Top Action Bar (AGENTS.md Rule 4 & 29: Zero-background, transparent) -->
     <div class="top-nav-bar">
       <div class="top-nav-left">
-        <AppBreadcrumb :items="breadcrumbItems" noMargin />
-        <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-nav-right">
         <!-- 3-Dots More Menu for Draft State (AGENTS.md Rule 4 & 59) -->
         <div class="draft-menu-container">
-          <button
-            type="button"
-            class="btn-icon-more"
+          <AppButton
+            variant="outline"
+            size="sm"
+            iconOnly
             title="Additional actions"
             @click="showDraftMenu = !showDraftMenu"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           <div v-if="showDraftMenu" class="draft-dropdown-menu">
             <button type="button" class="dropdown-item" @click="saveRecord('draft')">
               Save as Draft
@@ -409,23 +397,23 @@ const saveRecord = (stateToSet: AnnouncementState) => {
         </div>
 
         <!-- Secondary Clear Form Button (AGENTS.md Rule 4 & 31) -->
-        <button
-          type="button"
-          class="btn-secondary-nav"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleClearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Primary Save Button (Rule 4, 27: Plain text "Save", ZERO icons) -->
-        <button
-          type="button"
-          class="btn-primary-save"
+        <AppButton
+          variant="primary"
+          size="sm"
           @click="saveRecord('published')"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -500,62 +488,15 @@ const saveRecord = (stateToSet: AnnouncementState) => {
           </div>
         </div>
 
-        <!-- Card 2: Announcement Body & Content (WYSIWYG Standard Rules 18 & 25) -->
+        <!-- Card 2: Announcement Body & Content (Figma Node 8779:68714 Rich Text Component) -->
         <div class="clean-card">
-          <div class="card-title-row">
-            <div>
-              <h3 class="card-title">Announcement Body Content *</h3>
-              <p class="section-help-text">
-                Author the formal circular, policy directive, or operational memo with rich text formatting.
-              </p>
-            </div>
-          </div>
-
-          <div class="wysiwyg-box">
-            <div class="wysiwyg-toolbar">
-              <div class="tb-dropdown-btn">
-                <span>Paragraph</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="tb-dropdown-btn">
-                <span>Font Type</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="tb-dropdown-btn">
-                <List :size="13" />
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="tb-divider"></div>
-
-              <button type="button" class="tb-icon-btn font-bold" title="Bold" @click="insertFormat('b')">B</button>
-              <button type="button" class="tb-icon-btn italic" title="Italic" @click="insertFormat('i')">I</button>
-              <button type="button" class="tb-icon-btn underline" title="Underline">U</button>
-              <button type="button" class="tb-icon-btn line-through" title="Strikethrough">S</button>
-              <button type="button" class="tb-icon-btn" title="Code"><Code :size="13" /></button>
-              <button type="button" class="tb-icon-btn" title="Table"><Table :size="13" /></button>
-              <button type="button" class="tb-icon-btn" title="Color"><Square :size="12" class="fill-current" /></button>
-              <button type="button" class="tb-icon-btn" title="Link"><Link2 :size="13" /></button>
-              <button type="button" class="tb-icon-btn" title="Image"><ImageIcon :size="13" /></button>
-
-              <div class="tb-spacer"></div>
-
-              <button type="button" class="tb-icon-btn" title="Undo"><Undo2 :size="13" /></button>
-              <button type="button" class="tb-icon-btn" title="Redo"><Redo2 :size="13" /></button>
-            </div>
-
-            <textarea
-              v-model="formData.body"
-              rows="10"
-              class="wysiwyg-textarea"
-            ></textarea>
-
-            <div class="wysiwyg-footer">
-              <span class="char-count-text">{{ bodyCharCount }} / 5,000 Characters</span>
-            </div>
-          </div>
+          <FormRichText
+            v-model="formData.body"
+            label="Announcement Body Content"
+            help-text="Author the formal circular, policy directive, or operational memo with rich text formatting."
+            required
+            :max-length="5000"
+          />
         </div>
       </div>
 
@@ -809,7 +750,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 
 <style scoped>
 .announcement-create-page {
-  padding: 24px 32px 80px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -832,7 +773,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .top-nav-left {
@@ -989,13 +930,13 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 840px) {

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Search, CheckCircle2, XCircle, Clock, 
-  Check, X, Calendar, CalendarDays, Award, 
-  Banknote, Scale, Users, MoreVertical, Eye,
-  Maximize2, FileText, ArrowRight, ShieldCheck,
-  AlertCircle, DollarSign, Wallet, ArrowUpRight
-} from 'lucide-vue-next';
+import {
+  Plus, Search, CheckCircle2, Clock,
+  Check, X, Banknote, Users,
+  MoreVertical, Eye
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -88,9 +87,15 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Selection State for Batch Operations (Rule 11) ───
@@ -318,14 +323,10 @@ const formatCurrency = (val: number) => {
 
       <!-- Primary Action in Top Right Slot (Rule 10 & Rule 6) -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-create-encashment-primary"
-          @click="openCreateModal"
-        >
-          <Plus :size="15" />
-          <span>Request Encashment</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openCreateModal">
+  <template #icon-left><Plus :size="15" /></template>
+  Request Encashment
+</AppButton>
       </template>
 
       <!-- Table Content -->
@@ -543,7 +544,7 @@ const formatCurrency = (val: number) => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   position: relative;
 }
 

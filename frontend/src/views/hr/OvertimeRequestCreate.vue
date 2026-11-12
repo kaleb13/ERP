@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  X, Save, MoreVertical, Clock, Calendar, 
-  User, CheckCircle2, AlertCircle, ShieldAlert,
-  ArrowRight, FileText, Info
-} from 'lucide-vue-next';
+import {
+  X, Save, MoreVertical, Clock,
+  FileText
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
@@ -190,24 +191,24 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
   <div class="overtime-create-page">
     <!-- ═══ TOP BAR NAVIGATION (AGENTS.md Rule 4 & Breadcrumb Standard) ═══ -->
     <div class="top-nav-bar">
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems">
+        <template #badge>
+          <SaveStateBadge :isSaved="isSaved" />
+        </template>
+      </AppBreadcrumb>
 
       <div class="top-actions-cluster">
-        <!-- Save State Indicator -->
-        <span class="save-status-pill" :class="isSaved ? 'pill-saved' : 'pill-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
-
         <!-- Dynamic 3-Dots More Menu [ ⋮ ] (Draft Support AGENTS.md Rule 4) -->
         <div class="dropdown-wrap">
-          <button
-            type="button"
-            class="btn-icon-more"
+          <AppButton
+            variant="outline"
+            size="sm"
+            iconOnly
             @click="showDraftMenu = !showDraftMenu"
             title="More actions"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           <div v-if="showDraftMenu" class="dropdown-menu">
             <button type="button" class="dropdown-item" @click="executeSave('draft'); showDraftMenu = false;">
               <FileText :size="14" />
@@ -217,16 +218,23 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
         </div>
 
         <!-- Clear Form Secondary Button -->
-        <button type="button" class="btn-secondary-action" @click="handleClearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="handleClearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Blue Button -->
-        <button type="button" class="btn-primary-action" @click="executeSave('pending')">
-          <Save :size="15" />
-          <span>Submit for Approval</span>
-        </button>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="executeSave('pending')"
+        >
+          Submit for Approval
+        </AppButton>
       </div>
     </div>
 
@@ -359,8 +367,8 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
 .overtime-create-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }
@@ -573,7 +581,7 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 900px) {

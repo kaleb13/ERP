@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Clock, ArrowLeft, Save, X, RotateCcw, CheckCircle2,
-  Calendar, Layers, Moon, AlertCircle, Info, Coffee, Sunrise, Sunset
-} from 'lucide-vue-next';
+import { Save, X, Info } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import BaseTabs from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -12,6 +9,7 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -124,29 +122,32 @@ const handleSave = () => {
     <!-- Top Bar with Breadcrumbs & Actions -->
     <div class="top-nav-bar">
       <div class="left-section">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :is-saved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :is-saved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="right-actions">
-        <button 
-          type="button" 
-          class="btn-secondary-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="handleClearForm"
         >
-          <X :size="15" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
-        <button 
-          type="button" 
-          class="btn-primary-action" 
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           :disabled="isSubmitting"
+          :loading="isSubmitting"
           @click="handleSave"
         >
-          <Save :size="15" />
-          <span>{{ isSubmitting ? 'Saving...' : 'Save Shift' }}</span>
-        </button>
+          {{ isSubmitting ? 'Saving...' : 'Save Shift' }}
+        </AppButton>
       </div>
     </div>
 
@@ -330,7 +331,7 @@ const handleSave = () => {
 
 <style scoped>
 .shift-create-page {
-  padding: 1.25rem 2rem 3rem 2rem;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -440,7 +441,7 @@ const handleSave = () => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 900px) {

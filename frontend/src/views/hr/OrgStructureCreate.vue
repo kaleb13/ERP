@@ -1,20 +1,28 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, GitBranch, FolderTree,
-  Plus, Trash2, Calendar, ChevronDown, Columns,
-  List, Table, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo, MoreVertical, FileText
-} from 'lucide-vue-next';
+import {
+  X, GitBranch, FolderTree, Calendar,
+  ChevronDown, MoreVertical, FileText
+} from 'lucide-vue-next';;
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
+import DynamicSubTable, { type DynamicTableColumn, type CatalogItem } from '../../components/DynamicSubTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = [
+  { label: 'Organization Structures', to: '/hr/org-structures' },
+  { label: 'Create Org Structure' }
+];
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -72,6 +80,60 @@ export interface StructureUnitRow {
 
 const unitsList = ref<StructureUnitRow[]>([]);
 const selectedUnitIds = ref<number[]>([]);
+
+const orgUnitSelectOptions = computed(() => {
+  return masterOrgUnits.map(u => ({
+    label: u.name,
+    value: u.id,
+    group: u.type,
+    description: u.code
+  }));
+});
+
+// ─── Dynamic Sub-Table Specification (Figma Node 5104:71791) ───
+const unitTableColumns = computed<DynamicTableColumn[]>(() => [
+  {
+    key: 'unit_id',
+    label: 'Organization Unit',
+    type: 'select',
+    minWidth: '280px',
+    options: orgUnitSelectOptions.value,
+    placeholder: 'Select Organization Unit',
+    searchable: true,
+    tooltipTitle: 'Organization Unit',
+    tooltipDesc: 'Select an active organization unit to place in this hierarchical structure.'
+  },
+  {
+    key: 'type',
+    label: 'Unit Type',
+    minWidth: '200px',
+    tooltipTitle: 'Unit Type',
+    tooltipDesc: 'Derived classification (Division, Department, Branch, Section) of the unit.'
+  }
+]);
+
+const orgUnitsCatalog = computed<CatalogItem[]>(() => {
+  return masterOrgUnits.map(u => ({
+    id: u.id,
+    label: `${u.name} (${u.type || 'Unit'})`
+  }));
+});
+
+const handleAddMultipleUnits = (chosenCatalogItems: CatalogItem[]) => {
+  chosenCatalogItems.forEach(item => {
+    const unit = masterOrgUnits.find(u => u.id === item.id);
+    if (unit && !unitsList.value.some(r => r.unit_id === unit.id)) {
+      unitsList.value.push({
+        id: Date.now() + Math.random(),
+        unit_id: unit.id,
+        code: unit.code,
+        name: unit.name,
+        type: unit.type
+      });
+    }
+  });
+  showToast(`Added ${chosenCatalogItems.length} organization units.`);
+};
 
 // ─── Selection Management for Sub-table ───
 const isAllUnitsSelected = computed(() => {
@@ -209,29 +271,25 @@ onUnmounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar (Exact Critic Match) -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/org-structures" class="bc-link">Org Structures</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Org Structure</span>
-          <SaveStateBadge :isSaved="isSaved" :isDraft="form.structure_state === 'draft'" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" :isDraft="form.structure_state === 'draft'" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
         <!-- 3-Dots Action Menu (Available for Draft support) -->
         <div class="header-more-menu-wrapper">
-          <button 
-            type="button" 
-            class="btn-more-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             @click.stop="showMoreMenu = !showMoreMenu"
             aria-label="More Options"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           
           <div v-if="showMoreMenu" class="header-more-dropdown" @click.stop>
             <button type="button" class="more-menu-item" @click="handleSaveAsDraft">
@@ -241,21 +299,21 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-clear-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="clearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button 
-          type="button" 
-          class="btn-save-action" 
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -333,64 +391,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Strategic Description Rich Text Editor (Exact Match to Critic) -->
+        <!-- Strategic Description Rich Text Editor -->
         <div class="biography-section mt-5">
-          <label class="gc-field-label">Strategic Description</label>
-
-          <div class="rich-editor-container">
-            <!-- Toolbar -->
-            <div class="editor-toolbar">
-              <div class="toolbar-dropdown">
-                <span>Paragraph</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-dropdown">
-                <span>Font Type</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-icon-btn" title="List"><List :size="14" /><ChevronDown :size="10" /></button>
-                <button type="button" class="editor-icon-btn font-bold" title="Bold">B</button>
-                <button type="button" class="editor-icon-btn italic" title="Italic">I</button>
-                <button type="button" class="editor-icon-btn underline" title="Underline">U</button>
-                <button type="button" class="editor-icon-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="editor-icon-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="editor-icon-btn" title="Table"><Table :size="14" /></button>
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-color-box" title="Text Color"></button>
-                <button type="button" class="editor-icon-btn" title="Insert Link"><LinkIcon :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Insert Image"><ImageIcon :size="14" /></button>
-              </div>
-
-              <div class="toolbar-icon-group ml-auto">
-                <button type="button" class="editor-icon-btn" title="Undo"><Undo :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Redo"><Redo :size="14" /></button>
-              </div>
-            </div>
-
-            <!-- Text Area -->
-            <textarea
-              v-model="form.description"
-              rows="6"
-              class="editor-textarea"
-            ></textarea>
-
-            <!-- Footer Bar with Character Counter -->
-            <div class="editor-footer">
-              <span class="char-count-pill">{{ form.description.length }} / 5,000 Characters</span>
-              <div class="editor-resize-handle">//</div>
-            </div>
-          </div>
+          <FormRichText
+            v-model="form.description"
+            label="Strategic Description"
+            placeholder="Document structural rationale, departmental scope, or strategic reorganization purpose..."
+            :max-length="5000"
+          />
         </div>
       </div>
     </div>
@@ -414,113 +422,71 @@ onUnmounted(() => {
         </div>
 
         <div v-show="isUnitPlacementOpen" class="accordion-body-content mt-3">
-          <!-- Dynamic Child Sub-Table (Columns: Checkbox, No., Organization Unit, Unit Type, Column Icon) -->
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input 
-                      type="checkbox" 
-                      class="table-checkbox" 
-                      :checked="isAllUnitsSelected" 
-                      @change="toggleSelectAllUnits"
-                      aria-label="Select All Units" 
-                    />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 280px;">Organization Unit</th>
-                  <th class="child-th" style="min-width: 200px;">Unit Type</th>
-                  <th class="child-th child-th-col-icon text-center">
-                    <Columns :size="14" class="col-icon-hider" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Empty State (Exact Match: "No Row" in Center) -->
-                <tr v-if="unitsList.length === 0">
-                  <td colspan="5" class="child-td-empty">No Row</td>
-                </tr>
+          <DynamicSubTable
+            v-model="unitsList"
+            :columns="unitTableColumns"
+            entity-name="Organization Unit"
+            entity-name-plural="Organization Units"
+            empty-text="No rows"
+            :multi-select-catalog="orgUnitsCatalog"
+            @addMultiple="handleAddMultipleUnits"
+          >
+            <!-- Inline Cell for unit_id using FormSelect (Product Dropdown with Grouping & Checkmarks) -->
+            <template #unit_id="{ row }">
+              <div class="cell-grid-select-wrap">
+                <FormSelect 
+                  v-model="row.unit_id" 
+                  :options="orgUnitSelectOptions"
+                  placeholder="Select Organization Unit"
+                  variant="cell"
+                  :teleport="true"
+                  :searchable="true"
+                  @update:model-value="() => handleSelectUnit(row)" 
+                />
+              </div>
+            </template>
 
-                <!-- Populated Dynamic Rows -->
-                <tr 
-                  v-else
-                  v-for="(row, idx) in unitsList" 
-                  :key="row.id"
-                  class="child-tr"
-                  :class="{ 'row-selected': selectedUnitIds.includes(row.id) }"
-                >
-                  <td class="child-td child-td-check" @click.stop>
-                    <input 
-                      type="checkbox" 
-                      class="table-checkbox" 
-                      :checked="selectedUnitIds.includes(row.id)" 
-                      @change="toggleUnitSelection(row.id)" 
-                    />
-                  </td>
+            <!-- Custom Inline Cell for type -->
+            <template #type="{ row }">
+              <span v-if="row.type" class="type-pill capitalize">{{ row.type }}</span>
+              <span v-else class="text-slate-400 text-xs">—</span>
+            </template>
 
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
+            <!-- Expand Modal Slot (Figma 5104:71792 specification) -->
+            <template #expand-modal="{ row }">
+              <div class="modal-grid-2">
+                <div class="modal-form-group">
+                  <FormSelect 
+                    v-model="row.unit_id" 
+                    :options="orgUnitSelectOptions"
+                    label="Organization Unit"
+                    placeholder="Select Organization Unit"
+                    :teleport="true"
+                    :searchable="true"
+                    @update:model-value="() => handleSelectUnit(row)" 
+                  />
+                </div>
 
-                  <td class="child-td">
-                    <select 
-                      v-model="row.unit_id" 
-                      @change="handleSelectUnit(row)" 
-                      class="child-inline-select"
-                    >
-                      <option :value="null" disabled>Select Organization Unit</option>
-                      <option 
-                        v-for="unit in masterOrgUnits" 
-                        :key="unit.id" 
-                        :value="unit.id"
-                      >
-                        {{ unit.name }}
-                      </option>
-                    </select>
-                  </td>
-
-                  <td class="child-td">
-                    <span v-if="row.type" class="type-pill capitalize">{{ row.type }}</span>
-                    <span v-else class="text-slate-400 text-xs">—</span>
-                  </td>
-
-                  <td class="child-td child-td-col-icon text-center">
-                    <button 
-                      type="button" 
-                      class="btn-icon-danger"
-                      title="Remove row"
-                      @click="removeUnitRow(row.id)"
-                    >
-                      <Trash2 :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- + Add Row Button (Always Below Table Matching Image 1) -->
-          <button type="button" class="btn-add-row" @click="addUnitRow">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+                <div class="modal-form-group">
+                  <FormInput 
+                    label="Unit Type (Derived)"
+                    :model-value="row.type || '—'" 
+                    readonly 
+                    disabled 
+                  />
+                </div>
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
-
-      <!-- Floating Bar for Child Sub-Table -->
-      <TableFloatingBar 
-        :show="selectedUnitIds.length > 0"
-        :selected-count="selectedUnitIds.length"
-        :total-count="unitsList.length"
-        @delete="handleBatchDeleteUnits"
-        @close="selectedUnitIds = []"
-      />
     </div>
   </div>
 </template>
 
 <style scoped>
 .org-structure-create-page {
-  padding: 16px 24px 80px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: calc(100vh - 60px);
 }
@@ -741,7 +707,7 @@ onUnmounted(() => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 /* GC Date Input with Calendar Badge */

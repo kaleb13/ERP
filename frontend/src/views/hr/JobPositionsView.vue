@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Briefcase, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, Maximize2, X, DollarSign,
-  Layers, ChevronRight, ShieldAlert, GraduationCap, Award, FolderTree
-} from 'lucide-vue-next';
+import {
+  Plus, Search, Filter, ArrowUpDown,
+  MoreVertical, Edit2, Trash2, Eye,
+  Check, CheckCircle2, X
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -367,9 +367,10 @@ const isColumnVisible = (key: string) => {
   return col ? col.visible !== false : true;
 };
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
 };
 
 // ─── Actions Menu ───
@@ -534,14 +535,10 @@ onUnmounted(() => {
       >
         <!-- Primary Action -->
         <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="showQuickCreate = true"
-          >
-            <Plus :size="15" />
-            <span>Create Position</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="showQuickCreate = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Position
+</AppButton>
         </template>
 
         <!-- Filter Popover Content -->
@@ -899,9 +896,9 @@ onUnmounted(() => {
           <div class="footer-hint">
             <span>* Requirements drive candidate matching in JobRequisition and succession coverage scoring.</span>
           </div>
-          <button type="button" class="btn-primary" @click="showDetailModal = false">
+          <AppButton variant="primary" size="sm" @click="showDetailModal = false">
             Close
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -910,7 +907,7 @@ onUnmounted(() => {
 
 <style scoped>
 .job-positions-page {
-  padding: 24px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
   box-sizing: border-box;

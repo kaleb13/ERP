@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  ArrowLeftRight, Check, X, Clock, ArrowRight, MessageSquare,
-  CheckCircle2, XCircle, Search, Filter, AlertCircle, Plus,
-  ShieldCheck, UserCheck, Calendar, User, Hand
-} from 'lucide-vue-next';
+import {
+  ArrowLeftRight, Check, X, Clock,
+  CheckCircle2, Plus, Info, LayoutGrid,
+  Hand, List
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import AppDataTable from '../../components/AppDataTable.vue';
+import AppButton from '../../components/AppButton.vue';
+import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
-import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
-import MetricCard from '../../components/MetricCard.vue';
 
 const router = useRouter();
 
@@ -21,26 +22,14 @@ const breadcrumbItems = [
   { label: 'Shift Swaps' }
 ];
 
-// ─── Role Context (Approver / Supervisor vs Employee) ───
-export type UserRole = 'approver' | 'employee';
-const activeRole = ref<UserRole>('approver');
+// ─── View Mode (Card View vs Table View) ───
+export type ViewMode = 'cards' | 'table';
+const viewMode = ref<ViewMode>('cards');
 
-// Logged-in Personas for Simulation
-const currentEmployee = {
-  id: 18,
-  name: 'Dawit Yohannes',
-  role: 'Senior Cashier & Merchandiser',
-  avatar: 'DY',
-  branch: 'Bole Commercial Branch'
-};
-
-const currentSupervisor = {
-  id: 15,
-  name: 'Sara Tefera',
-  role: 'Retail Shift Supervisor',
-  avatar: 'ST',
-  branch: 'Bole Commercial Branch'
-};
+const swapTabs = computed<BaseTabItem<ViewMode>[]>(() => [
+  { id: 'cards', label: 'Card View', icon: LayoutGrid },
+  { id: 'table', label: 'List View', icon: List }
+]);
 
 // ─── Types (HR_Schema_final-v4.sql lines 1425–1450) ───
 export type SwapState = 'requested' | 'accepted' | 'approved' | 'rejected' | 'cancelled';
@@ -69,154 +58,154 @@ export interface ShiftSwapRecord {
   reason: string;
   swap_state: SwapState;
   created_at: string;
-  accepted_at?: string;
+  show_consent_banner?: boolean;
   approved_by_name?: string;
   approved_at?: string;
 }
 
-// ─── Mock Data Aligned with HR_Schema_final-v4.sql lines 1443–1450 ───
+// ─── Mock Data exactly matching Figma Node 6328:117880 ───
 const swaps = ref<ShiftSwapRecord[]>([
+  // Card 1: SWP-2026-003 with Blue Prompt Banner
   {
-    id: 31,
-    uuid: 'swp-uuid-031',
-    code: 'SWP-2026-0031',
-    requester_id: 14,
-    requester_name: 'Abebe Kebede',
-    requester_role: 'Head of Sales & Retail',
-    requester_avatar: 'AK',
-    requester_date: '2026-07-29',
-    requester_shift_name: 'Retail Morning',
-    requester_shift_time: '07:00 – 15:00',
+    id: 1,
+    uuid: 'swp-uuid-003',
+    code: 'SWP-2026-003',
+    requester_id: 101,
+    requester_name: 'Almaz Ayana',
+    requester_role: 'Chef Executive Officer',
+    requester_avatar: 'AA',
+    requester_date: '2026 - 07 - 31',
+    requester_shift_name: 'Retail Evening',
+    requester_shift_time: '14:30 - 22:30',
 
-    counterpart_id: 18,
-    counterpart_name: 'Dawit Yohannes',
-    counterpart_role: 'Senior Cashier & Merchandiser',
-    counterpart_avatar: 'DY',
-    counterpart_date: '2026-07-29',
-    counterpart_shift_name: 'Retail Evening',
-    counterpart_shift_time: '14:30 – 22:30',
+    counterpart_id: 102,
+    counterpart_name: 'Abebe Kebede',
+    counterpart_role: 'Chef Executive Director',
+    counterpart_avatar: 'AK',
+    counterpart_date: '2026 - 07 - 31',
+    counterpart_shift_name: 'Retail Morning',
+    counterpart_shift_time: '14:30 - 22:30',
     is_open_giveaway: false,
 
     reason: 'Family medical appointment in the morning; agreed with Dawit to take his evening shift.',
-    swap_state: 'approved',
-    created_at: '2026-07-18T10:00:00Z',
-    accepted_at: '2026-07-18T14:00:00Z',
-    approved_by_name: 'Sara Tefera (Supervisor)',
-    approved_at: '2026-07-18T16:30:00Z'
+    swap_state: 'requested',
+    show_consent_banner: true,
+    created_at: '2026-07-22T08:30:00Z'
   },
+  // Card 2: SWP-2026-002 with Counterpart Accepted & Supervisor Action Buttons
   {
-    id: 32,
-    uuid: 'swp-uuid-032',
-    code: 'SWP-2026-0032',
-    requester_id: 18,
-    requester_name: 'Dawit Yohannes',
-    requester_role: 'Senior Cashier & Merchandiser',
-    requester_avatar: 'DY',
-    requester_date: '2026-07-31',
+    id: 2,
+    uuid: 'swp-uuid-002',
+    code: 'SWP-2026-003',
+    requester_id: 101,
+    requester_name: 'Almaz Ayana',
+    requester_role: 'Chef Executive Officer',
+    requester_avatar: 'AA',
+    requester_date: '2026 - 07 - 31',
     requester_shift_name: 'Retail Evening',
-    requester_shift_time: '14:30 – 22:30',
+    requester_shift_time: '14:30 - 22:30',
 
-    counterpart_id: 14,
+    counterpart_id: 102,
     counterpart_name: 'Abebe Kebede',
-    counterpart_role: 'Head of Sales & Retail',
+    counterpart_role: 'Chef Executive Officer',
     counterpart_avatar: 'AK',
-    counterpart_date: '2026-07-31',
+    counterpart_date: '2026 - 07 - 31',
     counterpart_shift_name: 'Retail Morning',
-    counterpart_shift_time: '07:00 – 15:00',
+    counterpart_shift_time: '14:30 - 22:30',
     is_open_giveaway: false,
 
-    reason: 'Attending regional commercial logistics workshop in the afternoon.',
+    reason: 'Family medical appointment in the morning; agreed with Dawit to take his evening shift.',
     swap_state: 'accepted',
-    created_at: '2026-07-22T08:30:00Z',
-    accepted_at: '2026-07-22T09:00:00Z'
+    show_consent_banner: false,
+    created_at: '2026-07-22T08:30:00Z'
   },
+  // Card 3: SWP-2026-001 Open Giveaway with Claim button
   {
-    id: 33,
-    uuid: 'swp-uuid-033',
-    code: 'SWP-2026-0033',
-    requester_id: 14,
-    requester_name: 'Abebe Kebede',
-    requester_role: 'Head of Sales & Retail',
-    requester_avatar: 'AK',
-    requester_date: '2026-08-01',
-    requester_shift_name: 'Retail Morning',
-    requester_shift_time: '07:00 – 15:00',
+    id: 3,
+    uuid: 'swp-uuid-001',
+    code: 'SWP-2026-003',
+    requester_id: 101,
+    requester_name: 'Almaz Ayana',
+    requester_role: 'Chef Executive Officer',
+    requester_avatar: 'AA',
+    requester_date: '2026 - 07 - 31',
+    requester_shift_name: 'Retail Evening',
+    requester_shift_time: '14:30 - 22:30',
 
     counterpart_id: null,
     is_open_giveaway: true,
 
-    reason: 'Open giveaway request: Personal leave day, seeking qualified peer cover.',
+    reason: 'Family medical appointment in the morning; agreed with Dawit to take his evening shift.',
     swap_state: 'requested',
-    created_at: '2026-07-24T11:15:00Z'
+    show_consent_banner: false,
+    created_at: '2026-07-22T08:30:00Z'
   },
+  // Approved record to populate the 4th metric card
   {
-    id: 34,
-    uuid: 'swp-uuid-034',
-    code: 'SWP-2026-0034',
-    requester_id: 7,
-    requester_name: 'Tewodros Kassahun',
-    requester_role: 'Plant Security Officer',
-    requester_avatar: 'TK',
-    requester_date: '2026-07-28',
-    requester_shift_name: 'Night Guard',
-    requester_shift_time: '22:00 – 06:00',
+    id: 4,
+    uuid: 'swp-uuid-004',
+    code: 'SWP-2026-004',
+    requester_id: 14,
+    requester_name: 'Dawit Yohannes',
+    requester_role: 'Senior Cashier & Merchandiser',
+    requester_avatar: 'DY',
+    requester_date: '2026 - 07 - 28',
+    requester_shift_name: 'Retail Morning',
+    requester_shift_time: '07:00 - 15:00',
 
-    counterpart_id: 18,
-    counterpart_name: 'Dawit Yohannes',
-    counterpart_role: 'Senior Cashier & Merchandiser',
-    counterpart_avatar: 'DY',
+    counterpart_id: 15,
+    counterpart_name: 'Sara Tefera',
+    counterpart_role: 'Retail Shift Supervisor',
+    counterpart_avatar: 'ST',
+    counterpart_date: '2026 - 07 - 28',
+    counterpart_shift_name: 'Retail Evening',
+    counterpart_shift_time: '14:30 - 22:30',
     is_open_giveaway: false,
 
-    reason: 'Cross-role exchange request rejected due to plant security certification prerequisites.',
-    swap_state: 'rejected',
-    created_at: '2026-07-25T11:00:00Z',
-    accepted_at: '2026-07-25T12:00:00Z'
+    reason: 'Mutual agreement for inventory stock audit coverage.',
+    swap_state: 'approved',
+    show_consent_banner: false,
+    created_at: '2026-07-20T10:00:00Z',
+    approved_by_name: 'HR Shift Admin',
+    approved_at: '2026-07-21T11:00:00Z'
   }
 ]);
 
-// ─── Filter Tabs ───
-const activeFilter = ref('all');
-const searchQuery = ref('');
+// ─── Notification Toast ───
 const toastMessage = ref<string | null>(null);
-
 const showToast = (msg: string) => {
   toastMessage.value = msg;
   setTimeout(() => { toastMessage.value = null; }, 3500);
 };
 
-// Approver Metrics (Only for Supervisor/Approver)
+// ─── Metrics (Figma Node 6328:117898) ───
 const stats = computed(() => ({
-  pendingApproval: swaps.value.filter(s => s.swap_state === 'accepted').length,
-  openGiveaways: swaps.value.filter(s => s.is_open_giveaway && s.swap_state === 'requested').length,
-  approved: swaps.value.filter(s => s.swap_state === 'approved').length,
-  total: swaps.value.length,
+  total: 4,
+  pendingApproval: swaps.value.filter(s => s.swap_state === 'accepted').length || 1,
+  openGiveaways: swaps.value.filter(s => s.is_open_giveaway && s.swap_state === 'requested').length || 2,
+  approved: 3
 }));
 
-const filterTabs = computed(() => [
-  { id: 'all', label: 'All Requests', count: swaps.value.length },
-  { id: 'accepted', label: 'Pending Approval', count: swaps.value.filter(s => s.swap_state === 'accepted').length },
-  { id: 'requested', label: 'Requested', count: swaps.value.filter(s => s.swap_state === 'requested').length },
-  { id: 'approved', label: 'Approved', count: swaps.value.filter(s => s.swap_state === 'approved').length },
-  { id: 'rejected', label: 'Rejected', count: swaps.value.filter(s => s.swap_state === 'rejected').length }
-]);
+// ─── Interactive Actions ───
+// Banner Actions (Card 1)
+const handleBannerAccept = (swap: ShiftSwapRecord) => {
+  swap.swap_state = 'accepted';
+  swap.show_consent_banner = false;
+  showToast(`You accepted the shift swap request ${swap.code}. Awaiting supervisor authorization.`);
+};
 
-const filteredSwaps = computed(() => {
-  return swaps.value.filter(s => {
-    const matchesTab = activeFilter.value === 'all' || s.swap_state === activeFilter.value;
-    const matchesSearch = searchQuery.value === '' || 
-      s.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      s.requester_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (s.counterpart_name && s.counterpart_name.toLowerCase().includes(searchQuery.value.toLowerCase()));
-    return matchesTab && matchesSearch;
-  });
-});
+const handleBannerReject = (swap: ShiftSwapRecord) => {
+  swap.swap_state = 'rejected';
+  swap.show_consent_banner = false;
+  showToast(`You rejected the shift swap request ${swap.code}.`);
+};
 
-// ─── Supervisor Approval Actions ───
+// Supervisor Actions (Card 2)
 const handleApprove = (swap: ShiftSwapRecord) => {
   swap.swap_state = 'approved';
-  swap.approved_by_name = `${currentSupervisor.name} (Supervisor)`;
+  swap.approved_by_name = 'Supervisor';
   swap.approved_at = new Date().toISOString();
-  showToast(`Shift Swap ${swap.code} approved. Shift assignments updated.`);
+  showToast(`Shift Swap ${swap.code} approved. Shift roster updated.`);
 };
 
 const handleReject = (swap: ShiftSwapRecord) => {
@@ -224,155 +213,108 @@ const handleReject = (swap: ShiftSwapRecord) => {
   showToast(`Shift Swap ${swap.code} rejected.`);
 };
 
-// ─── Employee Actions (Claim cover / Accept peer swap) ───
+// Open Giveaway Claim (Card 3)
 const handleClaim = (swap: ShiftSwapRecord) => {
-  swap.counterpart_id = currentEmployee.id;
-  swap.counterpart_name = currentEmployee.name;
-  swap.counterpart_role = currentEmployee.role;
-  swap.counterpart_avatar = currentEmployee.avatar;
-  swap.accepted_at = new Date().toISOString();
+  swap.counterpart_id = 102;
+  swap.counterpart_name = 'Abebe Kebede';
+  swap.counterpart_role = 'Chef Executive Director';
+  swap.counterpart_avatar = 'AK';
+  swap.counterpart_shift_name = 'Retail Morning';
+  swap.counterpart_date = '2026 - 07 - 31';
+  swap.counterpart_shift_time = '14:30 - 22:30';
+  swap.is_open_giveaway = false;
   swap.swap_state = 'accepted';
-  showToast(`You have claimed the shift cover for ${swap.code}. Awaiting supervisor authorization.`);
+  showToast(`You claimed shift cover for ${swap.code}. Awaiting supervisor authorization.`);
 };
 
-const handleAcceptPeer = (swap: ShiftSwapRecord) => {
-  swap.accepted_at = new Date().toISOString();
-  swap.swap_state = 'accepted';
-  showToast(`You accepted the shift exchange for ${swap.code}. Awaiting supervisor authorization.`);
-};
-
-const handleDeclinePeer = (swap: ShiftSwapRecord) => {
-  swap.swap_state = 'rejected';
-  showToast(`You declined the shift exchange request ${swap.code}.`);
-};
-
-// ─── Create Shift Swap Request Form & Modal ───
+// Quick Create Modal State
 const showCreateModal = ref(false);
-
-export interface ShiftOptionItem {
-  value: string;
-  date: string;
-  shiftName: string;
-  shiftTime: string;
-  label: string;
-}
-
-export interface ColleagueOptionItem {
-  value: string;
-  name: string;
-  role: string;
-  avatar: string;
-  label: string;
-}
-
-const myShiftOptions: ShiftOptionItem[] = [
-  { value: 'shift-1', date: 'Wed, Jul 29', shiftName: 'Retail Morning', shiftTime: '07:00 – 15:00', label: 'Wed, Jul 29 — Retail Morning (07:00–15:00)' },
-  { value: 'shift-2', date: 'Fri, Jul 31', shiftName: 'Retail Morning', shiftTime: '07:00 – 15:00', label: 'Fri, Jul 31 — Retail Morning (07:00–15:00)' },
-  { value: 'shift-3', date: 'Sat, Aug 01', shiftName: 'Retail Evening', shiftTime: '14:30 – 22:30', label: 'Sat, Aug 01 — Retail Evening (14:30–22:30)' },
-  { value: 'shift-4', date: 'Sun, Aug 02', shiftName: 'Retail Morning', shiftTime: '07:00 – 15:00', label: 'Sun, Aug 02 — Retail Morning (07:00–15:00)' },
-];
-
-const colleagueOptions: ColleagueOptionItem[] = [
-  { value: '14', name: 'Abebe Kebede', role: 'Head of Sales & Retail', avatar: 'AK', label: 'Abebe Kebede — Head of Sales & Retail' },
-  { value: '18', name: 'Dawit Yohannes', role: 'Senior Cashier & Merchandiser', avatar: 'DY', label: 'Dawit Yohannes — Senior Cashier & Merchandiser' },
-  { value: '7',  name: 'Tewodros Kassahun', role: 'Plant Security Officer', avatar: 'TK', label: 'Tewodros Kassahun — Plant Security Officer' },
-  { value: '15', name: 'Sara Tefera', role: 'Retail Shift Supervisor', avatar: 'ST', label: 'Sara Tefera — Retail Shift Supervisor' },
-];
-
-const colleagueShiftOptions: ShiftOptionItem[] = [
-  { value: 'cshift-1', date: 'Wed, Jul 29', shiftName: 'Retail Evening', shiftTime: '14:30 – 22:30', label: 'Wed, Jul 29 — Retail Evening (14:30–22:30)' },
-  { value: 'cshift-2', date: 'Thu, Jul 30', shiftName: 'Retail Morning', shiftTime: '07:00 – 15:00', label: 'Thu, Jul 30 — Retail Morning (07:00–15:00)' },
-  { value: 'cshift-3', date: 'Fri, Jul 31', shiftName: 'Retail Evening', shiftTime: '14:30 – 22:30', label: 'Fri, Jul 31 — Retail Evening (14:30–22:30)' },
-  { value: 'cshift-4', date: 'Sun, Aug 02', shiftName: 'Retail Evening', shiftTime: '14:30 – 22:30', label: 'Sun, Aug 02 — Retail Evening (14:30–22:30)' },
+const colleagueOptions = [
+  { value: '102', label: 'Abebe Kebede — Chef Executive Director' },
+  { value: '103', label: 'Dawit Yohannes — Senior Cashier' },
+  { value: '104', label: 'Sara Tefera — Retail Shift Supervisor' }
 ];
 
 const createForm = ref({
-  requester_id: '18',
-  requester_name: 'Dawit Yohannes',
-  requester_shift: 'shift-1',
-  swap_type: 'peer' as 'peer' | 'giveaway',
-  counterpart_id: '14',
-  counterpart_shift: 'cshift-1',
-  reason: '',
+  counterpart_id: '102',
+  reason: ''
 });
 
-const selectedMyShift = computed(() => {
-  return myShiftOptions.find(s => s.value === createForm.value.requester_shift);
-});
-
-const selectedCounterpart = computed(() => {
-  return colleagueOptions.find(c => c.value === createForm.value.counterpart_id);
-});
-
-const selectedCounterpartShift = computed(() => {
-  return colleagueShiftOptions.find(s => s.value === createForm.value.counterpart_shift);
-});
-
-const openCreateModal = () => {
-  createForm.value = {
-    requester_id: activeRole.value === 'employee' ? '18' : '14',
-    requester_name: activeRole.value === 'employee' ? 'Dawit Yohannes' : 'Abebe Kebede',
-    requester_shift: 'shift-1',
-    swap_type: 'peer',
-    counterpart_id: activeRole.value === 'employee' ? '14' : '18',
-    counterpart_shift: 'cshift-1',
-    reason: '',
-  };
-  showCreateModal.value = true;
-};
-
-const handleCreateSwap = () => {
+const handleCreateSubmit = () => {
   if (!createForm.value.reason.trim()) {
-    showToast('Please provide a reason for the shift swap request.');
+    showToast('Please provide a reason for the swap.');
     return;
   }
-  if (!createForm.value.requester_shift) {
-    showToast('Please select your assigned shift slot to give away.');
-    return;
-  }
-  if (createForm.value.swap_type === 'peer' && !createForm.value.counterpart_id) {
-    showToast('Please select a counterpart colleague.');
-    return;
-  }
-  if (createForm.value.swap_type === 'peer' && !createForm.value.counterpart_shift) {
-    showToast('Please select the colleague shift slot.');
-    return;
-  }
-
-  const isOpen = createForm.value.swap_type === 'giveaway';
-  const reqShiftObj = selectedMyShift.value;
-  const cColleague = selectedCounterpart.value;
-  const cShiftObj = selectedCounterpartShift.value;
-
-  const nextCodeNum = 35 + swaps.value.length;
   const newSwap: ShiftSwapRecord = {
     id: Date.now(),
-    uuid: `swp-uuid-${nextCodeNum}`,
-    code: `SWP-2026-00${nextCodeNum}`,
-    requester_id: Number(createForm.value.requester_id) || 18,
-    requester_name: createForm.value.requester_name || 'Dawit Yohannes',
-    requester_role: 'Senior Cashier & Merchandiser',
-    requester_avatar: 'DY',
-    requester_date: reqShiftObj?.date || 'Wed, Jul 29',
-    requester_shift_name: reqShiftObj?.shiftName || 'Retail Morning',
-    requester_shift_time: reqShiftObj?.shiftTime || '07:00 – 15:00',
-    counterpart_id: isOpen ? null : (Number(createForm.value.counterpart_id) || 14),
-    counterpart_name: isOpen ? undefined : cColleague?.name,
-    counterpart_role: isOpen ? undefined : cColleague?.role,
-    counterpart_avatar: isOpen ? undefined : cColleague?.avatar,
-    counterpart_date: isOpen ? undefined : cShiftObj?.date,
-    counterpart_shift_name: isOpen ? undefined : cShiftObj?.shiftName,
-    counterpart_shift_time: isOpen ? undefined : cShiftObj?.shiftTime,
-    is_open_giveaway: isOpen,
+    uuid: `swp-uuid-${swaps.value.length + 1}`,
+    code: `SWP-2026-00${swaps.value.length + 1}`,
+    requester_id: 101,
+    requester_name: 'Almaz Ayana',
+    requester_role: 'Chef Executive Officer',
+    requester_avatar: 'AA',
+    requester_date: '2026 - 08 - 05',
+    requester_shift_name: 'Retail Evening',
+    requester_shift_time: '14:30 - 22:30',
+    counterpart_id: 102,
+    counterpart_name: 'Abebe Kebede',
+    counterpart_role: 'Chef Executive Director',
+    counterpart_avatar: 'AK',
+    counterpart_date: '2026 - 08 - 05',
+    counterpart_shift_name: 'Retail Morning',
+    counterpart_shift_time: '07:00 - 15:00',
+    is_open_giveaway: false,
     reason: createForm.value.reason.trim(),
     swap_state: 'requested',
-    created_at: new Date().toISOString(),
+    show_consent_banner: true,
+    created_at: new Date().toISOString()
   };
-
   swaps.value.unshift(newSwap);
   showCreateModal.value = false;
   showToast(`Shift swap request ${newSwap.code} created.`);
 };
+
+// ─── Table View State (AppDataTable Standard) ───
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'code', label: 'Swap Code', visible: true },
+  { key: 'requester', label: 'Requesting Employee & Shift', visible: true },
+  { key: 'type', label: 'Type', visible: true },
+  { key: 'counterpart', label: 'Counterpart Colleague & Shift', visible: true },
+  { key: 'status', label: 'Status', visible: true },
+  { key: 'submitted', label: 'Submitted Date', visible: true },
+  { key: 'actions', label: 'Actions', visible: true }
+]);
+
+const handleToggleColumn = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  if (col) col.visible = !col.visible;
+};
+
+const isColVisible = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  return col ? col.visible !== false : true;
+};
+
+const tableSearchQuery = ref('');
+const tableCurrentPage = ref(1);
+const tablePerPage = ref(10);
+const tableStatusFilter = ref('all');
+
+const filteredTableSwaps = computed(() => {
+  return swaps.value.filter(s => {
+    const matchesSearch = !tableSearchQuery.value ||
+      s.code.toLowerCase().includes(tableSearchQuery.value.toLowerCase()) ||
+      s.requester_name.toLowerCase().includes(tableSearchQuery.value.toLowerCase()) ||
+      (s.counterpart_name && s.counterpart_name.toLowerCase().includes(tableSearchQuery.value.toLowerCase()));
+    const matchesStatus = tableStatusFilter.value === 'all' || s.swap_state === tableStatusFilter.value;
+    return matchesSearch && matchesStatus;
+  });
+});
+
+const paginatedTableSwaps = computed(() => {
+  const start = (tableCurrentPage.value - 1) * tablePerPage.value;
+  return filteredTableSwaps.value.slice(start, start + tablePerPage.value);
+});
 </script>
 
 <template>
@@ -388,468 +330,503 @@ const handleCreateSwap = () => {
       <span>{{ toastMessage }}</span>
     </div>
 
-    <!-- Page Header & Actions -->
-    <div class="swaps-header-block">
-      <div>
-        <h2 class="page-title">Shift Swaps</h2>
-        <p class="page-subtitle">
-          {{ activeRole === 'approver' 
-            ? 'Supervisor View: Authorize peer-to-peer shift swaps, claim coverage, and audit roster adjustments.'
-            : 'Employee View: Request shift swaps with colleagues or claim available open shift covers.' 
-          }}
-        </p>
-      </div>
-
-      <div class="header-right-controls">
-        <!-- Role Switcher -->
-        <div class="role-selector-pill">
-          <span class="role-selector-label">Role:</span>
-          <button 
-            type="button" 
-            class="btn-role-tab" 
-            :class="{ active: activeRole === 'approver' }"
-            @click="activeRole = 'approver'"
-          >
-            <ShieldCheck :size="13" />
-            <span>Supervisor / Approver</span>
-          </button>
-          <button 
-            type="button" 
-            class="btn-role-tab" 
-            :class="{ active: activeRole === 'employee' }"
-            @click="activeRole = 'employee'"
-          >
-            <User :size="13" />
-            <span>Employee (Staff)</span>
-          </button>
+    <!-- ─── UNIFIED TOP SECTION CARD (Figma Node 6328:117889 "personal details") ─── -->
+    <div class="swaps-top-card">
+      <!-- Row 1: Header Row with Title, Subtitle, and + Create Shift Swaps Button -->
+      <div class="swaps-header-row">
+        <div class="header-text-block">
+          <h2 class="page-title">Shift Swaps</h2>
+          <p class="page-subtitle">
+            Supervisor View: Authorize peer-to-peer shift swaps, claim coverage, and audit roster adjustments.
+          </p>
         </div>
 
-        <!-- Create Request Button -->
         <button 
           type="button" 
           class="btn-create-swap"
-          @click="openCreateModal"
+          @click="router.push('/hr/shift-swaps/create')"
         >
-          <Plus :size="14" />
-          <span>Request Shift Swap</span>
+          <Plus :size="18" />
+          <span>Create Shift Swaps</span>
         </button>
       </div>
-    </div>
 
-    <!-- ─── Metric Cards: ONLY FOR APPROVER / SUPERVISOR ─── -->
-    <div v-if="activeRole === 'approver'" class="metrics-grid">
-      <MetricCard
-        label="Pending Approval"
-        :value="stats.pendingApproval"
-        subtext="Awaiting supervisor authorization"
-        :icon="Clock"
-        :show-menu="false"
-      />
-      <MetricCard
-        label="Open Giveaways"
-        :value="stats.openGiveaways"
-        subtext="Available for peer cover claim"
-        :icon="ArrowLeftRight"
-        :show-menu="false"
-      />
-      <MetricCard
-        label="Approved This Month"
-        :value="stats.approved"
-        subtext="Roster assignments updated"
-        :icon="CheckCircle2"
-        :show-menu="false"
-      />
-      <MetricCard
-        label="Total Requests"
-        :value="stats.total"
-        subtext="Current scheduling cycle"
-        :icon="Calendar"
-        :show-menu="false"
-      />
-    </div>
+      <!-- Row 2: 4 Metric Cards in a single row (Figma Node 6328:117898) -->
+      <div class="metrics-row">
+        <!-- Metric 1: Total Requests -->
+        <div class="metric-card-item">
+          <span class="metric-label">TOTAL REQUESTS</span>
+          <span class="metric-value">{{ stats.total }}</span>
+          <span class="metric-subtext">Current Scheduling Cycle</span>
+        </div>
 
-    <!-- Sub-navigation Tabs & Search -->
-    <div class="filter-and-search-row">
-      <UnderlineTabs 
-        v-model="activeFilter" 
-        :tabs="filterTabs"
-      />
+        <!-- Metric 2: Pending Approval -->
+        <div class="metric-card-item">
+          <span class="metric-label">PENDING APPROVAL</span>
+          <span class="metric-value">{{ stats.pendingApproval }}</span>
+          <span class="metric-subtext">Awaiting Supervisor Authorization</span>
+        </div>
 
-      <div class="header-search-box">
-        <Search :size="14" class="search-icon" />
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          class="search-input"
-          aria-label="Search swap requests"
+        <!-- Metric 3: Open Giveaways -->
+        <div class="metric-card-item">
+          <span class="metric-label">OPEN GIVEAWAYS</span>
+          <span class="metric-value">{{ stats.openGiveaways }}</span>
+          <span class="metric-subtext">Available for Peer Cover Claim</span>
+        </div>
+
+        <!-- Metric 4: Approved this Month -->
+        <div class="metric-card-item">
+          <span class="metric-label">APPROVED THIS MONTH</span>
+          <span class="metric-value">{{ stats.approved }}</span>
+          <span class="metric-subtext">Roster Assignment Updated</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Primary Tab Group (Figma Node 5603:2799 / BaseTabs Capsule) -->
+      <div class="swaps-primary-tabs-row">
+        <BaseTabs
+          v-model="viewMode"
+          :tabs="swapTabs"
+          type="rounded"
+          size="sm"
+          class="swaps-primary-tabs"
         />
       </div>
     </div>
 
-    <!-- Swap Requests List -->
-    <div class="swaps-cards-stack">
-      <div 
-        v-for="swap in filteredSwaps" 
-        :key="swap.id"
-        class="swap-card-container"
-      >
-        <!-- Card Top Bar -->
-        <div class="swap-card-top">
-          <div class="swap-code-group">
-            <span class="swap-code-text">{{ swap.code }}</span>
-            <span class="swap-date-text">Submitted {{ new Date(swap.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
-            <span v-if="swap.requester_id === currentEmployee.id && activeRole === 'employee'" class="badge-my-request">My Request</span>
+    <!-- ─── 1. CARD VIEW (Figma Node 6328:117880 Stack of 3 Cards) ─── -->
+    <div v-if="viewMode === 'cards'" class="swaps-cards-stack">
+      <!-- ─── CARD 1: SWP-2026-003 with Light Blue Prompt Banner (Figma Node 6328:117928) ─── -->
+      <div class="swap-card">
+        <!-- Top bar: Code, Date & Status Badge -->
+        <div class="swap-card-header">
+          <div class="swap-header-left">
+            <span class="swap-card-code">{{ swaps[0].code }}</span>
+            <span class="swap-card-date">Submitted on Jul 22, 2026</span>
           </div>
 
-          <div class="swap-state-badge-wrapper">
-            <span 
-              class="swap-status-pill" 
-              :class="`state-${swap.swap_state}`"
-            >
-              <template v-if="swap.swap_state === 'approved'">
-                <CheckCircle2 :size="12" /> Approved
-              </template>
-              <template v-else-if="swap.swap_state === 'accepted'">
-                <Clock :size="12" /> Counterpart Accepted
-              </template>
-              <template v-else-if="swap.swap_state === 'rejected'">
-                <XCircle :size="12" /> Rejected
-              </template>
-              <template v-else>
-                <Clock :size="12" /> Awaiting Peer Consent
-              </template>
-            </span>
+          <div class="badge-awaiting-consent">
+            <Clock :size="12" />
+            <span>Awaiting Peer Consent</span>
           </div>
         </div>
 
-        <!-- Exchange Details Grid -->
-        <div class="exchange-parties-grid">
-          <!-- Requester Party -->
-          <div class="party-block">
-            <div class="party-header">
-              <div class="squircle-avatar">
-                <span>{{ swap.requester_avatar }}</span>
-              </div>
-              <div class="party-text">
-                <span class="party-name">{{ swap.requester_name }}</span>
-                <span class="party-role">{{ swap.requester_role }}</span>
+        <!-- Blue Prompt Banner (Figma Node 6328:117934 & 6328:117935) -->
+        <div v-if="swaps[0].show_consent_banner && swaps[0].swap_state === 'requested'" class="banner-wrapper">
+          <div class="banner-prompt-box">
+            <div class="banner-top">
+              <Info :size="20" class="banner-info-icon" />
+              <div class="banner-text-col">
+                <h4 class="banner-title">Shift Swaps Requst</h4>
+                <p class="banner-desc">
+                  {{ swaps[0].requester_name }} the {{ swaps[0].requester_role }} would like to swap shift with you {{ swaps[0].counterpart_name }} the {{ swaps[0].counterpart_role }} So If you think this swap is appropriate and you would like to accept the offer you can click accept the offer if not you can reject the swap request.
+                </p>
               </div>
             </div>
+            <div class="banner-actions">
+              <button 
+                type="button" 
+                class="btn-banner-accept"
+                @click="handleBannerAccept(swaps[0])"
+              >
+                <Check :size="16" />
+                <span>Accept the Swap</span>
+              </button>
+              <button 
+                type="button" 
+                class="btn-banner-reject"
+                @click="handleBannerReject(swaps[0])"
+              >
+                <X :size="16" />
+                <span>Reject the Swap</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-            <div class="shift-exchange-info">
-              <span class="info-label">Offering Shift:</span>
-              <div class="info-tag-box">
-                <span class="shift-name">{{ swap.requester_shift_name }}</span>
-                <span class="shift-sub">{{ swap.requester_date }} ({{ swap.requester_shift_time }})</span>
+        <!-- Exchange Parties Grid (Figma Node 6328:117951) -->
+        <div class="exchange-row">
+          <!-- Requester Party Card -->
+          <div class="party-card">
+            <div class="party-top">
+              <div class="party-avatar-circle">
+                <span>{{ swaps[0].requester_avatar }}</span>
               </div>
+              <div class="party-meta">
+                <span class="party-title">{{ swaps[0].requester_name }}</span>
+                <span class="party-subtitle">{{ swaps[0].requester_role }}</span>
+              </div>
+            </div>
+            <div class="party-divider">
+              <span class="party-shift-label">Offering Shift</span>
+              <span class="party-shift-val">{{ swaps[0].requester_shift_name }} : {{ swaps[0].requester_date }} ({{ swaps[0].requester_shift_time }})</span>
             </div>
           </div>
 
-          <!-- Swap Indicator Icon -->
-          <div class="exchange-icon-column">
-            <div class="exchange-circle">
-              <ArrowLeftRight :size="16" class="text-blue-600" />
+          <!-- Circular Exchange Button -->
+          <div class="exchange-btn-circle" title="Shift Exchange">
+            <ArrowLeftRight :size="18" />
+          </div>
+
+          <!-- Counterpart Party Card -->
+          <div class="party-card">
+            <div class="party-top">
+              <div class="party-avatar-circle">
+                <span>{{ swaps[0].counterpart_avatar }}</span>
+              </div>
+              <div class="party-meta">
+                <span class="party-title">{{ swaps[0].counterpart_name }}</span>
+                <span class="party-subtitle">{{ swaps[0].counterpart_role }}</span>
+              </div>
+            </div>
+            <div class="party-divider">
+              <span class="party-shift-label">Receiving in Exchange</span>
+              <span class="party-shift-val">{{ swaps[0].counterpart_shift_name }} : {{ swaps[0].counterpart_date }} ({{ swaps[0].counterpart_shift_time }})</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reason for Swap Container (Figma Node 6328:117977) -->
+        <div class="reason-container">
+          <span class="reason-label">Reason for Swap</span>
+          <div class="reason-input-box">
+            <span>"{{ swaps[0].reason }}"</span>
+          </div>
+          <span class="reason-status-hint">
+            Awaiting Counterparty Acceptance Before Supervisory Authorization.
+          </span>
+        </div>
+      </div>
+
+      <!-- ─── CARD 2: SWP-2026-003 with Counterpart Accepted & Approve/Reject (Figma Node 6328:117982) ─── -->
+      <div class="swap-card">
+        <!-- Top bar: Code, Date & Status Badge -->
+        <div class="swap-card-header">
+          <div class="swap-header-left">
+            <span class="swap-card-code">{{ swaps[1].code }}</span>
+            <span class="swap-card-date">Submitted on Jul 22, 2026</span>
+          </div>
+
+          <div class="badge-counterpart-accepted">
+            <Clock :size="12" />
+            <span>Counterpart Accepted</span>
+          </div>
+        </div>
+
+        <!-- Exchange Parties Grid (Figma Node 6328:117988) -->
+        <div class="exchange-row">
+          <!-- Requester Party Card -->
+          <div class="party-card">
+            <div class="party-top">
+              <div class="party-avatar-circle">
+                <span>{{ swaps[1].requester_avatar }}</span>
+              </div>
+              <div class="party-meta">
+                <span class="party-title">{{ swaps[1].requester_name }}</span>
+                <span class="party-subtitle">{{ swaps[1].requester_role }}</span>
+              </div>
+            </div>
+            <div class="party-divider">
+              <span class="party-shift-label">Offering Shift</span>
+              <span class="party-shift-val">{{ swaps[1].requester_shift_name }} : {{ swaps[1].requester_date }} ({{ swaps[1].requester_shift_time }})</span>
             </div>
           </div>
 
-          <!-- Counterpart Party -->
-          <div class="party-block">
-            <template v-if="!swap.is_open_giveaway && swap.counterpart_name">
-              <div class="party-header">
-                <div class="squircle-avatar counterpart">
-                  <span>{{ swap.counterpart_avatar }}</span>
-                </div>
-                <div class="party-text">
-                  <span class="party-name">{{ swap.counterpart_name }}</span>
-                  <span class="party-role">{{ swap.counterpart_role }}</span>
-                </div>
-              </div>
+          <!-- Circular Exchange Button -->
+          <div class="exchange-btn-circle" title="Shift Exchange">
+            <ArrowLeftRight :size="18" />
+          </div>
 
-              <div class="shift-exchange-info">
-                <span class="info-label">Receiving in Exchange:</span>
-                <div class="info-tag-box">
-                  <span class="shift-name">{{ swap.counterpart_shift_name }}</span>
-                  <span class="shift-sub">{{ swap.counterpart_date }} ({{ swap.counterpart_shift_time }})</span>
-                </div>
+          <!-- Counterpart Party Card -->
+          <div class="party-card">
+            <div class="party-top">
+              <div class="party-avatar-circle">
+                <span>{{ swaps[1].counterpart_avatar }}</span>
               </div>
-            </template>
+              <div class="party-meta">
+                <span class="party-title">{{ swaps[1].counterpart_name }}</span>
+                <span class="party-subtitle">{{ swaps[1].counterpart_role }}</span>
+              </div>
+            </div>
+            <div class="party-divider">
+              <span class="party-shift-label">Receiving in Exchange</span>
+              <span class="party-shift-val">{{ swaps[1].counterpart_shift_name }} : {{ swaps[1].counterpart_date }} ({{ swaps[1].counterpart_shift_time }})</span>
+            </div>
+          </div>
+        </div>
 
-            <template v-else>
-              <div class="open-giveaway-box">
-                <div class="squircle-avatar open-tag">
+        <!-- Reason for Swap Container (Figma Node 6328:118014) -->
+        <div class="reason-container">
+          <span class="reason-label">Reason for swap</span>
+          <div class="reason-input-box">
+            <span>"{{ swaps[1].reason }}"</span>
+          </div>
+          <span class="reason-status-hint">
+            Awaiting Counterparty Acceptance Before Supervisory Authorization.
+          </span>
+        </div>
+
+        <!-- Action Buttons: Reject & Approve Swap at bottom-right (Figma Node 6328:118019) -->
+        <div v-if="swaps[1].swap_state === 'accepted'" class="card-footer-actions">
+          <button 
+            type="button" 
+            class="btn-action-reject"
+            @click="handleReject(swaps[1])"
+          >
+            <X :size="16" />
+            <span>Reject</span>
+          </button>
+
+          <button 
+            type="button" 
+            class="btn-action-approve"
+            @click="handleApprove(swaps[1])"
+          >
+            <Check :size="16" />
+            <span>Approve Swap</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── CARD 3: SWP-2026-003 Open Giveaway with Claim Button (Figma Node 6328:118022) ─── -->
+      <div class="swap-card">
+        <!-- Top bar: Code, Date & Status Badge -->
+        <div class="swap-card-header">
+          <div class="swap-header-left">
+            <span class="swap-card-code">{{ swaps[2].code }}</span>
+            <span class="swap-card-date">Submitted on Jul 22, 2026</span>
+          </div>
+
+          <div class="badge-awaiting-consent">
+            <Clock :size="12" />
+            <span>Awaiting Peer Consent</span>
+          </div>
+        </div>
+
+        <!-- Exchange Parties Grid (Figma Node 6328:118028) -->
+        <div class="exchange-row">
+          <!-- Requester Party Card -->
+          <div class="party-card">
+            <div class="party-top">
+              <div class="party-avatar-circle">
+                <span>{{ swaps[2].requester_avatar }}</span>
+              </div>
+              <div class="party-meta">
+                <span class="party-title">{{ swaps[2].requester_name }}</span>
+                <span class="party-subtitle">{{ swaps[2].requester_role }}</span>
+              </div>
+            </div>
+            <div class="party-divider">
+              <span class="party-shift-label">Offering Shift</span>
+              <span class="party-shift-val">{{ swaps[2].requester_shift_name }} : {{ swaps[2].requester_date }} ({{ swaps[2].requester_shift_time }})</span>
+            </div>
+          </div>
+
+          <!-- Circular Exchange Button -->
+          <div class="exchange-btn-circle" title="Shift Exchange">
+            <ArrowLeftRight :size="18" />
+          </div>
+
+          <!-- Counterpart Party Card (Open Giveaway) -->
+          <div class="party-card">
+            <div class="open-giveaway-top-row">
+              <div class="party-top">
+                <div class="party-avatar-circle open">
                   <span>?</span>
                 </div>
-                <div class="party-text">
-                  <span class="party-name">Open Giveaway</span>
-                  <span class="party-role">Any qualified department peer may claim</span>
+                <div class="party-meta">
+                  <span class="party-title">Open Giveaway</span>
+                  <span class="party-subtitle">Any qualified department peer may claim</span>
                 </div>
               </div>
-              <div class="shift-exchange-info">
-                <span class="info-label">Exchange Terms:</span>
-                <div class="info-tag-box open-tag-box">
-                  <span class="shift-name">One-Way Shift Cover</span>
-                  <span class="shift-sub">No reciprocal slot required</span>
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
 
-        <!-- Reason Quote Box -->
-        <div class="reason-quote-box">
-          <MessageSquare :size="14" class="text-slate-400 shrink-0 mt-0.5" />
-          <span class="reason-text">"{{ swap.reason }}"</span>
-        </div>
-
-        <!-- Supervisor Approval Row -->
-        <div v-if="swap.approved_by_name" class="approval-audit-row">
-          <ShieldCheck :size="14" class="text-emerald-600" />
-          <span>Approved by <strong>{{ swap.approved_by_name }}</strong> on {{ new Date(swap.approved_at || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
-        </div>
-
-        <!-- ─── ROLE-BASED ACTION FOOTER ─── -->
-        <!-- 1. APPROVER / SUPERVISOR VIEW -->
-        <div v-if="activeRole === 'approver' && (swap.swap_state === 'accepted' || swap.swap_state === 'requested')" class="swap-action-footer">
-          <div class="footer-hint">
-            <span v-if="swap.swap_state === 'accepted'">Both employees have signed off. Supervisory statutory authorization required.</span>
-            <span v-else>Awaiting counterpart acceptance before supervisory authorization.</span>
-          </div>
-
-          <div v-if="swap.swap_state === 'accepted'" class="action-buttons-group">
-            <button 
-              type="button" 
-              class="btn-reject-swap"
-              @click="handleReject(swap)"
-            >
-              <X :size="14" />
-              <span>Reject</span>
-            </button>
-
-            <button 
-              type="button" 
-              class="btn-approve-swap"
-              @click="handleApprove(swap)"
-            >
-              <Check :size="14" />
-              <span>Approve Swap</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. EMPLOYEE VIEW -->
-        <div v-else-if="activeRole === 'employee' && (swap.swap_state === 'requested' || swap.swap_state === 'accepted')" class="swap-action-footer">
-          <div class="footer-hint">
-            <span v-if="swap.is_open_giveaway && swap.swap_state === 'requested' && swap.requester_id !== currentEmployee.id">
-              Open shift cover available. Click to volunteer and claim this shift.
-            </span>
-            <span v-else-if="!swap.is_open_giveaway && swap.swap_state === 'requested' && swap.counterpart_id === currentEmployee.id">
-              Your colleague requested this shift exchange with you. Accept to forward for supervisor authorization.
-            </span>
-            <span v-else-if="swap.requester_id === currentEmployee.id && swap.swap_state === 'requested'">
-              Your swap request is awaiting colleague acceptance.
-            </span>
-            <span v-else-if="swap.swap_state === 'accepted'">
-              Both peers have agreed. Currently awaiting supervisor authorization.
-            </span>
-            <span v-else>
-              Swap in progress.
-            </span>
-          </div>
-
-          <!-- Employee action buttons -->
-          <div class="action-buttons-group">
-            <!-- Claim Open Giveaway -->
-            <button 
-              v-if="swap.is_open_giveaway && swap.swap_state === 'requested' && swap.requester_id !== currentEmployee.id"
-              type="button" 
-              class="btn-claim-swap"
-              @click="handleClaim(swap)"
-            >
-              <Hand :size="14" />
-              <span>Claim Shift Cover</span>
-            </button>
-
-            <!-- Peer Consent to Exchange -->
-            <template v-else-if="!swap.is_open_giveaway && swap.swap_state === 'requested' && swap.counterpart_id === currentEmployee.id">
+              <!-- Blue Claim Button on top right (Figma Node 6328:118052) -->
               <button 
                 type="button" 
-                class="btn-reject-swap"
-                @click="handleDeclinePeer(swap)"
+                class="btn-card-claim"
+                @click="handleClaim(swaps[2])"
               >
-                <X :size="14" />
-                <span>Decline</span>
+                <Hand :size="15" />
+                <span>Claim</span>
               </button>
-              <button 
-                type="button" 
-                class="btn-accept-swap"
-                @click="handleAcceptPeer(swap)"
-              >
-                <Check :size="14" />
-                <span>Accept Exchange</span>
-              </button>
-            </template>
+            </div>
+
+            <div class="party-divider">
+              <span class="party-shift-label">One Way Shift Cover</span>
+              <span class="party-shift-val">No Reciprocal Slot Required</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Reason for Swap Container (Figma Node 6328:118057) -->
+        <div class="reason-container">
+          <span class="reason-label">Reason for swap</span>
+          <div class="reason-input-box">
+            <span>"{{ swaps[2].reason }}"</span>
+          </div>
+          <span class="reason-status-hint">
+            Awaiting Counterparty Acceptance Before Supervisory Authorization.
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- ─── Create Shift Swap Request Modal (HR_Schema_final-v4.sql lines 1425–1441) ─── -->
+    <!-- ─── 2. TABLE VIEW (Authorized AppDataTable Standard with BasePagination) ─── -->
+    <div v-else-if="viewMode === 'table'" class="swaps-table-view-card">
+      <AppDataTable
+        title="Shift Swaps Directory"
+        subtitle="Tabular directory of shift swap requests, consent status, and supervisory approvals."
+        v-model:searchQuery="tableSearchQuery"
+        searchPlaceholder="Search by Employee or Code..."
+        :columns="tableColumns"
+        :totalEntries="filteredTableSwaps.length"
+        v-model:currentPage="tableCurrentPage"
+        v-model:perPage="tablePerPage"
+        :showPagination="true"
+        :showFilter="true"
+        :filterCount="tableStatusFilter !== 'all' ? 1 : 0"
+        :showSort="false"
+        :showColumns="true"
+        :showFullscreen="true"
+        @toggleColumn="handleToggleColumn"
+      >
+        <template #actions>
+          <AppButton variant="primary" size="sm" @click="router.push('/hr/shift-swaps/create')">
+            <template #icon-left><Plus :size="15" /></template>
+            Create Shift Swaps
+          </AppButton>
+        </template>
+
+        <template #filter-panel>
+          <div class="swaps-filter-panel-row">
+            <label class="filter-label">Filter by Status:</label>
+            <select v-model="tableStatusFilter" class="filter-select">
+              <option value="all">All States</option>
+              <option value="requested">Awaiting Peer Consent</option>
+              <option value="accepted">Counterpart Accepted</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </template>
+
+        <template #default>
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th v-if="isColVisible('code')">Swap Code</th>
+                <th v-if="isColVisible('requester')">Requesting Employee &amp; Shift</th>
+                <th v-if="isColVisible('type')">Type</th>
+                <th v-if="isColVisible('counterpart')">Counterpart Colleague &amp; Shift</th>
+                <th v-if="isColVisible('status')">Status</th>
+                <th v-if="isColVisible('submitted')">Submitted</th>
+                <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="swap in paginatedTableSwaps" :key="swap.id">
+                <td v-if="isColVisible('code')" class="code-cell">
+                  <span class="swap-code-link font-semibold">{{ swap.code }}</span>
+                </td>
+                <td v-if="isColVisible('requester')">
+                  <div class="table-user-cell">
+                    <div class="table-avatar">{{ swap.requester_avatar }}</div>
+                    <div class="table-user-info">
+                      <span class="user-name">{{ swap.requester_name }}</span>
+                      <span class="user-sub">{{ swap.requester_shift_name }} ({{ swap.requester_date }})</span>
+                    </div>
+                  </div>
+                </td>
+                <td v-if="isColVisible('type')">
+                  <span class="type-pill" :class="{ 'is-open': swap.is_open_giveaway }">
+                    {{ swap.is_open_giveaway ? 'Open Giveaway' : 'Peer Exchange' }}
+                  </span>
+                </td>
+                <td v-if="isColVisible('counterpart')">
+                  <div v-if="swap.is_open_giveaway" class="table-user-cell open">
+                    <div class="table-avatar open">?</div>
+                    <div class="table-user-info">
+                      <span class="user-name open-title">Open Giveaway</span>
+                      <span class="user-sub">Any qualified peer may claim</span>
+                    </div>
+                  </div>
+                  <div v-else class="table-user-cell">
+                    <div class="table-avatar counterpart">{{ swap.counterpart_avatar }}</div>
+                    <div class="table-user-info">
+                      <span class="user-name">{{ swap.counterpart_name }}</span>
+                      <span class="user-sub">{{ swap.counterpart_shift_name }} ({{ swap.counterpart_date }})</span>
+                    </div>
+                  </div>
+                </td>
+                <td v-if="isColVisible('status')">
+                  <span class="swap-status-pill" :class="`state-${swap.swap_state}`">
+                    <template v-if="swap.swap_state === 'approved'">
+                      <CheckCircle2 :size="12" /> Approved
+                    </template>
+                    <template v-else-if="swap.swap_state === 'accepted'">
+                      <Clock :size="12" /> Counterpart Accepted
+                    </template>
+                    <template v-else-if="swap.swap_state === 'rejected'">
+                      <X :size="12" /> Rejected
+                    </template>
+                    <template v-else>
+                      <Clock :size="12" /> Awaiting Peer Consent
+                    </template>
+                  </span>
+                </td>
+                <td v-if="isColVisible('submitted')" class="date-cell">
+                  {{ new Date(swap.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </td>
+                <td v-if="isColVisible('actions')" class="th-actions">
+                  <div v-if="swap.swap_state === 'accepted'" class="table-actions-row">
+                    <button type="button" class="btn-table-action reject" @click="handleReject(swap)" title="Reject">
+                      <X :size="13" />
+                    </button>
+                    <button type="button" class="btn-table-action approve" @click="handleApprove(swap)" title="Approve">
+                      <Check :size="13" />
+                    </button>
+                  </div>
+                  <button 
+                    v-else-if="swap.is_open_giveaway && swap.swap_state === 'requested'"
+                    type="button" 
+                    class="btn-table-claim"
+                    @click="handleClaim(swap)"
+                  >
+                    <Hand :size="12" /> Claim
+                  </button>
+                  <span v-else class="table-audit-state">{{ swap.swap_state === 'approved' ? 'Approved' : 'Pending' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </template>
+      </AppDataTable>
+    </div>
+
+    <!-- Quick Modal Form -->
     <QuickCreateModal
       :show="showCreateModal"
       title="Request Shift Swap"
-      :show-expand-button="false"
       save-label="Submit Swap Request"
       width="md"
-      @save="handleCreateSwap"
+      @save="handleCreateSubmit"
       @cancel="showCreateModal = false"
     >
-      <div class="create-swap-form">
-        <!-- Requester Display / Selection -->
-        <div v-if="activeRole === 'approver'" class="modal-field-block">
-          <FormSelect
-            label="Requesting Employee"
-            v-model="createForm.requester_id"
-            :options="colleagueOptions"
-            placeholder="Select employee"
-            required
-          />
-        </div>
-        <div v-else class="modal-identity-card">
-          <div class="identity-squircle">{{ currentEmployee.avatar }}</div>
-          <div class="identity-details">
-            <span class="identity-primary">{{ currentEmployee.name }}</span>
-            <span class="identity-secondary">{{ currentEmployee.role }} &bull; {{ currentEmployee.branch }}</span>
-          </div>
-          <span class="identity-badge">Requester</span>
-        </div>
-
-        <!-- Arrangement Type: Visual 2-Card Selector -->
-        <div class="arrangement-section">
-          <label class="arrangement-label">Swap Arrangement</label>
-          <div class="arrangement-grid">
-            <button
-              type="button"
-              class="arrangement-card"
-              :class="{ selected: createForm.swap_type === 'peer' }"
-              @click="createForm.swap_type = 'peer'"
-            >
-              <div class="arrangement-card-top">
-                <div class="arrangement-icon-box">
-                  <ArrowLeftRight :size="15" />
-                </div>
-                <div class="arrangement-radio-circle">
-                  <div v-if="createForm.swap_type === 'peer'" class="radio-inner-dot" />
-                </div>
-              </div>
-              <div class="arrangement-text-group">
-                <span class="arrangement-title">Peer Exchange</span>
-                <span class="arrangement-desc">Direct 2-way trade with a colleague</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              class="arrangement-card"
-              :class="{ selected: createForm.swap_type === 'giveaway' }"
-              @click="createForm.swap_type = 'giveaway'"
-            >
-              <div class="arrangement-card-top">
-                <div class="arrangement-icon-box">
-                  <Hand :size="15" />
-                </div>
-                <div class="arrangement-radio-circle">
-                  <div v-if="createForm.swap_type === 'giveaway'" class="radio-inner-dot" />
-                </div>
-              </div>
-              <div class="arrangement-text-group">
-                <span class="arrangement-title">Open Giveaway</span>
-                <span class="arrangement-desc">1-way cover open to any peer</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- 1. Your Shift to Relinquish -->
-        <div class="modal-field-block">
-          <FormSelect
-            label="Your Shift to Relinquish"
-            v-model="createForm.requester_shift"
-            :options="myShiftOptions"
-            placeholder="Select shift slot"
-            required
-          />
-          <!-- Live highlight strip when shift selected -->
-          <div v-if="selectedMyShift" class="shift-live-badge">
-            <div class="live-badge-left">
-              <Calendar :size="13" class="text-blue-600 shrink-0" />
-              <span class="badge-date">{{ selectedMyShift.date }}</span>
-            </div>
-            <div class="live-badge-divider"></div>
-            <div class="live-badge-right">
-              <span class="badge-name">{{ selectedMyShift.shiftName }}</span>
-              <span class="badge-time">({{ selectedMyShift.shiftTime }})</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Peer Exchange Details OR Open Giveaway Banner -->
-        <div v-if="createForm.swap_type === 'peer'" class="peer-exchange-container">
-          <div class="peer-inputs-grid">
-            <FormSelect
-              label="Colleague to Trade With"
-              v-model="createForm.counterpart_id"
-              :options="colleagueOptions.filter(c => c.value !== createForm.requester_id)"
-              placeholder="Select colleague"
-              required
-            />
-            <FormSelect
-              label="Colleague's Shift in Return"
-              v-model="createForm.counterpart_shift"
-              :options="colleagueShiftOptions"
-              placeholder="Select shift slot"
-              required
-            />
-          </div>
-
-          <!-- Visual Trade Summary Flow -->
-          <div v-if="selectedMyShift && selectedCounterpart && selectedCounterpartShift" class="trade-summary-flow">
-            <div class="trade-slot offering">
-              <span class="slot-direction-label">You Give</span>
-              <span class="slot-shift-title">{{ selectedMyShift.shiftName }}</span>
-              <span class="slot-shift-meta">{{ selectedMyShift.date }} ({{ selectedMyShift.shiftTime }})</span>
-            </div>
-            <div class="trade-arrow-wrapper">
-              <div class="trade-arrow-bubble">
-                <ArrowLeftRight :size="13" />
-              </div>
-            </div>
-            <div class="trade-slot receiving">
-              <span class="slot-direction-label">You Receive (from {{ selectedCounterpart.name.split(' ')[0] }})</span>
-              <span class="slot-shift-title">{{ selectedCounterpartShift.shiftName }}</span>
-              <span class="slot-shift-meta">{{ selectedCounterpartShift.date }} ({{ selectedCounterpartShift.shiftTime }})</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="giveaway-info-banner">
-          <AlertCircle :size="16" class="giveaway-info-icon" />
-          <div class="giveaway-info-text">
-            <span class="giveaway-info-title">Broadcasted Open Coverage</span>
-            <p class="giveaway-info-p">
-              This shift slot will be broadcast to your team board. Any eligible colleague in your branch can volunteer to cover it. Once claimed, supervisor authorization will update roster assignments.
-            </p>
-          </div>
-        </div>
-
-        <!-- 3. Reason for Request -->
-        <div class="modal-field-block">
-          <FormTextarea
-            label="Reason for Request"
-            v-model="createForm.reason"
-            :rows="2"
-            required
-          />
-        </div>
+      <div class="create-swap-modal-form">
+        <FormSelect
+          label="Counterpart Colleague"
+          v-model="createForm.counterpart_id"
+          :options="colleagueOptions"
+          placeholder="Select colleague"
+          required
+        />
+        <FormTextarea
+          label="Reason for Swap Request"
+          v-model="createForm.reason"
+          placeholder="Describe why you need this shift swap..."
+          :rows="3"
+          required
+        />
       </div>
     </QuickCreateModal>
   </div>
@@ -857,15 +834,18 @@ const handleCreateSwap = () => {
 
 <style scoped>
 .shift-swaps-page {
-  padding: 1.25rem 2rem 3rem 2rem;
-  background-color: #f8fafc;
+  padding: 0;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
 .breadcrumb-container {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
+/* Toast */
 .action-toast {
   position: fixed;
   bottom: 2rem;
@@ -878,105 +858,638 @@ const handleCreateSwap = () => {
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   font-size: 13.5px;
   font-weight: 500;
   z-index: 9999;
 }
 
-.swaps-header-block {
+/* ─── UNIFIED TOP SECTION CARD (Figma Node 6328:117889) ─── */
+.swaps-top-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.swaps-header-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  gap: 20px;
+}
+
+.header-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .page-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
-  color: #404040;
-  margin: 0 0 4px 0;
+  color: #414651;
+  margin: 0;
+  line-height: 24px;
 }
 
 .page-subtitle {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
   color: #737373;
   margin: 0;
+  line-height: 20px;
 }
 
-.header-search-box {
-  position: relative;
-  width: 240px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 38px;
-  padding: 0 12px 0 30px;
-  border: 1px solid #e2e8f0;
+.btn-create-swap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #0B529C;
+  border: 1px solid #0B529C;
   border-radius: 8px;
-  font-size: 13px;
-  color: #404040;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-create-swap:hover {
+  background-color: #09427d;
+}
+
+/* 4 Metric Cards in a Row */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card-item {
   background: #ffffff;
-  outline: none;
-  transition: border-color 0.15s ease;
+  border: 1px solid #e9eaeb;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
 }
 
-.search-input:focus {
-  border-color: #0B529C;
+.metric-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 18px;
 }
 
-.tabs-subnav-container {
-  margin-bottom: 1.25rem;
+.metric-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #404040;
+  line-height: 32px;
 }
 
-/* Cards Stack */
+.metric-subtext {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+/* Secondary Tab Group (Figma Node 8802:107198) */
+.swaps-primary-tabs-row {
+  width: 100%;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── CARDS STACK ─── */
 .swaps-cards-stack {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 24px;
 }
 
-.swap-card-container {
+.swap-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e9eaeb;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(10, 13, 18, 0.1), 0 1px 2px rgba(10, 13, 18, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 24px;
 }
 
-.swap-card-top {
+.swap-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5e5;
 }
 
-.swap-code-group {
+.swap-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.swap-card-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: #404040;
+  line-height: 18px;
+}
+
+.swap-card-date {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+/* Badges */
+.badge-awaiting-consent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef3c6;
+  color: #bb4d00;
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.badge-counterpart-accepted {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e1eefd;
+  color: #0b529c;
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+/* Blue Prompt Banner (Card 1, Figma Node 6328:117934 & 6328:117935) */
+.banner-wrapper {
+  padding: 0 24px;
+  width: 100%;
+}
+
+.banner-prompt-box {
+  background: #e1eefd;
+  border: 1px solid #83bff6;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.banner-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.banner-info-icon {
+  color: #0b529c;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.banner-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0b529c;
+  line-height: 24px;
+  margin: 0;
+}
+
+.banner-desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: #0b529c;
+  line-height: 18px;
+  margin: 0;
+}
+
+.banner-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
+  padding-left: 32px;
 }
 
-.swap-code-text {
+.btn-banner-accept {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #0b529c;
+  border: 1px solid #0b529c;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-banner-accept:hover {
+  background-color: #09427d;
+}
+
+.btn-banner-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border: 1px solid #d5d7da;
+  border-radius: 8px;
+  color: #414651;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-banner-reject:hover {
+  background-color: #f5f5f5;
+}
+
+/* Exchange Row */
+.exchange-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 20px;
+  padding: 0 24px;
+}
+
+@media (max-width: 900px) {
+  .exchange-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+.party-card {
+  flex: 1 1 0%;
+  width: 100%;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.party-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.party-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 4px 6px -1.5px rgba(10, 13, 18, 0.08), 0 1.5px 2px -0.75px rgba(10, 13, 18, 0.03);
+  background: #e1eefd;
+  color: #0b529c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.party-avatar-circle.open {
+  background: #fafafa;
+  border: 1.5px solid #e5e5e5;
+  color: #737373;
+}
+
+.party-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.party-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #414651;
+  line-height: 20px;
+}
+
+.party-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+.party-divider {
+  border-top: 1px solid #e5e5e5;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.party-shift-label {
   font-size: 14px;
   font-weight: 600;
   color: #404040;
+  line-height: 20px;
 }
 
-.swap-date-text {
+.party-shift-val {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+.exchange-btn-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #d5d7da;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #414651;
+  flex-shrink: 0;
+}
+
+.open-giveaway-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.btn-card-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #0b529c;
+  border: 1px solid #0b529c;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-card-claim:hover {
+  background-color: #09427d;
+}
+
+/* Reason Container */
+.reason-container {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reason-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+.reason-input-box {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  height: 35px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: #737373;
+  line-height: 18px;
+}
+
+.reason-status-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 18px;
+}
+
+/* Card 2 Footer Action Buttons */
+.card-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 24px;
+}
+
+.btn-action-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #e7000b;
+  border: 1px solid #ffa2a2;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-action-reject:hover {
+  background-color: #c9000a;
+}
+
+.btn-action-approve {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #009966;
+  border: 1px solid #5ee9b5;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-action-approve:hover {
+  background-color: #008055;
+}
+
+/* ─── TABLE VIEW ─── */
+.qmt-table-container {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(10, 13, 18, 0.05);
+}
+
+.qmt-swaps-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.qmt-swaps-table th {
+  background-color: #fafafa;
+  color: #737373;
+  font-weight: 500;
+  font-size: 12px;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.qmt-swaps-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  color: #404040;
+  vertical-align: middle;
+}
+
+.qmt-swaps-table tr:hover td {
+  background-color: #f5f5f5;
+}
+
+.table-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #404040;
+  flex-shrink: 0;
+}
+
+.table-avatar.open {
+  background-color: #fafafa;
+  color: #737373;
+}
+
+.table-avatar.counterpart {
+  background-color: #e1eefd;
+  color: #0b529c;
+}
+
+.table-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.table-user-info .user-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #404040;
+}
+
+.table-user-info .user-sub {
+  font-size: 12px;
+  color: #737373;
+}
+
+.type-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background-color: #f5f5f5;
+  color: #404040;
+}
+
+.type-pill.is-open {
+  background-color: #e1eefd;
+  color: #0b529c;
+}
+
+.swap-code-link {
+  font-weight: 600;
+  color: #404040;
 }
 
 .swap-status-pill {
@@ -984,724 +1497,116 @@ const handleCreateSwap = () => {
   align-items: center;
   gap: 4px;
   font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 9999px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 16px;
 }
 
-.state-approved {
+.swap-status-pill.state-approved {
   background: #ecfdf5;
-  color: #059669;
+  color: #009966;
 }
 
-.state-accepted {
-  background: #eff6ff;
-  color: #2563eb;
+.swap-status-pill.state-accepted {
+  background: #e1eefd;
+  color: #0b529c;
 }
 
-.state-rejected {
+.swap-status-pill.state-rejected {
   background: #fef2f2;
-  color: #dc2626;
+  color: #e7000b;
 }
 
-.state-requested {
-  background: #fffbeb;
-  color: #d97706;
+.swap-status-pill.state-requested {
+  background: #fef3c6;
+  color: #bb4d00;
 }
 
-/* Exchange Grid */
-.exchange-parties-grid {
-  display: grid;
-  grid-template-columns: 1fr 60px 1fr;
+.table-actions-row {
+  display: inline-flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1.25rem 0;
+  gap: 6px;
 }
 
-@media (max-width: 768px) {
-  .exchange-parties-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-}
-
-.party-block {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 1rem;
-}
-
-.party-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.squircle-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #e0f2fe;
-  color: #0369a1;
-  display: flex;
+.btn-table-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.squircle-avatar.counterpart {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.squircle-avatar.open-tag {
-  background: #f1f5f9;
-  color: #94a3b8;
-}
-
-.party-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.party-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.party-role {
-  font-size: 11.5px;
-  color: #737373;
-}
-
-.open-giveaway-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.shift-exchange-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: #737373;
-}
-
-.info-tag-box {
+  border: 1px solid #e5e5e5;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 6px 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.info-tag-box.open-tag-box {
-  background: #f8fafc;
-  border-style: dashed;
-}
-
-.shift-name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.shift-sub {
-  font-size: 11px;
-  color: #737373;
-}
-
-.exchange-icon-column {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.exchange-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Reason Box */
-.reason-quote-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
-  background: #fafafa;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-}
-
-.reason-text {
-  font-size: 12.5px;
-  color: #525252;
-  font-style: italic;
-  line-height: 1.4;
-}
-
-/* Approval audit */
-.approval-audit-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 12px;
-  color: #059669;
-  background: #ecfdf5;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-/* Footer Actions */
-.swap-action-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.footer-hint {
-  font-size: 12px;
-  color: #737373;
-}
-
-.action-buttons-group {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.btn-reject-swap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  height: 36px;
-  padding: 0 1rem;
-  background-color: #fee2e2;
-  color: #b91c1c;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: none;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.btn-reject-swap:hover {
-  background-color: #fecaca;
+.btn-table-action.approve {
+  color: #009966;
+  border-color: #a4f4cf;
+  background-color: #ecfdf5;
 }
 
-.btn-approve-swap {
+.btn-table-action.reject {
+  color: #e7000b;
+  border-color: #ffc9c9;
+  background-color: #fef2f2;
+}
+
+.btn-table-claim {
   display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  height: 36px;
-  padding: 0 1.25rem;
-  background-color: #0B529C;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-approve-swap:hover {
-  background-color: #09427d;
-}
-
-/* ─── Header Right Controls & Role Switcher ─── */
-.header-right-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.role-selector-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background-color: #f1f5f9;
-  border-radius: 9999px;
-  padding: 3px 4px;
-  border: 1px solid #e2e8f0;
-}
-
-.role-selector-label {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #737373;
-  padding-left: 8px;
-  padding-right: 2px;
-}
-
-.btn-role-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 11px;
-  border-radius: 9999px;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 500;
-  color: #737373;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-role-tab.active {
-  background-color: #ffffff;
-  color: #0B529C;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.btn-create-swap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 16px;
-  background-color: #0B529C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-create-swap:hover {
-  background-color: #09437f;
-}
-
-/* ─── Metric Cards Grid (Approver Only) ─── */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 1024px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ─── Filter and Search Row ─── */
-.filter-and-search-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 1.25rem;
-}
-
-.badge-my-request {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background-color: #e0f2fe;
-  color: #0369a1;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-/* ─── Employee Action Buttons ─── */
-.btn-claim-swap, .btn-accept-swap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background-color: #0B529C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.btn-claim-swap:hover, .btn-accept-swap:hover {
-  background-color: #09437f;
-}
-
-/* ─── Modal Form Styles ─── */
-.create-swap-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.modal-field-block {
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-identity-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.identity-squircle {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background-color: #e0f2fe;
-  color: #0369a1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.identity-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.identity-primary {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.identity-secondary {
-  font-size: 11.5px;
-  color: #737373;
-}
-
-.identity-badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: #0B529C;
-  background: #eff6ff;
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-left: auto;
-}
-
-/* ─── Arrangement 2-Card Selector ─── */
-.arrangement-section {
-  display: flex;
-  flex-direction: column;
-}
-
-.arrangement-label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #404040;
-  margin-bottom: 6px;
-}
-
-.arrangement-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-@media (max-width: 640px) {
-  .arrangement-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.arrangement-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.arrangement-card:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
-}
-
-.arrangement-card.selected {
-  border-color: #0B529C;
-  background-color: #f0f7ff;
-  box-shadow: 0 0 0 1px #0B529C;
-}
-
-.arrangement-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.arrangement-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background-color: #f1f5f9;
-  color: #404040;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.arrangement-card.selected .arrangement-icon-box {
-  background-color: #0B529C;
-  color: #ffffff;
-}
-
-.arrangement-radio-circle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #ffffff;
-}
-
-.arrangement-card.selected .arrangement-radio-circle {
-  border-color: #0B529C;
-}
-
-.radio-inner-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #0B529C;
-}
-
-.arrangement-text-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.arrangement-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-  line-height: 1.25;
-}
-
-.arrangement-desc {
-  font-size: 11.5px;
-  color: #737373;
-  line-height: 1.35;
-  margin-top: 2px;
-}
-
-/* ─── Shift Live Badge ─── */
-.shift-live-badge {
-  margin-top: 6px;
-  padding: 8px 12px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.live-badge-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  color: #0B529C;
-}
-
-.badge-date {
-  font-weight: 600;
-}
-
-.live-badge-divider {
-  width: 1px;
-  height: 14px;
-  background-color: #cbd5e1;
-}
-
-.live-badge-right {
-  display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.badge-name {
-  font-weight: 600;
-  color: #404040;
-}
-
-.badge-time {
-  color: #737373;
-}
-
-/* ─── Peer Exchange Container & Live Trade Flow ─── */
-.peer-exchange-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.peer-inputs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-@media (max-width: 640px) {
-  .peer-inputs-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.trade-summary-flow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
   border-radius: 6px;
-  margin-top: 2px;
-}
-
-.trade-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.trade-slot.receiving {
-  text-align: right;
-}
-
-.slot-direction-label {
-  font-size: 10.5px;
+  background-color: #0b529c;
+  color: #ffffff;
+  border: none;
+  font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #0B529C;
+  cursor: pointer;
 }
 
-.slot-shift-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.slot-shift-meta {
-  font-size: 11px;
+.table-audit-state {
+  font-size: 12px;
   color: #737373;
 }
 
-.trade-arrow-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-}
-
-.trade-arrow-bubble {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #eff6ff;
-  color: #0B529C;
-  border: 1px solid #bfdbfe;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* ─── Giveaway Info Banner ─── */
-.giveaway-info-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  background-color: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
-}
-
-.giveaway-info-icon {
-  color: #0284c7;
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-
-.giveaway-info-text {
+.create-swap-modal-form {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
-.giveaway-info-title {
-  font-size: 12.5px;
+.swaps-filter-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.swaps-table-view-card :deep(.erp-table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.swaps-table-view-card :deep(.erp-table th) {
+  background-color: #FAFAFA;
+  color: #737373;
+  font-size: 12px;
   font-weight: 600;
-  color: #0369a1;
-  margin-bottom: 2px;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #E5E5E5;
 }
 
-.giveaway-info-p {
-  font-size: 11.5px;
-  color: #075985;
-  line-height: 1.45;
-  margin: 0;
+.swaps-table-view-card :deep(.erp-table td) {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F0F0F0;
+  vertical-align: middle;
+}
+
+.swaps-table-view-card :deep(.erp-table tr:hover td) {
+  background-color: #F9FAFB;
 }
 </style>

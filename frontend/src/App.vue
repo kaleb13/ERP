@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
 import DashboardLayout from './layouts/DashboardLayout.vue'
+import BaseToaster from './components/BaseToaster.vue'
 
 const route = useRoute()
 </script>
 
 <template>
+  <BaseToaster />
   <div v-if="route.meta.noSidebar" class="fullscreen-page">
     <RouterView />
   </div>

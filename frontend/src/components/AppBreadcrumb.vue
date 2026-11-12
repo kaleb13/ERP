@@ -9,23 +9,22 @@ export interface BreadcrumbItem {
   onClick?: () => void;
 }
 
-
 withDefaults(
   defineProps<{
     /** List of breadcrumb trail items. The last item is treated as the current page. */
     items?: BreadcrumbItem[];
-    /** Route target for the root icon link. Defaults to '/dashboard'. */
+    /** Route target for the root icon link. Defaults to ERP portal Home ('/'). */
     homeTo?: string;
     /** Tooltip for the root icon link. */
     homeTitle?: string;
-    /** Optional custom icon for the root link (defaults to Monitor). */
+    /** Optional custom icon for the root link (defaults to Monitor per QMT Node 6095:94974). */
     homeIcon?: Component;
     /** Suppress bottom margin (useful when placed inside action bars / top headers). */
     noMargin?: boolean;
   }>(),
   {
     items: () => [],
-    homeTo: '/home',
+    homeTo: '/',
     homeTitle: 'Home',
     homeIcon: undefined,
     noMargin: false
@@ -35,14 +34,14 @@ withDefaults(
 
 <template>
   <nav aria-label="Breadcrumb" class="breadcrumb-nav" :class="{ 'no-margin': noMargin }">
-    <!-- Root Home / Dashboard Icon Link -->
+    <!-- Root ERP System Icon Link (Monitor per QMT Node 6095:94974) -->
     <router-link :to="homeTo" class="breadcrumb-root-link" :title="homeTitle">
-      <component :is="homeIcon || Monitor" :size="15" />
+      <component :is="homeIcon || Monitor" :size="16" />
     </router-link>
 
     <!-- Intermediate & Final Crumb Items -->
     <template v-for="(item, index) in items" :key="index">
-      <ChevronRight :size="12" class="breadcrumb-divider" />
+      <ChevronRight :size="16" class="breadcrumb-divider" />
 
       <!-- Clickable link for non-last items that have a 'to' property -->
       <router-link 
@@ -51,13 +50,13 @@ withDefaults(
         class="breadcrumb-link"
         @click="item.onClick ? item.onClick() : undefined"
       >
-        <component :is="item.icon" v-if="item.icon" :size="13" class="breadcrumb-item-icon" />
+        <component :is="item.icon" v-if="item.icon" :size="16" class="breadcrumb-item-icon" />
         <span>{{ item.label }}</span>
       </router-link>
 
       <!-- Active / Current Page for the last item or items without 'to' -->
-      <span v-else class="breadcrumb-current">
-        <component :is="item.icon" v-if="item.icon" :size="13" class="breadcrumb-item-icon" />
+      <span v-else class="breadcrumb-current" aria-current="page">
+        <component :is="item.icon" v-if="item.icon" :size="16" class="breadcrumb-item-icon" />
         <span>{{ item.label }}</span>
       </span>
     </template>
@@ -77,9 +76,11 @@ withDefaults(
 .breadcrumb-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-bottom: 20px;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 0;
+  margin-bottom: 0;
   user-select: none;
   font-family: inherit;
 }
@@ -94,51 +95,55 @@ withDefaults(
 }
 
 .breadcrumb-root-link {
-  color: #64748b;
+  color: var(--alias-color-icon-tertiary, #737373);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 2px;
+  border-radius: var(--alias-radius-md, 6px);
   transition: all 0.15s ease;
 }
 
 .breadcrumb-root-link:hover {
-  color: #0f172a;
-  background-color: #f1f5f9;
+  color: var(--primitive-color-brand-blue-700, #0B529C);
+  background-color: var(--primitive-color-brand-blue-50, #f1f7fe);
 }
 
 .breadcrumb-divider {
-  color: #94a3b8;
+  color: var(--alias-color-icon-tertiary, #737373);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
 }
 
 .breadcrumb-link {
-  color: #64748b;
+  color: var(--alias-color-text-tertiary, #737373);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 450;
+  border-radius: var(--alias-radius-sm, 4px);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
   transition: all 0.15s ease;
 }
 
 .breadcrumb-link:hover {
-  color: #0f172a;
-  background-color: #f1f5f9;
+  color: var(--primitive-color-brand-blue-700, #0B529C);
+  background-color: var(--primitive-color-brand-blue-50, #f1f7fe);
 }
 
 .breadcrumb-current {
-  color: #0f172a;
-  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .breadcrumb-item-icon {

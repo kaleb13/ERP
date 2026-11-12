@@ -7,10 +7,16 @@ interface Props {
   totalEntries: number;
   perPage: number;
   perPageOptions?: number[];
+  color?: 'brand' | 'light';
+  showSummary?: boolean;
+  showPerPage?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  perPageOptions: () => [1, 5, 10, 25, 50, 100]
+  perPageOptions: () => [10, 25, 50, 100],
+  color: 'brand',
+  showSummary: true,
+  showPerPage: true
 });
 
 const emit = defineEmits<{
@@ -33,7 +39,7 @@ const paginationEnd = computed(() => {
   return Math.min(props.currentPage * props.perPage, props.totalEntries);
 });
 
-// Dynamic visible page numbers calculation matching standard pagination with ellipsis
+// QMT Dynamic Visible Page Calculation with ellipsis (matches Figma Node 3345:27425)
 const visiblePages = computed(() => {
   const total = totalPages.value;
   const current = props.currentPage;
@@ -44,15 +50,14 @@ const visiblePages = computed(() => {
       items.push(i);
     }
   } else {
-    // Always include page 1
     items.push(1);
 
-    if (current <= 3) {
-      items.push(2, 3, '...', total - 2, total - 1, total);
-    } else if (current >= total - 2) {
-      items.push('...', total - 4, total - 3, total - 2, total - 1, total);
+    if (current <= 4) {
+      items.push(2, 3, 4, 5, '…', total);
+    } else if (current >= total - 3) {
+      items.push('…', total - 4, total - 3, total - 2, total - 1, total);
     } else {
-      items.push('...', current - 1, current, current + 1, '...', total);
+      items.push('…', current - 1, current, current + 1, '…', total);
     }
   }
 
@@ -86,269 +91,309 @@ const handlePerPageChange = (event: Event) => {
 </script>
 
 <template>
-  <div class="custom-pagination-container">
-    <!-- LEFT SIDE: Showing info + Per Page select -->
-    <div class="pagination-left-section">
-      <span class="showing-entries-text">
+  <div 
+    class="qmt-pagination-card" 
+    data-node-id="3345:27425"
+    data-name="Pagination / Card button group right aligned / Brand / Square / Desktop"
+  >
+    <!-- LEFT SIDE: Summary Info & Per Page Dropdown (Figma Node 5626:1160) -->
+    <div v-if="showSummary" class="qmt-pagination-summary-group" data-node-id="5626:1160">
+      <p class="qmt-pagination-summary" data-node-id="5626:1161">
         Showing {{ paginationStart }} to {{ paginationEnd }} of {{ totalEntries }} entries
-      </span>
+      </p>
 
-      <div class="per-page-group">
-        <span class="per-page-label">Per Page:</span>
-        <div class="per-page-dropdown-box">
+      <div v-if="showPerPage" class="qmt-pagination-page-size" data-node-id="5626:1162">
+        <span class="qmt-pagination-page-size-label" data-node-id="5626:1163">Per page</span>
+        
+        <div class="qmt-pagination-select-wrapper" data-node-id="5626:1164">
+          <div class="qmt-pagination-select-button" data-node-id="I5626:1164;3345:17964">
+            <span class="qmt-pagination-select-value">{{ perPage }}</span>
+            <ChevronDown :size="16" class="qmt-pagination-select-chevron" />
+          </div>
           <select 
             :value="perPage" 
-            @change="handlePerPageChange" 
-            class="per-page-select-input"
+            class="qmt-pagination-select-native"
+            aria-label="Per page"
+            @change="handlePerPageChange"
           >
             <option v-for="opt in perPageOptions" :key="opt" :value="opt">
               {{ opt }}
             </option>
           </select>
-          <ChevronDown :size="13" class="per-page-chevron-icon" />
         </div>
       </div>
     </div>
 
-    <!-- RIGHT SIDE: Single Joined Segmented Pagination Bar -->
-    <div class="pagination-right-section">
-      <div class="segmented-pagination-bar">
-        <!-- Previous Button -->
-        <button 
-          type="button"
-          class="seg-nav-btn seg-prev-btn" 
-          :disabled="currentPage === 1 || totalEntries === 0"
-          @click="handlePrevious"
-        >
-          <ArrowLeft :size="14" class="seg-arrow-icon" />
-          <span>Previous</span>
-        </button>
+    <!-- RIGHT SIDE: Contiguous Segmented Button Group (Figma Node 5626:1105) -->
+    <div class="qmt-pagination-button-group" data-node-id="5626:1105">
+      <!-- Previous Segment Cell -->
+      <button 
+        type="button"
+        class="qmt-pagination-segment qmt-pagination-segment--prev"
+        :class="{ 'is-disabled': currentPage <= 1 || totalEntries === 0 }"
+        :disabled="currentPage <= 1 || totalEntries === 0"
+        title="Previous Page"
+        @click="handlePrevious"
+      >
+        <ArrowLeft :size="16" class="qmt-pagination-segment-icon" />
+        <span class="qmt-pagination-segment-label">Previous</span>
+      </button>
 
-        <!-- Page Numbers and Ellipses -->
-        <template v-for="(p, index) in visiblePages" :key="index">
-          <span v-if="p === '...'" class="seg-page-ellipsis">
-            ...
-          </span>
-          <button 
-            v-else 
-            type="button"
-            :class="['seg-page-number-btn', { 'seg-active-page': currentPage === p }]"
-            @click="setPage(p)"
-          >
-            {{ p }}
-          </button>
-        </template>
-
-        <!-- Next Button -->
-        <button 
-          type="button"
-          class="seg-nav-btn seg-next-btn" 
-          :disabled="currentPage >= totalPages || totalEntries === 0"
-          @click="handleNext"
+      <!-- Page Number Segments & Ellipsis -->
+      <template v-for="(p, index) in visiblePages" :key="index">
+        <!-- Ellipsis Cell -->
+        <span 
+          v-if="p === '…'" 
+          class="qmt-pagination-segment qmt-pagination-segment--ellipsis"
         >
-          <span>Next</span>
-          <ArrowRight :size="14" class="seg-arrow-icon" />
+          …
+        </span>
+
+        <!-- Page Number Cell -->
+        <button 
+          v-else 
+          type="button"
+          :class="[
+            'qmt-pagination-segment',
+            'qmt-pagination-segment--page',
+            { 'is-current': currentPage === p }
+          ]"
+          :aria-current="currentPage === p ? 'page' : undefined"
+          @click="setPage(p)"
+        >
+          {{ p }}
         </button>
-      </div>
+      </template>
+
+      <!-- Next Segment Cell -->
+      <button 
+        type="button"
+        class="qmt-pagination-segment qmt-pagination-segment--next"
+        :class="{ 'is-disabled': currentPage >= totalPages || totalEntries === 0 }"
+        :disabled="currentPage >= totalPages || totalEntries === 0"
+        title="Next Page"
+        @click="handleNext"
+      >
+        <span class="qmt-pagination-segment-label">Next</span>
+        <ArrowRight :size="16" class="qmt-pagination-segment-icon" />
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.custom-pagination-container {
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* QMT CARD BUTTON GROUP RIGHT ALIGNED PAGINATION (Figma 3345:27425)            */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.qmt-pagination-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  background-color: #ffffff;
-  border-top: 1px solid #f1f5f9;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  gap: var(--qmt-pagination-gap, 12px);
+  min-height: 60px;
+  padding: var(--qmt-pagination-card-padding-top, 12px) var(--qmt-pagination-card-padding-x, 24px) var(--qmt-pagination-card-padding-bottom, 16px) var(--qmt-pagination-card-padding-x, 24px);
+  background-color: var(--alias-color-background-surface-elevated, #ffffff);
+  border-top: 1px solid var(--qmt-pagination-border, #e5e5e5);
+  font-family: var(--qmt-font-family-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  box-sizing: border-box;
+  width: 100%;
 }
 
-/* Left Side: Showing Info & Per Page */
-.pagination-left-section {
+/* ─── LEFT: Summary & Per Page Dropdown ─── */
+.qmt-pagination-summary-group {
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: var(--qmt-pagination-gap, 12px);
+  flex-shrink: 0;
 }
 
-.showing-entries-text {
-  font-size: 13px;
-  color: #64748b;
+.qmt-pagination-summary {
+  font-size: 14px;
   font-weight: 400;
+  line-height: 20px;
+  color: var(--qmt-pagination-summary-fg, #737373);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.qmt-pagination-page-size {
+  display: flex;
+  align-items: center;
+  gap: var(--qmt-pagination-gap, 12px);
+  flex-shrink: 0;
+}
+
+.qmt-pagination-page-size-label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--qmt-pagination-summary-fg, #737373);
   white-space: nowrap;
 }
 
-.per-page-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.per-page-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.per-page-dropdown-box {
+/* Page Size Custom Select Button (Figma Node I5626:1164;3345:17964) */
+.qmt-pagination-select-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
 
-.per-page-select-input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+.qmt-pagination-select-button {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 6px 30px 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1e293b;
-  cursor: pointer;
-  outline: none;
-  min-width: 58px;
-  height: 34px;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.per-page-select-input:hover {
-  border-color: #cbd5e1;
-}
-
-.per-page-select-input:focus {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.12);
-}
-
-.per-page-chevron-icon {
-  position: absolute;
-  right: 10px;
-  color: #64748b;
-  pointer-events: none;
-}
-
-/* Right Side: Segmented Joined Control Bar */
-.pagination-right-section {
-  display: flex;
-  align-items: center;
-}
-
-.segmented-pagination-bar {
-  display: inline-flex;
-  align-items: stretch;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-/* Segmented Buttons */
-.seg-nav-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 16px;
+  border: 1px solid var(--qmt-pagination-button-border, #d9d9d9);
+  border-radius: var(--qmt-button-radius, 8px);
   height: 36px;
-  background: #ffffff;
-  border: none;
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
-  cursor: pointer;
+  padding: 0 var(--qmt-button-sm-padding-x, 14px);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qmt-button-gap, 8px);
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
+  pointer-events: none;
   transition: all 0.15s ease;
-  white-space: nowrap;
 }
 
-.seg-prev-btn {
-  border-right: 1px solid #e2e8f0;
+.qmt-pagination-select-value {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #414651;
 }
 
-.seg-next-btn {
-  border-left: 1px solid #e2e8f0;
-}
-
-.seg-nav-btn:hover:not(:disabled) {
-  background-color: #f8fafc;
-  color: #0f172a;
-}
-
-.seg-nav-btn:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
-  background-color: #ffffff;
-  opacity: 0.6;
-}
-
-.seg-arrow-icon {
+.qmt-pagination-select-chevron {
+  color: #414651;
   flex-shrink: 0;
 }
 
-/* Page Numbers */
-.seg-page-number-btn {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  border: none;
-  border-right: 1px solid #e2e8f0;
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
+.qmt-pagination-select-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  z-index: 10;
 }
 
-.seg-page-number-btn:hover:not(.seg-active-page) {
-  background-color: #f8fafc;
-  color: #0f172a;
+.qmt-pagination-select-wrapper:hover .qmt-pagination-select-button {
+  border-color: #a1a1a1;
+  background-color: #fafafa;
 }
 
-/* Active Page Matching Screenshot: Solid #0B529C */
-.seg-page-number-btn.seg-active-page {
-  background-color: #0B529C !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-color: #0B529C;
-  cursor: default;
+.qmt-pagination-select-native:focus ~ .qmt-pagination-select-button,
+.qmt-pagination-select-native:focus-visible ~ .qmt-pagination-select-button {
+  border-color: #0b529c;
+  box-shadow: 0 0 0 3px var(--qmt-color-focus-ring-brand, #e1eefd);
 }
 
-/* Ellipsis */
-.seg-page-ellipsis {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 8px;
+/* ─── RIGHT: Segmented Button Group (Figma Node 5626:1105) ─── */
+.qmt-pagination-button-group {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--qmt-pagination-group-bg, #ffffff);
+  border: 1px solid var(--qmt-pagination-group-border, #d4d4d4);
+  border-radius: var(--qmt-pagination-group-radius, 8px);
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Each Segment Cell (PaginationItemBase: 5624:678) */
+.qmt-pagination-segment {
+  height: var(--qmt-pagination-item-height, 40px);
+  min-width: var(--qmt-pagination-item-min-width, 40px);
+  padding: 0 var(--qmt-pagination-item-padding-x, 12px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: none;
-  border-right: 1px solid #e2e8f0;
-  font-size: 13px;
-  color: #64748b;
+  gap: var(--qmt-pagination-item-gap, 8px);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  border-left: 1px solid var(--qmt-pagination-group-border, #d4d4d4);
+  background-color: transparent;
+  color: var(--qmt-pagination-fg, #737373);
+  cursor: pointer;
   user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  box-sizing: border-box;
+  white-space: nowrap;
+  outline: none;
+}
+
+/* First segment in button group has no left border */
+.qmt-pagination-segment:first-child {
+  border-left: none;
+}
+
+.qmt-pagination-segment-icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.qmt-pagination-segment-label {
+  font-family: inherit;
+  font-weight: 500;
+}
+
+/* Inactive Hover */
+.qmt-pagination-segment:hover:not(.is-current):not(.is-disabled):not(.qmt-pagination-segment--ellipsis) {
+  background-color: var(--qmt-pagination-bg-hover, #f5f5f5);
+  color: #404040;
+}
+
+/* Active / Current Brand Blue Cell (Figma 5624:654) */
+.qmt-pagination-segment.is-current {
+  background-color: var(--qmt-pagination-brand-bg-current, #0b529c) !important;
+  color: var(--qmt-pagination-brand-fg-current, #ffffff) !important;
+  font-weight: 500;
   cursor: default;
 }
 
-@media (max-width: 640px) {
-  .custom-pagination-container {
+/* Disabled Cell (Figma 5624:648) */
+.qmt-pagination-segment.is-disabled,
+.qmt-pagination-segment:disabled {
+  color: var(--qmt-pagination-fg-disabled, #a1a1a1) !important;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Ellipsis Gap Cell (Figma 5625:416) */
+.qmt-pagination-segment--ellipsis {
+  color: var(--qmt-pagination-fg, #737373);
+  cursor: default;
+}
+
+/* Focus Ring */
+.qmt-pagination-segment:focus-visible:not(.is-disabled) {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 0 2px var(--qmt-pagination-brand-bg-current, #0b529c);
+}
+
+/* Responsive Collapse for Small Screens */
+@media (max-width: 860px) {
+  .qmt-pagination-card {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    height: auto;
+    padding: 16px;
+    gap: 16px;
   }
-  .pagination-right-section {
+
+  .qmt-pagination-summary-group {
+    justify-content: space-between;
     width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .qmt-pagination-button-group {
+    align-self: center;
+    max-width: 100%;
     overflow-x: auto;
   }
 }

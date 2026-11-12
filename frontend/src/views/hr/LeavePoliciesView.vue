@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, MoreVertical, Eye, CheckCircle2, 
+import {
+  Plus, MoreVertical, Eye, CheckCircle2,
   Trash2, ShieldCheck, AlertCircle, Calendar,
-  LayoutGrid, List, Building2, Clock, 
-  ArrowRight, Check
-} from 'lucide-vue-next';
+  LayoutGrid, List, ArrowRight
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
@@ -50,9 +50,15 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: '', width: '48px', align: 'center', visible: true }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Filtering ───
@@ -162,10 +168,10 @@ const handleDeletePolicy = (id: number) => {
     >
       <!-- Top Action Slot: Create Button -->
       <template #actions>
-        <button class="btn-primary-action" @click="goToCreate">
-          <Plus :size="15" />
-          <span>Create Leave Policy</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="goToCreate">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Leave Policy
+</AppButton>
       </template>
 
       <!-- Filters Slot with State Filter & View Mode Switcher -->
@@ -328,10 +334,10 @@ const handleDeletePolicy = (id: number) => {
             <AlertCircle :size="32" class="empty-icon" />
             <p class="empty-title">No Leave Policies Found</p>
             <p class="empty-desc">Create your first organizational leave policy rulebook to configure statutory accrual formulas.</p>
-            <button class="btn-primary-action empty-btn" @click="goToCreate">
-              <Plus :size="15" />
-              <span>Create Leave Policy</span>
-            </button>
+            <AppButton variant="primary" size="sm" @click="goToCreate">
+              <template #icon-left><Plus :size="15" /></template>
+              Create Leave Policy
+            </AppButton>
           </div>
         </div>
 
@@ -485,8 +491,8 @@ const handleDeletePolicy = (id: number) => {
 .leave-policies-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

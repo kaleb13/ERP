@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Calendar, MoreVertical, X, Maximize2, ShieldCheck, 
-  UserCheck, AlertCircle, Bold, Italic, Underline, List,
-  Link, Image, Undo, Redo, FileText
-} from 'lucide-vue-next';
+import { Calendar, MoreVertical, X } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import BaseTabs from '../../components/BaseTabs.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 import { 
   addSeparationRecord, 
   type SeparationType, 
@@ -58,22 +56,6 @@ const formData = ref({
   is_rehire_eligible: true,
   exit_interview_note: ''
 });
-
-// Character counters for rich text areas (AGENTS.md Rule 18 & 25)
-const reasonCharCount = ref(0);
-const interviewCharCount = ref(0);
-
-const handleReasonInput = (e: Event) => {
-  const target = e.target as HTMLDivElement;
-  formData.value.reason = target.innerText;
-  reasonCharCount.value = target.innerText.length;
-};
-
-const handleInterviewInput = (e: Event) => {
-  const target = e.target as HTMLDivElement;
-  formData.value.exit_interview_note = target.innerText;
-  interviewCharCount.value = target.innerText.length;
-};
 
 // Pre-fill from route query if expanded from QuickCreateModal
 onMounted(() => {
@@ -183,22 +165,25 @@ const saveRecord = (status: SeparationStatus) => {
     <!-- Top Action Bar (AGENTS.md Rule 29: Zero-background, transparent) -->
     <div class="top-nav-bar">
       <div class="top-nav-left">
-        <AppBreadcrumb :items="breadcrumbItems" noMargin />
-        <!-- Save State Badge (AGENTS.md Rule 30) -->
-        <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-nav-right">
         <!-- Dynamic 3-Dots More Menu strictly for entities with 'draft' state (AGENTS.md Rule 4 & 59) -->
         <div class="draft-menu-container">
-          <button 
-            type="button" 
-            class="btn-icon-more" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             title="Additional Actions"
             @click="showDraftMenu = !showDraftMenu"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           <div v-if="showDraftMenu" class="draft-dropdown-menu">
             <button type="button" class="dropdown-item" @click="handleSaveAsDraft">
               Save as Draft
@@ -207,22 +192,23 @@ const saveRecord = (status: SeparationStatus) => {
         </div>
 
         <!-- Secondary Clear Form Button (AGENTS.md Rule 31) -->
-        <button 
-          type="button" 
-          class="btn-secondary-clear" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="handleClearForm"
         >
-          ✕ Clear Form
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Primary Save Button: Plain Text "Save", ZERO Icons (AGENTS.md Rule 27 & 31) -->
-        <button 
-          type="button" 
-          class="btn-primary-save" 
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -312,31 +298,11 @@ const saveRecord = (status: SeparationStatus) => {
           <div class="riser-line"></div>
         </div>
 
-        <!-- Standard Haleta ERP Rich Text Editor (AGENTS.md Rule 18 & 25) -->
-        <div class="rich-editor-container">
-          <div class="rich-editor-toolbar">
-            <span class="toolbar-pill">Paragraph ⌵</span>
-            <span class="toolbar-pill">Normal ⌵</span>
-            <div class="toolbar-separator"></div>
-            <button type="button" class="btn-tool-icon"><Bold :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Italic :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Underline :size="13" /></button>
-            <div class="toolbar-separator"></div>
-            <button type="button" class="btn-tool-icon"><List :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Link :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Undo :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Redo :size="13" /></button>
-          </div>
-          <div 
-            class="rich-editor-content" 
-            contenteditable="true"
-            @input="handleReasonInput"
-          ></div>
-          <div class="rich-editor-footer">
-            <span class="char-counter">{{ reasonCharCount }} / 5,000 Characters</span>
-            <span class="resize-handle">//</span>
-          </div>
-        </div>
+        <FormRichText
+          v-model="formData.reason"
+          placeholder="Enter resignation notice or formal separation reason..."
+          :max-length="5000"
+        />
       </div>
 
       <!-- TAB 2: Exit Interview & Governance -->
@@ -357,28 +323,11 @@ const saveRecord = (status: SeparationStatus) => {
           <div class="riser-line"></div>
         </div>
 
-        <div class="rich-editor-container">
-          <div class="rich-editor-toolbar">
-            <span class="toolbar-pill">Paragraph ⌵</span>
-            <span class="toolbar-pill">Normal ⌵</span>
-            <div class="toolbar-separator"></div>
-            <button type="button" class="btn-tool-icon"><Bold :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Italic :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Underline :size="13" /></button>
-            <div class="toolbar-separator"></div>
-            <button type="button" class="btn-tool-icon"><List :size="13" /></button>
-            <button type="button" class="btn-tool-icon"><Link :size="13" /></button>
-          </div>
-          <div 
-            class="rich-editor-content" 
-            contenteditable="true"
-            @input="handleInterviewInput"
-          ></div>
-          <div class="rich-editor-footer">
-            <span class="char-counter">{{ interviewCharCount }} / 5,000 Characters</span>
-            <span class="resize-handle">//</span>
-          </div>
-        </div>
+        <FormRichText
+          v-model="formData.exit_interview_note"
+          placeholder="Document employee exit interview responses and retention insights..."
+          :max-length="5000"
+        />
       </div>
     </div>
 
@@ -391,10 +340,10 @@ const saveRecord = (status: SeparationStatus) => {
 
 <style scoped>
 .create-page-container {
-  padding: 16px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
 }
@@ -551,13 +500,13 @@ const saveRecord = (status: SeparationStatus) => {
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-2col {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 /* ─── Calendar Inputs (AGENTS.md Rule 17 & 23) ─── */

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Layers, ChevronRight, Award,
-  Briefcase
-} from 'lucide-vue-next';
+import {
+  Plus, Search, Filter, MoreVertical,
+  Trash2, Copy, Check, CheckCircle2,
+  X, Award, Briefcase
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -410,14 +410,10 @@ onUnmounted(() => {
 
       <!-- Toolbar Actions Slot: Primary Create Action (Rule 10.2) -->
       <template #actions>
-        <button 
-          type="button" 
-          class="btn-primary-create" 
-          @click="showQuickCreate = true"
-        >
-          <Plus :size="14" />
-          <span>Create Job Level</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="showQuickCreate = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Job Level
+</AppButton>
       </template>
 
       <!-- Table Body Slot -->
@@ -453,10 +449,10 @@ onUnmounted(() => {
                   <Award :size="32" class="empty-icon" />
                   <p class="empty-title">No Job Levels Found</p>
                   <p class="empty-subtitle">Adjust your search filters or create a new standardized seniority level.</p>
-                  <button type="button" class="btn-primary-empty" @click="showQuickCreate = true">
-                    <Plus :size="14" />
-                    <span>Create Level</span>
-                  </button>
+                  <AppButton variant="primary" size="sm" @click="showQuickCreate = true">
+                    <template #icon-left><Plus :size="14" /></template>
+                    Create Level
+                  </AppButton>
                 </div>
               </td>
             </tr>
@@ -647,12 +643,13 @@ onUnmounted(() => {
 
 .job-levels-page {
   min-height: 100vh;
-  padding: 24px 28px 60px;
+  padding: 0;
   background-color: #f8fafc;
 }
 
 .breadcrumb-container {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
 }
 
 /* ═══ TOAST NOTIFICATION BANNER ═══ */

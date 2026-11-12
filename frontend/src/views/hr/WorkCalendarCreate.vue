@@ -2,18 +2,20 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
-  X, Calendar, Clock, CalendarRange, Sliders,
-  Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, Edit3,
-  CheckCircle2, AlertCircle, AlertTriangle, ArrowRight,
-  RotateCcw, Sparkles, Check, Expand, ArrowDown, ArrowUp, Copy
-} from 'lucide-vue-next';
+  X, Calendar, Clock, CalendarRange,
+  Sliders, Plus, ChevronDown, CheckCircle2,
+  AlertCircle, AlertTriangle, RotateCcw, Expand,
+  ArrowDown, ArrowUp, Copy
+} from 'lucide-vue-next';;
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import IconColumnSolid from '../../components/IconColumnSolid.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -718,15 +720,28 @@ onMounted(() => {
             { label: 'Work Calendar Setup', to: '/hr/work-calendars' },
             { label: isEditMode ? 'Edit Work Calendar' : 'Create Work Calendar' }
           ]"
-        />
-        <SaveStateBadge :is-saved="isSaved" />
+        >
+          <template #badge>
+            <SaveStateBadge :is-saved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
       <div class="nav-actions">
-        <button type="button" class="btn-clear" @click="handleClear">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button type="button" class="btn-save" @click="handleSave">Save</button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="handleClear"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSave"
+        >
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -861,9 +876,9 @@ onMounted(() => {
           <!-- Preset buttons -->
           <div class="preset-chips">
             <span class="preset-label-txt">Presets:</span>
-            <button type="button" class="btn-preset" @click="applyPreset('5day')">5-Day / 40 hrs</button>
-            <button type="button" class="btn-preset" @click="applyPreset('6day')">6-Day / 48 hrs</button>
-            <button type="button" class="btn-preset" @click="applyPreset('5half')">5.5-Day / 44 hrs</button>
+            <AppButton variant="outline" size="xs" @click="applyPreset('5day')">5-Day / 40 hrs</AppButton>
+            <AppButton variant="outline" size="xs" @click="applyPreset('6day')">6-Day / 48 hrs</AppButton>
+            <AppButton variant="outline" size="xs" @click="applyPreset('5half')">5.5-Day / 44 hrs</AppButton>
           </div>
         </div>
 
@@ -1155,7 +1170,9 @@ onMounted(() => {
                   <th style="min-width: 220px;">Override Name / Reason <span class="required-star">*</span></th>
                   <th style="min-width: 170px;">Classification <span class="required-star">*</span></th>
                   <th style="min-width: 120px;">Planned Hours</th>
-                  <th class="child-th-col-icon"></th>
+                  <th class="child-th-col-icon">
+                    <IconColumnSolid :size="13" class="col-icon-solid" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1437,12 +1454,12 @@ onMounted(() => {
 <style scoped>
 /* ─── Page Layout ─── */
 .wc-create-page {
-  padding: 16px 24px 48px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--alias-spacing-3xl, 24px);
   font-family: 'Inter', sans-serif;
 }
 
@@ -1577,7 +1594,7 @@ onMounted(() => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px 18px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
   margin-bottom: 4px;
 }
 .col-span-2 { grid-column: span 2; }

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Receipt, Plus, Eye, CheckCircle2, DollarSign, Calendar, 
-  ArrowUpRight, Printer, ShieldCheck, Download, PlusCircle,
-  Clock, Check, X, FileText, ChevronRight, MoreVertical,
-  Zap, Calculator, User
-} from 'lucide-vue-next';
+import {
+  Eye, CheckCircle2, DollarSign, Calendar,
+  Printer, Check, X, MoreVertical,
+  Zap, User
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
@@ -402,15 +402,15 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
     >
       <!-- Primary Action in Toolbar #actions Slot (AGENTS.md Rule 10) -->
       <template #actions>
-        <button
+        <AppButton
           v-if="readyCount > 0"
-          type="button"
-          class="btn-primary-create"
+          variant="primary"
+          size="sm"
           @click="handleComputeNextReady"
         >
-          <Zap :size="15" />
-          <span>Calculate Next ({{ readyCount }} Ready)</span>
-        </button>
+          <template #icon-left><Zap :size="15" /></template>
+          Calculate Next ({{ readyCount }} Ready)
+        </AppButton>
       </template>
 
       <!-- Canonical Table (AGENTS.md Rule 8, 9, 10) -->
@@ -767,10 +767,10 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 
 <style scoped>
 .page-container {
-  padding: 16px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
 }

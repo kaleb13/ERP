@@ -1,31 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import {
-  X,
-  User,
-  Building2,
-  Briefcase,
-  FileText,
-  LifeBuoy,
-  UserCheck,
-  CheckCircle2,
-  AlertCircle,
-  ChevronDown,
-  Code,
-  Table,
-  Square,
-  Link2,
-  Image as ImageIcon,
-  Undo2,
-  Redo2,
-  List
-} from 'lucide-vue-next';
+import { X } from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
 
 import {
   serviceRequestsData,
@@ -214,29 +197,32 @@ const handleSubmitRequest = () => {
     <!-- ─── TOP ACTION BAR (Rule 4 & 29: Zero-background, transparent) ──── -->
     <div class="creation-top-bar">
       <div class="top-bar-left">
-        <AppBreadcrumb :items="breadcrumbItems" noMargin />
-        <SaveStateBadge :isSaved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-bar-actions">
         <!-- Schema has no 'draft' in HR_SERVICE_REQUEST_STATE, so Rule 4 omits 3-dots draft button -->
-        <button
-          type="button"
-          class="btn-clear-form"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleClearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Primary Save Button (Rule 4, 27: Plain text "Save", ZERO icons) -->
-        <button
-          type="button"
-          class="btn-primary-save"
+        <AppButton
+          variant="primary"
+          size="sm"
           @click="handleSubmitRequest"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -281,51 +267,12 @@ const handleSubmitRequest = () => {
           required
         />
 
-        <div class="wysiwyg-box">
-          <div class="wysiwyg-toolbar">
-            <div class="tb-dropdown-btn">
-              <span>Paragraph</span>
-              <ChevronDown :size="12" />
-            </div>
-
-            <div class="tb-dropdown-btn">
-              <span>Font Type</span>
-              <ChevronDown :size="12" />
-            </div>
-
-            <div class="tb-dropdown-btn">
-              <List :size="13" />
-              <ChevronDown :size="12" />
-            </div>
-
-            <div class="tb-divider"></div>
-
-            <button type="button" class="tb-icon-btn font-bold" title="Bold">B</button>
-            <button type="button" class="tb-icon-btn italic" title="Italic">I</button>
-            <button type="button" class="tb-icon-btn underline" title="Underline">U</button>
-            <button type="button" class="tb-icon-btn line-through" title="Strikethrough">S</button>
-            <button type="button" class="tb-icon-btn" title="Code"><Code :size="13" /></button>
-            <button type="button" class="tb-icon-btn" title="Table"><Table :size="13" /></button>
-            <button type="button" class="tb-icon-btn" title="Color"><Square :size="12" class="fill-current" /></button>
-            <button type="button" class="tb-icon-btn" title="Link"><Link2 :size="13" /></button>
-            <button type="button" class="tb-icon-btn" title="Image"><ImageIcon :size="13" /></button>
-
-            <div class="tb-spacer"></div>
-
-            <button type="button" class="tb-icon-btn" title="Undo"><Undo2 :size="13" /></button>
-            <button type="button" class="tb-icon-btn" title="Redo"><Redo2 :size="13" /></button>
-          </div>
-
-          <textarea
-            v-model="formData.description"
-            rows="6"
-            class="wysiwyg-textarea"
-          ></textarea>
-
-          <div class="wysiwyg-footer">
-            <span class="char-count-text">{{ (formData.description || '').length }} / 5,000 Characters</span>
-          </div>
-        </div>
+        <FormRichText
+          v-model="formData.description"
+          label="Detailed Description & Operational Background"
+          placeholder="Provide detailed description and operational background for this HR request..."
+          :max-length="5000"
+        />
       </div>
 
     </div>
@@ -334,12 +281,12 @@ const handleSubmitRequest = () => {
 
 <style scoped>
 .service-request-create-page {
-  padding: 24px 32px 64px 32px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Toast alert */
@@ -552,13 +499,13 @@ const handleSubmitRequest = () => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .textarea-wrap {

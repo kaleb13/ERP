@@ -218,6 +218,14 @@ const toggleDropdown = (id: number) => {
 const closeDropdowns = () => {
   activeDropdownId.value = null;
 };
+
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const paginatedRecords = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredRecords.value.slice(start, start + perPage.value);
+});
 </script>
 
 <template>
@@ -263,6 +271,10 @@ const closeDropdowns = () => {
       v-model:sortOrder="sortOrder"
       :showColumns="true"
       :columns="tableColumns"
+      :totalEntries="filteredRecords.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showPagination="true"
       @toggleColumn="handleToggleColumn"
     >
       <!-- Filter Panel -->
@@ -322,7 +334,7 @@ const closeDropdowns = () => {
         </thead>
         <tbody>
           <tr 
-            v-for="row in filteredRecords" 
+            v-for="row in paginatedRecords" 
             :key="row.id"
             class="erp-row cursor-pointer"
             :class="{ 'row-selected': selectedRows.includes(row.id) }"
@@ -427,38 +439,6 @@ const closeDropdowns = () => {
           </tr>
         </tbody>
       </table>
-
-      <!-- Bottom Pagination Bar (Matching Image 2) -->
-      <template #pagination>
-        <div class="table-pagination-bar">
-          <div class="pagination-info">
-            <span>Showing 1 to {{ filteredRecords.length }} of {{ filteredRecords.length }} entries</span>
-          </div>
-
-          <div class="pagination-per-page">
-            <span class="per-page-label">Per Page:</span>
-            <select class="per-page-select">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-
-          <div class="pagination-controls">
-            <button type="button" class="btn-page-nav" disabled>
-              <span>&larr; Previous</span>
-            </button>
-            <button type="button" class="btn-page-number page-active">1</button>
-            <button type="button" class="btn-page-number">2</button>
-            <span class="page-ellipsis">...</span>
-            <button type="button" class="btn-page-number">9</button>
-            <button type="button" class="btn-page-number">10</button>
-            <button type="button" class="btn-page-nav">
-              <span>Next &rarr;</span>
-            </button>
-          </div>
-        </div>
-      </template>
     </AppDataTable>
   </div>
 </template>
@@ -468,7 +448,7 @@ const closeDropdowns = () => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Metric Cards Grid */

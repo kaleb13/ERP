@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Plus, MoreVertical, Eye, CheckCircle2, 
-  Trash2, ShieldCheck, AlertCircle, ListFilter,
-  Check, X, FileText
-} from 'lucide-vue-next';
+import {
+  Plus, MoreVertical, Eye, CheckCircle2,
+  ShieldCheck, AlertCircle, ListFilter
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -305,10 +305,10 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
       >
         <!-- Top Action Slot: Create Policy Button -->
         <template #actions>
-          <button class="btn-primary-action" @click="goToCreatePolicy">
-            <Plus :size="16" />
-            <span>Create Leave Policy</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="goToCreatePolicy">
+            <template #icon-left><Plus :size="16" /></template>
+            Create Leave Policy
+          </AppButton>
         </template>
 
         <!-- Filters Slot -->
@@ -439,10 +439,10 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
                       <AlertCircle :size="32" class="empty-icon" />
                       <p class="empty-title">No Leave Policies Found</p>
                       <p class="empty-desc">Create your first organizational leave policy rulebook to configure statutory accrual formulas.</p>
-                      <button class="btn-primary-action empty-btn" @click="goToCreatePolicy">
-                        <Plus :size="15" />
-                        <span>Create Leave Policy</span>
-                      </button>
+                      <AppButton variant="primary" size="sm" @click="goToCreatePolicy">
+                        <template #icon-left><Plus :size="15" /></template>
+                        Create Leave Policy
+                      </AppButton>
                     </div>
                   </td>
                 </tr>
@@ -473,10 +473,10 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
       >
         <!-- Top Action Slot: Quick Create Type Button -->
         <template #actions>
-          <button class="btn-primary-action" @click="openQuickCreateType">
-            <Plus :size="16" />
-            <span>Create Leave Type</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="openQuickCreateType">
+            <template #icon-left><Plus :size="16" /></template>
+            Create Leave Type
+          </AppButton>
         </template>
 
         <!-- Custom Table Slot -->
@@ -586,10 +586,10 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
                       <AlertCircle :size="32" class="empty-icon" />
                       <p class="empty-title">No Leave Types Found</p>
                       <p class="empty-desc">Register standard leave categories (Annual, Sick, Maternity, etc.) in the catalog.</p>
-                      <button class="btn-primary-action empty-btn" @click="openQuickCreateType">
-                        <Plus :size="15" />
-                        <span>Create Leave Type</span>
-                      </button>
+                      <AppButton variant="primary" size="sm" @click="openQuickCreateType">
+                        <template #icon-left><Plus :size="15" /></template>
+                        Create Leave Type
+                      </AppButton>
                     </div>
                   </td>
                 </tr>
@@ -669,8 +669,8 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
 .leave-setup-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

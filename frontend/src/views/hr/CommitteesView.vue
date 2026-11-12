@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Users, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Layers, ChevronRight, Award,
-  ShieldCheck, UserCheck, Clock, FileText, UserPlus
-} from 'lucide-vue-next';
+import {
+  Users, Plus, Search, Filter,
+  MoreVertical, Edit2, Trash2, Eye,
+  Check, Calendar, CheckCircle2, X,
+  ShieldCheck, UserPlus
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -789,14 +790,10 @@ onUnmounted(() => {
 
       <!-- Primary Action: + Add Committee (Rule 10.2) -->
       <template #actions>
-        <button 
-          type="button" 
-          class="btn-primary-create" 
-          @click="openCreateModal"
-        >
-          <Plus :size="14" />
-          <span>Add Committee</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openCreateModal">
+  <template #icon-left><Plus :size="15" /></template>
+  Add Committee
+</AppButton>
       </template>
 
       <!-- Table Body -->
@@ -1217,7 +1214,7 @@ onUnmounted(() => {
 .committees-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   width: 100%;
 }
 

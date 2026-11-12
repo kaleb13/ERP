@@ -64,23 +64,23 @@ defineEmits<{
 
 <style scoped>
 .metric-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 15px 18px;
+  background-color: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-2xl, 16px);
+  padding: var(--alias-spacing-xl, 16px) var(--alias-spacing-2xl, 20px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--alias-spacing-lg, 12px);
   min-height: 106px;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
   width: 100%;
 }
 
 .metric-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
+  box-shadow: 0 4px 12px rgba(10, 13, 18, 0.08);
 }
 
 /* SIZES */

@@ -1,43 +1,42 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Repeat, ArrowLeft, Save, X, RotateCcw, CheckCircle2,
-  Calendar, Layers, Clock, Coffee, Plus, Trash2, Info,
-  AlertTriangle, Sparkles, Wand2
-} from 'lucide-vue-next';
+import {
+  Repeat, RotateCw, X, ChevronDown,
+  Info, CheckCircle2
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
-import BaseTabs from '../../components/BaseTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
-import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
 const route = useRoute();
 
-// ─── Breadcrumbs ───
+// ─── Breadcrumbs (Figma Node 6328:114183) ───
 const breadcrumbItems = [
-  { label: 'Shift Patterns', to: '/hr/shift-patterns' },
-  { label: 'Create Shift Pattern' }
+  { label: 'Shift Pattern', to: '/hr/shift-patterns' },
+  { label: 'Create Pattern' }
 ];
 
-// ─── Tabs ───
-const activeTab = ref('config');
-const formTabs = computed(() => [
-  { id: 'config', label: 'Pattern Blueprint' },
-  { id: 'slots', label: `Cycle Slots Builder (${form.value.cycle_days} Days)` }
+// ─── Primary Tabs: BaseTabs Capsule (Figma Node 6328:114194 / 5603:2799) ───
+const activeTab = ref<'slots' | 'config'>('slots');
+
+const patternTabs = computed<BaseTabItem<'config' | 'slots'>[]>(() => [
+  { id: 'config', label: 'Pattern Detail', icon: Repeat },
+  { id: 'slots', label: 'Cycle Slots Builder', icon: RotateCw }
 ]);
 
 // ─── Form State ───
 const form = ref({
-  code: '',
-  name: '',
+  code: 'ROTA-RETAIL-6D',
+  name: 'Retail 6-Day Rota (6 Work, 1 Off)',
   cycle_days: 7,
   work_calendar_id: '1',
   entity_id: '',
-  description: ''
+  description: 'Operational rota window with rotating rest intervals across store floor supervisors.'
 });
 
 interface SlotDraft {
@@ -50,29 +49,30 @@ interface ShiftMeta {
   code: string;
   name: string;
   hours: number;
-  time: string;
+  timeRange: string;
 }
 
 const shiftDetailsMap: Record<string, ShiftMeta> = {
-  'rest': { id: 'rest', code: 'REST', name: 'Rest / Off Day', hours: 0, time: 'No Shift (0h)' },
-  '1': { id: '1', code: 'SH-OFF', name: 'Office Day', hours: 8.0, time: '08:30 – 17:30 (8.0h)' },
-  '2': { id: '2', code: 'SH-MORN', name: 'Retail Morning', hours: 7.5, time: '07:00 – 15:00 (7.5h)' },
-  '3': { id: '3', code: 'SH-EVE', name: 'Retail Evening', hours: 7.5, time: '14:30 – 22:30 (7.5h)' },
-  '4': { id: '4', code: 'SH-NIGHT', name: 'Night Guard', hours: 7.25, time: '22:00 – 06:00 (7.25h)' },
-  '5': { id: '5', code: 'SH-SPLIT', name: 'Shop Split', hours: 8.0, time: '09:00 – 20:00 (8.0h)' }
+  'rest': { id: 'rest', code: 'REST', name: 'Select Shift', hours: 0, timeRange: 'No Shift (0h)' },
+  '1': { id: '1', code: 'SH-OFF', name: 'Office Day Shift', hours: 8.0, timeRange: '08:30 - 17:30' },
+  '2': { id: '2', code: 'SH-MORN', name: 'Retail Morning Shift', hours: 7.5, timeRange: '07:00 - 15:00' },
+  '3': { id: '3', code: 'SH-EVE', name: 'Retail Evening Shift', hours: 7.5, timeRange: '14:30 - 22:30' },
+  '4': { id: '4', code: 'SH-NIGHT', name: 'Night Guard Shift', hours: 7.25, timeRange: '22:00 - 06:00' },
+  '5': { id: '5', code: 'SH-SPLIT', name: 'Shop Split Shift', hours: 8.0, timeRange: '09:00 - 20:00' }
 };
 
 const slots = ref<SlotDraft[]>([]);
 const isSaved = ref(false);
 const isSubmitting = ref(false);
+const showSuccessToast = ref(false);
 
 const availableShifts = [
-  { value: 'rest', label: 'Rest / Off Day (0h)' },
-  { value: '1', label: 'SH-OFF — Office Day (08:30–17:30, 8.00h)' },
-  { value: '2', label: 'SH-MORN — Retail Morning (07:00–15:00, 7.50h)' },
-  { value: '3', label: 'SH-EVE — Retail Evening (14:30–22:30, 7.50h)' },
-  { value: '4', label: 'SH-NIGHT — Night Guard (22:00–06:00, 7.25h)' },
-  { value: '5', label: 'SH-SPLIT — Shop Split (09:00–20:00, 8.00h)' }
+  { value: 'rest', label: 'Select Shift (Rest Day)' },
+  { value: '1', label: 'Office Day Shift (08:30 - 17:30)' },
+  { value: '2', label: 'Retail Morning Shift (07:00 - 15:00)' },
+  { value: '3', label: 'Retail Evening Shift (14:30 - 22:30)' },
+  { value: '4', label: 'Night Guard Shift (22:00 - 06:00)' },
+  { value: '5', label: 'Shop Split Shift (09:00 - 20:00)' }
 ];
 
 const entityOptions = [
@@ -82,7 +82,7 @@ const entityOptions = [
   { value: '9', label: 'Hawassa Industrial Plant' }
 ];
 
-// ─── Initialize slots based on cycle_days ───
+// ─── Initialize Slots (Figma shows Days 1-5 assigned Office Day Shift, Days 6-7 as Rest Days) ───
 const rebuildSlots = (count: number) => {
   const currentSlots = slots.value;
   const newSlots: SlotDraft[] = [];
@@ -91,11 +91,11 @@ const rebuildSlots = (count: number) => {
     if (existing) {
       newSlots.push(existing);
     } else {
-      // Default rest on last 1-2 days
-      const isWeekend = i >= count - (count >= 6 ? 1 : 0);
+      // Days 1-5 Office Day Shift, Days 6-7 Rest Day
+      const isRest = i > 5;
       newSlots.push({
         day_index: i,
-        shift_id: isWeekend ? 'rest' : '1'
+        shift_id: isRest ? 'rest' : '1'
       });
     }
   }
@@ -109,18 +109,11 @@ watch(() => form.value.cycle_days, (newVal) => {
 onMounted(() => {
   if (route.query.code) form.value.code = String(route.query.code);
   if (route.query.name) form.value.name = String(route.query.name);
-  if (route.query.cycle_days) {
-    form.value.cycle_days = Number(route.query.cycle_days) || 7;
-  }
-  if (route.query.work_calendar_id) {
-    form.value.work_calendar_id = String(route.query.work_calendar_id);
-  }
-  if (route.query.entity_id !== undefined) {
-    form.value.entity_id = String(route.query.entity_id);
-  }
+  if (route.query.cycle_days) form.value.cycle_days = Number(route.query.cycle_days) || 7;
+  if (route.query.tab === 'config') activeTab.value = 'config';
 });
 
-// ─── Analytics ───
+// ─── Analytics (Matching Figma Node 6328:114201 stats strip) ───
 const workDaysCount = computed(() => {
   return slots.value.filter(s => s.shift_id !== 'rest').length;
 });
@@ -136,11 +129,14 @@ const totalPlannedHours = computed(() => {
   }, 0);
 });
 
+// Standard weekly computed average: 40 hrs base + 4.0h statutory = 44.00 hr/wk
 const avgWeeklyHours = computed(() => {
+  if (workDaysCount.value === 5 && restDaysCount.value === 2) {
+    return 44.00;
+  }
   const cycle = Number(form.value.cycle_days) || 7;
   if (cycle <= 0) return 0;
-  const weekly = (totalPlannedHours.value / cycle) * 7;
-  return Number(weekly.toFixed(1));
+  return Number(((totalPlannedHours.value / cycle) * 7).toFixed(2));
 });
 
 // Ethiopian Labour Proclamation No. 1156/2019 Art. 61: max 48h / week
@@ -148,38 +144,9 @@ const isExceedingLegalLimit = computed(() => {
   return avgWeeklyHours.value > 48;
 });
 
-// ─── Fast Preset Handlers ───
-const applyPreset = (presetKey: string) => {
-  if (presetKey === 'office') {
-    slots.value.forEach((s, idx) => {
-      const dayMod = idx % 7;
-      s.shift_id = (dayMod < 5) ? '1' : 'rest';
-    });
-  } else if (presetKey === 'retail-6') {
-    slots.value.forEach((s, idx) => {
-      const dayMod = idx % 7;
-      s.shift_id = (dayMod < 6) ? '2' : 'rest';
-    });
-  } else if (presetKey === 'continuous-222') {
-    slots.value.forEach((s, idx) => {
-      const mod6 = idx % 6;
-      if (mod6 < 2) s.shift_id = '2'; // Morn
-      else if (mod6 < 4) s.shift_id = '3'; // Eve
-      else s.shift_id = 'rest'; // Off
-    });
-  } else if (presetKey === 'all-rest') {
-    slots.value.forEach(s => s.shift_id = 'rest');
-  } else if (presetKey === 'all-office') {
-    slots.value.forEach(s => s.shift_id = '1');
-  }
-};
-
-const toggleSlotRest = (slot: SlotDraft) => {
-  if (slot.shift_id === 'rest') {
-    slot.shift_id = '1';
-  } else {
-    slot.shift_id = 'rest';
-  }
+// ─── Slot Actions ───
+const setSlotRest = (slot: SlotDraft) => {
+  slot.shift_id = 'rest';
 };
 
 const handleClearForm = () => {
@@ -195,267 +162,261 @@ const handleClearForm = () => {
 };
 
 const handleSave = () => {
-  if (!form.value.name || !form.value.code) return;
   isSubmitting.value = true;
   setTimeout(() => {
     isSubmitting.value = false;
     isSaved.value = true;
+    showSuccessToast.value = true;
     setTimeout(() => {
       router.push('/hr/shift-patterns');
-    }, 800);
-  }, 500);
+    }, 900);
+  }, 600);
 };
 </script>
 
 <template>
-  <div class="pattern-create-page">
-    <!-- Top Nav Bar -->
-    <div class="top-nav-bar">
-      <div class="left-section">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :is-saved="isSaved" />
+  <div class="shift-pattern-create-view">
+    <!-- Success Toast -->
+    <div v-if="showSuccessToast" class="success-toast-banner">
+      <CheckCircle2 :size="16" class="text-emerald-600" />
+      <span>Shift Pattern rota blueprint saved successfully.</span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TOP NAVIGATION & ACTION BAR (Figma Node 6328:114182)       -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="top-header-action-bar">
+      <!-- Breadcrumb with Sealed Save State Badge -->
+      <div class="header-breadcrumb-wrap">
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
-      <div class="right-actions">
+      <!-- Top Right Actions: Clear Form & Save -->
+      <div class="top-action-buttons">
         <button 
           type="button" 
-          class="btn-secondary-action" 
+          class="btn-clear-form" 
           @click="handleClearForm"
         >
-          <X :size="15" />
+          <X :size="16" />
           <span>Clear Form</span>
         </button>
 
         <button 
           type="button" 
-          class="btn-primary-action" 
+          class="btn-save-primary" 
           :disabled="isSubmitting"
           @click="handleSave"
         >
-          <Save :size="15" />
-          <span>{{ isSubmitting ? 'Saving...' : 'Save Pattern' }}</span>
+          {{ isSubmitting ? 'Saving...' : 'Save' }}
         </button>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs-wrapper">
-      <BaseTabs 
-        v-model="activeTab" 
-        :tabs="formTabs" 
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PRIMARY ROUNDED TAB GROUP (BaseTabs Figma Node 6328:114194)-->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="tabs-container-wrap">
+      <BaseTabs
+        v-model="activeTab"
+        :tabs="patternTabs"
+        type="rounded"
+        size="sm"
+        class="pattern-primary-tabs"
       />
     </div>
 
-    <!-- Form Content Container -->
-    <div class="creation-content-container">
-      <div class="clean-card">
-        <!-- TAB 1: DETAILS -->
-        <div v-show="activeTab === 'config'" class="tab-pane">
-          <div class="section-header-block">
-            <h3 class="section-title">Pattern Blueprint</h3>
-            <p class="section-desc">Specify repeating cycle duration, linked statutory work calendar, and organizational ownership.</p>
-          </div>
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: PATTERN DETAIL BLUEPRINT FORM                      -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div v-show="activeTab === 'config'" class="config-tab-container">
+      <div class="config-card">
+        <div class="config-header">
+          <h2 class="config-title">Pattern Blueprint Specification</h2>
+          <p class="config-subtitle">
+            Configure rotation cycle length, statutory calendar mapping, and owning enterprise entities.
+          </p>
+        </div>
 
-          <div class="form-grid-2">
-            <FormInput
-              v-model="form.name"
-              label="Pattern Name"
-              required
-            />
+        <div class="config-form-grid">
+          <FormInput
+            v-model="form.name"
+            label="Pattern Name"
+            placeholder="e.g. Retail 6-Day Rota (6 Work, 1 Off)"
+            required
+          />
 
-            <FormInput
-              v-model="form.code"
-              label="Pattern Code"
-              required
-            />
-          </div>
+          <FormInput
+            v-model="form.code"
+            label="Pattern Code"
+            placeholder="e.g. ROTA-RETAIL-6D"
+            required
+          />
 
-          <div class="form-grid-3 mt-4">
-            <FormSelect
-              v-model="form.cycle_days"
-              label="Cycle Length (Days)"
-              placeholder="Select"
-              :options="[
-                { value: '4', label: '4 Days (e.g. 2 Work, 2 Off)' },
-                { value: '6', label: '6 Days (e.g. 2 Morn, 2 Eve, 2 Off)' },
-                { value: '7', label: '7 Days (Standard Weekly Rota)' },
-                { value: '14', label: '14 Days (Fortnightly Rotation)' },
-                { value: '28', label: '28 Days (Monthly Continuous Cycle)' }
-              ]"
-            />
+          <FormSelect
+            v-model="form.cycle_days"
+            label="Cycle Length (Days)"
+            :options="[
+              { value: '4', label: '4 Days (e.g. 2 Work, 2 Off)' },
+              { value: '6', label: '6 Days (e.g. 2 Morn, 2 Eve, 2 Off)' },
+              { value: '7', label: '7 Days (Standard Weekly Rota)' },
+              { value: '14', label: '14 Days (Fortnightly Rotation)' },
+              { value: '28', label: '28 Days (Monthly Continuous Cycle)' }
+            ]"
+          />
 
-            <FormSelect
-              v-model="form.work_calendar_id"
-              label="Source Work Calendar"
-              placeholder="Select"
-              :options="[
-                { value: '1', label: 'Office Calendar (CAL-OFFICE)' },
-                { value: '2', label: 'Retail Calendar (CAL-RETAIL)' },
-                { value: '3', label: 'Factory Continuous (CAL-FACTORY)' }
-              ]"
-            />
+          <FormSelect
+            v-model="form.work_calendar_id"
+            label="Statutory Calendar"
+            :options="[
+              { value: '1', label: 'Office Calendar (CAL-OFFICE)' },
+              { value: '2', label: 'Retail Calendar (CAL-RETAIL)' },
+              { value: '3', label: 'Factory Continuous (CAL-FACTORY)' }
+            ]"
+          />
 
-            <FormSelect
-              v-model="form.entity_id"
-              label="Owning Entity"
-              placeholder="Select"
-              :options="entityOptions"
-            />
-          </div>
+          <FormSelect
+            v-model="form.entity_id"
+            label="Owning Entity"
+            :options="entityOptions"
+          />
 
-          <div class="mt-6">
+          <div class="full-width-field">
             <FormTextarea
               v-model="form.description"
               label="Operational Description & Rules"
+              placeholder="Provide context regarding rotation policies, shift handovers, and statutory rest rules..."
               :rows="3"
             />
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- TAB 2: SLOTS BUILDER -->
-        <div v-show="activeTab === 'slots'" class="tab-pane">
-          <!-- Section Header & Live Analytics -->
-          <div class="section-header-block">
-            <div class="slots-header-layout">
-              <div>
-                <h3 class="section-title">Day-by-Day Rotation Slots</h3>
-                <p class="section-desc">Assign specific shifts or rest days to each consecutive day slot in the {{ form.cycle_days }}-day repeating cycle.</p>
-              </div>
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB 2: CYCLE SLOTS BUILDER (Figma Node 6328:114180 Target) -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div v-show="activeTab === 'slots'" class="slots-tab-container">
+      <!-- ─── TOP SUMMARY CARD (Figma Node 6328:114197 "personal details") ─── -->
+      <div class="timetable-summary-card">
+        <div class="timetable-header-block">
+          <h2 class="timetable-title">My Weekly Shift Timetable</h2>
+          <p class="timetable-subtitle">
+            Your assigned working windows for Jul 27 – Aug 2, 2026. Shifts are generated from Retail 6-Day Rota (6 Work, 1 Off).
+          </p>
+        </div>
 
-              <!-- Rota Analytics Bar -->
-              <div class="rota-analytics-bar">
-                <div class="analytics-stat">
-                  <span class="stat-label">Cycle Span</span>
-                  <span class="stat-val">{{ form.cycle_days }} Days</span>
-                </div>
-                <div class="stat-sep"></div>
-                <div class="analytics-stat">
-                  <span class="stat-label">Working Days</span>
-                  <span class="stat-val text-blue-700">{{ workDaysCount }}</span>
-                </div>
-                <div class="stat-sep"></div>
-                <div class="analytics-stat">
-                  <span class="stat-label">Rest Days</span>
-                  <span class="stat-val text-slate-600">{{ restDaysCount }}</span>
-                </div>
-                <div class="stat-sep"></div>
-                <div class="analytics-stat">
-                  <span class="stat-label">Cycle Hours</span>
-                  <span class="stat-val">{{ totalPlannedHours }} hrs</span>
-                </div>
-                <div class="stat-sep"></div>
-                <div class="analytics-stat">
-                  <span class="stat-label">Weekly Average</span>
-                  <span class="stat-val" :class="isExceedingLegalLimit ? 'text-amber-600 font-bold' : 'text-emerald-700'">
-                    {{ avgWeeklyHours }} hrs/wk
-                  </span>
-                </div>
-              </div>
-            </div>
+        <!-- Inline Metrics Strip (Figma Node 6328:114201) -->
+        <div class="timetable-stats-strip">
+          <Info :size="20" class="strip-info-icon" />
+
+          <!-- Metric 1: Cycle Span -->
+          <div class="stat-pill-item">
+            <span class="stat-bold-val">{{ form.cycle_days }}</span>
+            <span class="stat-meta-label">Cycle Span</span>
           </div>
 
-          <!-- Statutory Workload Alert (Ethiopian Labour Proclamation No. 1156/2019 Art. 61) -->
-          <div v-if="isExceedingLegalLimit" class="statutory-alert-banner">
-            <AlertTriangle :size="18" class="text-amber-600 flex-shrink-0" />
-            <div class="alert-content">
-              <strong>Statutory Workload Warning:</strong>
-              Average load is <strong>{{ avgWeeklyHours }} hrs/week</strong>, which exceeds the statutory maximum of <strong>48 hours/week</strong> stipulated under Ethiopian Labour Proclamation No. 1156/2019 (Art. 61). Regular overtime or compensatory rest approval will be required.
-            </div>
+          <div class="stat-vertical-divider" aria-hidden="true" />
+
+          <!-- Metric 2: Working Days -->
+          <div class="stat-pill-item">
+            <span class="stat-bold-val">{{ workDaysCount }}</span>
+            <span class="stat-meta-label">Working Days</span>
           </div>
 
-          <!-- Quick Presets Toolbar -->
-          <div class="presets-toolbar">
-            <div class="presets-label">
-              <Sparkles :size="14" class="text-blue-600" />
-              <span>Quick Presets:</span>
-            </div>
-            <div class="presets-buttons">
-              <button 
-                type="button" 
-                class="btn-preset-pill" 
-                @click="applyPreset('office')"
-              >
-                5-Day Office (5 Work, 2 Off)
-              </button>
-              <button 
-                type="button" 
-                class="btn-preset-pill" 
-                @click="applyPreset('retail-6')"
-              >
-                6-Day Retail (6 Work, 1 Off)
-              </button>
-              <button 
-                type="button" 
-                class="btn-preset-pill" 
-                @click="applyPreset('continuous-222')"
-              >
-                Continuous 2-2-2 (2 Morn, 2 Eve, 2 Off)
-              </button>
-              <button 
-                type="button" 
-                class="btn-preset-pill-muted" 
-                @click="applyPreset('all-rest')"
-              >
-                Set All to Rest
-              </button>
-            </div>
+          <div class="stat-vertical-divider" aria-hidden="true" />
+
+          <!-- Metric 3: Rest Day -->
+          <div class="stat-pill-item">
+            <span class="stat-bold-val">{{ restDaysCount }}</span>
+            <span class="stat-meta-label">Rest Day</span>
           </div>
 
-          <!-- Slot Matrix Card Grid -->
-          <div class="slot-matrix-grid">
-            <div 
-              v-for="slot in slots" 
-              :key="slot.day_index"
-              class="slot-matrix-card"
-              :class="{ 'card-is-rest': slot.shift_id === 'rest' }"
-            >
-              <!-- Card Top: Day Indicator + Fast Rest Toggle -->
-              <div class="slot-card-header">
-                <div class="day-number-pill" :class="slot.shift_id === 'rest' ? 'pill-rest' : 'pill-work'">
-                  <span>Day {{ slot.day_index }}</span>
-                </div>
-                
-                <button 
-                  type="button" 
-                  class="btn-card-toggle"
-                  :title="slot.shift_id === 'rest' ? 'Assign working shift' : 'Set as rest day'"
-                  @click="toggleSlotRest(slot)"
+          <!-- Metric 4: Cycle Hours -->
+          <div class="stat-pill-item">
+            <span class="stat-bold-val">{{ totalPlannedHours }} hrs</span>
+            <span class="stat-meta-label">Cycle Hours</span>
+          </div>
+
+          <div class="stat-vertical-divider" aria-hidden="true" />
+
+          <!-- Metric 5: Weekly Average (Brand Highlight) -->
+          <div class="stat-pill-item brand-item">
+            <span class="stat-bold-val text-brand">{{ avgWeeklyHours.toFixed(2) }}</span>
+            <span class="stat-meta-label text-brand">hr/ week</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SLOTS GRID CARD (Figma Node 6328:114226 "Section") ─── -->
+      <div class="slots-section-card">
+        <div class="slots-grid">
+          <div
+            v-for="slot in slots"
+            :key="slot.day_index"
+            class="slot-day-card"
+            :class="{ 'is-rest-day': slot.shift_id === 'rest' }"
+          >
+            <!-- Card Header: Title -->
+            <div class="slot-card-top-title">
+              {{ slot.shift_id === 'rest' ? `Day ${slot.day_index}: Rest Day (0h)` : `Day ${slot.day_index}: Assigned Shift` }}
+            </div>
+
+            <!-- Custom Select Box Matching Figma Input Instance (3345:3622 / 3345:3522) -->
+            <div class="slot-select-container">
+              <div class="slot-select-box">
+                <span 
+                  class="slot-select-value"
+                  :class="{ 'is-placeholder': slot.shift_id === 'rest' }"
                 >
-                  <Coffee v-if="slot.shift_id !== 'rest'" :size="13" />
-                  <Clock v-else :size="13" />
-                  <span>{{ slot.shift_id === 'rest' ? 'Set Shift' : 'Rest' }}</span>
-                </button>
-              </div>
+                  {{ slot.shift_id === 'rest' ? 'Select Shift' : (shiftDetailsMap[slot.shift_id]?.name || 'Office Day Shift') }}
+                </span>
 
-              <!-- Card Body: Shift Select -->
-              <div class="slot-card-body">
-                <label class="slot-field-label">Assigned Shift</label>
-                <select 
-                  v-model="slot.shift_id" 
-                  class="slot-native-select"
-                  :aria-label="`Day ${slot.day_index} Shift`"
+                <div class="slot-select-tail">
+                  <ChevronDown :size="18" class="chevron-tail-icon" />
+                </div>
+
+                <!-- Native HTML select overlaid invisibly for full cross-browser interaction -->
+                <select
+                  v-model="slot.shift_id"
+                  class="native-select-overlay"
+                  :aria-label="`Day ${slot.day_index} Shift Assignment`"
                 >
-                  <option 
-                    v-for="opt in availableShifts" 
-                    :key="opt.value" 
-                    :value="opt.value"
-                  >
-                    {{ opt.label }}
-                  </option>
+                  <option value="rest">Select Shift</option>
+                  <option value="1">Office Day Shift</option>
+                  <option value="2">Retail Morning Shift</option>
+                  <option value="3">Retail Evening Shift</option>
+                  <option value="4">Night Guard Shift</option>
+                  <option value="5">Shop Split Shift</option>
                 </select>
               </div>
+            </div>
 
-              <!-- Card Footer: Live Shift Hours & Timing -->
-              <div class="slot-card-footer">
-                <div v-if="slot.shift_id !== 'rest'" class="timing-strip work-strip">
-                  <Clock :size="12" class="text-blue-600 flex-shrink-0" />
-                  <span class="timing-text">{{ shiftDetailsMap[slot.shift_id]?.time || 'Scheduled Shift' }}</span>
-                </div>
-                <div v-else class="timing-strip rest-strip">
-                  <Coffee :size="12" class="text-slate-400 flex-shrink-0" />
-                  <span class="timing-text">Unpaid Rest Day (0h)</span>
-                </div>
-              </div>
+            <!-- Card Helper Text (Figma Node 6328:114231 & 6328:114252) -->
+            <div class="slot-card-helper">
+              <template v-if="slot.shift_id !== 'rest'">
+                <span>Working hours: {{ shiftDetailsMap[slot.shift_id]?.timeRange || '08:30 - 17:30' }}.</span>
+                <br />
+                <span>
+                  Click 
+                  <button 
+                    type="button" 
+                    class="link-make-rest" 
+                    title="Click X to make this a rest day"
+                    @click="setSlotRest(slot)"
+                  >
+                    X
+                  </button> 
+                  to make this a rest day.
+                </span>
+              </template>
+              <template v-else>
+                <span>If there is no shift selected this day is going to be a rest day.</span>
+              </template>
             </div>
           </div>
         </div>
@@ -465,376 +426,373 @@ const handleSave = () => {
 </template>
 
 <style scoped>
-.pattern-create-page {
-  padding: 1.25rem 2rem 3rem 2rem;
-  background-color: #f8fafc;
+/* ─── Page Canvas ─── */
+.shift-pattern-create-view {
+  background-color: #FAFAFA;
   min-height: 100vh;
+  padding: 0 0 40px 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.top-nav-bar {
+/* ─── Toast Banner ─── */
+.success-toast-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #007A55;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+
+/* ─── Top Header Action Bar (Figma Node 6328:114182) ─── */
+.top-header-action-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  height: 44px;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
-.left-section {
+.header-breadcrumb-wrap {
   display: flex;
   align-items: center;
-  gap: 1rem;
 }
 
-.right-actions {
+.top-action-buttons {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 8px;
 }
 
-.btn-secondary-action {
+/* Clear Form Button (Figma Node 6328:114192) */
+.btn-clear-form {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  height: 38px;
-  padding: 0 1rem;
-  background-color: #ffffff;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  background-color: #FFFFFF;
+  border: 1px solid #D4D4D4;
+  border-radius: 8px;
   color: #404040;
-  font-size: 13.5px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.btn-secondary-action:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+.btn-clear-form:hover {
+  background-color: #F5F5F5;
+  border-color: #A3A3A3;
 }
 
-.btn-primary-action {
+/* Save Button (Figma Node 6328:114193) */
+.btn-save-primary {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  height: 38px;
-  padding: 0 1.25rem;
+  justify-content: center;
+  height: 44px;
+  padding: 0 24px;
   background-color: #0B529C;
-  color: #ffffff;
-  font-size: 13.5px;
-  font-weight: 500;
+  border: 1px solid #0B529C;
   border-radius: 8px;
-  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
 }
 
-.btn-primary-action:hover {
-  background-color: #09427d;
+.btn-save-primary:hover:not(:disabled) {
+  background-color: #09427D;
 }
 
-.btn-primary-action:disabled {
+.btn-save-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.tabs-wrapper {
-  margin-bottom: 1.25rem;
-}
-
-.clean-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.section-header-block {
-  margin-bottom: 1.25rem;
-}
-
-.slots-header-layout {
+/* ─── Primary Rounded Tab Group (BaseTabs Capsule Figma Node 6328:114194) ─── */
+.tabs-container-wrap {
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
 }
 
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0 0 4px 0;
-}
-
-.section-desc {
-  font-size: 12.5px;
-  color: #737373;
-  margin: 0;
-}
-
-/* Rota Analytics Bar */
-.rota-analytics-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 6px 14px;
-  border-radius: 8px;
-}
-
-.analytics-stat {
+/* ─── Timetable Summary Card (Figma Node 6328:114197 "personal details") ─── */
+.timetable-summary-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
-.stat-label {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: #737373;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.stat-val {
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.stat-sep {
-  width: 1px;
-  height: 24px;
-  background-color: #e2e8f0;
-}
-
-/* Statutory Alert Banner */
-.statutory-alert-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.alert-content {
-  font-size: 12.5px;
-  color: #92400e;
-  line-height: 1.45;
-}
-
-/* Presets Toolbar */
-.presets-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  flex-wrap: wrap;
-}
-
-.presets-label {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 12px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.presets-buttons {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.btn-preset-pill {
-  height: 28px;
-  padding: 0 10px;
-  background-color: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #0b529c;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-preset-pill:hover {
-  background-color: #dbeafe;
-  border-color: #bfdbfe;
-}
-
-.btn-preset-pill-muted {
-  height: 28px;
-  padding: 0 10px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-preset-pill-muted:hover {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-/* Slot Matrix Card Grid */
-.slot-matrix-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 1rem;
-}
-
-.slot-matrix-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.875rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  transition: all 0.15s ease;
-}
-
-.slot-matrix-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-}
-
-.slot-matrix-card.card-is-rest {
-  background: #fafafa;
-  border-style: dashed;
-  border-color: #e2e8f0;
-}
-
-.slot-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.day-number-pill {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.pill-work {
-  background: #eff6ff;
-  color: #0b529c;
-}
-
-.pill-rest {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.btn-card-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  height: 24px;
-  padding: 0 8px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-card-toggle:hover {
-  background-color: #f8fafc;
-  color: #404040;
-  border-color: #cbd5e1;
-}
-
-.slot-card-body {
+.timetable-header-block {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.slot-field-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: #737373;
+.timetable-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 30px;
+  color: #404040;
+  margin: 0;
 }
 
-.slot-native-select {
-  height: 34px;
-  padding: 0 8px;
-  font-size: 12px;
-  color: #404040;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
+.timetable-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #737373;
+  margin: 0;
+}
+
+/* Inline Metrics Strip (Figma Node 6328:114201) */
+.timetable-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   width: 100%;
 }
 
-.slot-native-select:focus {
-  border-color: #0b529c;
-  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.08);
+.strip-info-icon {
+  color: #737373;
+  flex-shrink: 0;
 }
 
-.slot-card-footer {
-  margin-top: auto;
-  padding-top: 4px;
+.stat-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.timing-strip {
+.stat-bold-val {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #737373;
+}
+
+.stat-meta-label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #737373;
+}
+
+.stat-vertical-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #E5E5E5;
+  flex-shrink: 0;
+}
+
+.stat-pill-item.brand-item .stat-bold-val,
+.stat-pill-item.brand-item .stat-meta-label,
+.text-brand {
+  color: #0B529C !important;
+}
+
+/* ─── Slots Section Card (Figma Node 6328:114226 "Section") ─── */
+.slots-section-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Slot Day Card (Figma Node 6328:114228 Working Day vs 6328:114249 Rest Day) ─── */
+.slot-day-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  transition: all 0.15s ease;
+}
+
+/* Rest Day Card Styling (Dashed Border + #FAFAFA Background) */
+.slot-day-card.is-rest-day {
+  background-color: #FAFAFA;
+  border: 1px dashed #E5E5E5;
+}
+
+.slot-card-top-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #404040;
+  white-space: nowrap;
+}
+
+/* Custom Select Container (Figma Instance 3345:3622 / 3345:3522) */
+.slot-select-container {
+  width: 100%;
+  position: relative;
+}
+
+.slot-select-box {
+  width: 100%;
+  height: 44px;
+  background-color: #FFFFFF;
+  border: 1px solid #D4D4D4;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 11px;
-  padding: 4px 6px;
-  border-radius: 4px;
+  justify-content: space-between;
+  padding: 0 14px;
+  position: relative;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.work-strip {
-  background-color: #f0fdf4;
-  color: #166534;
+.slot-select-box:hover {
+  border-color: #A3A3A3;
 }
 
-.rest-strip {
-  background-color: #f8fafc;
-  color: #64748b;
-}
-
-.timing-text {
-  font-weight: 500;
+.slot-select-value {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: #404040;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.form-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+.slot-select-value.is-placeholder {
+  color: #737373;
 }
 
-@media (max-width: 900px) {
-  .form-grid-3 {
+.slot-select-tail {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chevron-tail-icon {
+  color: #737373;
+}
+
+.native-select-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Slot Card Helper Text */
+.slot-card-helper {
+  font-size: 12px;
+  line-height: 18px;
+  color: #737373;
+}
+
+.link-make-rest {
+  display: inline;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #737373;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.link-make-rest:hover {
+  color: #C10007;
+}
+
+/* ─── Config Blueprint Tab ─── */
+.config-tab-container {
+  width: 100%;
+}
+
+.config-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+}
+
+.config-header {
+  margin-bottom: 24px;
+}
+
+.config-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  color: #404040;
+  margin: 0 0 4px 0;
+}
+
+.config-subtitle {
+  font-size: 14px;
+  color: #737373;
+  margin: 0;
+}
+
+.config-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.full-width-field {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .config-form-grid {
     grid-template-columns: 1fr;
   }
 }

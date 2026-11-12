@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { 
   Copy, Pencil, Trash2, RotateCw, MoreVertical, 
   CheckCircle2, XCircle, Clock, Lock, History, 
-  Download, ToggleLeft, X
+  Download, ToggleLeft, X, GripVertical
 } from 'lucide-vue-next';
 
 interface Props {
@@ -91,14 +91,7 @@ onUnmounted(() => {
       <div class="floating-action-bar" @click.stop>
         <!-- Drag Handle (6 dots) -->
         <div class="floating-grip" title="Bulk Action Bar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="grip-icon">
-            <circle cx="8" cy="5" r="1.8" />
-            <circle cx="16" cy="5" r="1.8" />
-            <circle cx="8" cy="12" r="1.8" />
-            <circle cx="16" cy="12" r="1.8" />
-            <circle cx="8" cy="19" r="1.8" />
-            <circle cx="16" cy="19" r="1.8" />
-          </svg>
+          <GripVertical :size="14" class="grip-icon" />
         </div>
 
         <div class="floating-sep" />
@@ -137,23 +130,23 @@ onUnmounted(() => {
             <Transition name="popover-fade">
               <div v-if="showStatusPopover" class="floating-popover-menu status-popover">
                 <button type="button" class="popover-item text-neutral-800" @click="handleSelectStatus('Approved')">
-                  <CheckCircle2 :size="15" class="text-emerald-500 flex-shrink-0" />
+                  <CheckCircle2 :size="15" class="icon-success flex-shrink-0" />
                   <span>Approve</span>
                 </button>
                 <button type="button" class="popover-item text-neutral-800" @click="handleSelectStatus('Rejected')">
-                  <XCircle :size="15" class="text-rose-500 flex-shrink-0" />
+                  <XCircle :size="15" class="icon-error flex-shrink-0" />
                   <span>Reject</span>
                 </button>
                 <button type="button" class="popover-item text-neutral-800" @click="handleSelectStatus('Pending')">
-                  <Clock :size="15" class="text-amber-500 flex-shrink-0" />
+                  <Clock :size="15" class="icon-warning flex-shrink-0" />
                   <span>Pending</span>
                 </button>
                 <button type="button" class="popover-item text-neutral-800" @click="handleSelectStatus('Locked')">
-                  <Lock :size="15" class="text-slate-400 flex-shrink-0" />
+                  <Lock :size="15" class="icon-tertiary flex-shrink-0" />
                   <span>Locked</span>
                 </button>
                 <button type="button" class="popover-item text-neutral-800" @click="handleSelectStatus('Expired')">
-                  <History :size="15" class="text-slate-400 flex-shrink-0" />
+                  <History :size="15" class="icon-tertiary flex-shrink-0" />
                   <span>Expired</span>
                 </button>
               </div>
@@ -167,7 +160,7 @@ onUnmounted(() => {
             class="floating-btn" 
             @click="$emit('duplicate')"
           >
-            <Copy :size="14" class="text-neutral-600" />
+            <Copy :size="14" class="icon-secondary" />
             <span>Duplicate</span>
           </button>
 
@@ -178,7 +171,7 @@ onUnmounted(() => {
             class="floating-btn" 
             @click="$emit('edit')"
           >
-            <Pencil :size="14" class="text-neutral-600" />
+            <Pencil :size="14" class="icon-secondary" />
             <span>Edit</span>
           </button>
 
@@ -189,8 +182,8 @@ onUnmounted(() => {
             class="floating-btn btn-delete" 
             @click="$emit('delete')"
           >
-            <Trash2 :size="14" class="text-rose-600" />
-            <span class="text-rose-600 font-medium">Delete</span>
+            <Trash2 :size="14" class="icon-error" />
+            <span class="icon-error font-medium">Delete</span>
           </button>
 
           <div v-if="props.showMore" class="floating-sep" />
@@ -206,7 +199,7 @@ onUnmounted(() => {
               @mouseleave="showTooltip = false"
               title="More Actions"
             >
-              <MoreVertical :size="15" />
+              <MoreVertical :size="15" class="icon-secondary" />
             </button>
 
             <!-- Tooltip Prompt (Image 2) -->
@@ -219,11 +212,11 @@ onUnmounted(() => {
             <Transition name="popover-fade">
               <div v-if="showMorePopover" class="floating-popover-menu more-popover">
                 <button type="button" class="popover-item text-neutral-800" @click="handleExport">
-                  <Download :size="15" class="text-neutral-600 flex-shrink-0" />
+                  <Download :size="15" class="icon-secondary flex-shrink-0" />
                   <span>Export</span>
                 </button>
                 <button type="button" class="popover-item text-neutral-800" @click="handleDeactivate">
-                  <ToggleLeft :size="15" class="text-neutral-600 flex-shrink-0" />
+                  <ToggleLeft :size="15" class="icon-secondary flex-shrink-0" />
                   <span>Deactivate</span>
                 </button>
               </div>
@@ -259,12 +252,12 @@ onUnmounted(() => {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 9999px;
+  gap: var(--alias-spacing-lg, 12px);
+  background-color: var(--alias-color-background-surface-elevated, #ffffff);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-full, 9999px);
   box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
-  padding: 6px 14px 6px 16px;
+  padding: var(--alias-spacing-sm, 6px) var(--alias-spacing-xl, 16px);
   height: 46px;
   user-select: none;
 }
@@ -274,18 +267,18 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: grab;
-  color: #64748b;
+  color: var(--qmt-icon-tertiary, #737373);
   padding: 2px;
 }
 
 .grip-icon {
-  color: #475569;
+  color: var(--qmt-icon-secondary, #404040);
 }
 
 .floating-sep {
   width: 1px;
   height: 18px;
-  background-color: #e2e8f0;
+  background-color: var(--alias-color-border-subtle, #e5e5e5);
   flex-shrink: 0;
 }
 
@@ -300,11 +293,11 @@ onUnmounted(() => {
 
 .count-bold {
   font-weight: 500;
-  color: #334155;
+  color: var(--alias-color-text-secondary, #404040);
 }
 
 .count-divider {
-  color: #94a3b8;
+  color: var(--alias-color-text-disabled, #a1a1a1);
   font-size: 11px;
 }
 
@@ -312,7 +305,7 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   padding: 0;
-  color: #475569;
+  color: var(--alias-color-text-secondary, #404040);
   font-size: 13px;
   font-weight: 500;
   text-decoration: underline;
@@ -320,7 +313,7 @@ onUnmounted(() => {
   transition: color 0.15s ease;
 }
 .count-select-all:hover {
-  color: #0B529C;
+  color: var(--alias-color-brand-blue-primary, #0B529C);
 }
 
 .floating-actions-row {
@@ -340,33 +333,33 @@ onUnmounted(() => {
   border: none;
   font-size: 13px;
   font-weight: 500;
-  color: #404040;
+  color: var(--alias-color-text-secondary, #404040);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 .floating-btn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--alias-color-background-hover, #f5f5f5);
+  color: var(--alias-color-text-secondary, #404040);
 }
 
 .status-pill-btn {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   background-color: #ffffff;
   padding: 0 12px;
 }
 .status-pill-btn:hover,
 .status-pill-btn.is-active {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+  background-color: var(--alias-color-background-primary, #fafafa);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
 }
 
 .status-btn-icon {
-  color: #64748b;
+  color: var(--qmt-icon-tertiary, #737373);
 }
 
 .btn-delete:hover {
-  background-color: #fee2e2;
+  background-color: var(--primitive-color-red-50, #fef2f2);
 }
 
 .floating-btn-icon {
@@ -377,16 +370,16 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  color: var(--qmt-icon-tertiary, #737373);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .floating-btn-icon:hover,
 .floating-btn-icon.is-active {
-  background-color: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background-color: var(--alias-color-background-hover, #f5f5f5);
+  color: var(--qmt-icon-secondary, #404040);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
 }
 
 .floating-close-btn {
@@ -396,16 +389,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f1f5f9;
+  background: var(--alias-color-background-hover, #f5f5f5);
   border: none;
-  color: #64748b;
+  color: var(--qmt-icon-tertiary, #737373);
   cursor: pointer;
   margin-left: 2px;
   transition: all 0.15s ease;
 }
 .floating-close-btn:hover {
-  background-color: #e2e8f0;
-  color: #0f172a;
+  background-color: var(--alias-color-border-subtle, #e5e5e5);
+  color: var(--qmt-icon-secondary, #404040);
 }
 
 /* ─── Floating Popover Menus (Image 2) ─── */
@@ -413,7 +406,7 @@ onUnmounted(() => {
   position: absolute;
   bottom: calc(100% + 12px);
   background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 14px;
   box-shadow: 0 18px 30px -4px rgba(0, 0, 0, 0.14), 0 6px 14px -3px rgba(0, 0, 0, 0.08);
   padding: 6px;

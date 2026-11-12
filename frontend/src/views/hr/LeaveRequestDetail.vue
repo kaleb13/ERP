@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, 
-  User, Calendar, CalendarDays, FileText, UserCheck, 
-  Printer, AlertCircle, Share2, ArrowRight, CornerDownLeft,
-  X, Check, Focus, ChevronDown, CheckCheck, HelpCircle, Award
-} from 'lucide-vue-next';
+import {
+  CheckCircle2, XCircle, Clock, Calendar,
+  FileText, Printer, AlertCircle, CornerDownLeft,
+  X, Check, Award
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -465,23 +465,23 @@ const formatDateRange = (start: string, end: string) => {
       </div>
 
       <div class="top-nav-actions">
-        <button
-          type="button"
-          class="btn-secondary-action"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handlePrintSlip"
         >
-          <Printer :size="14" />
-          <span>Print Leave Slip</span>
-        </button>
-        <button
+          <template #icon-left><Printer :size="14" /></template>
+          Print Leave Slip
+        </AppButton>
+        <AppButton
           v-if="currentItem.request_state === 'pending'"
-          type="button"
-          class="btn-danger-action"
+          variant="destructive"
+          size="sm"
           @click="handleCancelRequest"
         >
-          <XCircle :size="14" />
-          <span>Cancel Request</span>
-        </button>
+          <template #icon-left><XCircle :size="14" /></template>
+          Cancel Request
+        </AppButton>
       </div>
     </div>
 
@@ -750,14 +750,15 @@ const formatDateRange = (start: string, end: string) => {
               />
             </div>
 
-            <button
-              type="button"
-              class="btn-submit-decision"
+            <AppButton
+              variant="primary"
+              size="md"
               :disabled="isSubmittingDecision"
+              :loading="isSubmittingDecision"
               @click="handleSubmitDecision"
             >
-              <span>{{ isSubmittingDecision ? 'Submitting...' : 'Submit Decision' }}</span>
-            </button>
+              Submit Decision
+            </AppButton>
           </div>
         </div>
 
@@ -818,8 +819,8 @@ const formatDateRange = (start: string, end: string) => {
 .leave-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

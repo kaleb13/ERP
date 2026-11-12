@@ -1,22 +1,23 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
-  Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight,
-  Sun, FileText, Check, X, ShieldCheck, Briefcase, Users, AlertCircle
+  Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, ChevronDown,
+  Monitor, FileText, ShieldCheck, Briefcase
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import ellipseDarkerUrl from '../../assets/ellipse-darker.svg';
+import ellipseLightUrl from '../../assets/ellipse-light.svg';
 
-// ─── Breadcrumbs (Rule 3: Exact Sidebar Page Name Only) ───
+// ─── Breadcrumbs (Aligned with Figma 6328:119446: Monitor icon > Work Calendar) ───
 const breadcrumbItems = [
   { label: 'Work Calendar' }
 ];
 
-// ─── View Modes (Figma order: Day | Week | Month | List) ───
-type CalendarViewMode = 'day' | 'week' | 'month' | 'list';
-const currentView = ref<CalendarViewMode>('month');
+// ─── View Modes (Figma Tab Rounded Group: Week | Month | List) ───
+type CalendarViewMode = 'week' | 'month' | 'list';
+const currentView = ref<CalendarViewMode>('week');
 
 const viewModes: { id: CalendarViewMode; label: string }[] = [
-  { id: 'day', label: 'Day' },
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
   { id: 'list', label: 'List' }
@@ -44,7 +45,7 @@ const companyCalendars: CompanyCalendar[] = [
   {
     id: 1,
     code: 'CAL-OFFICE',
-    name: 'Office Calendar (40h HQ)',
+    name: 'Office Calendar',
     entityName: 'Haleta Addis Ababa HQ',
     dailyHours: 8.0,
     weeklyHours: 40.0,
@@ -101,26 +102,26 @@ const currentDate = ref(new Date(2027, 11, 17)); // Dec 17, 2027
 const selectedDate = ref(new Date(2027, 11, 17));
 const miniCalendarDate = ref(new Date(2027, 7, 1)); // August 2027 per Figma mini picker
 
-// ─── Calendar Event Schema Model (Aligned with Holiday, WorkCalendarDay, Committee, & Shift) ───
+// ─── Calendar Event Schema Model ───
 export interface CalendarEvent {
   id: string;
   date: string; // YYYY-MM-DD
   title: string;
   category: 'holiday' | 'committee' | 'company_event' | 'shift_window';
-  holidayType?: 'public' | 'religious' | 'company'; // HOLIDAY_TYPE lookup
-  dayType?: 'working' | 'weekend' | 'holiday' | 'half_day'; // CALENDAR_DAY_TYPE lookup
+  holidayType?: 'public' | 'religious' | 'company';
+  dayType?: 'working' | 'weekend' | 'holiday' | 'half_day';
   badgeLabel?: string;
   badgeVariant: 'purple' | 'green' | 'blue' | 'pink' | 'gray';
   time: string;
-  startHour?: number; // 0-23 for hourly grid positioning
+  startHour?: number;
   durationHours?: number;
   isPaid?: boolean;
-  otMultiplier?: string; // 2.5× for public holidays, 1.5× for normal OT
+  otMultiplier?: string;
   description: string;
   location?: string;
 }
 
-// Master Schema Events (Reflecting Ethiopian statutory holidays, committees, and company events)
+// Master Schema Events (Statutory Ethiopian public holidays, committees, and company events)
 const masterEvents = ref<CalendarEvent[]>([
   {
     id: 'evt-1',
@@ -137,14 +138,14 @@ const masterEvents = ref<CalendarEvent[]>([
   },
   {
     id: 'evt-2',
-    date: '2027-12-14',
-    title: 'Meskel',
+    date: '2027-12-17',
+    title: 'Meskel Beal',
     category: 'holiday',
     holidayType: 'religious',
     dayType: 'holiday',
-    badgeVariant: 'gray',
+    badgeVariant: 'blue',
     time: 'All Day',
-    startHour: 8,
+    startHour: 0,
     isPaid: true,
     otMultiplier: '2.5×',
     badgeLabel: 'Religious Holiday',
@@ -217,18 +218,18 @@ const masterEvents = ref<CalendarEvent[]>([
   },
   {
     id: 'evt-8',
-    date: '2027-12-19',
-    title: 'Enkutatash Ethiopian New Year',
+    date: '2027-12-14',
+    title: 'Enkutatash (New year)',
     category: 'holiday',
     holidayType: 'public',
     dayType: 'holiday',
-    badgeVariant: 'green',
+    badgeVariant: 'gray',
     time: 'All Day',
-    startHour: 8,
+    startHour: 0,
     isPaid: true,
     otMultiplier: '2.5×',
     badgeLabel: 'Public Holiday',
-    description: 'National statutory public holiday marking the Ethiopian New Year (Meskerem 1). Mandatory paid rest day.'
+    description: 'National statutory public holiday marking the Ethiopian New Year. Mandatory paid rest day.'
   },
   {
     id: 'evt-9',
@@ -243,26 +244,11 @@ const masterEvents = ref<CalendarEvent[]>([
     isPaid: true,
     otMultiplier: '2.5×',
     badgeLabel: 'Rest Day',
-    description: 'Ethiopian Christmas, known as Genna, is a sacred celebration marked by fasting, midnight church services, traditional feasts, and family gatherings.'
-  },
-  {
-    id: 'evt-10',
-    date: '2028-01-03',
-    title: 'Enkutatash Ethiopian New Year',
-    category: 'holiday',
-    holidayType: 'public',
-    dayType: 'holiday',
-    badgeVariant: 'green',
-    time: 'All Day',
-    startHour: 8,
-    isPaid: true,
-    otMultiplier: '2.5×',
-    badgeLabel: 'Public Holiday',
-    description: 'Statutory New Year observance and national holiday.'
+    description: 'Ethiopian Christmas sacred celebration marked by church services and traditional feasts.'
   }
 ]);
 
-// ─── Active Event Popover State (Figma Image 5) ───
+// ─── Active Event Popover State ───
 const activePopoverEvent = ref<CalendarEvent | null>(null);
 const popoverPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -280,12 +266,7 @@ const handleClosePopover = () => {
   activePopoverEvent.value = null;
 };
 
-// ─── Ethiopian Calendar Year Display ───
-const ethiopianYearText = computed(() => {
-  return currentDate.value.getFullYear();
-});
-
-// ─── Current Header Period Title ("December , 2027") ───
+// ─── Header Period Title ("December , 2027") ───
 const currentMonthYear = computed(() => {
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -297,20 +278,12 @@ const currentMonthYear = computed(() => {
   };
 });
 
-// ─── Selected Date Display for Left Sidebar ───
+// ─── Selected Date Display for Left Sidebar ("Thu, Dec 17") ───
 const selectedDateHeadline = computed(() => {
   const d = selectedDate.value;
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
-});
-
-// ─── Sidebar "Today's Event" List (Figma Left Column) ───
-const todayEventsList = computed(() => {
-  return [
-    { title: 'Office Meeting', time: '11:30' },
-    { title: 'Culture Day', time: '11:30' }
-  ];
 });
 
 // ─── Mini Calendar Generator (Left Sidebar) ───
@@ -322,34 +295,149 @@ const miniMonthTitle = computed(() => {
   return `${monthNames[miniCalendarDate.value.getMonth()]} ${miniCalendarDate.value.getFullYear()}`;
 });
 
-const miniMonthDays = computed(() => {
+export interface MiniDay {
+  day: number;
+  isCurrentMonth: boolean;
+  isSelected: boolean;
+  date: Date;
+  dateStr: string;
+}
+
+export interface MiniWeek {
+  days: MiniDay[];
+  hasSelectedDay: boolean;
+}
+
+const miniCalendarWeeks = computed<MiniWeek[]>(() => {
   const y = miniCalendarDate.value.getFullYear();
   const m = miniCalendarDate.value.getMonth();
   const firstDay = new Date(y, m, 1).getDay();
   const totalDays = new Date(y, m + 1, 0).getDate();
   const prevMonthDays = new Date(y, m, 0).getDate();
 
-  const days: { day: number; isCurrentMonth: boolean; isSelected: boolean; date: Date }[] = [];
+  const allDays: MiniDay[] = [];
 
+  // Trailing previous month days
   for (let i = firstDay - 1; i >= 0; i--) {
     const d = new Date(y, m - 1, prevMonthDays - i);
-    days.push({ day: d.getDate(), isCurrentMonth: false, isSelected: false, date: d });
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    allDays.push({
+      day: d.getDate(),
+      isCurrentMonth: false,
+      isSelected,
+      date: d,
+      dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    });
   }
 
+  // Current month days
   for (let i = 1; i <= totalDays; i++) {
     const d = new Date(y, m, i);
-    const isSelected = i === 17; // Day 17 is highlighted in orange per Figma
-    days.push({ day: i, isCurrentMonth: true, isSelected, date: d });
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    allDays.push({
+      day: i,
+      isCurrentMonth: true,
+      isSelected,
+      date: d,
+      dateStr: `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
+    });
   }
 
-  while (days.length % 7 !== 0) {
-    const nextDayNum = days.length - (firstDay + totalDays) + 1;
+  // Next month leading days (fill up to complete weeks)
+  const targetTotal = allDays.length > 35 ? 42 : 35;
+  let nextDayNum = 1;
+  while (allDays.length < targetTotal) {
     const d = new Date(y, m + 1, nextDayNum);
-    days.push({ day: nextDayNum, isCurrentMonth: false, isSelected: false, date: d });
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    allDays.push({
+      day: nextDayNum,
+      isCurrentMonth: false,
+      isSelected,
+      date: d,
+      dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(nextDayNum).padStart(2, '0')}`
+    });
+    nextDayNum++;
   }
 
-  return days;
+  // Chunk into 7-day weeks
+  const weeks: MiniWeek[] = [];
+  for (let i = 0; i < allDays.length; i += 7) {
+    const weekSlice = allDays.slice(i, i + 7);
+    weeks.push({
+      days: weekSlice,
+      hasSelectedDay: weekSlice.some(d => d.isSelected)
+    });
+  }
+
+  return weeks;
 });
+
+// ─── Week View Days Headers (Dynamically generated for the week containing selectedDate) ───
+export interface WeekHeaderCol {
+  date: Date;
+  dayNum: number;
+  name: string;
+  dateStr: string;
+  isActive: boolean;
+  isTinted: boolean;
+  isLast?: boolean;
+}
+
+const weekHeaderCols = computed<WeekHeaderCol[]>(() => {
+  const current = new Date(selectedDate.value);
+  const dayOfWeek = current.getDay(); // 0 is Sunday
+  const sunday = new Date(current);
+  sunday.setDate(current.getDate() - dayOfWeek);
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const cols: WeekHeaderCol[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    const dayNum = d.getDate();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    const isActive = d.toDateString() === selectedDate.value.toDateString();
+    cols.push({
+      date: d,
+      dayNum,
+      name: dayNames[i],
+      dateStr,
+      isActive,
+      isTinted: i < 4,
+      isLast: i === 6
+    });
+  }
+  return cols;
+});
+
+// Hourly slots: 12 AM to 11 PM
+const timeSlots = [
+  '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM',
+  '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+  '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
+  '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
+];
+
+// Helper to get events for a specific day column and hour slot
+const getEventsForSlot = (dateStr: string, hourIdx: number): CalendarEvent[] => {
+  return masterEvents.value.filter(e => {
+    if (e.date !== dateStr) return false;
+    if (e.time === 'All Day' || e.startHour === 0) {
+      return hourIdx === 0;
+    }
+    return e.startHour === hourIdx;
+  });
+};
+
+const getEventBannerClass = (ev: CalendarEvent): string => {
+  if (ev.title.includes('Enkutatash')) return 'week-event-banner--enkutatash';
+  if (ev.title.includes('Meskel')) return 'week-event-banner--meskel';
+  if (ev.category === 'committee' && ev.badgeVariant === 'pink') return 'week-event-banner--executive';
+  if (ev.category === 'committee') return 'week-event-banner--committee';
+  if (ev.category === 'company_event') return 'week-event-banner--culture';
+  return 'week-event-banner--meskel';
+};
 
 // ─── Month Matrix Generator (5x7 Grid) ───
 interface MonthCell {
@@ -358,6 +446,7 @@ interface MonthCell {
   dayNum: number;
   label: string;
   isCurrentMonth: boolean;
+  isSelected: boolean;
   isDay16: boolean;
   isDay17: boolean;
   dayType: 'working' | 'weekend' | 'holiday' | 'half_day';
@@ -375,23 +464,15 @@ const monthGrid = computed(() => {
 
   const cells: MonthCell[] = [];
 
-  // Helper to determine day classification from calendar
   const getDayClassification = (d: Date, events: CalendarEvent[]): { dayType: 'working' | 'weekend' | 'holiday' | 'half_day'; plannedHours: number } => {
     const holiday = events.find(e => e.category === 'holiday');
-    if (holiday) {
-      return { dayType: 'holiday', plannedHours: 0 };
-    }
+    if (holiday) return { dayType: 'holiday', plannedHours: 0 };
     const dayOfWeek = d.getDay();
-    if (cal.restDays.includes(dayOfWeek)) {
-      return { dayType: 'weekend', plannedHours: 0 };
-    }
-    if (cal.halfDays.includes(dayOfWeek)) {
-      return { dayType: 'half_day', plannedHours: 4.0 };
-    }
+    if (cal.restDays.includes(dayOfWeek)) return { dayType: 'weekend', plannedHours: 0 };
+    if (cal.halfDays.includes(dayOfWeek)) return { dayType: 'half_day', plannedHours: 4.0 };
     return { dayType: 'working', plannedHours: cal.dailyHours };
   };
 
-  // Previous month trailing days
   for (let i = firstDay - 1; i >= 0; i--) {
     const d = new Date(y, m - 1, prevMonthDays - i);
     const dNum = d.getDate();
@@ -399,6 +480,7 @@ const monthGrid = computed(() => {
     const monthShort = d.toLocaleString('en-US', { month: 'short' });
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
 
     cells.push({
       date: d,
@@ -406,6 +488,7 @@ const monthGrid = computed(() => {
       dayNum: dNum,
       label: dNum === prevMonthDays - i ? `${monthShort} ${dNum}` : `${dNum}`,
       isCurrentMonth: false,
+      isSelected,
       isDay16: false,
       isDay17: false,
       dayType,
@@ -414,12 +497,12 @@ const monthGrid = computed(() => {
     });
   }
 
-  // Current month days
   for (let i = 1; i <= totalDays; i++) {
     const d = new Date(y, m, i);
     const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
 
     cells.push({
       date: d,
@@ -427,6 +510,7 @@ const monthGrid = computed(() => {
       dayNum: i,
       label: i === 1 ? `Dec 1` : `${i}`,
       isCurrentMonth: true,
+      isSelected,
       isDay16: i === 16,
       isDay17: i === 17,
       dayType,
@@ -435,13 +519,13 @@ const monthGrid = computed(() => {
     });
   }
 
-  // Next month leading days
   const remaining = 35 - cells.length > 0 ? 35 - cells.length : 42 - cells.length;
   for (let n = 1; n <= remaining; n++) {
     const d = new Date(y, m + 1, n);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(n).padStart(2, '0')}`;
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
+    const isSelected = d.toDateString() === selectedDate.value.toDateString();
 
     cells.push({
       date: d,
@@ -449,6 +533,7 @@ const monthGrid = computed(() => {
       dayNum: n,
       label: n === 1 ? `Jan 1` : `${n}`,
       isCurrentMonth: false,
+      isSelected,
       isDay16: false,
       isDay17: false,
       dayType,
@@ -460,201 +545,68 @@ const monthGrid = computed(() => {
   return cells;
 });
 
-// ─── Week View Days Generator (Days 13 to 19 per Figma Image 1) ───
-const weekDays = [
-  { dayNum: 13, name: 'Sunday', dateStr: '2027-12-13', isCurrent: false },
-  { dayNum: 14, name: 'Monday', dateStr: '2027-12-14', isCurrent: false },
-  { dayNum: 15, name: 'Thursday', dateStr: '2027-12-15', isCurrent: false },
-  { dayNum: 16, name: 'Wednesday', dateStr: '2027-12-16', isCurrent: false },
-  { dayNum: 17, name: 'Tuesday', dateStr: '2027-12-17', isCurrent: true },
-  { dayNum: 18, name: 'Friday', dateStr: '2027-12-18', isCurrent: false },
-  { dayNum: 19, name: 'Saturday', dateStr: '2027-12-19', isCurrent: false }
-];
+// ─── List View Grouped Agenda (Figma 6328:119971 Structured Table List) ───
+export interface ListAgendaItem {
+  id: string;
+  time: string;
+  title: string;
+  category: string;
+  dotVariant: 'amber' | 'blue' | 'green' | 'purple';
+  badge: string;
+  originalEvent: CalendarEvent;
+}
 
-const timeSlots = [
-  '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM',
-  '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
-  '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
-  '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
-];
-
-// ─── List View Grouped Agenda Generator (Chronological & Schema-Aligned) ───
-interface ListAgendaGroup {
+export interface ListAgendaGroup {
   dateStr: string;
   dayNum: number;
   dayName: string;
-  isToday: boolean;
-  dayType: string;
-  plannedHours: number;
-  items: {
-    id: string;
-    time: string;
-    title: string;
-    category: string;
-    dotVariant: 'amber' | 'blue' | 'green' | 'purple';
-    badge: string;
-    otMultiplier?: string;
-    description: string;
-  }[];
+  date: Date;
+  isSelected: boolean;
+  dayType?: string;
+  items: ListAgendaItem[];
 }
 
 const listAgendaGroups = computed<ListAgendaGroup[]>(() => {
-  return [
-    {
-      dateStr: '2027-12-13',
-      dayNum: 13,
-      dayName: 'Sunday',
-      isToday: false,
-      dayType: 'Weekend Rest Day',
-      plannedHours: 0,
-      items: [
-        {
-          id: 'l-1',
-          time: '09:00 AM',
-          title: 'Audit Committee Meeting',
-          category: 'committee',
-          dotVariant: 'blue',
-          badge: 'Committee',
-          description: 'Statutory audit and operational compliance review in the Executive Boardroom.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-14',
-      dayNum: 14,
-      dayName: 'Monday',
-      isToday: false,
-      dayType: 'Public Holiday (Rest Day)',
-      plannedHours: 0,
-      items: [
-        {
-          id: 'l-2',
-          time: 'All Day',
-          title: 'Meskel (Finding of the True Cross)',
-          category: 'holiday',
-          dotVariant: 'green',
-          badge: 'Religious Holiday',
-          otMultiplier: '2.5×',
-          description: 'Statutory public holiday. Paid day off under Ethiopian Labour Proclamation.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-16',
-      dayNum: 16,
-      dayName: 'Wednesday',
-      isToday: false,
-      dayType: 'Working Day',
-      plannedHours: 8.0,
-      items: [
-        {
-          id: 'l-3',
-          time: '10:00 AM',
-          title: 'Safety & Health Committee',
-          category: 'committee',
-          dotVariant: 'blue',
-          badge: 'Committee',
-          description: 'Quarterly occupational safety and health workplace compliance inspection.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-17',
-      dayNum: 17,
-      dayName: 'Thursday',
-      isToday: true,
-      dayType: 'Working Day',
-      plannedHours: 8.0,
-      items: [
-        {
-          id: 'l-4',
-          time: '10:00 AM',
-          title: 'Executive Committee Meeting',
-          category: 'committee',
-          dotVariant: 'amber',
-          badge: 'Governance',
-          description: 'Executive committee governance, headcount budget approval, and quarterly performance alignment.'
-        },
-        {
-          id: 'l-5',
-          time: '08:30 AM – 17:30 PM',
-          title: 'Standard Office Shift (8.0h)',
-          category: 'shift_window',
-          dotVariant: 'amber',
-          badge: 'Operating Window',
-          description: 'Standard working hours with 60-min statutory lunch break from 12:30 to 13:30.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-18',
-      dayNum: 18,
-      dayName: 'Friday',
-      isToday: false,
-      dayType: 'Working Day',
-      plannedHours: 8.0,
-      items: [
-        {
-          id: 'l-6',
-          time: '11:30 AM',
-          title: 'Executive Committee Briefing',
-          category: 'committee',
-          dotVariant: 'blue',
-          badge: 'Committee',
-          description: 'Strategy alignment and operational review.'
-        },
-        {
-          id: 'l-7',
-          time: '02:00 PM',
-          title: 'Culture Day',
-          category: 'company_event',
-          dotVariant: 'purple',
-          badge: 'Company Social',
-          description: 'Corporate culture gathering and employee recognition ceremony.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-19',
-      dayNum: 19,
-      dayName: 'Saturday',
-      isToday: false,
-      dayType: 'Weekend Rest Day',
-      plannedHours: 0,
-      items: [
-        {
-          id: 'l-8',
-          time: 'All Day',
-          title: 'Enkutatash Ethiopian New Year',
-          category: 'holiday',
-          dotVariant: 'green',
-          badge: 'Public Holiday',
-          otMultiplier: '2.5×',
-          description: 'Statutory celebration marking the Ethiopian New Year. Paid rest day.'
-        }
-      ]
-    },
-    {
-      dateStr: '2027-12-22',
-      dayNum: 22,
-      dayName: 'Wednesday',
-      isToday: false,
-      dayType: 'Public Holiday (Rest Day)',
-      plannedHours: 0,
-      items: [
-        {
-          id: 'l-9',
-          time: 'All Day',
-          title: 'Ye Gena Beal',
-          category: 'holiday',
-          dotVariant: 'purple',
-          badge: 'Religious Holiday',
-          otMultiplier: '2.5×',
-          description: 'Ethiopian Christmas sacred celebration. Paid statutory holiday.'
-        }
-      ]
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const groupsMap = new Map<string, ListAgendaGroup>();
+
+  // Sort events chronologically
+  const sorted = [...masterEvents.value].sort((a, b) => a.date.localeCompare(b.date) || a.startHour - b.startHour);
+
+  for (const ev of sorted) {
+    if (!groupsMap.has(ev.date)) {
+      const parts = ev.date.split('-').map(Number);
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const isSelected = d.toDateString() === selectedDate.value.toDateString();
+      groupsMap.set(ev.date, {
+        dateStr: ev.date,
+        dayNum: parts[2],
+        dayName: dayNames[d.getDay()],
+        date: d,
+        isSelected,
+        dayType: ev.badgeLabel || (ev.category === 'holiday' ? 'Public Holiday' : ''),
+        items: []
+      });
     }
-  ];
+
+    const group = groupsMap.get(ev.date)!;
+    let dotVariant: 'amber' | 'blue' | 'green' | 'purple' = 'blue';
+    if (ev.category === 'holiday') dotVariant = 'green';
+    else if (ev.badgeVariant === 'amber' || ev.badgeVariant === 'pink') dotVariant = 'amber';
+    else if (ev.badgeVariant === 'purple') dotVariant = 'purple';
+
+    group.items.push({
+      id: ev.id,
+      time: ev.time,
+      title: ev.title,
+      category: ev.category,
+      dotVariant,
+      badge: ev.badgeLabel || '',
+      originalEvent: ev
+    });
+  }
+
+  return Array.from(groupsMap.values());
 });
 
 // ─── Navigation Handlers ───
@@ -662,7 +614,6 @@ const handlePrevMonth = () => {
   const d = new Date(currentDate.value);
   d.setMonth(d.getMonth() - 1);
   currentDate.value = d;
-  miniCalendarDate.value = new Date(d);
   handleClosePopover();
 };
 
@@ -670,7 +621,6 @@ const handleNextMonth = () => {
   const d = new Date(currentDate.value);
   d.setMonth(d.getMonth() + 1);
   currentDate.value = d;
-  miniCalendarDate.value = new Date(d);
   handleClosePopover();
 };
 
@@ -692,138 +642,201 @@ const jumpToToday = () => {
   miniCalendarDate.value = new Date(2027, 7, 1);
   handleClosePopover();
 };
+
+const selectDate = (d: Date) => {
+  selectedDate.value = new Date(d);
+};
 </script>
 
 <template>
   <div class="calendar-page-layout" @click="handleClosePopover">
     
-    <!-- ─── Top Breadcrumb Navigation (Rule 3) ─── -->
+    <!-- ─── Top Breadcrumb Navigation (Figma 6328:119446: Monitor icon > Work Calendar) ─── -->
     <div class="calendar-top-header">
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems" :home-icon="Monitor" />
     </div>
 
-    <!-- ─── Top Company Calendar Card (Figma Exact Layout) ─── -->
+    <!-- ─── Top Company Calendar Card (Figma 6328:119454: 1300x124) ─── -->
     <div class="company-calendar-card">
       <div class="company-calendar-info">
         <h1 class="company-title">Company Calendar</h1>
         <p class="company-subtitle">
           Corporate operational schedules, statutory Ethiopian &amp; Gregorian holiday observances, and workforce shift windows across entities.
         </p>
-        <div class="company-today-text" @click="jumpToToday">
+        <button type="button" class="company-today-text" @click="jumpToToday">
           Today: Thursday, Sep 17, 2027
-        </div>
+        </button>
       </div>
 
       <div class="company-calendar-selector">
         <label class="selector-label">Select Work Calendar</label>
-        <div class="select-wrapper">
+        <div class="select-dropdown-container">
           <select v-model="selectedCalendarId" class="work-calendar-dropdown">
             <option v-for="cal in companyCalendars" :key="cal.id" :value="cal.id">
               {{ cal.name }}
             </option>
           </select>
+          <div class="dropdown-chevron-box">
+            <ChevronDown :size="18" class="icon-tertiary" />
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ─── Master Calendar Container ─── -->
+    <!-- ─── Master Calendar Container (Figma 6328:119465) ─── -->
     <div class="calendar-master-container">
 
-      <!-- ─── Header Toolbar Bar ─── -->
+      <!-- ─── Header Toolbar Row (Figma 6328:119466: 1300x88) ─── -->
       <div class="calendar-toolbar-row">
-        <!-- Left: Today Button -->
+        <!-- Left: Today Button (Figma 6328:119469: 102x40) -->
         <button type="button" class="btn-today-pill" @click="jumpToToday">
-          <CalendarIcon :size="16" class="icon-today" />
+          <CalendarIcon :size="18" class="icon-calendar" />
           <span>Today</span>
         </button>
 
-        <!-- Center: Month Navigation Controls -->
-        <div class="month-nav-group">
-          <button type="button" class="btn-circle-nav" @click="handlePrevMonth" title="Previous Month">
-            <ChevronLeft :size="18" />
-          </button>
-          <span class="nav-month-title">{{ currentMonthYear.monthName }} , {{ currentMonthYear.year }}</span>
-          <button type="button" class="btn-circle-nav" @click="handleNextMonth" title="Next Month">
-            <ChevronRight :size="18" />
-          </button>
-        </div>
+        <!-- Center & Right: Navigation Arrows + Month/Year + Tab Switcher -->
+        <div class="header-right-controls">
+          <!-- Arrows & Title (Figma 6328:119471: 277x40) -->
+          <div class="month-nav-group">
+            <button type="button" class="btn-circle-nav" @click="handlePrevMonth" title="Previous Month">
+              <ChevronLeft :size="18" />
+            </button>
+            <span class="nav-month-title">{{ currentMonthYear.monthName }} , {{ currentMonthYear.year }}</span>
+            <button type="button" class="btn-circle-nav" @click="handleNextMonth" title="Next Month">
+              <ChevronRight :size="18" />
+            </button>
+          </div>
 
-        <!-- Right: View Mode Capsule Tabs (Day | Week | Month | List) -->
-        <div class="view-capsule-switcher">
-          <button
-            v-for="mode in viewModes"
-            :key="mode.id"
-            type="button"
-            class="capsule-tab-item"
-            :class="{ 'capsule-tab-item--active': currentView === mode.id }"
-            @click="currentView = mode.id"
-          >
-            {{ mode.label }}
-          </button>
+          <!-- View Mode Capsule Tabs (Figma 6328:119475: 195x40 Week | Month | List) -->
+          <div class="view-capsule-switcher">
+            <button
+              v-for="mode in viewModes"
+              :key="mode.id"
+              type="button"
+              class="capsule-tab-item"
+              :class="{ 'capsule-tab-item--active': currentView === mode.id }"
+              @click="currentView = mode.id"
+            >
+              {{ mode.label }}
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- ─── Split Body: Blue Sidebar + Viewport ─── -->
+      <!-- ─── Unified Calendar Container (Figma 6328:119479: 1229x639 with 0 gap) ─── -->
       <div class="calendar-split-body">
 
         <!-- ════════════════════════════════════════════
-             LEFT BLUE HERO SIDEBAR (Figma Signature)
+             LEFT BLUE HERO SIDEBAR (Figma 6328:119480: 325x639)
         ════════════════════════════════════════════ -->
         <aside class="blue-calendar-sidebar">
           
-          <!-- Top Watermark & Year -->
-          <div class="sidebar-top-section">
-            <div class="sidebar-watermark-year">{{ ethiopianYearText }}</div>
-            <div class="sidebar-eth-title">Ethiopian Calendar</div>
+          <!-- Background Atmospheric Decorative Ellipses (Figma 8832:36492 / 6328:120021) -->
+          <div class="sidebar-bg-effects" aria-hidden="true">
+            <!-- 1. Darker Ellipse on top section, top attached to top center of the blue section -->
+            <img 
+              :src="ellipseDarkerUrl" 
+              class="sidebar-ellipse-darker" 
+              alt="" 
+            />
+            <!-- 2. Light Ellipse stuck to the left of the screen, centered and slightly top -->
+            <img 
+              :src="ellipseLightUrl" 
+              class="sidebar-ellipse-light" 
+              alt="" 
+            />
           </div>
 
-          <!-- Headline Date -->
-          <div class="sidebar-date-headline">
-            {{ selectedDateHeadline }}
+          <!-- Giant Background Watermark "2027" (Figma 6328:120028) -->
+          <div class="sidebar-watermark-year">2027</div>
+
+          <!-- Header Section (Figma 6328:120024: 171px with hairline border) -->
+          <div class="sidebar-header-section">
+            <h2 class="sidebar-year-headline">2027</h2>
+            <p class="sidebar-cal-type">Gregorian calendar</p>
           </div>
 
-          <!-- Mini Calendar Month Picker -->
-          <div class="sidebar-mini-picker">
-            <div class="mini-picker-header">
-              <span class="mini-picker-title">{{ miniMonthTitle }} ⌵</span>
-              <div class="mini-picker-arrows">
-                <button type="button" class="mini-chevron" @click="handleMiniPrev">‹</button>
-                <button type="button" class="mini-chevron" @click="handleMiniNext">›</button>
+          <!-- Body Section of Sidebar -->
+          <div class="sidebar-body-section">
+            <!-- Active Headline Date (Figma 6328:120031) -->
+            <div class="sidebar-active-date">{{ selectedDateHeadline }}</div>
+
+            <!-- Month Selection & Control Arrows (Figma 6328:120032) -->
+            <div class="sidebar-month-nav">
+              <button type="button" class="sidebar-month-pill" @click="handleMiniPrev">
+                <span>{{ miniMonthTitle }}</span>
+                <ChevronDown :size="12" />
+              </button>
+              <div class="sidebar-mini-arrows">
+                <button type="button" class="mini-arrow-btn" @click="handleMiniPrev" title="Previous Month">
+                  <ChevronLeft :size="16" />
+                </button>
+                <button type="button" class="mini-arrow-btn" @click="handleMiniNext" title="Next Month">
+                  <ChevronRight :size="16" />
+                </button>
               </div>
             </div>
 
-            <!-- Weekday Initials -->
-            <div class="mini-week-row">
-              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-            </div>
-
-            <!-- Mini Grid -->
-            <div class="mini-days-grid" :class="{ 'mini-days-grid--week-highlight': currentView === 'week' }">
-              <div
-                v-for="(mDay, idx) in miniMonthDays"
-                :key="idx"
-                class="mini-day-cell"
-                :class="{
-                  'mini-day-cell--inactive': !mDay.isCurrentMonth,
-                  'mini-day-cell--selected': mDay.isSelected,
-                  'mini-day-cell--week-band': currentView === 'week' && mDay.day >= 13 && mDay.day <= 19 && mDay.isCurrentMonth
-                }"
-              >
-                <span>{{ mDay.day }}</span>
+            <!-- Mini Calendar Grid (Figma 6328:120038) -->
+            <div class="sidebar-mini-table">
+              <!-- Weekday Initials (S M T W T F S) -->
+              <div class="mini-weekdays-row">
+                <span class="mini-weekday-col">S</span>
+                <span class="mini-weekday-col">M</span>
+                <span class="mini-weekday-col">T</span>
+                <span class="mini-weekday-col">W</span>
+                <span class="mini-weekday-col">T</span>
+                <span class="mini-weekday-col">F</span>
+                <span class="mini-weekday-col">S</span>
               </div>
-            </div>
-          </div>
 
-          <!-- Today's Event Section -->
-          <div class="sidebar-events-section">
-            <div class="today-event-badge">Today's Event</div>
-            <div class="today-events-list">
-              <div v-for="(ev, idx) in todayEventsList" :key="idx" class="today-event-item">
-                <div class="event-item-title">
-                  <span class="bullet-arrow">›</span>
-                  <span>{{ ev.title }}</span>
+              <!-- 5 Rows of Weeks with Capsule Band in Week Mode (Figma 6328:120143) -->
+              <div class="mini-weeks-container">
+                <div
+                  v-for="(week, wIdx) in miniCalendarWeeks"
+                  :key="wIdx"
+                  class="mini-week-row"
+                  :class="{ 'mini-week-row--active-band': currentView === 'week' && week.hasSelectedDay }"
+                >
+                  <div
+                    v-for="d in week.days"
+                    :key="d.dateStr"
+                    class="mini-day-cell"
+                    @click="selectDate(d.date)"
+                  >
+                    <div
+                      class="mini-day-inner"
+                      :class="{
+                        'mini-day-inner--muted': !d.isCurrentMonth,
+                        'mini-day-inner--selected': d.isSelected,
+                        'mini-day-inner--in-band': currentView === 'week' && week.hasSelectedDay && !d.isSelected
+                      }"
+                    >
+                      <span>{{ d.day }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="event-item-time">{{ ev.time }}</div>
+              </div>
+            </div>
+
+            <!-- Today's Event Section (Figma 6328:120102) -->
+            <div class="sidebar-todays-events">
+              <div class="todays-event-badge">Today’s Event</div>
+              <div class="todays-event-list">
+                <div class="todays-event-row">
+                  <span class="event-chevron">›</span>
+                  <div class="event-texts">
+                    <span class="event-name">Office Meeting</span>
+                    <span class="event-time">11:30</span>
+                  </div>
+                </div>
+                <div class="todays-event-row">
+                  <span class="event-chevron">›</span>
+                  <div class="event-texts">
+                    <span class="event-name">Culture Day</span>
+                    <span class="event-time">11:30</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -831,22 +844,85 @@ const jumpToToday = () => {
         </aside>
 
         <!-- ════════════════════════════════════════════
-             RIGHT CALENDAR MAIN VIEWS
+             RIGHT CALENDAR MAIN VIEWS (Figma Frame 332: 904x639)
         ════════════════════════════════════════════ -->
         <main class="calendar-viewport-area">
 
           <!-- ──────────────────────────────────────────
-               1. MONTH VIEW (Figma Image 2 & 5)
+               1. WEEK VIEW (Figma 6328:119481 & Frame 329/330)
           ────────────────────────────────────────── -->
-          <div v-if="currentView === 'month'" class="view-month-matrix">
+          <div v-if="currentView === 'week'" class="calendar-week-grid">
             
+            <!-- Week Hourly Body Grid with Sticky Day Header (Figma Frame 329/330) -->
+            <div class="week-hourly-grid-body">
+              <!-- Week Days Header Row (Sticky Top) -->
+              <div class="week-days-header-row">
+                <!-- Col 0: Gutter (38px) -->
+                <div class="week-header-gutter"></div>
+
+                <!-- 7 Day Columns -->
+                <div
+                  v-for="col in weekHeaderCols"
+                  :key="col.dateStr"
+                  class="week-day-header-cell"
+                  :class="{
+                    'week-day-header-cell--active': col.isActive,
+                    'week-day-header-cell--tinted': col.isTinted,
+                    'week-day-header-cell--last': col.isLast
+                  }"
+                  @click="selectDate(col.date)"
+                >
+                  <span class="col-day-num">{{ col.dayNum }}</span>
+                  <span class="col-day-name">{{ col.name }}</span>
+                </div>
+              </div>
+
+              <!-- Hourly Rows -->
+              <div
+                v-for="(timeLabel, tIdx) in timeSlots"
+                :key="tIdx"
+                class="week-hourly-row"
+              >
+                <!-- Time gutter label (38px width) -->
+                <div class="week-time-label-cell">{{ timeLabel }}</div>
+
+                <!-- 7 Day cells -->
+                <div
+                  v-for="col in weekHeaderCols"
+                  :key="col.dateStr"
+                  class="week-hour-slot-cell"
+                  :class="{
+                    'week-hour-slot-cell--active-col': col.isActive,
+                    'week-hour-slot-cell--monday-col': col.name === 'Monday'
+                  }"
+                  @click="selectDate(col.date)"
+                >
+                  <div
+                    v-for="ev in getEventsForSlot(col.dateStr, tIdx)"
+                    :key="ev.id"
+                    class="week-event-banner"
+                    :class="getEventBannerClass(ev)"
+                    @click.stop="handleOpenPopover(ev, $event)"
+                  >
+                    {{ ev.title }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ──────────────────────────────────────────
+               2. MONTH VIEW (5x7 Matrix Grid)
+          ────────────────────────────────────────── -->
+          <div v-else-if="currentView === 'month'" class="view-month-matrix">
             <!-- Weekday Header (7 Columns) -->
             <div class="month-weekday-header">
               <div class="weekday-header-col">Sunday</div>
               <div class="weekday-header-col">Monday</div>
-              <div class="weekday-header-col">Thursday</div>
-              <div class="weekday-header-col">Wednesday</div>
               <div class="weekday-header-col">Tuesday</div>
+              <div class="weekday-header-col">Wednesday</div>
+              <div class="weekday-header-col">Thursday</div>
               <div class="weekday-header-col">Friday</div>
               <div class="weekday-header-col">Saturday</div>
             </div>
@@ -857,15 +933,17 @@ const jumpToToday = () => {
                 v-for="(cell, cIdx) in monthGrid"
                 :key="cIdx"
                 class="month-cell-box"
-                :class="{ 'month-cell-box--other': !cell.isCurrentMonth }"
+                :class="{
+                  'month-cell-box--other': !cell.isCurrentMonth,
+                  'month-cell-box--selected': cell.isSelected
+                }"
+                @click="selectDate(cell.date)"
               >
                 <!-- Cell Day Label / Circle Badge -->
                 <div class="month-cell-header">
-                  <span v-if="cell.isDay17" class="day-badge-solid-blue">17</span>
-                  <span v-else-if="cell.isDay16" class="day-badge-light-blue">16</span>
+                  <span v-if="cell.isSelected" class="day-badge-solid-blue">{{ cell.dayNum }}</span>
                   <span v-else class="day-label-text">{{ cell.label }}</span>
 
-                  <!-- Schema Planned Hours Indicator -->
                   <span v-if="cell.isCurrentMonth" class="day-hours-hint">
                     {{ cell.plannedHours > 0 ? `${cell.plannedHours}h` : 'Rest' }}
                   </span>
@@ -873,220 +951,64 @@ const jumpToToday = () => {
 
                 <!-- Events Chips Inside Cell -->
                 <div class="month-cell-events">
-                  
-                  <!-- Schema Events Stack -->
                   <template v-for="ev in cell.events" :key="ev.id">
                     <div
                       class="event-pill"
                       :class="`event-pill--${ev.badgeVariant || 'green'}`"
-                      @click="handleOpenPopover(ev, $event)"
+                      @click.stop="handleOpenPopover(ev, $event)"
                     >
-                      <span v-if="ev.title === 'Ye Gena Beal'" class="pill-icon-lead">🪔</span>
                       <span class="pill-title-text">{{ ev.title }}</span>
                     </div>
                   </template>
-
-                  <!-- Overflow Pill (+3) for Day 18 -->
-                  <div v-if="cell.isCurrentMonth && cell.dayNum === 18" class="cell-overflow-indicator">
-                    +3
-                  </div>
-
                 </div>
               </div>
             </div>
-
           </div>
 
           <!-- ──────────────────────────────────────────
-               2. WEEK VIEW (Figma Image 1)
+               3. LIST VIEW (Figma 6328:119971: 904x639 Table List)
           ────────────────────────────────────────── -->
-          <div v-else-if="currentView === 'week'" class="view-week-matrix">
-            
-            <!-- Week Header (Time Column + 7 Days) -->
-            <div class="week-header-row">
-              <div class="week-time-gutter"></div>
-              <div
-                v-for="wDay in weekDays"
-                :key="wDay.dayNum"
-                class="week-day-header-col"
-                :class="{ 'week-day-header-col--active': wDay.isCurrent }"
-              >
-                <span class="w-day-num">{{ wDay.dayNum }}</span>
-                <span class="w-day-name">{{ wDay.name }}</span>
-              </div>
-            </div>
-
-            <!-- Hourly Scrollable Grid -->
-            <div class="week-hourly-scroll">
-              <div
-                v-for="(timeLabel, tIdx) in timeSlots"
-                :key="tIdx"
-                class="week-time-row"
-              >
-                <!-- Left Hour Label -->
-                <div class="hour-label-cell">{{ timeLabel }}</div>
-
-                <!-- 7 Day Columns for this hour -->
-                <div
-                  v-for="wDay in weekDays"
-                  :key="wDay.dayNum"
-                  class="hour-slot-cell"
-                >
-                  <!-- Committee Meeting at 12 AM (Sunday 13 & Wednesday 16) -->
-                  <div
-                    v-if="tIdx === 0 && (wDay.dayNum === 13 || wDay.dayNum === 16)"
-                    class="week-event-chip chip-gray"
-                    @click="handleOpenPopover(masterEvents[0], $event)"
-                  >
-                    Committee Mee...
-                  </div>
-
-                  <!-- Culture Day at 1 AM (Saturday 19) -->
-                  <div
-                    v-if="tIdx === 1 && wDay.dayNum === 19"
-                    class="week-event-chip chip-blue"
-                    @click="handleOpenPopover(masterEvents[6], $event)"
-                  >
-                    Culture Day
-                  </div>
-
-                  <!-- Executive Committee Meeting at 3 AM (Tuesday 17) -->
-                  <div
-                    v-if="tIdx === 3 && wDay.dayNum === 17"
-                    class="week-event-chip chip-pink"
-                    @click="handleOpenPopover(masterEvents[3], $event)"
-                  >
-                    Executive Committee Meeting
-                  </div>
-
-                  <!-- Meskel at 8 AM (Monday 14) -->
-                  <div
-                    v-if="tIdx === 8 && wDay.dayNum === 14"
-                    class="week-event-chip chip-gray"
-                    @click="handleOpenPopover(masterEvents[1], $event)"
-                  >
-                    Meskel
-                  </div>
-
-                  <!-- Enkutatash Ethiopian New Year at 8 AM (Saturday 19) -->
-                  <div
-                    v-if="tIdx === 8 && wDay.dayNum === 19"
-                    class="week-event-chip chip-green"
-                    @click="handleOpenPopover(masterEvents[7], $event)"
-                  >
-                    Enkutatash Ethi...
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- ──────────────────────────────────────────
-               3. DAY VIEW (Figma Image 4)
-          ────────────────────────────────────────── -->
-          <div v-else-if="currentView === 'day'" class="view-day-matrix">
-            
-            <!-- Single Day Header with Schema Metadata -->
-            <div class="day-header-bar">
-              <div class="day-time-gutter"></div>
-              <div class="day-header-title">
-                <span class="day-title-num">17</span>
-                <span class="day-title-name">Thursday</span>
-                <span class="day-title-badge">Working Day • {{ selectedCalendar.dailyHours }}h Shift</span>
-              </div>
-            </div>
-
-            <!-- 24-Hour Slots -->
-            <div class="day-hourly-scroll">
-              <div
-                v-for="(timeLabel, tIdx) in timeSlots"
-                :key="tIdx"
-                class="day-time-row"
-              >
-                <!-- Left Hour Label -->
-                <div class="hour-label-cell">{{ timeLabel }}</div>
-
-                <!-- Main Day Slot Content -->
-                <div class="day-slot-content">
-                  <!-- Scheduled Event Banner at 2 AM (Per Figma Image 4) -->
-                  <div
-                    v-if="tIdx === 2"
-                    class="day-banner-event"
-                    @click="handleOpenPopover(masterEvents[7], $event)"
-                  >
-                    Enkutatash Ethiopian New Year
-                  </div>
-
-                  <!-- Executive Committee Meeting at 10 AM -->
-                  <div
-                    v-else-if="tIdx === 10"
-                    class="day-banner-meeting"
-                    @click="handleOpenPopover(masterEvents[3], $event)"
-                  >
-                    Executive Committee Meeting (10:00 AM – 12:30 PM) • Executive Boardroom
-                  </div>
-
-                  <!-- Standard Work Shift Window Indication -->
-                  <div
-                    v-else-if="tIdx === 8"
-                    class="day-banner-shift-start"
-                  >
-                    Office Shift Starts (08:30) • Grace Period 15 min (08:45)
-                  </div>
-
-                  <!-- Lunch Break Indication -->
-                  <div
-                    v-else-if="tIdx === 12"
-                    class="day-banner-break"
-                  >
-                    Statutory Lunch Break (12:30 – 13:30) • Unpaid 60 min
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- ──────────────────────────────────────────
-               4. LIST VIEW (Figma Image 3)
-          ────────────────────────────────────────── -->
-          <div v-else-if="currentView === 'list'" class="view-list-matrix">
-            
-            <!-- Chronological Schema-Driven Agenda Groups -->
+          <div v-else-if="currentView === 'list'" class="view-list-container">
             <div
               v-for="group in listAgendaGroups"
               :key="group.dateStr"
-              class="list-date-group"
+              class="list-date-group-card"
             >
-              <!-- Group Header -->
-              <div class="list-group-header">
-                <span class="list-header-num">{{ group.dayNum }}</span>
-                <span class="list-header-name">{{ group.dayName }}</span>
-                <span class="list-header-daytype">{{ group.dayType }}</span>
-                <span v-if="group.plannedHours > 0" class="list-header-hours">({{ group.plannedHours }}h planned)</span>
-              </div>
-
-              <!-- Events for this Date -->
+              <!-- 44px Day Header Row (Figma 6328:119972) -->
               <div
-                v-for="item in group.items"
-                :key="item.id"
-                class="list-event-row"
+                class="list-table-header-row"
+                :class="{ 'list-table-header-row--active': group.isSelected }"
+                @click="selectDate(group.date)"
               >
-                <span class="list-event-time">{{ item.time }}</span>
-                <span class="list-dot" :class="`dot-${item.dotVariant}`">●</span>
-                <div class="list-event-meta">
-                  <span class="list-event-title">{{ item.title }}</span>
-                  <span class="list-event-badge">{{ item.badge }}</span>
-                  <span v-if="item.otMultiplier" class="list-ot-tag">Labour OT {{ item.otMultiplier }}</span>
+                <div class="list-header-content">
+                  <span class="list-header-day-num">{{ group.dayNum }}</span>
+                  <span class="list-header-day-name">{{ group.dayName }}</span>
+                  <span v-if="group.dayType" class="list-header-day-type">{{ group.dayType }}</span>
                 </div>
               </div>
 
-              <!-- Extra Time Slot Dividers per Figma Image 3 -->
-              <div v-if="group.dayNum === 20" class="list-time-slot-divider">7:30 PM</div>
-              <div v-if="group.dayNum === 20" class="list-time-slot-divider">12:30 AM</div>
+              <!-- 30px Event Rows (Figma 6328:119974) -->
+              <div
+                v-for="item in group.items"
+                :key="item.id"
+                class="list-table-event-row"
+                @click="handleOpenPopover(item.originalEvent, $event)"
+              >
+                <!-- 23px Gutter -->
+                <div class="list-row-gutter"></div>
+                <!-- Event Content Cell with Dot & Title -->
+                <div class="list-row-content">
+                  <div class="list-event-badge-item">
+                    <span class="list-event-dot" :class="`list-event-dot--${item.dotVariant}`"></span>
+                    <span class="list-event-title-text">{{ item.title }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            <div v-if="listAgendaGroups.length === 0" class="list-empty-state">
+              <p>No events scheduled for the selected period.</p>
+            </div>
           </div>
 
         </main>
@@ -1107,7 +1029,6 @@ const jumpToToday = () => {
       <div class="popover-header-row">
         <h4 class="popover-title">{{ activePopoverEvent.title }}</h4>
         <span class="popover-badge">
-          <span class="badge-icon">🪔</span>
           <span>{{ activePopoverEvent.badgeLabel || 'Rest Day' }}</span>
         </span>
       </div>
@@ -1115,7 +1036,7 @@ const jumpToToday = () => {
       <div class="popover-meta-row">
         <Clock :size="14" class="popover-icon" />
         <span>
-          {{ activePopoverEvent.dayType === 'holiday' ? 'Mon 12/22/2027 (Work is off on this day)' : activePopoverEvent.time }}
+          {{ activePopoverEvent.dayType === 'holiday' ? 'Tue 12/17/2027 (Work is off on this day)' : activePopoverEvent.time }}
         </span>
       </div>
 
@@ -1143,55 +1064,62 @@ const jumpToToday = () => {
 <style scoped>
 /* ─── Page Outer Layout ─── */
 .calendar-page-layout {
-  padding: 16px 24px 36px 24px;
-  background-color: #f8fafc;
+  padding: 0;
+  background-color: #fafafa;
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
 }
 
 .calendar-top-header {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
-/* ─── Top Company Calendar Card ─── */
+/* ─── Top Company Calendar Card (Figma 6328:119454: 1300x124) ─── */
 .company-calendar-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 22px 26px;
-  margin-bottom: 18px;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
 }
 
 .company-calendar-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .company-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #404040;
+  color: #414651;
+  line-height: 24px;
   margin: 0 0 4px 0;
 }
 
 .company-subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: #737373;
-  margin: 0 0 8px 0;
-  max-width: 820px;
-  line-height: 1.45;
+  line-height: 20px;
+  margin: 0 0 6px 0;
+  max-width: 880px;
 }
 
 .company-today-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #0B529C;
+  line-height: 18px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   width: fit-content;
+  text-align: left;
 }
 
 .company-today-text:hover {
@@ -1201,75 +1129,107 @@ const jumpToToday = () => {
 .company-calendar-selector {
   display: flex;
   flex-direction: column;
-  min-width: 260px;
+  width: 343px;
+  border-left: 1px solid #e5e5e5;
+  padding-left: 24px;
+  box-sizing: border-box;
 }
 
 .selector-label {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 500;
-  color: #404040;
-  margin-bottom: 5px;
+  color: #737373;
+  line-height: 20px;
+  margin-bottom: 6px;
 }
 
-.select-wrapper {
+.select-dropdown-container {
   position: relative;
+  width: 100%;
 }
 
 .work-calendar-dropdown {
   width: 100%;
-  height: 38px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 13.5px;
+  height: 44px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  padding: 0 38px 0 14px;
+  font-size: 16px;
+  font-weight: 400;
   color: #404040;
   background-color: #ffffff;
   cursor: pointer;
   outline: none;
+  appearance: none;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
   transition: border-color 0.15s ease;
 }
 
 .work-calendar-dropdown:focus {
   border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.1);
 }
 
-/* ─── Master Calendar Container ─── */
+.dropdown-chevron-box {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Master Calendar Container (Figma 6328:119465) ─── */
 .calendar-master-container {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   border-radius: 16px;
-  padding: 24px 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  padding: 24px 32px 32px 32px;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
 }
 
-/* ─── Toolbar Header Row ─── */
+/* ─── Header Toolbar Row (Figma 6328:119466: 1300x88) ─── */
 .calendar-toolbar-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
+  height: 40px;
 }
 
 .btn-today-pill {
   height: 40px;
-  padding: 0 20px;
+  padding: 0 16px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d9d9d9;
   border-radius: 8px;
-  color: #404040;
-  font-size: 13.5px;
-  font-weight: 500;
+  color: #414651;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
   transition: all 0.15s ease;
 }
 
 .btn-today-pill:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #fafafa;
+  border-color: #bfbfbf;
+}
+
+.icon-calendar {
+  color: #414651;
+}
+
+.header-right-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 747px;
 }
 
 .month-nav-group {
@@ -1282,32 +1242,34 @@ const jumpToToday = () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d9d9d9;
   background: #ffffff;
   color: #404040;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
   transition: all 0.15s ease;
 }
 
 .btn-circle-nav:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #fafafa;
+  border-color: #bfbfbf;
 }
 
 .nav-month-title {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   color: #404040;
-  letter-spacing: -0.01em;
+  line-height: 30px;
 }
 
-/* ─── View Mode Capsule Tabs ─── */
+/* ─── View Mode Capsule Tabs (Figma 6328:119475: 195x40) ─── */
 .view-capsule-switcher {
   display: inline-flex;
-  background: #f1f5f9;
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
   border-radius: 9999px;
   padding: 4px;
   gap: 4px;
@@ -1316,258 +1278,637 @@ const jumpToToday = () => {
 .capsule-tab-item {
   border: none;
   background: transparent;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 16px;
+  color: #737373;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 14px;
   border-radius: 9999px;
   cursor: pointer;
+  line-height: 20px;
   transition: all 0.15s ease;
 }
 
 .capsule-tab-item:hover {
-  color: #0f172a;
+  color: #404040;
 }
 
 .capsule-tab-item--active {
   background: #ffffff;
-  color: #0f172a;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-/* ─── Split Body: Sidebar + Main ─── */
-.calendar-split-body {
-  display: grid;
-  grid-template-columns: 325px 1fr;
-  gap: 22px;
-  min-height: 639px;
-  align-items: stretch;
+  color: #404040;
+  box-shadow: 0px 1px 1px rgba(10, 13, 18, 0.05);
 }
 
 /* ════════════════════════════════════════════
-   LEFT BLUE HERO SIDEBAR
+   UNIFIED CALENDAR CONTAINER (Figma 6328:119479: 1229x639)
 ════════════════════════════════════════════ */
-.blue-calendar-sidebar {
-  width: 325px;
-  background: #0B529C;
-  border-radius: 14px;
-  padding: 24px 20px;
-  color: #ffffff;
+.calendar-split-body {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  width: 100%;
+  height: 639px;
+  max-height: 639px;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #ffffff;
   box-sizing: border-box;
 }
 
-.sidebar-top-section {
+/* ════════════════════════════════════════════
+   LEFT BLUE HERO SIDEBAR (Figma 6328:119480: 325x639)
+════════════════════════════════════════════ */
+.blue-calendar-sidebar {
+  width: 325px;
+  flex-shrink: 0;
+  height: 639px;
+  max-height: 639px;
+  background-color: var(--alias-color-brand-default, #0B529C);
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
+/* Atmospheric Decorative Background Effects (Figma 8832:36492 / 6328:120021) */
+.sidebar-bg-effects {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 1. Darker Ellipse: Attached to top center of the blue section */
+.sidebar-ellipse-darker {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 325px;
+  height: 426px;
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: normal;
+}
+
+/* 2. Light Ellipse: Center stuck to left of screen, centered and moved slightly to top */
+.sidebar-ellipse-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 325px;
+  height: 639px;
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: normal;
+}
+
+/* Giant Background Watermark "2027" (Figma 6328:120028) */
 .sidebar-watermark-year {
-  font-size: 52px;
+  position: absolute;
+  top: 34px;
+  left: -38px;
+  font-size: 165px;
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: 110px;
+  color: rgba(131, 191, 246, 0.1);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header Section (Figma 6328:120024: 171px with hairline border) */
+.sidebar-header-section {
+  height: 171px;
+  border-bottom: 0.74px solid #83bff6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+  padding: 43px 8.8px 28px 17.7px;
+  box-sizing: border-box;
+}
+
+.sidebar-year-headline {
+  font-size: 60px;
+  font-weight: 700;
   color: #ffffff;
+  line-height: 40px;
+  margin: 0;
+  letter-spacing: 0;
 }
 
-.sidebar-eth-title {
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 4px;
+.sidebar-cal-type {
+  font-size: 12px;
+  color: #bddbfa;
+  margin: 10px 0 0 0;
+  font-weight: 400;
+  line-height: 18px;
 }
 
-.sidebar-date-headline {
-  font-size: 21px;
-  font-weight: 600;
+/* Body Section of Sidebar (Figma 6328:120029) */
+.sidebar-body-section {
+  padding: 11px 8.84px 12px 8.84px;
+  display: flex;
+  flex-direction: column;
+  height: calc(639px - 171px);
+  box-sizing: border-box;
+  position: relative;
+  z-index: 3;
+}
+
+.sidebar-active-date {
+  padding: 0 7px;
+  font-size: 23.57px;
+  font-weight: 400;
   color: #ffffff;
-  margin: 18px 0 12px 0;
+  line-height: 29.47px;
+  margin-bottom: 4px;
 }
 
-/* ─── Mini Calendar ─── */
-.sidebar-mini-picker {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.mini-picker-header {
+/* Month Selector & Controls */
+.sidebar-month-nav {
+  padding: 2.95px 7px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  font-weight: 500;
-  color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.mini-picker-title {
-  cursor: pointer;
-}
-
-.mini-picker-arrows {
+.sidebar-month-pill {
   display: flex;
-  gap: 10px;
-}
-
-.mini-chevron {
+  align-items: center;
+  gap: 5.9px;
   background: transparent;
   border: none;
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 4px;
-  opacity: 0.8;
-}
-
-.mini-chevron:hover {
-  opacity: 1;
-}
-
-.mini-week-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 6px;
+  color: #e1eefd;
+  font-size: 10.3px;
   font-weight: 500;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 73.66px;
+  transition: background-color 0.15s ease;
 }
 
-.mini-days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  row-gap: 4px;
-  text-align: center;
-  font-size: 12px;
+.sidebar-month-pill:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.mini-day-cell {
-  height: 24px;
+.sidebar-mini-arrows {
+  display: flex;
+  align-items: center;
+  gap: 0px;
+}
+
+.mini-arrow-btn {
+  width: 35.36px;
+  height: 35.36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  border-radius: 50%;
   cursor: pointer;
-  font-size: 11.5px;
+  background: transparent;
+  border: none;
+  transition: background-color 0.15s ease;
 }
 
-.mini-day-cell--inactive {
-  opacity: 0.35;
+.mini-arrow-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
-.mini-day-cell--selected {
-  background-color: #f59e0b !important;
+/* Mini Calendar Table (Figma 6328:120038: 307.32px width) */
+.sidebar-mini-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.mini-weekdays-row {
+  display: flex;
+  width: 100%;
+  height: 35.36px;
+  align-items: center;
+  color: #ffffff;
+}
+
+.mini-weekday-col {
+  flex: 1 0 0;
+  min-width: 1px;
+  text-align: center;
+  font-size: 11.79px;
+  line-height: 17.68px;
+  font-weight: 400;
+}
+
+.mini-weeks-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-week-row {
+  display: flex;
+  width: 100%;
+  height: 35.36px;
+  align-items: center;
+  border-radius: 9999px;
+  transition: background-color 0.15s ease;
+}
+
+/* Week Active Pill Band in Week Mode Only (Figma 6328:120143 & 6328:120388) */
+.mini-week-row--active-band {
+  background-color: #e1eefd;
+}
+
+.mini-day-cell {
+  flex: 1 0 0;
+  min-width: 1px;
+  height: 35.12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mini-day-inner {
+  width: 29.47px;
+  height: 29.47px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 18px;
+  transition: all 0.15s ease;
+}
+
+.mini-day-cell:hover .mini-day-inner:not(.mini-day-inner--selected) {
+  background-color: rgba(35, 48, 88, 0.29);
+}
+
+.mini-day-inner--muted {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.mini-day-inner--in-band {
+  color: #0B529C !important;
+  font-weight: 500;
+}
+
+.mini-day-inner--selected {
+  background-color: #fba81c !important;
+  border: 2px solid #ffd230 !important;
   color: #ffffff !important;
   font-weight: 600;
 }
 
-.mini-day-cell--week-band {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+/* Today's Events in Sidebar (Figma 6328:120102) */
+.sidebar-todays-events {
+  margin-top: auto;
+  padding: 6px 15px 4px 15px;
 }
 
-/* ─── Today's Events in Sidebar ─── */
-.sidebar-events-section {
-  margin-top: 18px;
-}
-
-.today-event-badge {
+.todays-event-badge {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.18);
+  background-color: #e1eefd;
+  color: #0B529C;
   border-radius: 9999px;
-  padding: 4px 14px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #ffffff;
-  margin-bottom: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  margin-bottom: 8px;
 }
 
-.today-events-list {
+.todays-event-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.today-event-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.event-item-title {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
+}
+
+.todays-event-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.event-chevron {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.event-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-name {
+  font-size: 14px;
   color: #ffffff;
+  line-height: 20px;
+  font-weight: 400;
 }
 
-.bullet-arrow {
-  font-size: 15px;
-  line-height: 1;
-}
-
-.event-item-time {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-left: 14px;
+.event-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 18px;
 }
 
 /* ════════════════════════════════════════════
-   RIGHT CALENDAR VIEWPORT
+   RIGHT CALENDAR MAIN VIEWS (Figma Frame 332: 904x639)
 ════════════════════════════════════════════ */
 .calendar-viewport-area {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #ffffff;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  height: 639px;
+  max-height: 639px;
+  overflow: hidden;
+  background: #ffffff;
+  box-sizing: border-box;
 }
 
-/* ─── 1. MONTH VIEW ─── */
+/* ─── 1. WEEK VIEW (Figma 6328:119481 & Frame 329/330) ─── */
+.calendar-week-grid {
+  display: flex;
+  flex-direction: column;
+  height: 639px;
+  max-height: 639px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.week-hourly-grid-body {
+  height: 639px;
+  max-height: 639px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent;
+}
+
+.week-hourly-grid-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.week-hourly-grid-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.week-hourly-grid-body::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 9999px;
+}
+
+.week-hourly-grid-body::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
+
+.week-days-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 44px;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 38px repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid #e5e5e5;
+  background: #ffffff;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.week-days-header-row * {
+  box-sizing: border-box;
+}
+
+.week-header-gutter {
+  border-right: 1px solid #e5e5e5;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.week-day-header-cell {
+  border-right: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  min-width: 0;
+}
+
+.week-day-header-cell:hover:not(.week-day-header-cell--active) {
+  background-color: #f5f5f5;
+}
+
+.week-day-header-cell--tinted {
+  background-color: #fafafa;
+}
+
+.week-day-header-cell--last {
+  border-right: none;
+}
+
+.col-day-num {
+  color: #0B529C;
+  font-weight: 600;
+}
+
+.col-day-name {
+  color: #737373;
+}
+
+/* Active Day Header (Figma 6328:119487) */
+.week-day-header-cell--active {
+  background-color: #0B529C !important;
+  border-right-color: #83bff6;
+}
+
+.week-day-header-cell--active .col-day-num,
+.week-day-header-cell--active .col-day-name {
+  color: #ffffff !important;
+}
+
+.week-hourly-row {
+  display: grid;
+  grid-template-columns: 38px repeat(7, minmax(0, 1fr));
+  height: 30px;
+  min-height: 30px;
+  border-bottom: 1px solid #e5e5e5;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.week-hourly-row * {
+  box-sizing: border-box;
+}
+
+.week-time-label-cell {
+  border-right: 1px solid #e5e5e5;
+  font-size: 10px;
+  color: #737373;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.week-hour-slot-cell {
+  border-right: 1px solid #e5e5e5;
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.week-hour-slot-cell:last-child {
+  border-right: none;
+}
+
+.week-hour-slot-cell--monday-col {
+  background-color: #fafafa;
+}
+
+.week-hour-slot-cell--active-col {
+  background-color: #f1f7fe;
+}
+
+/* Event Banners inside Week Grid Slots */
+.week-event-banner {
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.15s ease;
+}
+
+.week-event-banner:hover {
+  opacity: 0.85;
+}
+
+.week-event-banner--enkutatash {
+  background-color: #f5f5f5;
+  color: #a1a1a1;
+  padding: 2px 8px;
+  text-align: center;
+}
+
+.week-event-banner--meskel {
+  background-color: #f1f7fe;
+  color: #0B529C;
+  padding: 6px 8px;
+}
+
+.week-event-banner--committee {
+  background-color: #f5f5f5;
+  color: #404040;
+  padding: 4px 8px;
+}
+
+.week-event-banner--executive {
+  background-color: #fdf2f8;
+  color: #db2777;
+  padding: 4px 8px;
+}
+
+.week-event-banner--culture {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  padding: 4px 8px;
+}
+
+/* ─── 2. MONTH VIEW ─── */
 .view-month-matrix {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 639px;
+  max-height: 639px;
+  overflow: hidden;
 }
 
 .month-weekday-header {
+  height: 44px;
+  min-height: 44px;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fafafa;
+  flex-shrink: 0;
 }
 
 .weekday-header-col {
-  padding: 12px 10px;
-  text-align: center;
-  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
   color: #737373;
   font-weight: 500;
+  border-right: 1px solid #e5e5e5;
+}
+
+.weekday-header-col:last-child {
+  border-right: none;
 }
 
 .month-cells-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(5, minmax(115px, 1fr));
+  grid-template-rows: repeat(5, 1fr);
+  height: 595px;
   flex: 1;
+  overflow: hidden;
 }
 
 .month-cell-box {
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 8px 10px;
+  border-right: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   position: relative;
   background: #ffffff;
-  min-height: 115px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 0.15s ease;
+}
+
+.month-cell-box:hover {
+  background-color: #fafafa;
+}
+
+.month-cell-box--selected {
+  background-color: #f1f7fe !important;
 }
 
 .month-cell-box:nth-child(7n) {
@@ -1575,14 +1916,14 @@ const jumpToToday = () => {
 }
 
 .month-cell-box--other .day-label-text {
-  color: #94a3b8;
+  color: #a1a1a1;
 }
 
 .month-cell-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .day-label-text {
@@ -1593,21 +1934,8 @@ const jumpToToday = () => {
 
 .day-hours-hint {
   font-size: 10px;
-  color: #94a3b8;
+  color: #a1a1a1;
   font-weight: 500;
-}
-
-.day-badge-light-blue {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #e0f2fe;
-  color: #0284c7;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .day-badge-solid-blue {
@@ -1626,14 +1954,15 @@ const jumpToToday = () => {
 .month-cell-events {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
+  overflow: hidden;
 }
 
 .event-pill {
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -1642,383 +1971,152 @@ const jumpToToday = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: opacity 0.15s ease;
 }
 
-.event-pill:hover {
-  opacity: 0.9;
-}
-
-.event-pill--purple {
-  background: #f5f3ff;
-  color: #7c3aed;
-}
-
-.event-pill--green {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.event-pill--blue {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.event-pill--pink {
-  background: #fdf2f8;
-  color: #db2777;
-}
-
-.event-pill--gray {
-  background: #f1f5f9;
-  color: #404040;
-}
-
-.pill-icon-lead {
-  font-size: 12px;
-}
+.event-pill--purple { background: #f5f3ff; color: #7c3aed; }
+.event-pill--green { background: #ecfdf5; color: #059669; }
+.event-pill--blue { background: #f1f7fe; color: #0B529C; }
+.event-pill--pink { background: #fdf2f8; color: #db2777; }
+.event-pill--gray { background: #f5f5f5; color: #404040; }
 
 .pill-title-text {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.cell-overflow-indicator {
-  font-size: 11px;
-  font-weight: 600;
-  color: #0284c7;
-  text-align: right;
-  margin-top: auto;
-}
-
-/* ─── 2. WEEK VIEW ─── */
-.view-week-matrix {
+/* ─── 3. LIST VIEW (Figma 6328:119971) ─── */
+.view-list-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-.week-header-row {
-  display: grid;
-  grid-template-columns: 65px repeat(7, 1fr);
-  border-bottom: 1px solid #e2e8f0;
+  height: 639px;
+  max-height: 639px;
+  overflow-y: auto;
   background: #ffffff;
 }
 
-.week-time-gutter {
-  border-right: 1px solid #e2e8f0;
+.list-date-group-card {
+  display: flex;
+  flex-direction: column;
 }
 
-.week-day-header-col {
-  padding: 10px 6px;
-  text-align: center;
-  border-right: 1px solid #e2e8f0;
+.list-table-header-row {
+  height: 44px;
+  min-height: 44px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  border-top: 1px solid #e5e5e5;
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 0 24px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.list-table-header-row:hover {
+  background-color: #f5f5f5;
+}
+
+.list-table-header-row--active {
+  background-color: #f1f7fe !important;
+}
+
+.list-header-content {
+  display: flex;
+  align-items: center;
   gap: 6px;
-  font-size: 13px;
 }
 
-.week-day-header-col:last-child {
-  border-right: none;
-}
-
-.w-day-num {
-  font-weight: 600;
-  color: #0B529C;
-}
-
-.w-day-name {
-  color: #404040;
-}
-
-.week-day-header-col--active {
-  background: #0B529C;
-  color: #ffffff;
-}
-
-.week-day-header-col--active .w-day-num,
-.week-day-header-col--active .w-day-name {
-  color: #ffffff !important;
-}
-
-.week-hourly-scroll {
-  flex: 1;
-  max-height: 580px;
-  overflow-y: auto;
-}
-
-.week-time-row {
-  display: grid;
-  grid-template-columns: 65px repeat(7, 1fr);
-  min-height: 48px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.hour-label-cell {
-  padding: 8px 8px;
-  text-align: right;
-  font-size: 11px;
-  color: #737373;
-  border-right: 1px solid #e2e8f0;
-}
-
-.hour-slot-cell {
-  border-right: 1px solid #f1f5f9;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.hour-slot-cell:last-child {
-  border-right: none;
-}
-
-.week-event-chip {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.chip-gray {
-  background: #f1f5f9;
-  color: #404040;
-}
-
-.chip-blue {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.chip-pink {
-  background: #fdf2f8;
-  color: #db2777;
-}
-
-.chip-green {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-/* ─── 3. DAY VIEW ─── */
-.view-day-matrix {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.day-header-bar {
-  display: grid;
-  grid-template-columns: 65px 1fr;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 12px 14px;
-}
-
-.day-header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.day-title-num {
+.list-header-day-num {
   font-size: 16px;
-  font-weight: 700;
-  color: #0B529C;
-}
-
-.day-title-name {
-  font-size: 15px;
   font-weight: 600;
-  color: #404040;
-}
-
-.day-title-badge {
-  font-size: 12px;
   color: #0B529C;
-  background: #eff6ff;
-  padding: 3px 10px;
-  border-radius: 6px;
+  line-height: 24px;
+}
+
+.list-header-day-name {
+  font-size: 16px;
   font-weight: 500;
+  color: #737373;
+  line-height: 24px;
 }
 
-.day-hourly-scroll {
-  flex: 1;
-  max-height: 580px;
-  overflow-y: auto;
-}
-
-.day-time-row {
-  display: grid;
-  grid-template-columns: 65px 1fr;
-  min-height: 50px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.day-slot-content {
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.day-banner-event {
-  width: 100%;
-  background: #ecfdf5;
-  border-left: 3px solid #10b981;
-  color: #065f46;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.day-banner-meeting {
-  width: 100%;
-  background: #fdf2f8;
-  border-left: 3px solid #db2777;
-  color: #9d174d;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.day-banner-shift-start {
-  width: 100%;
-  background: #eff6ff;
-  border-left: 3px solid #3b82f6;
-  color: #1e40af;
+.list-header-day-type {
   font-size: 12px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 4px;
+  color: #a1a1a1;
+  margin-left: 8px;
 }
 
-.day-banner-break {
-  width: 100%;
-  background: #f8fafc;
-  border-left: 3px solid #94a3b8;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 4px;
-}
-
-/* ─── 4. LIST VIEW ─── */
-.view-list-matrix {
+.list-table-event-row {
   display: flex;
-  flex-direction: column;
-  padding: 16px 20px;
-  gap: 18px;
+  height: 30px;
+  min-height: 30px;
+  border-bottom: 1px solid #e5e5e5;
+  cursor: pointer;
+  background: #ffffff;
+  transition: background-color 0.15s ease;
+}
+
+.list-table-event-row:hover {
+  background-color: #fafafa;
+}
+
+.list-row-gutter {
+  width: 23px;
+  flex-shrink: 0;
   height: 100%;
-  overflow-y: auto;
+  border-right: 1px solid #e5e5e5;
+  background: #ffffff;
 }
 
-.list-date-group {
+.list-row-content {
+  flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  padding: 0 12px;
+  height: 100%;
+}
+
+.list-event-badge-item {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
 }
 
-.list-group-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e2e8f0;
+.list-event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.list-header-num {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0B529C;
+.list-event-dot--blue {
+  background-color: #0B529C;
 }
 
-.list-header-name {
+.list-event-dot--green {
+  background-color: #009966;
+}
+
+.list-event-dot--amber {
+  background-color: #E17100;
+}
+
+.list-event-dot--purple {
+  background-color: #8200DB;
+}
+
+.list-event-title-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #404040;
+  line-height: 18px;
+}
+
+.list-empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: #737373;
   font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.list-header-daytype {
-  font-size: 12px;
-  color: #737373;
-  margin-left: 4px;
-}
-
-.list-header-hours {
-  font-size: 11.5px;
-  color: #94a3b8;
-}
-
-.list-event-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-}
-
-.list-event-time {
-  font-size: 12px;
-  color: #737373;
-  min-width: 75px;
-}
-
-.list-dot {
-  font-size: 11px;
-}
-
-.dot-amber { color: #f59e0b; }
-.dot-blue { color: #0284c7; }
-.dot-green { color: #10b981; }
-.dot-purple { color: #7c3aed; }
-
-.list-event-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.list-event-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.list-event-badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
-  font-weight: 500;
-}
-
-.list-ot-tag {
-  font-size: 10.5px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #ecfdf5;
-  color: #059669;
-  font-weight: 600;
-}
-
-.list-time-slot-divider {
-  font-size: 11.5px;
-  color: #94a3b8;
-  padding-left: 87px;
-  padding-top: 4px;
 }
 
 /* ════════════════════════════════════════════
@@ -2028,7 +2126,7 @@ const jumpToToday = () => {
   position: absolute;
   width: 330px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   padding: 16px 18px;
@@ -2053,8 +2151,8 @@ const jumpToToday = () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f5f3ff;
-  color: #7c3aed;
+  background: #f1f7fe;
+  color: #0B529C;
   border-radius: 9999px;
   padding: 3px 10px;
   font-size: 11.5px;
@@ -2097,12 +2195,12 @@ const jumpToToday = () => {
   align-items: center;
   gap: 8px;
   font-size: 11.5px;
-  color: #64748b;
+  color: #737373;
   margin-top: 4px;
 }
 
 .popover-icon {
-  color: #94a3b8;
+  color: #a1a1a1;
   flex-shrink: 0;
 }
 
@@ -2112,5 +2210,9 @@ const jumpToToday = () => {
 
 .popover-desc-text {
   margin: 0;
+}
+
+.icon-tertiary {
+  color: #737373;
 }
 </style>

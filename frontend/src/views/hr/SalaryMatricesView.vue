@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Sliders, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, Maximize2, Award, X, DollarSign,
-  Layers, ChevronRight, Grid
-} from 'lucide-vue-next';
+import {
+  Plus, Search, Filter, ArrowUpDown,
+  MoreVertical, Edit2, Trash2, Eye,
+  Check, Calendar, CheckCircle2, Award,
+  X, Grid
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -315,9 +316,10 @@ const isColumnVisible = (key: string) => {
   return col ? col.visible !== false : true;
 };
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
 };
 
 // ─── Actions Menu ───
@@ -447,14 +449,10 @@ onUnmounted(() => {
       >
         <!-- Primary Action -->
         <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="router.push('/hr/salary-matrices/create')"
-          >
-            <Plus :size="15" />
-            <span>Create Salary Matrix</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="router.push('/hr/salary-matrices/create')">
+            <template #icon-left><Plus :size="15" /></template>
+            Create Salary Matrix
+          </AppButton>
         </template>
 
         <!-- Filter Drawer Popover Content -->
@@ -802,7 +800,7 @@ onUnmounted(() => {
 
 <style scoped>
 .salary-matrices-page {
-  padding: 24px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
   box-sizing: border-box;

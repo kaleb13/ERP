@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  FolderTree, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
-  Building2, Layers, Network, User, UserCheck, ShieldCheck,
-  Clock, ArrowRight, CornerDownRight, Users, UserPlus
-} from 'lucide-vue-next';
+import {
+  FolderTree, Plus, Search, Filter,
+  ArrowUpDown, MoreVertical, Edit2, Eye,
+  CheckCircle2, AlertCircle, ChevronLeft, User,
+  Clock, Users, UserPlus
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -734,14 +734,10 @@ onUnmounted(() => {
         @toggleColumn="handleToggleColumn"
       >
         <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="showQuickCreate = true"
-          >
-            <Plus :size="15" />
-            <span>Create Organization Unit</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="showQuickCreate = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Organization Unit
+</AppButton>
         </template>
 
         <template #filter-panel>
@@ -1275,7 +1271,7 @@ onUnmounted(() => {
 
 <style scoped>
 .org-units-page {
-  padding: 16px 24px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: calc(100vh - 60px);
 }

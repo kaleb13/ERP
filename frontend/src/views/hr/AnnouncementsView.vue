@@ -2,33 +2,17 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Plus,
-  Search,
-  Filter,
-  ArrowUpDown,
-  Columns,
-  Maximize2,
-  MoreVertical,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  FileText,
-  Users,
-  Building2,
-  Briefcase,
-  X,
-  Eye,
-  Check,
-  Send,
-  ShieldCheck,
-  Layers,
-  Edit
-} from 'lucide-vue-next';
+  Plus, Search, Filter, MoreVertical,
+  Clock, CheckCircle2, FileText, X,
+  Send, ShieldCheck, Layers, Edit
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import { type ColumnDef } from '../../components/BaseTable.vue';
 
 import {
   announcementsData,
@@ -67,9 +51,38 @@ const overallAckRate = computed(() => {
   return totalTargeted > 0 ? Math.round((totalAcked / totalTargeted) * 100) : 0;
 });
 
-// ─── SECONDARY TABS (Rule 1: UnderlineTabs for Sub-views) ─────────────────
+// ─── FILTER TABS & INTERACTIVE METRICS ────────────────────────────────────
 type TabId = 'all' | 'published' | 'scheduled' | 'draft' | 'archived';
 const activeTab = ref<TabId>('all');
+const onlyAckRequired = ref(false);
+
+const handleFilterAll = () => {
+  activeTab.value = 'all';
+  onlyAckRequired.value = false;
+};
+
+const handleFilterPublished = () => {
+  if (activeTab.value === 'published' && !onlyAckRequired.value) {
+    activeTab.value = 'all';
+  } else {
+    activeTab.value = 'published';
+    onlyAckRequired.value = false;
+  }
+};
+
+const handleFilterAck = () => {
+  onlyAckRequired.value = !onlyAckRequired.value;
+  activeTab.value = 'all';
+};
+
+const handleFilterScheduled = () => {
+  if (activeTab.value === 'scheduled' && !onlyAckRequired.value) {
+    activeTab.value = 'all';
+  } else {
+    activeTab.value = 'scheduled';
+    onlyAckRequired.value = false;
+  }
+};
 
 const statusTabs = computed<UnderlineTabItem<TabId>[]>(() => [
   { id: 'all', label: 'All Announcements', count: announcementsData.value.length },
@@ -84,6 +97,10 @@ const searchQuery = ref('');
 
 const filteredAnnouncements = computed(() => {
   return announcementsData.value.filter(a => {
+    // Ack required filter
+    if (onlyAckRequired.value && !a.requires_acknowledgment) {
+      return false;
+    }
     // Tab filter
     if (activeTab.value !== 'all' && a.announcement_state !== activeTab.value) {
       return false;
@@ -128,23 +145,27 @@ const toggleSelectRow = (id: number) => {
 };
 
 // ─── TABLE COLUMNS (Rule 9: Atomic columns, Name first, Code subtext) ────
-interface TableCol {
-  id: string;
-  name: string;
-  visible: boolean;
-}
-
-const tableColumns = ref<TableCol[]>([
-  { id: 'title', name: 'Notice Title', visible: true },
-  { id: 'audience', name: 'Audience Scope', visible: true },
-  { id: 'publish_window', name: 'Publish Window', visible: true },
-  { id: 'status', name: 'Status', visible: true },
-  { id: 'actions', name: 'Actions', visible: true },
-  { id: 'targets', name: 'Audience Targets', visible: false },
-  { id: 'acknowledgment', name: 'Requires Acknowledgment', visible: false },
-  { id: 'published_by', name: 'Published By', visible: false },
-  { id: 'state', name: 'State', visible: false }
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'title', label: 'Notice Title', sortable: true, visible: true },
+  { key: 'audience', label: 'Audience Scope', sortable: true, visible: true },
+  { key: 'publish_window', label: 'Publish Window', sortable: true, visible: true },
+  { key: 'acknowledgment', label: 'Compliance Acknowledgment', sortable: false, visible: true },
+  { key: 'status', label: 'Status', sortable: true, visible: true },
+  { key: 'targets', label: 'Audience Targets', visible: false },
+  { key: 'published_by', label: 'Published By', visible: false },
+  { key: 'state', label: 'State', visible: false },
+  { key: 'actions', label: 'Actions', width: '60px', sortable: false, visible: true }
 ]);
+
+const handleToggleColumn = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  if (col) col.visible = !col.visible;
+};
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible : true;
+};
 
 const formatAudienceScope = (aud: AnnouncementAudience) => {
   switch (aud) {
@@ -162,11 +183,6 @@ const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const isColumnVisible = (id: string) => {
-  const col = tableColumns.value.find(c => c.id === id);
-  return col ? col.visible : true;
 };
 
 // ─── ACTION MENU POPUP ───────────────────────────────────────────────────
@@ -256,28 +272,59 @@ const handleDelete = (id: number) => {
     <!-- Breadcrumbs (Rule 3: Exact Sidebar Page Name Only) -->
     <AppBreadcrumb :items="breadcrumbs" />
 
-    <!-- 4 KPI Metrics Cards (Rule 2) -->
+    <!-- 4 KPI Metrics Cards (Rule 2 - Interactive Click-to-Filter) -->
     <div class="metrics-grid">
-      <MetricCard
-        label="TOTAL ANNOUNCEMENTS"
-        :value="totalAnnouncements"
-        subtext="All corporate notices on record"
-      />
-      <MetricCard
-        label="ACTIVE BROADCASTS"
-        :value="activeBroadcasts"
-        subtext="Live on employee dashboards"
-      />
-      <MetricCard
-        label="COMPLIANCE ACKNOWLEDGMENT"
-        :value="overallAckRate + '%'"
-        subtext="Policy compliance confirmed"
-      />
-      <MetricCard
-        label="SCHEDULED NOTICES"
-        :value="scheduledNotices"
-        subtext="Queued for automated release"
-      />
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'all' && !onlyAckRequired }"
+        @click="handleFilterAll"
+      >
+        <MetricCard
+          label="TOTAL ANNOUNCEMENTS"
+          :value="totalAnnouncements"
+          subtext="All corporate notices on record"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'published' && !onlyAckRequired }"
+        @click="handleFilterPublished"
+      >
+        <MetricCard
+          label="ACTIVE BROADCASTS"
+          :value="activeBroadcasts"
+          subtext="Live on employee dashboards"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': onlyAckRequired }"
+        @click="handleFilterAck"
+      >
+        <MetricCard
+          label="COMPLIANCE ACKNOWLEDGMENT"
+          :value="overallAckRate + '%'"
+          subtext="Policy compliance confirmed"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'scheduled' && !onlyAckRequired }"
+        @click="handleFilterScheduled"
+      >
+        <MetricCard
+          label="SCHEDULED NOTICES"
+          :value="scheduledNotices"
+          subtext="Queued for automated release"
+          :show-menu="false"
+        />
+      </div>
     </div>
 
     <!-- Main Data Table Card Container (Rule 10) -->
@@ -286,24 +333,16 @@ const handleDelete = (id: number) => {
         title="Announcements & Notices"
         subtitle="Manage company-wide bulletins, statutory policy circulars, and mandatory employee acknowledgment tracking."
         v-model:searchQuery="searchQuery"
+        :columns="tableColumns"
         :totalEntries="filteredAnnouncements.length"
+        @toggleColumn="handleToggleColumn"
       >
         <!-- Primary Action Inside Table Toolbar Header Slot (Rule 10) -->
         <template #actions>
-          <button class="btn-primary-create" @click="handleCreateAnnouncement">
-            <Plus :size="16" />
-            <span>Create Announcement</span>
-          </button>
-        </template>
-
-        <!-- Underline Tabs for Filter Views (Rule 1) -->
-        <template #tabs>
-          <div class="table-tabs-wrapper">
-            <UnderlineTabs
-              v-model="activeTab"
-              :tabs="statusTabs"
-            />
-          </div>
+          <AppButton variant="primary" size="sm" @click="handleCreateAnnouncement">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Announcement
+</AppButton>
         </template>
 
         <!-- Data Table (Rules 8, 9) -->
@@ -610,9 +649,9 @@ const handleDelete = (id: number) => {
         </div>
 
         <div class="modal-footer">
-          <button class="btn-secondary-action" @click="isAckModalOpen = false">
+          <AppButton variant="outline" size="sm" @click="isAckModalOpen = false">
             Close
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -622,7 +661,7 @@ const handleDelete = (id: number) => {
 <style scoped>
 /* Page Layout */
 .announcements-page {
-  padding: 24px 32px 60px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -633,6 +672,21 @@ const handleDelete = (id: number) => {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.metric-interactive {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.metric-interactive.metric-active {
+  box-shadow: 0 0 0 2px #0B529C;
+  border-radius: 10px;
 }
 
 @media (max-width: 1024px) {
@@ -977,7 +1031,7 @@ const handleDelete = (id: number) => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .quick-ack-wrap {

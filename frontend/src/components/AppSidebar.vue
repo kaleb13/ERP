@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Box, ChevronDown, ChevronUp, ChevronRight,
-  HelpCircle, LayoutDashboard, FileText, Home, Settings, LogOut, ShoppingBag, ShoppingCart, Building2, Users,
-  UserCheck, LayoutGrid, Database, User, Sliders, BarChart3, Utensils, GitBranch, ShieldCheck, Key,
-  Briefcase, Layers, Award, GitPullRequest, PanelLeft, FolderTree, Network, GraduationCap, BadgeCheck,
-  ClipboardList, Activity, Calendar, Clock, Repeat, CalendarRange, ArrowLeftRight, CalendarDays,
-  Umbrella, GitCommit, PieChart, Banknote, ListFilter, Fingerprint,
-  UserMinus, CheckSquare, Receipt, ClipboardCheck, Calculator, Megaphone, LifeBuoy
-} from 'lucide-vue-next';
+import {
+  Box, ChevronRight, HelpCircle, LayoutDashboard,
+  FileText, Home, Settings, LogOut,
+  ShoppingBag, ShoppingCart, Building2, Users,
+  UserCheck, LayoutGrid, Database, User,
+  Sliders, BarChart3, Utensils, GitBranch,
+  ShieldCheck, Key, Briefcase, Layers,
+  Award, GitPullRequest, PanelLeft, FolderTree,
+  Network, GraduationCap, BadgeCheck, ClipboardList,
+  Activity, Calendar, Clock, Repeat,
+  CalendarRange, ArrowLeftRight, CalendarDays, Umbrella,
+  GitCommit, PieChart, Banknote, ListFilter,
+  Fingerprint, UserMinus, CheckSquare, Receipt,
+  ClipboardCheck, Calculator, Megaphone, LifeBuoy
+} from 'lucide-vue-next';;
+import BaseNavItem from './BaseNavItem.vue';
 
 interface Props {
   collapsed?: boolean;
@@ -34,12 +41,9 @@ const isSubmenuOpen = ref(false);
 
 // Collapsible group state
 const expandedGroups = ref<Record<string, boolean>>({
-  'Setup': true,
-  'Product & Pricing': true,
-  'User And Access': true,
-  'Items Setup': false,
-  'Leave': true,
-  'Attendance': true
+  'Employees': true,
+  'Attendance': true,
+  'Leave': true
 });
 
 const isGroupExpanded = (item: any) => {
@@ -86,7 +90,7 @@ const navigateToModule = (routePath: string) => {
 const handleLogout = () => {
   closeDropdown();
   alert('Successfully logged out of Haleta ERP!');
-  router.push('/home');
+  router.push('/inventory/stock-summary');
 };
 
 const handleScroll = (e: Event) => {
@@ -147,7 +151,8 @@ const iconsMap: Record<string, any> = {
 };
 
 // Active link matching helper
-const isChildActive = (to: string) => {
+const isChildActive = (to?: string) => {
+  if (!to) return false;
   if (to.includes('?')) {
     const [pathPart, queryPart] = to.split('?');
     const params = new URLSearchParams(queryPart);
@@ -176,34 +181,16 @@ const isGroupActive = (item: any) => {
 // Compute current active module
 const activeModule = computed(() => {
   const path = route.path;
-  if (path.startsWith('/sales')) {
+  if (path.startsWith('/procurement')) {
     return {
-      id: 'sales',
-      name: 'Sales',
-      icon: 'ShoppingBag',
-      iconColor: 'var(--primitive-color-orange-500)',
-      iconBg: 'var(--primitive-color-orange-50)',
-      menu: [
-        {
-          label: 'Setup',
-          icon: 'Database',
-          isGroup: true,
-          children: [
-            { to: '/sales/customers', label: 'Customer', icon: 'User' },
-            { to: '/sales/customer-groups', label: 'Customer Group', icon: 'Users' }
-          ]
-        }
-      ]
-    };
-  } else if (path.startsWith('/buying')) {
-    return {
-      id: 'buying',
-      name: 'Buying',
+      id: 'procurement',
+      name: 'Procurement',
       icon: 'ShoppingCart',
-      iconColor: 'var(--primitive-color-emerald-500)',
-      iconBg: 'var(--primitive-color-emerald-50)',
+      iconColor: '#009966',
+      iconBg: '#ECFDF5',
       menu: [
-        { to: '/buying', label: 'Suppliers', icon: 'ShoppingCart' }
+        { isHeader: true, label: 'Foundation & Policy' },
+        { to: '/procurement/categories', label: 'Procurement Categories', icon: 'FolderTree' }
       ]
     };
   } else if (path.startsWith('/hr')) {
@@ -211,111 +198,18 @@ const activeModule = computed(() => {
       id: 'hr',
       name: 'Human Resource',
       icon: 'Users',
-      iconColor: 'var(--primitive-color-indigo-500)',
-      iconBg: 'var(--primitive-color-indigo-50)',
+      iconColor: '#7C3AED',
+      iconBg: '#F5F3FF',
       menu: [
-        { isHeader: true, label: 'MENU' },
-        { to: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
         { isHeader: true, label: 'USER AND ACCESS' },
-        {
-          label: 'Employees',
-          icon: 'Users',
-          isGroup: true,
-          children: [
-            { to: '/hr/employees', label: 'Employee Directory', icon: 'User' },
-            { to: '/hr/movements', label: 'Employee Movement', icon: 'ArrowLeftRight' },
-            { to: '/hr/movements/admin', label: 'Movement Admin', icon: 'ShieldCheck' }
-          ]
-        },
+        { to: '/hr/employees', label: 'Employee Directory', icon: 'User' },
         { isHeader: true, label: 'Organization & Structure' },
         { to: '/hr/org-structures', label: 'Org Structures', icon: 'Network' },
-        { to: '/hr/org-units', label: 'Organization Units', icon: 'FolderTree' },
-        { isHeader: true, label: 'Compensation & Pay' },
-        { to: '/hr/salary-scales', label: 'Salary Scales', icon: 'Award' },
-        { isHeader: true, label: 'Job & Position Architecture' },
-        { to: '/hr/job-positions', label: 'Job Positions', icon: 'Briefcase' },
-        { to: '/hr/job-titles', label: 'Job Titles & Roles', icon: 'BadgeCheck' },
-        { to: '/hr/job-levels', label: 'Job Levels', icon: 'Layers' },
-        { to: '/hr/headcount-planning', label: 'Headcount Planning', icon: 'ClipboardList' },
-        { to: '/hr/headcount-monitoring', label: 'Headcount Monitoring', icon: 'Activity' },
-        { isHeader: true, label: 'Academic & Qualifications' },
-        { to: '/hr/fields-of-study', label: 'Fields of Study', icon: 'GraduationCap' },
-        { to: '/hr/institutions', label: 'Institutions', icon: 'Building2' },
-        { isHeader: true, label: 'Governance & Committees' },
-        { to: '/hr/committees', label: 'Committees', icon: 'ShieldCheck' },
         { isHeader: true, label: 'Work Calendar & Shifts' },
-        { to: '/hr/work-calendars', label: 'Work Calendar Setup', icon: 'Calendar' },
         { to: '/hr/calendar', label: 'Calendar', icon: 'CalendarDays' },
-        { to: '/hr/shifts', label: 'Work Shifts', icon: 'Clock' },
         { to: '/hr/shift-patterns', label: 'Shift Patterns', icon: 'Repeat' },
-        { to: '/hr/my-shifts', label: 'My Shifts', icon: 'UserCheck' },
-        { to: '/hr/shift-assignments', label: 'Shift Assignments', icon: 'CalendarRange' },
-        {
-          label: 'Attendance',
-          icon: 'Activity',
-          isGroup: true,
-          children: [
-            { to: '/hr/attendance', label: 'Daily Attendance', icon: 'Clock' },
-            { to: '/hr/attendance-devices', label: 'Biometric Devices', icon: 'Fingerprint' }
-          ]
-        },
-        { to: '/hr/overtime-requests', label: 'Overtime Requests', icon: 'Clock' },
-        { to: '/hr/shift-swaps', label: 'Shift Swaps', icon: 'ArrowLeftRight' },
-        { to: '/hr/holidays', label: 'Holidays', icon: 'Umbrella' },
-        { isHeader: true, label: 'Leave & Absence' },
-        { to: '/hr/leave-requests', label: 'Leave Requests', icon: 'CalendarDays' },
-        { to: '/hr/leave-allocations', label: 'Leave Allocations', icon: 'Award' },
-        { to: '/hr/leave-balances', label: 'Leave Balances', icon: 'PieChart' },
-        { to: '/hr/leave-encashments', label: 'Leave Encashments', icon: 'Banknote' },
-        {
-          label: 'Leave',
-          icon: 'UserCheck',
-          isGroup: true,
-          children: [
-            { to: '/hr/leave-policies', label: 'Leave Policies', icon: 'Sliders' },
-            { to: '/hr/leave-types', label: 'Leave Type', icon: 'ListFilter' }
-          ]
-        },
-        { isHeader: true, label: 'Separation & Settlement' },
-        { to: '/hr/separations', label: 'Employee Separations', icon: 'UserMinus' },
-        { to: '/hr/exit-clearance', label: 'Exit Clearance', icon: 'ClipboardCheck' },
-        { to: '/hr/final-settlements', label: 'Final Settlements', icon: 'Calculator' },
-        { isHeader: true, label: 'Letters & Communications' },
-        { to: '/hr/letters', label: 'Employee Letters', icon: 'FileText' },
-        { to: '/hr/letter-templates', label: 'Letter Templates', icon: 'Sliders' },
-        { to: '/hr/announcements', label: 'Announcements', icon: 'Megaphone' },
-        { to: '/hr/service-requests', label: 'HR Service Requests', icon: 'LifeBuoy' },
-        { isHeader: true, label: 'Multi-Entity Workforce' },
-        { to: '/hr/service-agreements', label: 'HR Service Agreements', icon: 'FileText' },
-        { to: '/hr/client-assignments', label: 'Client Assignments', icon: 'Building2' }
-      ]
-    };
-  } else if (path.startsWith('/company-setup')) {
-    return {
-      id: 'company-setup',
-      name: 'Company Setup',
-      icon: 'Building2',
-      iconColor: 'var(--primitive-color-neutral-500)',
-      iconBg: 'var(--primitive-color-neutral-100)',
-      menu: [
-        { isHeader: true, label: 'Menu' },
-        { to: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-        { isHeader: true, label: 'Company setup' },
-        { to: '/company-setup?tab=entity_types', label: 'Entity Types', icon: 'LayoutGrid' },
-        { to: '/company-setup', label: 'Entity', icon: 'Building2' },
-        { isHeader: true, label: 'User And Access' },
-        {
-          label: 'User And Access',
-          icon: 'UserCheck',
-          isGroup: true,
-          children: [
-            { to: '/company-setup/user-and-access', label: 'User', icon: 'User' },
-            { to: '/company-setup/user-and-access?tab=roles', label: 'Role', icon: 'UserCheck' },
-            { to: '/company-setup/user-and-access?tab=permissions', label: 'Permissions', icon: 'Key' }
-          ]
-        },
-        { isHeader: true, label: 'System Configuration' },
-        { to: '/company-setup/audit-logs', label: 'Audit Log', icon: 'FileText' }
+        { to: '/hr/attendance', label: 'Daily Attendance', icon: 'Clock' },
+        { to: '/hr/shift-swaps', label: 'Shift Swaps', icon: 'ArrowLeftRight' }
       ]
     };
   } else {
@@ -324,34 +218,22 @@ const activeModule = computed(() => {
       id: 'inventory',
       name: 'Inventory',
       icon: 'Box',
-      iconColor: 'var(--primitive-color-blue-500)',
-      iconBg: 'var(--primitive-color-blue-50)',
+      iconColor: '#0B529C',
+      iconBg: '#eff6ff',
       menu: [
-        { to: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-        { to: '/stock-summary', label: 'Stock Summary', icon: 'BarChart3' },
-        { to: '/gate-pass', label: 'Gate Pass', icon: 'PanelLeft', rotate: true },
-        { to: '/stock-reservation', label: 'Stock Reservation', icon: 'FileText' },
-        { isHeader: true, label: 'Product Setup' },
-        {
-          label: 'Product & Pricing',
-          icon: 'ShoppingBag',
-          isGroup: true,
-          children: [
-            { to: '/inventory/product-group', label: 'Product Group', icon: 'Database' },
-            { to: '/inventory/products', label: 'Products', icon: 'Box' },
-            { to: '/inventory/product-variants', label: 'Product Variants', icon: 'GitBranch' },
-            { to: '/inventory/product-modifiers', label: 'Product Modifiers', icon: 'Utensils' },
-            { to: '/inventory/product-attribute', label: 'Product Attribute', icon: 'Sliders' }
-          ]
-        },
-        {
-          label: 'Items Setup',
-          icon: 'Box',
-          isGroup: true,
-          children: []
-        },
-        { isHeader: true, label: 'Tenant Setup' },
-        { to: '/inventory/locations', label: 'Locations', icon: 'Building2' }
+        { isHeader: true, label: 'Stock & Storage' },
+        { to: '/inventory/stock-summary', label: 'Stock Summary', icon: 'LayoutGrid' },
+        { to: '/inventory/warehouses', label: 'Warehouses', icon: 'Building2' },
+        { to: '/inventory/item-master', label: 'Item Master', icon: 'Box' },
+        { to: '/inventory/categories', label: 'Categories', icon: 'Layers' },
+        { to: '/inventory/units', label: 'Units of Measure', icon: 'Sliders' },
+        { isHeader: true, label: 'Operations' },
+        { to: '/inventory/stock-moves', label: 'Stock Moves', icon: 'ArrowLeftRight' },
+        { to: '/inventory/deliveries', label: 'Deliveries', icon: 'ShoppingBag' },
+        { to: '/inventory/receipts', label: 'Receipts', icon: 'Receipt' },
+        { isHeader: true, label: 'Adjustments' },
+        { to: '/inventory/physical-inventory', label: 'Physical Inventory', icon: 'CheckSquare' },
+        { to: '/inventory/scrap', label: 'Scrap Orders', icon: 'UserMinus' }
       ]
     };
   }
@@ -359,6 +241,7 @@ const activeModule = computed(() => {
 
 onMounted(() => {
   window.addEventListener('click', closeDropdown);
+
   if (sidebarNavRef.value) {
     const savedScroll = sessionStorage.getItem('erp_sidebar_scroll');
     if (savedScroll) {
@@ -380,119 +263,127 @@ onUnmounted(() => {
 
 <template>
   <aside :class="['app-sidebar', { collapsed: props.collapsed }]">
-    <!-- Sidebar Header -->
+    <!-- Sidebar Header Frame (Figma QMT Node 3345:24551 Type=Mega & Type=Collapsed) -->
     <div class="sidebar-header-wrapper">
-      <div class="sidebar-brand-badge" @click="toggleDropdown">
-        <div class="logo-box" :style="{ backgroundColor: activeModule.iconBg }">
-          <component 
-            :is="iconsMap[activeModule.icon] || Box" 
-            class="logo-icon" 
-            :style="{ color: activeModule.iconColor }" 
-            :size="20" 
+      <div class="sidebar-header-relative w-full">
+        <!-- Collapsed State: 40px square icon with dark tooltip -->
+        <div v-if="props.collapsed" class="collapsed-item-container">
+          <BaseNavItem
+            type="collapsed"
+            :icon="iconsMap[activeModule.icon] || Box"
+            :label="activeModule.name"
+            @click="toggleDropdown"
           />
         </div>
-        <div class="brand-info">
-          <h1 class="brand-title">{{ activeModule.name }}</h1>
-          <p class="brand-subtitle">Haleta ERP</p>
-        </div>
-        <div class="app-switcher ml-auto">
-          <ChevronUp :size="10" class="text-gray-400" />
-          <ChevronDown :size="10" class="text-gray-400" />
-        </div>
 
-        <!-- DROPDOWN PORTAL MENU -->
+        <!-- Expanded State: 56px rich mega item with tile, title, and chevron -->
+        <BaseNavItem
+          v-else
+          type="mega"
+          :label="activeModule.name"
+          supporting-text="Haleta ERP"
+          :icon="iconsMap[activeModule.icon] || Box"
+          :tile-bg="activeModule.iconBg"
+          :tile-color="activeModule.iconColor"
+          :show-chevron="true"
+          :expanded="isDropdownOpen"
+          @click="toggleDropdown"
+        />
+
+        <!-- DROPDOWN PORTAL MENU (Using QMT NavItemBase components) -->
         <div 
           v-if="isDropdownOpen" 
-          class="brand-dropdown-menu" 
+          :class="['brand-dropdown-menu', { 'collapsed-dropdown': props.collapsed }]" 
           @click.stop
           @mouseleave="closeSubmenu"
         >
           <!-- Home -->
-          <router-link to="/home" class="dropdown-item" @click="closeDropdown">
-            <Home :size="16" class="dropdown-icon text-gray-500" />
-            <span class="dropdown-text">Home</span>
-          </router-link>
+          <BaseNavItem
+            type="sidebar"
+            to="/"
+            label="Home"
+            :icon="Home"
+            @click="closeDropdown"
+          />
 
           <!-- Modules with Arrow (Triggers Submenu) -->
           <div 
-            class="dropdown-item has-submenu" 
+            class="dropdown-item-wrapper has-submenu" 
             :class="{ 'submenu-active': isSubmenuOpen }"
             @mouseenter="openSubmenu"
             @click="toggleSubmenu"
           >
-            <Box :size="16" class="dropdown-icon text-gray-500" />
-            <span class="dropdown-text">Modules</span>
-            <ChevronRight :size="14" class="ml-auto text-gray-400" />
+            <BaseNavItem
+              type="sidebar"
+              label="Modules"
+              :icon="Box"
+              :show-chevron="true"
+              :chevron="ChevronRight"
+            />
 
             <!-- SUBMENU (positioned absolutely to the right) -->
             <div v-if="isSubmenuOpen" class="brand-submenu-menu" @click.stop>
-              <div class="submenu-item" @click="navigateToModule('/dashboard')">
-                <div class="submenu-icon-box" style="background-color: #eff6ff;">
-                  <Box :size="14" style="color: #2563eb;" />
-                </div>
-                <span class="submenu-text">Inventory</span>
-                <ChevronRight :size="12" class="ml-auto text-gray-400" />
-              </div>
+              <BaseNavItem
+                type="sidebar"
+                label="Inventory"
+                :icon="Box"
+                @click="navigateToModule('/inventory/stock-summary')"
+              />
 
-              <div class="submenu-item" @click="navigateToModule('/sales')">
-                <div class="submenu-icon-box" style="background-color: #fff7ed;">
-                  <ShoppingBag :size="14" style="color: #f97316;" />
-                </div>
-                <span class="submenu-text">Sales</span>
-              </div>
+              <BaseNavItem
+                type="sidebar"
+                label="Procurement"
+                :icon="ShoppingCart"
+                @click="navigateToModule('/procurement/categories')"
+              />
 
-              <div class="submenu-item" @click="navigateToModule('/buying')">
-                <div class="submenu-icon-box" style="background-color: #ecfdf5;">
-                  <ShoppingCart :size="14" style="color: #10b981;" />
-                </div>
-                <span class="submenu-text">Buying</span>
-              </div>
-
-              <div class="submenu-item" @click="navigateToModule('/company-setup')">
-                <div class="submenu-icon-box" style="background-color: #f3f4f6;">
-                  <Building2 :size="14" style="color: #6b7280;" />
-                </div>
-                <span class="submenu-text">Company Setup</span>
-              </div>
-
-              <div class="submenu-item" @click="navigateToModule('/hr/employees')">
-                <div class="submenu-icon-box" style="background-color: #eef2ff;">
-                  <Users :size="14" style="color: #4f46e5;" />
-                </div>
-                <span class="submenu-text">Human Resources</span>
-              </div>
+              <BaseNavItem
+                type="sidebar"
+                label="Human Resources"
+                :icon="Users"
+                @click="navigateToModule('/hr/employees')"
+              />
             </div>
           </div>
 
           <!-- Settings -->
-          <router-link to="/settings" class="dropdown-item" @click="closeDropdown">
-            <Settings :size="16" class="dropdown-icon text-gray-500" />
-            <span class="dropdown-text">Settings</span>
-          </router-link>
+          <BaseNavItem
+            type="sidebar"
+            to="/settings"
+            label="Settings"
+            :icon="Settings"
+            @click="closeDropdown"
+          />
 
           <!-- Help -->
-          <router-link to="/help" class="dropdown-item" @click="closeDropdown">
-            <HelpCircle :size="16" class="dropdown-icon text-gray-500" />
-            <span class="dropdown-text">Help</span>
-          </router-link>
+          <BaseNavItem
+            type="sidebar"
+            to="/help"
+            label="Help"
+            :icon="HelpCircle"
+            @click="closeDropdown"
+          />
 
           <!-- Divider -->
           <div class="dropdown-divider"></div>
 
           <!-- Logout -->
-          <button class="dropdown-item logout-btn" @click="handleLogout">
-            <LogOut :size="16" class="dropdown-icon text-red-500" />
-            <span class="dropdown-text text-red-600 font-semibold">Logout</span>
-          </button>
+          <BaseNavItem
+            type="sidebar"
+            label="Logout"
+            :icon="LogOut"
+            custom-class="logout-nav-item"
+            @click="handleLogout"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Main Navigation List -->
+    <!-- Main Navigation List (Figma QMT Node 3345:24551 Type=Sidebar & Sub item) -->
     <nav class="sidebar-nav" ref="sidebarNavRef">
-      <ul>
+      <ul class="sidebar-nav-list">
         <li v-for="(item, idx) in activeModule.menu" :key="item.label">
-          <!-- HEADER SECTION -->
+          <!-- SECTION HEADER TITLE -->
           <template v-if="item.isHeader">
             <div v-if="!props.collapsed" :class="['nav-section-title', idx > 0 ? 'mt-5' : '']">
               {{ item.label }}
@@ -501,43 +392,62 @@ onUnmounted(() => {
 
           <!-- REGULAR MENU ITEMS -->
           <template v-else>
-            <!-- COLLAPSED SIDEBAR -->
+            <!-- COLLAPSED SIDEBAR (Icon-only rails with dark hover tooltips) -->
             <template v-if="props.collapsed">
               <div v-if="item.isGroup && item.children && item.children.length > 0" class="nav-group-collapsed">
                 <div v-for="child in item.children" :key="child.to" class="collapsed-item-wrapper">
-                  <router-link :to="child.to" class="nav-item" :class="{ 'active': isChildActive(child.to) }" :title="child.label">
-                    <component :is="iconsMap[child.icon] || Users" :size="18" class="nav-icon" />
-                  </router-link>
+                  <BaseNavItem
+                    type="collapsed"
+                    :to="child.to"
+                    :icon="iconsMap[child.icon] || Users"
+                    :label="child.label"
+                    :active="isChildActive(child.to)"
+                  />
                 </div>
               </div>
-              <router-link v-else-if="!item.isGroup" :to="item.to" class="nav-item" :class="{ 'active': isChildActive(item.to) }" :title="item.label">
-                <component :is="iconsMap[item.icon] || LayoutDashboard" :size="18" class="nav-icon" />
-              </router-link>
+              <BaseNavItem
+                v-else-if="!item.isGroup"
+                type="collapsed"
+                :to="item.to"
+                :icon="iconsMap[item.icon] || LayoutDashboard"
+                :label="item.label"
+                :active="isChildActive(item.to)"
+              />
             </template>
 
-            <!-- EXPANDED SIDEBAR -->
+            <!-- EXPANDED SIDEBAR (QMT NavItemBase rows) -->
             <template v-else>
-              <!-- Simple Link -->
-              <router-link v-if="!item.isGroup" :to="item.to" class="nav-item" :class="{ 'active': isChildActive(item.to) }">
-                <component :is="iconsMap[item.icon] || LayoutDashboard" :size="18" :class="['nav-icon', { 'rotate-90': item.rotate }]" />
-                <span class="nav-text">{{ item.label }}</span>
-              </router-link>
+              <!-- Simple Link Item (Type=Sidebar) -->
+              <BaseNavItem
+                v-if="!item.isGroup"
+                type="sidebar"
+                :to="item.to"
+                :icon="iconsMap[item.icon] || LayoutDashboard"
+                :label="item.label"
+                :active="isChildActive(item.to)"
+              />
 
-              <!-- Collapsible Group -->
+              <!-- Collapsible Group Item -->
               <div v-else class="nav-group">
-                <div class="nav-group-header" :class="{ 'header-active': isGroupActive(item) }" @click="toggleGroupExpanded(item.label)">
-                  <div class="nav-group-header-left">
-                    <component :is="iconsMap[item.icon] || Database" :size="18" class="nav-icon" />
-                    <span class="nav-text">{{ item.label }}</span>
-                  </div>
-                  <ChevronDown :size="14" class="nav-group-chevron" :class="{ 'collapsed-chevron': !isGroupExpanded(item) }" />
-                </div>
+                <BaseNavItem
+                  type="sidebar"
+                  :icon="iconsMap[item.icon] || Database"
+                  :label="item.label"
+                  :show-chevron="true"
+                  :expanded="isGroupExpanded(item)"
+                  :active="isGroupActive(item)"
+                  @click="toggleGroupExpanded(item.label)"
+                />
+                <!-- Sub Items (Type=Sub item with indent) -->
                 <ul v-show="isGroupExpanded(item)" class="nav-group-children">
                   <li v-for="child in item.children" :key="child.to">
-                    <router-link :to="child.to" class="nav-child-item" :class="{ 'active': isChildActive(child.to) }">
-                      <component :is="iconsMap[child.icon] || Users" :size="16" class="nav-icon" />
-                      <span class="nav-text">{{ child.label }}</span>
-                    </router-link>
+                    <BaseNavItem
+                      type="sub-item"
+                      :to="child.to"
+                      :icon="iconsMap[child.icon] || Users"
+                      :label="child.label"
+                      :active="isChildActive(child.to)"
+                    />
                   </li>
                 </ul>
               </div>
@@ -545,134 +455,156 @@ onUnmounted(() => {
           </template>
         </li>
       </ul>
-
-      <!-- Sidebar Footer Actions -->
-      <div class="sidebar-bottom-actions mt-auto">
-        <router-link to="/settings" class="nav-item">
-          <Settings :size="18" class="nav-icon" />
-          <span class="nav-text">Settings</span>
-        </router-link>
-        <router-link to="/help" class="nav-item">
-          <HelpCircle :size="18" class="nav-icon" />
-          <span class="nav-text">Help</span>
-        </router-link>
-      </div>
     </nav>
+
+    <!-- Sidebar Footer Actions (Fixed at bottom with transition border-top) -->
+    <div class="sidebar-bottom-actions">
+      <template v-if="props.collapsed">
+        <BaseNavItem type="collapsed" to="/settings" :icon="Settings" label="Settings" :active="isChildActive('/settings')" />
+        <BaseNavItem type="collapsed" to="/help" :icon="HelpCircle" label="Help" :active="isChildActive('/help')" />
+      </template>
+      <template v-else>
+        <BaseNavItem type="sidebar" to="/settings" :icon="Settings" label="Settings" :active="isChildActive('/settings')" />
+        <BaseNavItem type="sidebar" to="/help" :icon="HelpCircle" label="Help" :active="isChildActive('/help')" />
+      </template>
+    </div>
   </aside>
 </template>
 
 <style scoped>
 .app-sidebar {
-  width: 260px;
+  width: 284px;
   height: 100%;
   max-height: 100vh;
   max-height: 100dvh;
   flex-shrink: 0;
   background-color: #ffffff;
-  border-right: 1px solid #e5e5e5;
+  border-right: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
   z-index: 100;
+  box-sizing: border-box;
 }
 .app-sidebar.collapsed { width: 68px; }
 
+/* Sidebar Top Menu Frame: Top 16px, Left/Right 16px, Bottom gap 20px */
 .sidebar-header-wrapper {
-  height: 84px;
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
   flex-shrink: 0;
   display: flex;
-  align-items: flex-start;
-  padding: 6px 16px 0 16px;
+  align-items: stretch;
+  padding: var(--alias-spacing-xl, 16px) var(--alias-spacing-xl, 16px) 0 var(--alias-spacing-xl, 16px);
+  margin-bottom: var(--alias-spacing-2xl, 20px);
   transition: padding 0.3s ease;
+  box-sizing: border-box;
 }
 .app-sidebar.collapsed .sidebar-header-wrapper {
-  padding: 6px 0 0 0;
-  justify-content: center;
-}
-.sidebar-brand-badge {
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
+  padding: var(--alias-spacing-xl, 16px) 0;
+  margin-bottom: var(--alias-spacing-2xl, 20px);
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
-  height: 56px;
-  padding: 0 14px;
-  background-color: #fafafa;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.sidebar-header-relative {
   position: relative;
-  cursor: pointer;
   width: 100%;
-  transition: all 0.3s ease;
+  height: 100%;
 }
-.sidebar-brand-badge:hover {
-  background-color: #ffffff;
-  border-color: #d1d5db;
-}
-.app-sidebar.collapsed .sidebar-brand-badge {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  justify-content: center;
-  border-radius: 10px;
-  gap: 0;
-}
-.logo-box {
-  background: #f3f4f6;
-  padding: 6px;
-  border-radius: 8px;
+
+.collapsed-item-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-.brand-info { 
-  flex: 1; 
-  line-height: 1.2; 
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  opacity: 1;
+  width: 100%;
+  height: 100%;
 }
 
-.app-sidebar.collapsed .brand-info {
-  width: 0;
-  flex: 0 0 0;
-  min-width: 0;
-  opacity: 0;
-  margin: 0;
-  padding: 0;
-  pointer-events: none;
-  transform: translateX(-10px);
+/* BRAND SWITCHER DROPDOWN MENU */
+.brand-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-xl, 12px);
+  box-shadow: 0 10px 25px -5px rgba(10, 13, 18, 0.08), 0 8px 10px -6px rgba(10, 13, 18, 0.04);
+  z-index: 999;
+  padding: var(--alias-spacing-xs, 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: dropFade 0.2s ease-out;
+  box-sizing: border-box;
 }
 
-.brand-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0; }
-.brand-subtitle { font-size: 11px; font-weight: 400; color: #475569; margin: 0; }
-
-.app-switcher { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 1;
+.brand-dropdown-menu.collapsed-dropdown {
+  left: calc(100% + 12px);
+  top: 0;
+  width: 220px;
 }
 
-.app-sidebar.collapsed .app-switcher {
-  width: 0;
-  height: 0;
-  flex: 0 0 0;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
+@keyframes dropFade {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--alias-color-border-subtle, #e5e5e5);
+  margin: 4px 6px;
+}
+
+:deep(.logout-nav-item:hover) {
+  background-color: var(--primitive-color-red-50, #fef2f2) !important;
+  color: var(--primitive-color-red-600, #e7000b) !important;
+}
+:deep(.logout-nav-item:hover .qmt-nav-item__icon) {
+  color: var(--primitive-color-red-600, #e7000b) !important;
+}
+
+/* SUBMENU SYSTEM */
+.brand-submenu-menu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  width: 220px;
+  background-color: #ffffff;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-xl, 12px);
+  box-shadow: 0 10px 25px -5px rgba(10, 13, 18, 0.08), 0 8px 10px -6px rgba(10, 13, 18, 0.04);
+  z-index: 1000;
+  padding: var(--alias-spacing-xs, 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: subFade 0.15s ease-out;
+  box-sizing: border-box;
+}
+
+@keyframes subFade {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* NAV */
 .sidebar-nav { 
   flex: 1; 
   min-height: 0; 
-  padding: 20px 12px; 
+  padding: 0 var(--alias-spacing-xl, 16px); 
   overflow-y: auto; 
   overflow-x: hidden; 
   transition: padding 0.3s ease; 
@@ -680,102 +612,85 @@ onUnmounted(() => {
   flex-direction: column;
 }
 .app-sidebar.collapsed .sidebar-nav {
-  padding: 20px 0;
+  padding: 0;
   align-items: center;
 }
 
-/* Group / Section Header Titles (Normalized text, color #737373) */
+.sidebar-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-xs, 4px);
+}
+
+/* Section Header Titles */
 .nav-section-title { 
-  font-size: 11.5px; 
+  font-size: 12px; 
   font-weight: 500; 
-  color: #737373; 
-  margin-bottom: 6px; 
-  padding-left: 12px;
-  text-transform: none;
-  letter-spacing: normal;
+  line-height: 18px; 
+  color: var(--alias-color-text-tertiary, #737373); 
+  padding: var(--alias-spacing-md, 8px) var(--alias-spacing-md, 8px) 6px var(--alias-spacing-md, 8px); 
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
   transition: opacity 0.3s ease;
 }
 .app-sidebar.collapsed .nav-section-title {
   opacity: 0;
   height: 0;
   margin: 0;
-  overflow: hidden;
-}
-.mt-5 { margin-top: 20px; }
-.mt-6 { margin-top: 24px; }
-.mt-auto { margin-top: auto; }
-.rotate-90 { transform: rotate(90deg); }
-
-ul { list-style: none; padding: 0; margin: 0; }
-
-/* Inactive Nav Item (#737373) */
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 9px 12px;
-  gap: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #737373;
-  margin-bottom: 2px;
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-.nav-item .nav-icon { 
-  color: #737373; 
-  flex-shrink: 0; 
-  transition: color 0.15s ease, transform 0.2s; 
-}
-.nav-item:hover { 
-  background-color: #F5F5F5; 
-  color: #404040; 
-}
-.nav-item:hover .nav-icon { 
-  color: #404040; 
-}
-
-/* Active Nav Item (#404040 text & icon, #F5F5F5 background) */
-.nav-item.active { 
-  background-color: #F5F5F5; 
-  color: #404040; 
-  font-weight: 600; 
-}
-.nav-item.active .nav-icon { 
-  color: #404040; 
-}
-
-.app-sidebar.collapsed .nav-item {
-  width: 44px;
-  height: 44px;
   padding: 0;
-  justify-content: center;
-  margin-bottom: 8px;
-  gap: 0;
-}
-.nav-icon { flex-shrink: 0; transition: transform 0.2s; }
-.nav-text { 
-  font-size: 13px; 
-  transition: all 0.3s ease;
-  white-space: nowrap;
   overflow: hidden;
-  opacity: 1;
+}
+.mt-5 { margin-top: var(--alias-spacing-2xl, 20px); }
+.mt-auto { margin-top: auto; }
+
+/* Collapsible Menu Group Styling */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-xs, 4px);
+  width: 100%;
 }
 
-.app-sidebar.collapsed .nav-text {
-  width: 0;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-10px);
+.nav-group-children {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-xs, 4px);
+}
+
+.nav-group-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--alias-spacing-xs, 4px);
+  width: 100%;
+}
+
+.collapsed-item-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .sidebar-bottom-actions {
-  padding-top: 20px;
-  border-top: 1px solid #f3f4f6;
-  margin-top: auto;
+  padding: var(--alias-spacing-xl, 16px);
+  border-top: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-xs, 4px);
+  box-sizing: border-box;
 }
 .app-sidebar.collapsed .sidebar-bottom-actions {
-  border-top: none;
+  border-top: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  padding: var(--alias-spacing-xl, 16px) 0;
+  align-items: center;
 }
 
 /* Scrollbar */
@@ -796,265 +711,5 @@ ul { list-style: none; padding: 0; margin: 0; }
 .sidebar-nav {
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
-}
-
-/* BRAND SWITCHER DROPDOWN MENU */
-.brand-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  width: 226px;
-  background-color: #fafafa;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  animation: dropFade 0.2s ease-out;
-}
-
-@keyframes dropFade {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.app-sidebar.collapsed .brand-dropdown-menu {
-  width: 190px;
-  left: 0;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: #475569;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.dropdown-item:hover {
-  background-color: #ffffff;
-  color: #0f172a;
-}
-
-.dropdown-icon {
-  flex-shrink: 0;
-}
-
-.dropdown-text {
-  white-space: nowrap;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background-color: #f1f5f9;
-  margin: 4px 6px;
-}
-
-.logout-btn:hover {
-  background-color: #fef2f2 !important;
-}
-
-/* SUBMENU SYSTEM */
-.has-submenu {
-  position: relative;
-}
-
-.brand-submenu-menu {
-  position: absolute;
-  top: 0;
-  left: calc(100% + 8px);
-  width: 226px;
-  background-color: #fafafa;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  z-index: 1000;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  animation: subFade 0.15s ease-out;
-}
-
-@keyframes subFade {
-  from { opacity: 0; transform: translateX(-5px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-.submenu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: #475569;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.submenu-item:hover {
-  background-color: #ffffff;
-  color: #0f172a;
-}
-
-.submenu-icon-box {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.submenu-text {
-  font-weight: 500;
-}
-
-.ml-auto {
-  margin-left: auto;
-}
-
-/* Collapsible Menu Group Styling */
-.nav-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 4px;
-}
-
-.nav-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #737373;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s ease;
-  user-select: none;
-  border: 1px solid transparent;
-}
-
-.nav-group-header .nav-icon {
-  color: #737373;
-  transition: color 0.15s ease;
-}
-
-.nav-group-header:hover {
-  background-color: #F5F5F5;
-  color: #404040;
-}
-
-.nav-group-header:hover .nav-icon,
-.nav-group-header:hover .nav-group-chevron {
-  color: #404040;
-}
-
-.nav-group-header.header-active {
-  color: #404040;
-  font-weight: 600;
-}
-
-.nav-group-header.header-active .nav-icon,
-.nav-group-header.header-active .nav-group-chevron {
-  color: #404040;
-}
-
-.nav-group-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.nav-group-chevron {
-  color: #737373;
-  transition: transform 0.2s ease, color 0.15s ease;
-}
-
-.nav-group-chevron.collapsed-chevron {
-  transform: rotate(-90deg);
-}
-
-.nav-group-children {
-  list-style: none;
-  padding: 2px 0 2px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-left: 10px;
-}
-
-.nav-child-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  gap: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #737373;
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  border: none;
-}
-
-.nav-child-item .nav-icon {
-  color: #737373;
-  transition: color 0.15s ease;
-}
-
-.nav-child-item:hover {
-  background-color: #F5F5F5;
-  color: #404040;
-}
-
-.nav-child-item:hover .nav-icon {
-  color: #404040;
-}
-
-/* Active sub-item pill matching requested #404040 / #F5F5F5 */
-.nav-child-item.active {
-  background-color: #F5F5F5;
-  color: #404040;
-  box-shadow: none;
-  border: none;
-  font-weight: 600;
-}
-
-.nav-child-item.active .nav-icon {
-  color: #404040;
-}
-
-.nav-group-collapsed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.collapsed-item-wrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
 }
 </style>

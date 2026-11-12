@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  ShieldCheck, Fingerprint, Plus, Search, Filter, 
-  RotateCcw, CheckCircle2, AlertTriangle, Radio, 
-  Wifi, Smartphone, MapPin, Eye, Trash2, X, Lock, RefreshCw, Check
-} from 'lucide-vue-next';
+import {
+  ShieldCheck, Fingerprint, Plus, Search,
+  Filter, CheckCircle2, Radio, Wifi,
+  RefreshCw
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -294,8 +296,8 @@ const metrics = computed(() => {
   };
 });
 
-// ─── Tabs Configuration (AGENTS.md Rule 1: UnderlineTabs Standard) ───
-const underlineTabs = computed<UnderlineTabItem<TabKey>[]>(() => [
+// ─── Tabs Configuration (AGENTS.md Single Tab Standard: BaseTabs rounded) ───
+const deviceTabs = computed<BaseTabItem<TabKey>[]>(() => [
   { id: 'terminals', label: 'Attendance Devices', count: devices.value.length, icon: ShieldCheck },
   { id: 'enrollments', label: 'Device Enrollments', count: enrollments.value.filter(e => e.state === 'active').length, icon: Fingerprint }
 ]);
@@ -548,11 +550,13 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 
     <!-- Master Unified Card Container -->
     <div class="devices-unified-card">
-      <!-- Secondary Tabs Standard (AGENTS.md Rule 1: UnderlineTabs) -->
+      <!-- Primary Tabs Standard (AGENTS.md Single Tab Standard: BaseTabs rounded) -->
       <div class="card-tabs-header">
-        <UnderlineTabs
+        <BaseTabs
           v-model="activeTab"
-          :tabs="underlineTabs"
+          :tabs="deviceTabs"
+          type="rounded"
+          size="sm"
         />
       </div>
 
@@ -567,14 +571,10 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
         >
           <!-- Table Toolbar Primary Action (AGENTS.md Rule 6: 8-10px radius) -->
           <template #actions>
-            <button
-              type="button"
-              class="btn-primary-action"
-              @click="handleOpenRegisterDevice"
-            >
-              <Plus :size="15" />
-              <span>Register Device</span>
-            </button>
+            <AppButton variant="primary" size="sm" @click="handleOpenRegisterDevice">
+  <template #icon-left><Plus :size="15" /></template>
+  Register Device
+</AppButton>
           </template>
 
           <!-- Table Filters Strip -->
@@ -671,7 +671,9 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 
                   <!-- Status -->
                   <td v-if="terminalColumns.find(c => c.key === 'status')?.visible">
-                    <span class="status-pill status-present">ONLINE</span>
+                    <BaseBadge type="pill-color" :color="dev.is_online ? 'success' : 'error'" :dot="true" size="sm">
+                      {{ dev.is_online ? 'ONLINE' : 'OFFLINE' }}
+                    </BaseBadge>
                   </td>
 
                   <!-- Actions -->
@@ -812,9 +814,9 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 
                   <!-- State -->
                   <td v-if="enrollmentColumns.find(c => c.key === 'state')?.visible">
-                    <span class="status-pill" :class="enr.state === 'active' ? 'status-present' : 'status-absent'">
+                    <BaseBadge type="pill-color" :color="enr.state === 'active' ? 'success' : 'error'" :dot="true" size="sm">
                       {{ enr.state.toUpperCase() }}
-                    </span>
+                    </BaseBadge>
                   </td>
 
                   <!-- Actions -->
@@ -959,8 +961,8 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 .biometric-devices-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }
@@ -998,9 +1000,9 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 }
 
 .card-tabs-header {
-  padding: 8px 16px 0 16px;
+  padding: 16px 20px 12px 20px;
   background: #ffffff;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #E5E5E5;
 }
 
 .tab-content-area {

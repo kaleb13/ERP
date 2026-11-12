@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, Briefcase, GraduationCap,
-  Plus, Trash2, Calendar, ChevronDown, Columns,
-  List, Table, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo, Maximize2, Check, ShieldAlert, Award,
+import {
+  X, Briefcase, GraduationCap, Plus,
+  Trash2, ChevronDown, Table, Maximize2,
   ArrowUp, ArrowDown, Copy
-} from 'lucide-vue-next';
+} from 'lucide-vue-next';;
+import IconColumnSolid from '../../components/IconColumnSolid.vue';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = [
+  { label: 'Job Positions', to: '/hr/job-positions' },
+  { label: 'Create Job Position' }
+];
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -28,7 +35,7 @@ type TabId = 'position' | 'requirements';
 const activeTab = ref<TabId>('position');
 
 const tabs = computed<TabItem[]>(() => [
-  { id: 'position', label: 'Position Details', icon: Briefcase },
+  { id: 'position', label: 'Position Detail', icon: Briefcase },
   { id: 'requirements', label: 'Requirements & Qualifications', icon: GraduationCap }
 ]);
 
@@ -559,34 +566,29 @@ onMounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar (Exact Critic Standard) -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/job-positions" class="bc-link">Job Positions</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Job Position</span>
-          <SaveStateBadge :isSaved="isSaved" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
-        <button 
-          type="button" 
-          class="btn-clear-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="clearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button 
-          type="button" 
-          class="btn-save-action" 
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -605,21 +607,17 @@ onMounted(() => {
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════ -->
-    <!-- TAB 1: POSITION DETAILS (JobPosition lines 1152–1176)          -->
+    <!-- TAB 1: POSITION DETAIL (JobPosition lines 1152–1176)           -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-show="activeTab === 'position'" class="tab-content-container">
       <div class="clean-card">
-        <div class="section-title-box">
-          <h2 class="section-title">Position Seat Specifications</h2>
-        </div>
-
-        <!-- 3-Column Responsive Grid (Rule 16: Zero Code Input) -->
+        <!-- Row 1: 3 columns (gap: 16px) -->
         <div class="form-grid-3">
-          <!-- Job Title from Catalogue: FK job_title_id -->
+          <!-- Job Title: FK job_title_id -->
           <FormSelect
             label="Job Title"
             v-model="form.job_title_id"
-            placeholder="Select"
+            placeholder="Select Title"
             :options="jobTitleOptions"
             required
           />
@@ -628,136 +626,77 @@ onMounted(() => {
           <FormSelect
             label="Seniority Level"
             v-model="form.job_level_id"
-            placeholder="Select"
+            placeholder="Select Level"
             :options="jobLevelOptions"
             required
           />
 
-          <!-- Owning Entity / Branch: FK entity_id (Schema line 1157) -->
+          <!-- Owning Entity: FK entity_id (Schema line 1157) -->
           <FormSelect
-            label="Owning Entity / Branch"
+            label="Owning Entity"
             v-model="form.entity_id"
-            placeholder="Select"
+            placeholder="Select Entity"
             :options="entityOptions"
             required
           />
+        </div>
 
+        <!-- Row 2: 3 columns (gap: 16px) -->
+        <div class="form-grid-3">
           <!-- Organization Unit Placement: FK organization_unit_id -->
           <FormSelect
             label="Organization Unit"
             v-model="form.organization_unit_id"
-            placeholder="Select"
+            placeholder="Select Unit"
             :options="orgUnitOptions"
             required
           />
 
-          <!-- Pay Grade: FK job_grade_id -->
+          <!-- Job Grade: FK job_grade_id -->
           <FormSelect
             label="Job Grade"
             v-model="form.job_grade_id"
-            placeholder="Select"
+            placeholder="Select Grade"
             :options="jobGradeOptions"
             required
           />
 
-          <!-- Reports To Position: FK reports_to_position_id -->
-          <FormSelect
-            label="Reports To Position"
-            v-model="form.reports_to_position_id"
-            placeholder="Select"
-            :options="reportsToOptions"
-          />
-
           <!-- Authorized Headcount -->
           <FormInput
-            label="Authorized Headcount (Seats)"
+            label="Authorized Headcount"
             v-model="form.authorized_headcount"
             type="number"
+            placeholder="1"
             required
           />
         </div>
 
-        <!-- Guarantee / Surety Row (Cashier / Storekeeper surety bonds) -->
-        <div class="guarantee-row mt-4">
-          <div class="form-grid-3">
-            <FormInput
-              label="Guarantee Required Amount (ETB)"
-              v-model="form.guarantee_required_amount"
-              type="number"
-            />
-          </div>
-          <p class="field-helper-note">
-            Required surety bond posted before taking the seat (e.g., cashier or warehouse storekeeper), validated against EmployeeGuarantee.
-          </p>
-        </div>
+        <!-- Row 3: 2 columns matching 3-col width (gap: 16px) -->
+        <div class="form-grid-3">
+          <!-- Reports To Position: FK reports_to_position_id -->
+          <FormSelect
+            label="Reports to Position"
+            v-model="form.reports_to_position_id"
+            placeholder="Select Position"
+            :options="reportsToOptions"
+          />
 
-        <!-- Key Succession Position Checkbox: Rule 5 (Both Title & Description) -->
-        <div class="checkbox-row mt-4">
-          <FormCheckbox
-            v-model="form.is_key_position"
-            label="Key Succession Position"
-            description="Flags this position as critical in succession coverage reporting. Audits require a designated emergency or planned successor."
+          <!-- Guarantee / Surety Row (Cashier / Storekeeper surety bonds) -->
+          <FormInput
+            label="Guarantee Required Amount (ETB)"
+            v-model="form.guarantee_required_amount"
+            type="number"
+            placeholder="0"
           />
         </div>
 
-        <!-- Strategic Job Summary Rich Text Editor (Rule 18 Standard) -->
-        <div class="biography-section mt-5">
-          <label class="gc-field-label">Job Purpose & Operational Scope</label>
-
-          <div class="rich-editor-container">
-            <!-- Toolbar -->
-            <div class="editor-toolbar">
-              <div class="toolbar-dropdown">
-                <span>Paragraph</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-dropdown">
-                <span>Font Type</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-icon-btn" title="List"><List :size="14" /><ChevronDown :size="10" /></button>
-                <button type="button" class="editor-icon-btn font-bold" title="Bold">B</button>
-                <button type="button" class="editor-icon-btn italic" title="Italic">I</button>
-                <button type="button" class="editor-icon-btn underline" title="Underline">U</button>
-                <button type="button" class="editor-icon-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="editor-icon-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="editor-icon-btn" title="Table"><Table :size="14" /></button>
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-color-box" title="Text Color"></button>
-                <button type="button" class="editor-icon-btn" title="Insert Link"><LinkIcon :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Insert Image"><ImageIcon :size="14" /></button>
-              </div>
-
-              <div class="toolbar-icon-group ml-auto">
-                <button type="button" class="editor-icon-btn" title="Undo"><Undo :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Redo"><Redo :size="14" /></button>
-              </div>
-            </div>
-
-            <!-- Text Area -->
-            <textarea
-              v-model="form.description"
-              rows="6"
-              class="editor-textarea"
-            ></textarea>
-
-            <!-- Footer Bar with Character Counter -->
-            <div class="editor-footer">
-              <span class="char-count-pill">{{ form.description.length }} / 5,000 Characters</span>
-              <div class="editor-resize-handle">//</div>
-            </div>
-          </div>
+        <!-- Row 4: Key Succession Position Checkbox (Title & Description) -->
+        <div class="checkbox-row">
+          <FormCheckbox
+            v-model="form.is_key_position"
+            label="Key Succession Position"
+            description="Designates this position as critical, flagging it in enterprise succession coverage audits if vacant without designated successors."
+          />
         </div>
       </div>
     </div>
@@ -805,7 +744,7 @@ onMounted(() => {
                   <th class="child-th text-center" style="width: 110px;">Mandatory</th>
                   <th class="child-th" style="width: 110px;">Weight (%)</th>
                   <th class="child-th child-th-col-icon">
-                    <Columns :size="14" class="text-slate-400" />
+                    <IconColumnSolid :size="13" class="col-icon-solid" />
                   </th>
                 </tr>
               </thead>
@@ -1137,9 +1076,10 @@ onMounted(() => {
 
 <style scoped>
 .job-position-create-page {
-  padding: 16px 24px 80px 24px;
-  background-color: var(--primitive-color-neutral-50, #f8fafc);
-  min-height: 100vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-3xl, 24px);
   box-sizing: border-box;
 }
 
@@ -1148,7 +1088,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  width: 100%;
 }
 
 .breadcrumb-strip {
@@ -1204,7 +1144,7 @@ onMounted(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--alias-spacing-md, 8px);
 }
 
 .btn-clear-action {
@@ -1254,26 +1194,34 @@ onMounted(() => {
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 13px;
-  margin-bottom: 16px;
 }
 
 /* Tabs */
 .create-tabs-wrapper {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .tab-content-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 .clean-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-xl, 16px);
+  padding: var(--alias-spacing-3xl, 24px);
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: var(--alias-spacing-2xl, 20px);
+}
+
+.checkbox-row {
+  margin-top: 4px;
+  max-width: 520px;
 }
 
 .section-title-box {
@@ -1290,7 +1238,7 @@ onMounted(() => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 900px) {

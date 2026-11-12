@@ -5,11 +5,13 @@ import {
   Plus, Search, MoreVertical, Trash2, Eye, CheckCircle2, X 
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 
 const router = useRouter();
@@ -337,14 +339,10 @@ const shiftSelectOptions = [
     >
       <!-- Top Right Toolbar Actions (One Create Button Standard) -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-create-assignment"
-          @click="handleOpenQuickCreate"
-        >
-          <Plus :size="15" />
-          <span>Assign Shift</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="handleOpenQuickCreate">
+  <template #icon-left><Plus :size="15" /></template>
+  Assign Shift
+</AppButton>
       </template>
 
       <!-- Filter Controls Strip (Filter by Shift Window, Facility, State) -->
@@ -395,11 +393,12 @@ const shiftSelectOptions = [
           <thead>
             <tr>
               <th class="th-checkbox">
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="filteredAssignments.length > 0 && selectedRowIds.length === filteredAssignments.length"
-                  @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
+                <FormCheckbox
+                  :model-value="filteredAssignments.length > 0 && selectedRowIds.length === filteredAssignments.length"
+                  :indeterminate="selectedRowIds.length > 0 && selectedRowIds.length < filteredAssignments.length"
+                  size="sm"
+                  @change="(val) => handleToggleSelectAll(Boolean(val))"
+                  aria-label="Select all rows"
                 />
               </th>
               <th v-if="tableColumns.find(c => c.key === 'employee')?.visible">Employee</th>
@@ -420,12 +419,12 @@ const shiftSelectOptions = [
               :class="{ 'row-selected': selectedRowIds.includes(item.id) }"
             >
               <!-- Checkbox -->
-              <td class="td-checkbox">
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="selectedRowIds.includes(item.id)"
-                  @click.stop="handleToggleRow(item.id)"
+              <td class="td-checkbox" @click.stop>
+                <FormCheckbox
+                  :model-value="selectedRowIds.includes(item.id)"
+                  size="sm"
+                  @change="() => handleToggleRow(item.id)"
+                  aria-label="Select row"
                 />
               </td>
 
@@ -682,9 +681,9 @@ const shiftSelectOptions = [
         </div>
 
         <div class="modal-footer-row">
-          <button type="button" class="btn-modal-dismiss" @click="viewingRecord = null">
+          <AppButton variant="outline" size="sm" @click="viewingRecord = null">
             Close
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -695,8 +694,8 @@ const shiftSelectOptions = [
 .shift-assignments-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

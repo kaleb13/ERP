@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import BaseBadge, { type BadgeColor } from './BaseBadge.vue';
 
 const props = withDefaults(defineProps<{
   isSaved?: boolean;
+  saved?: boolean;
   isDraft?: boolean;
   state?: string;
   label?: string;
+  dot?: boolean;
 }>(), {
   isSaved: false,
+  saved: undefined,
   isDraft: false,
   state: '',
-  label: ''
+  label: '',
+  dot: false
 });
+
+const resolvedIsSaved = computed(() => (props.saved !== undefined ? props.saved : props.isSaved));
 
 const computedState = computed(() => {
   if (props.state) {
@@ -20,59 +27,43 @@ const computedState = computed(() => {
     if (props.state === 'approved' || props.state === 'saved') return 'saved';
     return props.state;
   }
-  if (!props.isSaved) return 'unsaved';
+  if (!resolvedIsSaved.value) return 'unsaved';
   return props.isDraft ? 'draft' : 'saved';
+});
+
+const badgeColor = computed<BadgeColor>(() => {
+  if (computedState.value === 'unsaved') return 'warning';
+  if (computedState.value === 'saved') return 'success';
+  if (computedState.value === 'draft') return 'primary';
+  return 'gray';
 });
 
 const displayLabel = computed(() => {
   if (props.label) return props.label;
   if (computedState.value === 'unsaved') return 'Not Saved';
-  if (computedState.value === 'draft') return props.isSaved ? 'Draft Saved' : 'Draft';
-  if (computedState.value === 'saved') return 'Saved';
+  if (computedState.value === 'draft') return resolvedIsSaved.value ? 'Draft Saved' : 'Draft';
+  if (computedState.value === 'saved') return props.state === 'approved' ? 'Approved' : 'Saved';
   return computedState.value;
 });
 </script>
 
 <template>
-  <span 
+  <BaseBadge
     class="save-state-badge"
     :class="`state-${computedState}`"
+    type="pill-color"
+    :color="badgeColor"
+    :dot="dot"
+    size="sm"
   >
     {{ displayLabel }}
-  </span>
+  </BaseBadge>
 </template>
 
 <style scoped>
 .save-state-badge {
+  margin: 0;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 10px;
-  padding: 2.5px 11px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.2;
-  border: none;
-  white-space: nowrap;
   vertical-align: middle;
-}
-
-/* Not Saved: exact user specification #FEF3C6 bg, #BB4D00 text, no border */
-.save-state-badge.state-unsaved {
-  background-color: #FEF3C6;
-  color: #BB4D00;
-}
-
-/* Saved: clean positive green */
-.save-state-badge.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-/* Draft */
-.save-state-badge.state-draft {
-  background-color: #eff6ff;
-  color: #1d4ed8;
 }
 </style>
