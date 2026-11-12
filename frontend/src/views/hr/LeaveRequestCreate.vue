@@ -3,16 +3,17 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
   MoreVertical, X, Calendar, CalendarDays, List, 
-  ChevronDown, Code, Table, Link2, 
-  Image, Undo2, Redo2, Check, Save,
-  FileText, UploadCloud, Trash2, CheckCircle2,
-  Strikethrough, Underline, Palette
+  ChevronDown, Check, Save,
+  FileText, UploadCloud, Trash2, CheckCircle2
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -347,22 +348,21 @@ const removeAttachment = (idx: number) => {
     <div class="top-nav-bar">
       <div class="breadcrumb-group">
         <AppBreadcrumb :items="breadcrumbItems" />
-        <span :class="isSaved ? 'badge-saved' : 'badge-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <SaveStateBadge :isSaved="isSaved" />
       </div>
 
       <div class="actions-group">
         <!-- Dynamic 3-Dots More Menu [ ⋮ ] (Draft Support per Rule 4) -->
         <div class="more-menu-wrapper" @click.stop>
-          <button 
-            type="button" 
-            class="btn-more-options" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             title="More actions"
             @click="showMoreDropdown = !showMoreDropdown"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
 
           <Transition name="dropdown-fade">
             <div v-if="showMoreDropdown" class="more-dropdown-menu">
@@ -375,16 +375,23 @@ const removeAttachment = (idx: number) => {
         </div>
 
         <!-- Clear Form Secondary Button -->
-        <button type="button" class="btn-clear-form" @click="handleClearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="handleClearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Button -->
-        <button type="button" class="btn-save-primary" @click="handleSubmit">
-          <Save :size="14" />
-          <span>Save</span>
-        </button>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSubmit"
+        >
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -576,58 +583,13 @@ const removeAttachment = (idx: number) => {
             </div>
           </div>
 
-          <!-- Section 2: Rich Text WYSIWYG Editor -->
-          <div class="wysiwyg-editor-box">
-            <!-- Toolbar -->
-            <div class="wysiwyg-toolbar">
-              <div class="toolbar-left-group">
-                <button type="button" class="tb-select-btn">
-                  <span>Paragraph</span>
-                  <ChevronDown :size="12" />
-                </button>
-                <button type="button" class="tb-select-btn">
-                  <span>Font Type</span>
-                  <ChevronDown :size="12" />
-                </button>
-                <button type="button" class="tb-select-btn">
-                  <List :size="13" />
-                  <ChevronDown :size="11" />
-                </button>
-
-                <div class="tb-divider"></div>
-
-                <button type="button" class="tb-btn" title="Bold"><b>B</b></button>
-                <button type="button" class="tb-btn" title="Italic"><i>I</i></button>
-                <button type="button" class="tb-btn" title="Underline"><Underline :size="13" /></button>
-                <button type="button" class="tb-btn" title="Strikethrough"><Strikethrough :size="13" /></button>
-                <button type="button" class="tb-btn" title="Code"><Code :size="13" /></button>
-                <button type="button" class="tb-btn" title="Table"><Table :size="13" /></button>
-                
-                <div class="tb-divider"></div>
-
-                <button type="button" class="tb-btn" title="Color"><Palette :size="13" /></button>
-                <button type="button" class="tb-btn" title="Link"><Link2 :size="13" /></button>
-                <button type="button" class="tb-btn" title="Image"><Image :size="13" /></button>
-              </div>
-
-              <div class="toolbar-right-group">
-                <button type="button" class="tb-btn" title="Undo"><Undo2 :size="13" /></button>
-                <button type="button" class="tb-btn" title="Redo"><Redo2 :size="13" /></button>
-              </div>
-            </div>
-
-            <!-- Textarea Area -->
-            <textarea 
-              v-model="form.reason" 
-              class="wysiwyg-textarea" 
-              rows="5"
-            />
-
-            <!-- Editor Footer Counter -->
-            <div class="wysiwyg-footer">
-              <span class="char-counter-text">{{ form.reason.length }} / 5,000 Characters</span>
-            </div>
-          </div>
+          <!-- Section 2: Standard Rich Text Component -->
+          <FormRichText 
+            v-model="form.reason" 
+            label="Reason & Additional Justification"
+            placeholder="Explain the detailed justification, medical notes, or travel remarks..."
+            :max-length="5000"
+          />
         </div>
       </div>
     </div>
@@ -718,8 +680,8 @@ const removeAttachment = (idx: number) => {
 .leave-create-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }
@@ -898,13 +860,13 @@ const removeAttachment = (idx: number) => {
 .form-grid-2col {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 900px) {

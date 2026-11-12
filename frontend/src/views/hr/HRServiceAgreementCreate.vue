@@ -2,26 +2,16 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
-  X,
-  Building2,
-  Briefcase,
-  FileText,
-  DollarSign,
-  Users,
-  Calendar,
-  MoreVertical,
-  CheckCircle2,
-  AlertCircle,
-  Bold,
-  Italic,
-  List,
-  Link2
-} from 'lucide-vue-next';
+  X, Building2, Briefcase, FileText,
+  DollarSign, MoreVertical, CheckCircle2
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
 
 import {
   serviceAgreementsData,
@@ -188,19 +178,6 @@ onMounted(() => {
   }
 });
 
-// ─── RICH TEXT TOOLBAR ACTIONS ────────────────────────────────────────────
-const insertFormatting = (tag: string) => {
-  if (tag === 'bold') {
-    formData.value.notes += ' **Bold Terms** ';
-  } else if (tag === 'italic') {
-    formData.value.notes += ' *Italic Clause* ';
-  } else if (tag === 'list') {
-    formData.value.notes += '\n• ';
-  } else if (tag === 'link') {
-    formData.value.notes += ' [Reference SLA Document](https://...) ';
-  }
-};
-
 // ─── SAVE HANDLER (Rule 27: Plain text Save button) ───────────────────────
 const handleSave = (stateOverride?: AgreementState) => {
   if (!formData.value.provider_entity_id || !formData.value.client_party_id) {
@@ -309,21 +286,25 @@ const handleClear = () => {
     <!-- Top Action Bar (Rule 4) -->
     <div class="top-action-bar">
       <div class="left-nav-meta">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :saved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :saved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="right-actions-cluster" @click.stop>
         <!-- 3-Dots More Menu for Draft State (Rule 4) -->
         <div class="relative-more-dropdown">
-          <button
-            type="button"
-            class="btn-more-dots"
+          <AppButton
+            variant="outline"
+            size="sm"
+            iconOnly
             title="More Options"
             @click="toggleMoreMenu"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
 
           <div v-if="isMoreMenuOpen" class="more-dropdown-menu">
             <button
@@ -338,23 +319,23 @@ const handleClear = () => {
         </div>
 
         <!-- Clear Form Secondary Button -->
-        <button
-          type="button"
-          class="btn-secondary-clear"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleClear"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Button (Rule 27: Plain text "Save", zero icon) -->
-        <button
-          type="button"
-          class="btn-primary-save"
+        <AppButton
+          variant="primary"
+          size="sm"
           @click="() => handleSave()"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -506,54 +487,12 @@ const handleClear = () => {
         </div>
 
         <!-- Standardized WYSIWYG Editor Container -->
-        <div class="rich-editor-wrapper">
-          <div class="editor-toolbar">
-            <button
-              type="button"
-              class="editor-tool-btn"
-              title="Bold"
-              @click="insertFormatting('bold')"
-            >
-              <Bold :size="14" />
-            </button>
-            <button
-              type="button"
-              class="editor-tool-btn"
-              title="Italic"
-              @click="insertFormatting('italic')"
-            >
-              <Italic :size="14" />
-            </button>
-            <div class="toolbar-sep"></div>
-            <button
-              type="button"
-              class="editor-tool-btn"
-              title="Bullet List"
-              @click="insertFormatting('list')"
-            >
-              <List :size="14" />
-            </button>
-            <button
-              type="button"
-              class="editor-tool-btn"
-              title="Link"
-              @click="insertFormatting('link')"
-            >
-              <Link2 :size="14" />
-            </button>
-          </div>
-
-          <textarea
-            v-model="formData.notes"
-            class="editor-textarea"
-            rows="7"
-            maxlength="5000"
-          ></textarea>
-
-          <div class="editor-footer">
-            <span class="char-counter">{{ formData.notes.length }} / 5,000 Characters</span>
-          </div>
-        </div>
+        <!-- Standardized Rich Text Component -->
+        <FormRichText
+          v-model="formData.notes"
+          placeholder="Detail specific job categories supplied, client operational requirements, and regulatory compliance stipulations..."
+          :max-length="5000"
+        />
       </div>
     </div>
   </div>
@@ -561,12 +500,12 @@ const handleClear = () => {
 
 <style scoped>
 .service-agreement-create-page {
-  padding: 20px 28px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Toast */
@@ -784,13 +723,13 @@ const handleClear = () => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-4 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 1024px) {

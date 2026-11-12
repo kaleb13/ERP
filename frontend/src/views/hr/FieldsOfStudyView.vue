@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  GraduationCap, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Layers, ChevronRight, Award,
-  BookOpen, FolderTree
-} from 'lucide-vue-next';
+import {
+  GraduationCap, Plus, Search, Filter,
+  MoreVertical, Edit2, Trash2, Eye,
+  Copy, Check, CheckCircle2, X
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -557,14 +557,10 @@ onUnmounted(() => {
 
       <!-- Primary Action: + Add Field of Study (Rule 10.2) -->
       <template #actions>
-        <button 
-          type="button" 
-          class="btn-primary-create" 
-          @click="openCreateModal"
-        >
-          <Plus :size="14" />
-          <span>Add Field of Study</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openCreateModal">
+  <template #icon-left><Plus :size="15" /></template>
+  Add Field of Study
+</AppButton>
       </template>
 
       <!-- Table Body -->
@@ -800,14 +796,13 @@ onUnmounted(() => {
 .fields-of-study-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   width: 100%;
 }
 
 .breadcrumb-container {
   display: flex;
   align-items: center;
-  margin-bottom: 2px;
 }
 
 /* Toast Banner */

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Search, Filter, ArrowUpDown, Columns, Maximize2, 
-  MoreVertical, ChevronLeft, ChevronRight, CheckCircle2,
-  ChevronDown, Eye, Check, X, ArrowUpRight, ShieldAlert
-} from 'lucide-vue-next';
+import {
+  Plus, Search, Filter, MoreVertical,
+  CheckCircle2, Eye, Check, X,
+  ShieldAlert
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import AppDataTable from '../../components/AppDataTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { type ColumnDef } from '../../components/BaseTable.vue';
 
 const router = useRouter();
 
@@ -15,6 +18,28 @@ const router = useRouter();
 const breadcrumbItems = [
   { label: 'Employee Movement' }
 ];
+
+// ─── Table Columns (Matching Figma 6624:99272) ───
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'select', label: '', width: '40px', sortable: false, visible: true },
+  { key: 'name', label: 'Name', sortable: true, visible: true },
+  { key: 'movement_type', label: 'Movement Type', sortable: true, visible: true },
+  { key: 'transition', label: 'Transition Detail', sortable: false, visible: true },
+  { key: 'effective_date', label: 'Effective Date', sortable: true, visible: true },
+  { key: 'status', label: 'Status', sortable: true, visible: true },
+  { key: 'actions', label: 'Actions', width: '60px', sortable: false, visible: true }
+]);
+
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
+};
 
 // ─── Datasets Aligned with Image 3 ───
 export interface MovementDirectoryRecord {
@@ -189,230 +214,152 @@ const handleBatchDelete = () => {
       </div>
     </Transition>
 
-    <!-- Master Unified Table Card (Matching Image 3) -->
-    <div class="master-table-card">
-      <!-- Card Header: Title + Rich Subtitle -->
-      <div class="card-title-row">
-        <h2 class="table-card-title">Employee Movement</h2>
-        <p class="table-card-subtitle">
-          Manage lifecycle employee promotions, lateral transfers, grade step increments, secondments, and active employment assignments across facilities.
-        </p>
-      </div>
+    <!-- Master Unified Table Card (Matching Figma 6624:99272) -->
+    <AppDataTable
+      title="Employee Movement"
+      subtitle="Manage lifecycle employee promotions, lateral transfers, grade step increments, secondments, and active employment assignments across facilities."
+      :columns="tableColumns"
+      v-model:searchQuery="searchQuery"
+      :totalEntries="filteredMovements.length"
+      @toggleColumn="handleToggleColumn"
+    >
+      <template #actions>
+        <AppButton variant="primary" size="sm" @click="handleNavigateCreate">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Movement
+</AppButton>
+      </template>
 
-      <!-- Toolbar Row: Search, Filter, Sort, Columns, Maximize, + Create Movement -->
-      <div class="table-toolbar-row">
-        <!-- Search Input -->
-        <div class="search-input-wrapper">
-          <Search :size="14" class="search-icon" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-text-input"
-            placeholder="Search by Name..."
-          />
-        </div>
+      <template #default>
+        <div class="table-responsive-wrapper">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th v-if="isColVisible('select')" class="th-checkbox">
+                  <input
+                    type="checkbox"
+                    class="table-checkbox"
+                    :checked="isAllSelected"
+                    @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
+                  />
+                </th>
+                <th v-if="isColVisible('name')">Name</th>
+                <th v-if="isColVisible('movement_type')">Movement Type</th>
+                <th v-if="isColVisible('transition')">Transition Detail</th>
+                <th v-if="isColVisible('effective_date')">Effective Date</th>
+                <th v-if="isColVisible('status')">Status</th>
+                <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in filteredMovements"
+                :key="item.id"
+                class="table-row-hover"
+                @click="handleInspectDetails(item.id)"
+              >
+                <!-- Checkbox -->
+                <td v-if="isColVisible('select')" class="td-checkbox" @click.stop>
+                  <input
+                    type="checkbox"
+                    class="table-checkbox"
+                    :checked="selectedRowIds.includes(item.id)"
+                    @change="handleToggleRow(item.id)"
+                  />
+                </td>
 
-        <!-- Toolbar Right Actions Block -->
-        <div class="toolbar-actions-block">
-          <!-- Filter Button -->
-          <button type="button" class="btn-toolbar-secondary">
-            <Filter :size="14" />
-            <span>Filter</span>
-          </button>
-
-          <!-- Sort Button -->
-          <button type="button" class="btn-toolbar-secondary">
-            <ArrowUpDown :size="14" />
-            <span>Sort</span>
-            <ChevronDown :size="12" />
-          </button>
-
-          <!-- Columns Visibility Button -->
-          <button type="button" class="btn-toolbar-icon" title="Toggle Columns">
-            <Columns :size="15" />
-          </button>
-
-          <!-- Maximize View Button -->
-          <button type="button" class="btn-toolbar-icon" title="Maximize View">
-            <Maximize2 :size="15" />
-          </button>
-
-          <!-- Create Movement Primary Button -->
-          <button 
-            type="button" 
-            class="btn-create-primary"
-            @click="handleNavigateCreate"
-          >
-            <Plus :size="15" />
-            <span>Create Movement</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Data Table Body (Matching Image 3) -->
-      <div class="table-responsive-wrapper">
-        <table class="erp-table">
-          <thead>
-            <tr>
-              <th class="th-checkbox">
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="isAllSelected"
-                  @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
-                />
-              </th>
-              <th>Name</th>
-              <th>Movement Type</th>
-              <th>Transition Detail</th>
-              <th>Effective Date</th>
-              <th>Status</th>
-              <th class="th-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="item in filteredMovements"
-              :key="item.id"
-              class="table-row-hover"
-              @click="handleInspectDetails(item.id)"
-            >
-              <!-- Checkbox -->
-              <td class="td-checkbox" @click.stop>
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="selectedRowIds.includes(item.id)"
-                  @change="handleToggleRow(item.id)"
-                />
-              </td>
-
-              <!-- Name (Avatar + Bold Name + EMP code subtext underneath) -->
-              <td>
-                <div class="name-cell-group">
-                  <img :src="item.avatar" :alt="item.name" class="table-avatar-img" />
-                  <div class="name-meta-col">
-                    <span class="table-emp-name">{{ item.name }}</span>
-                    <span class="table-emp-code">{{ item.emp_code }}</span>
+                <!-- Name (Avatar + Bold Name + EMP code subtext underneath) -->
+                <td v-if="isColVisible('name')">
+                  <div class="name-cell-group">
+                    <img :src="item.avatar" :alt="item.name" class="table-avatar-img" />
+                    <div class="name-meta-col">
+                      <span class="table-emp-name">{{ item.name }}</span>
+                      <span class="table-emp-code">{{ item.emp_code }}</span>
+                    </div>
                   </div>
-                </div>
-              </td>
+                </td>
 
-              <!-- Movement Type (Tertiary color #737373) -->
-              <td class="td-tertiary">
-                <div class="movement-type-cell">
-                  <span>{{ item.movement_type }}</span>
-                  <span v-if="item.require_guarantee_refresh" class="table-surety-badge" title="Financial Surety / Guarantor Refresh Required">
-                    <ShieldAlert :size="10" />
-                    <span>Surety Req.</span>
+                <!-- Movement Type (Tertiary color #737373) -->
+                <td v-if="isColVisible('movement_type')" class="td-tertiary">
+                  <div class="movement-type-cell">
+                    <span>{{ item.movement_type }}</span>
+                    <span v-if="item.require_guarantee_refresh" class="table-surety-badge" title="Financial Surety / Guarantor Refresh Required">
+                      <ShieldAlert :size="10" />
+                      <span>Surety Req.</span>
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Transition Detail: e.g. Inventory Controller ➔ Inventory Controller -->
+                <td v-if="isColVisible('transition')" class="td-tertiary">
+                  <span class="transition-detail-text">
+                    {{ item.from_position }} &rarr; {{ item.to_position }}
                   </span>
-                </div>
-              </td>
+                </td>
 
-              <!-- Transition Detail: e.g. Inventory Controller ➔ Inventory Controller -->
-              <td class="td-tertiary">
-                <span class="transition-detail-text">
-                  {{ item.from_position }} &rarr; {{ item.to_position }}
-                </span>
-              </td>
+                <!-- Effective Date -->
+                <td v-if="isColVisible('effective_date')" class="td-tertiary">
+                  {{ item.effective_date }}
+                </td>
 
-              <!-- Effective Date -->
-              <td class="td-tertiary">
-                {{ item.effective_date }}
-              </td>
+                <!-- Status (Status Pill: Rejected, Pending, Effected, Approved) -->
+                <td v-if="isColVisible('status')">
+                  <span class="status-pill" :class="`status-${item.status}`">
+                    {{ item.status.charAt(0).toUpperCase() + item.status.slice(1) }}
+                  </span>
+                </td>
 
-              <!-- Status (Status Pill: Rejected, Pending, Effected, Approved) -->
-              <td>
-                <span class="status-pill" :class="`status-${item.status}`">
-                  {{ item.status.charAt(0).toUpperCase() + item.status.slice(1) }}
-                </span>
-              </td>
-
-              <!-- Actions (⋮ 3-dots popup) -->
-              <td class="td-actions" @click.stop>
-                <div class="action-dropdown-wrapper">
-                  <button
-                    type="button"
-                    class="btn-action-dots"
-                    title="Actions"
-                    @click="toggleActionMenu(item.id)"
-                  >
-                    <MoreVertical :size="15" />
-                  </button>
-
-                  <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
-                    <button type="button" class="popup-item" @click="handleInspectDetails(item.id)">
-                      <Eye :size="13" />
-                      <span>View Details</span>
-                    </button>
-                    <button 
-                      v-if="item.status === 'pending'" 
-                      type="button" 
-                      class="popup-item item-approve" 
-                      @click="handleApprove(item)"
+                <!-- Actions (⋮ 3-dots popup) -->
+                <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
+                  <div class="action-dropdown-wrapper">
+                    <button
+                      type="button"
+                      class="btn-action-dots"
+                      title="Actions"
+                      @click="toggleActionMenu(item.id)"
                     >
-                      <Check :size="13" />
-                      <span>Approve</span>
+                      <MoreVertical :size="15" />
                     </button>
-                    <button 
-                      v-if="item.status === 'pending'" 
-                      type="button" 
-                      class="popup-item item-reject" 
-                      @click="handleReject(item)"
-                    >
-                      <X :size="13" />
-                      <span>Reject</span>
-                    </button>
+
+                    <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
+                      <button type="button" class="popup-item" @click="handleInspectDetails(item.id)">
+                        <Eye :size="13" />
+                        <span>View Details</span>
+                      </button>
+                      <button 
+                        v-if="item.status === 'pending'" 
+                        type="button" 
+                        class="popup-item item-approve" 
+                        @click="handleApprove(item)"
+                      >
+                        <Check :size="13" />
+                        <span>Approve</span>
+                      </button>
+                      <button 
+                        v-if="item.status === 'pending'" 
+                        type="button" 
+                        class="popup-item item-reject" 
+                        @click="handleReject(item)"
+                      >
+                        <X :size="13" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </td>
-            </tr>
+                </td>
+              </tr>
 
-            <!-- Empty State -->
-            <tr v-if="filteredMovements.length === 0">
-              <td colspan="7" class="empty-state-cell">
-                <span class="empty-text">No movement records found matching your search.</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Footer (Matching Image 3) -->
-      <div class="table-pagination-footer">
-        <div class="pagination-info">
-          <span>Showing 1 to {{ filteredMovements.length }} of {{ filteredMovements.length }} entries</span>
+              <!-- Empty State -->
+              <tr v-if="filteredMovements.length === 0">
+                <td colspan="7" class="empty-state-cell">
+                  <span class="empty-text">No movement records found matching your search.</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <div class="pagination-controls-right">
-          <div class="per-page-selector">
-            <span class="per-page-label">Per Page:</span>
-            <div class="per-page-box">
-              <span>10</span>
-              <ChevronDown :size="13" />
-            </div>
-          </div>
-
-          <div class="pagination-nav-buttons">
-            <button type="button" class="btn-page-step" disabled>
-              <ChevronLeft :size="13" />
-              <span>Previous</span>
-            </button>
-
-            <button type="button" class="btn-page-number active">1</button>
-            <button type="button" class="btn-page-number">2</button>
-            <span class="page-ellipsis">...</span>
-            <button type="button" class="btn-page-number">9</button>
-            <button type="button" class="btn-page-number">10</button>
-
-            <button type="button" class="btn-page-step">
-              <span>Next</span>
-              <ChevronRight :size="13" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      </template>
+    </AppDataTable>
 
     <!-- Floating Batch Action Bar -->
     <TableFloatingBar
@@ -429,8 +376,8 @@ const handleBatchDelete = () => {
 .movement-directory-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  CalendarDays, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Layers, ChevronRight,
-  Maximize2, ArrowRight, ShieldCheck, DollarSign, Gift, Building2,
-  LayoutGrid, List
-} from 'lucide-vue-next';
+import {
+  Plus, Filter, MoreVertical, Edit2,
+  Trash2, Calendar, CheckCircle2, LayoutGrid,
+  List
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
@@ -236,9 +234,15 @@ const handleSaveQuick = () => {
   }, 400);
 };
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 const handleSelectAll = (checked: boolean) => {
@@ -543,13 +547,14 @@ const handleBatchDelete = () => {
 
 <style scoped>
 .holidays-page {
-  padding: 1.25rem 2rem 3rem 2rem;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
 
 .breadcrumb-container {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
 }
 
 .action-toast {

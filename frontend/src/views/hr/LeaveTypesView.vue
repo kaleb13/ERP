@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, MoreVertical, Eye, CheckCircle2, 
-  Check, X, ShieldCheck, FileText, AlertCircle, Trash2
-} from 'lucide-vue-next';
+import {
+  Plus, MoreVertical, CheckCircle2, ShieldCheck,
+  AlertCircle, Trash2
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
@@ -165,14 +166,10 @@ const handleDeleteType = (id: number) => {
     >
       <!-- Top-Right Actions Slot -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-primary-action"
-          @click="isQuickCreateOpen = true"
-        >
-          <Plus :size="15" />
-          <span>Add Leave Type</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="isQuickCreateOpen = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Add Leave Type
+</AppButton>
       </template>
 
       <!-- Data Table Body -->
@@ -282,10 +279,10 @@ const handleDeleteType = (id: number) => {
                     <AlertCircle :size="32" class="empty-icon" />
                     <p class="empty-title">No Leave Types Found</p>
                     <p class="empty-desc">Register standard leave categories (Annual, Sick, Maternity, etc.) in the catalog.</p>
-                    <button class="btn-primary-action empty-btn" @click="isQuickCreateOpen = true">
-                      <Plus :size="15" />
-                      <span>Add Leave Type</span>
-                    </button>
+                    <AppButton variant="primary" size="sm" @click="isQuickCreateOpen = true">
+                      <template #icon-left><Plus :size="15" /></template>
+                      Add Leave Type
+                    </AppButton>
                   </div>
                 </td>
               </tr>
@@ -367,8 +364,8 @@ const handleDeleteType = (id: number) => {
 .leave-types-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

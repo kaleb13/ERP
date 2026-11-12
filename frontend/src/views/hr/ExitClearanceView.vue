@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  CheckSquare, Plus, Check, X, AlertTriangle, ShieldCheck, 
-  RotateCw, Filter, Eye, CheckCircle2, XCircle, DollarSign,
-  Building2, User, ArrowRight
-} from 'lucide-vue-next';
+import {
+  Plus, Check, X, AlertTriangle,
+  Filter, Eye, CheckCircle2
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
@@ -408,9 +408,10 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
         <span class="sep-filter-emp">{{ currentFilteredSeparation.employee_name }} ({{ currentFilteredSeparation.employee_code }})</span>
         <span class="sep-filter-dept">• {{ currentFilteredSeparation.department }}</span>
       </div>
-      <button type="button" class="btn-clear-filter" @click="selectedSeparationFilter = 'all'">
-        ✕ Show All Clearances
-      </button>
+      <AppButton variant="outline" size="xs" @click="selectedSeparationFilter = 'all'">
+        <template #icon-left><X :size="13" /></template>
+        Show All Clearances
+      </AppButton>
     </div>
 
     <!-- Master Single Table Card Standard (AGENTS.md Rule 10) -->
@@ -424,14 +425,10 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
     >
       <!-- Action button inside AppDataTable header per Rule 10 -->
       <template #actions>
-        <button 
-          type="button" 
-          class="btn-primary-register" 
-          @click="openRegisterModal()"
-        >
-          <Plus :size="14" />
-          <span>Register Clearance Item</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openRegisterModal()">
+  <template #icon-left><Plus :size="15" /></template>
+  Register Clearance Item
+</AppButton>
       </template>
 
       <!-- Canonical Table (AGENTS.md Rule 8, 9, 10) -->
@@ -596,10 +593,10 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
       @close="selectedRowIds = []"
     >
       <template #custom-actions>
-        <button type="button" class="btn-floating-batch" @click="handleBatchClear">
-          <CheckCircle2 :size="14" />
+        <AppButton variant="primary" size="sm" @click="handleBatchClear">
+          <template #icon-left><CheckCircle2 :size="14" /></template>
           <span>Clear Selected Items</span>
-        </button>
+        </AppButton>
       </template>
     </TableFloatingBar>
 
@@ -680,10 +677,10 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 
 <style scoped>
 .page-container {
-  padding: 16px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
 }

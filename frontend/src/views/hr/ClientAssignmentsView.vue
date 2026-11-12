@@ -2,24 +2,12 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Plus,
-  Search,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  Users,
-  Building2,
-  Calendar,
-  Briefcase,
-  MapPin,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Percent
-} from 'lucide-vue-next';
+  Plus, Search, MoreVertical, Eye,
+  Edit, Users, CheckCircle2
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -127,28 +115,30 @@ const toggleSelectRow = (id: number) => {
   }
 };
 
-// ─── TABLE COLUMNS (Non-scrollable: Important columns only) ───────────────
-interface TableCol {
-  id: string;
-  name: string;
-  visible: boolean;
-}
+import { type ColumnDef } from '../../components/BaseTable.vue';
 
-const tableColumns = ref<TableCol[]>([
-  { id: 'employee', name: 'Leased Worker & Code', visible: true },
-  { id: 'client', name: 'Client & Agreement', visible: true },
-  { id: 'role', name: 'Client Role / Seat', visible: true },
-  { id: 'placement_period', name: 'Placement Period', visible: true },
-  { id: 'status', name: 'Status', visible: true },
-  { id: 'actions', name: 'Actions', visible: true },
-  { id: 'client_branch', name: 'Client Branch', visible: false },
-  { id: 'duty_station', name: 'Duty Station', visible: false },
-  { id: 'state', name: 'State', visible: false }
+// ─── TABLE COLUMNS (Non-scrollable: Important columns only) ───────────────
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'employee', label: 'Leased Worker & Code', visible: true },
+  { key: 'client', label: 'Client & Agreement', visible: true },
+  { key: 'role', label: 'Client Role / Seat', visible: true },
+  { key: 'placement_period', label: 'Placement Period', visible: true },
+  { key: 'status', label: 'Status', visible: true },
+  { key: 'actions', label: 'Actions', visible: true },
+  { key: 'client_branch', label: 'Client Branch', visible: false },
+  { key: 'duty_station', label: 'Duty Station', visible: false },
+  { key: 'state', label: 'State', visible: false }
 ]);
 
-const isColumnVisible = (id: string) => {
-  const col = tableColumns.value.find(c => c.id === id);
-  return col ? col.visible : true;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
 };
 
 // ─── UNIVERSAL DATE FORMATTER (Rule 22: MMM D, YYYY) ──────────────────────
@@ -257,38 +247,17 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
       <AppDataTable
         title="Client Assignments"
         subtitle="Manage leased staff deployments, client organizational seats, duty stations, and payslip cost allocation splits."
-        :total-items="filteredAssignments.length"
-        :current-page="1"
-        :per-page="10"
+        :totalEntries="filteredAssignments.length"
+        v-model:searchQuery="searchQuery"
         :columns="tableColumns"
-        @toggle-column="(colId) => {
-          const col = tableColumns.find(c => c.id === colId);
-          if (col) col.visible = !col.visible;
-        }"
+        @toggleColumn="handleToggleColumn"
       >
         <!-- Table Toolbar Actions Slot -->
         <template #actions>
-          <button
-            type="button"
-            class="btn-primary-add"
-            @click="handleCreateAssignment"
-          >
-            <Plus :size="16" />
-            <span>Assign Leased Staff</span>
-          </button>
-        </template>
-
-        <!-- Search Bar -->
-        <template #search>
-          <div class="table-search-box">
-            <Search :size="14" class="search-icon" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Search by worker, code, client organization, seat..."
-            />
-          </div>
+          <AppButton variant="primary" size="sm" @click="handleCreateAssignment">
+  <template #icon-left><Plus :size="15" /></template>
+  Assign Leased Staff
+</AppButton>
         </template>
 
         <!-- Data Table (Rules 8, 9: Non-scrollable, important columns only) -->
@@ -590,16 +559,16 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 
         <!-- Modal Footer -->
         <div class="detail-modal-footer">
-          <button type="button" class="btn-modal-secondary" @click="closeDetailModal">
+          <AppButton variant="outline" size="sm" @click="closeDetailModal">
             Close
-          </button>
-          <button
-            type="button"
-            class="btn-modal-primary"
+          </AppButton>
+          <AppButton
+            variant="primary"
+            size="sm"
             @click="navigateToEdit(selectedAssignment.id)"
           >
             Edit Deployment
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -608,12 +577,12 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 
 <style scoped>
 .client-assignments-page {
-  padding: 20px 28px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Breadcrumb */

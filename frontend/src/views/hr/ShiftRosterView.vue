@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  CalendarRange, List, ChevronLeft, ChevronRight, Plus, Search, Filter,
-  Users, CheckCircle2, AlertCircle, Clock, ArrowRight, ArrowLeftRight,
-  Send, MoreVertical, X, Check, Wand2, Trash2, AlertTriangle, Coffee,
-  Edit2, Eye, Calendar, Sparkles, Building2, User
-} from 'lucide-vue-next';
+import {
+  CalendarRange, List, ChevronLeft, ChevronRight,
+  Plus, Search, Filter, CheckCircle2,
+  ArrowLeftRight, Send, Wand2, Trash2,
+  Coffee, Edit2, Calendar
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -568,36 +569,42 @@ const counterpartOptions = computed(() => {
           </div>
 
           <!-- Secondary Action: Pattern Auto-Generator -->
-          <button 
-            type="button" 
-            class="btn-secondary-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm"
             @click="showPatternModal = true"
             title="Generate recurring shift roster from pattern"
           >
-            <Wand2 :size="14" />
-            <span>Generate from Pattern</span>
-          </button>
+            <template #icon-left>
+              <Wand2 :size="14" />
+            </template>
+            Generate from Pattern
+          </AppButton>
 
           <!-- Secondary Action: Publish All Planned -->
-          <button 
-            type="button" 
-            class="btn-secondary-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm"
             @click="handlePublishAllPlanned"
             title="Publish all draft shifts in current view"
           >
-            <Send :size="14" />
-            <span>Publish Drafts</span>
-          </button>
+            <template #icon-left>
+              <Send :size="14" />
+            </template>
+            Publish Drafts
+          </AppButton>
 
           <!-- Primary Action: Assign Shift -->
-          <button 
-            type="button" 
-            class="btn-primary-action" 
+          <AppButton 
+            variant="primary" 
+            size="sm"
             @click="openAssignModal()"
           >
-            <Plus :size="15" />
-            <span>Assign Shift</span>
-          </button>
+            <template #icon-left>
+              <Plus :size="15" />
+            </template>
+            Assign Shift
+          </AppButton>
         </div>
       </template>
 
@@ -651,10 +658,12 @@ const counterpartOptions = computed(() => {
             <thead>
               <tr>
                 <th class="th-checkbox">
-                  <input 
-                    type="checkbox" 
-                    :checked="selectedRowIds.length === paginatedAssignments.length && paginatedAssignments.length > 0"
-                    @change="(e) => handleToggleSelectAll((e.target as HTMLInputElement).checked)"
+                  <FormCheckbox 
+                    :model-value="selectedRowIds.length === paginatedAssignments.length && paginatedAssignments.length > 0"
+                    :indeterminate="selectedRowIds.length > 0 && selectedRowIds.length < paginatedAssignments.length"
+                    size="sm"
+                    @change="(val) => handleToggleSelectAll(Boolean(val))"
+                    aria-label="Select all rows"
                   />
                 </th>
                 <th v-if="tableColumns.find(c => c.key === 'employee')?.visible">Employee</th>
@@ -675,11 +684,12 @@ const counterpartOptions = computed(() => {
                 :class="{ 'row-selected': selectedRowIds.includes(item.id) }"
               >
                 <!-- Selection Checkbox -->
-                <td class="td-checkbox">
-                  <input 
-                    type="checkbox" 
-                    :checked="selectedRowIds.includes(item.id)"
+                <td class="td-checkbox" @click.stop>
+                  <FormCheckbox 
+                    :model-value="selectedRowIds.includes(item.id)"
+                    size="sm"
                     @change="() => handleToggleRow(item.id)"
+                    aria-label="Select row"
                   />
                 </td>
 
@@ -1129,13 +1139,14 @@ const counterpartOptions = computed(() => {
 
 <style scoped>
 .shift-roster-page {
-  padding: 1.5rem 2rem 3rem 2rem;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
 
 .breadcrumb-container {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
 }
 
 .action-toast {
@@ -1900,7 +1911,7 @@ const counterpartOptions = computed(() => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .modal-intro-text {

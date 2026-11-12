@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Edit2, Trash2, Check, X,
+import {
+  Plus, Edit2, Trash2, X,
   CheckCircle2, ShieldCheck, ArrowUpDown, User,
   MoreVertical, Eye
-} from 'lucide-vue-next';
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
@@ -278,6 +279,14 @@ const handleBatchDelete = () => {
   selectedRows.value = [];
 };
 
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const paginatedPlans = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredPlans.value.slice(start, start + perPage.value);
+});
+
 const toggleDropdown = (id: number) => {
   activeDropdownId.value = activeDropdownId.value === id ? null : id;
 };
@@ -371,18 +380,24 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
       v-model:sortOrder="sortOrder"
       :showColumns="true"
       :columns="tableColumns"
+      :totalEntries="filteredPlans.length"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :showPagination="true"
       @toggleColumn="handleToggleColumn"
     >
       <!-- Action Slot: Primary Action in Top Right Toolbar (+ Create Budgets) -->
       <template #actions>
-        <button 
-          type="button" 
-          class="btn-primary-create"
+        <AppButton 
+          variant="primary"
+          size="sm"
           @click="handleCreate"
         >
-          <Plus :size="15" />
-          <span>Create Budgets</span>
-        </button>
+          <template #icon-left>
+            <Plus :size="15" />
+          </template>
+          Create Budgets
+        </AppButton>
       </template>
 
       <!-- Custom Filter Panel (Reveals when Filter button clicked) -->
@@ -450,7 +465,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
         </thead>
         <tbody>
           <tr 
-            v-for="row in filteredPlans" 
+            v-for="row in paginatedPlans" 
             :key="row.id"
             class="erp-row cursor-pointer"
             :class="{ 'row-selected': selectedRows.includes(row.id) }"
@@ -554,38 +569,6 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
           </tr>
         </tbody>
       </table>
-
-      <!-- Bottom Pagination Bar (Matching Image 1 & 4) -->
-      <template #pagination>
-        <div class="table-pagination-bar">
-          <div class="pagination-info">
-            <span>Showing 1 to {{ filteredPlans.length }} of {{ filteredPlans.length }} entries</span>
-          </div>
-
-          <div class="pagination-per-page">
-            <span class="per-page-label">Per Page:</span>
-            <select class="per-page-select">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-
-          <div class="pagination-controls">
-            <button type="button" class="btn-page-nav" disabled>
-              <span>&larr; Previous</span>
-            </button>
-            <button type="button" class="btn-page-number page-active">1</button>
-            <button type="button" class="btn-page-number">2</button>
-            <span class="page-ellipsis">...</span>
-            <button type="button" class="btn-page-number">9</button>
-            <button type="button" class="btn-page-number">10</button>
-            <button type="button" class="btn-page-nav">
-              <span>Next &rarr;</span>
-            </button>
-          </div>
-        </div>
-      </template>
     </AppDataTable>
 
     <!-- Floating Batch Bar (Rule 11) -->
@@ -636,11 +619,10 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn-secondary-cancel" @click="isApproveModalOpen = false">Cancel</button>
-          <button type="button" class="btn-primary-confirm" @click="confirmApproval">
-            <Check :size="14" />
-            <span>Confirm & Sanction Budget</span>
-          </button>
+          <AppButton variant="outline" size="sm" @click="isApproveModalOpen = false">Cancel</AppButton>
+          <AppButton variant="primary" size="sm" @click="confirmApproval">
+            Confirm &amp; Sanction Budget
+          </AppButton>
         </div>
       </div>
     </div>
@@ -658,7 +640,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Planning Header Row (Breadcrumbs + Role Switcher) */

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { 
-  X, Printer, Download, Calendar, Banknote, Building2, Check, FileSpreadsheet
-} from 'lucide-vue-next';
+import { X, Printer, Download } from 'lucide-vue-next';;
+import FormToggle from './FormToggle.vue';
+import FormRadio from './FormRadio.vue';
 import type { ScaleDetailData } from '../views/hr/SalaryScaleDetail.vue';
 
 const props = defineProps<{
@@ -87,46 +87,31 @@ const downloadPDF = () => {
           <!-- Company Logo Toggle -->
           <div class="setting-toggle-row">
             <span class="setting-toggle-title">Company Logo</span>
-            <label class="switch">
-              <input type="checkbox" v-model="printSettings.showCompanyLogo" />
-              <span class="slider round"></span>
-            </label>
+            <FormToggle v-model="printSettings.showCompanyLogo" size="md" aria-label="Company Logo" />
           </div>
 
           <!-- Document Title Toggle -->
           <div class="setting-toggle-row">
             <span class="setting-toggle-title">Document Title</span>
-            <label class="switch">
-              <input type="checkbox" v-model="printSettings.showDocumentTitle" />
-              <span class="slider round"></span>
-            </label>
+            <FormToggle v-model="printSettings.showDocumentTitle" size="md" aria-label="Document Title" />
           </div>
 
           <!-- Amharic Official Header (Image 2 Inspiration) -->
           <div class="setting-toggle-row">
             <span class="setting-toggle-title">Amharic Official Header</span>
-            <label class="switch">
-              <input type="checkbox" v-model="printSettings.showAmharicHeader" />
-              <span class="slider round"></span>
-            </label>
+            <FormToggle v-model="printSettings.showAmharicHeader" size="md" aria-label="Amharic Official Header" />
           </div>
 
           <!-- Official Stamp & Seal (Image 2 Inspiration) -->
           <div class="setting-toggle-row">
             <span class="setting-toggle-title">Official Stamp &amp; Seal</span>
-            <label class="switch">
-              <input type="checkbox" v-model="printSettings.showOfficialStamp" />
-              <span class="slider round"></span>
-            </label>
+            <FormToggle v-model="printSettings.showOfficialStamp" size="md" aria-label="Official Stamp and Seal" />
           </div>
 
           <!-- Signatures Section -->
           <div class="setting-toggle-row">
             <span class="setting-toggle-title">Signatures &amp; Endorsement</span>
-            <label class="switch">
-              <input type="checkbox" v-model="printSettings.showSignatures" />
-              <span class="slider round"></span>
-            </label>
+            <FormToggle v-model="printSettings.showSignatures" size="md" aria-label="Signatures and Endorsement" />
           </div>
 
           <!-- Matrix Display Layout Selector (Matching Image 1 Segmented Radios) -->
@@ -134,38 +119,36 @@ const downloadPDF = () => {
             <span class="selector-section-label">Salary Matrix Display Layout</span>
 
             <!-- Option 1: Detail List / 2D Grid -->
-            <label class="layout-radio-option" :class="{ 'radio-selected': printSettings.displayMode === 'detailed' }">
-              <input 
-                type="radio" 
-                name="salaryDisplayMode" 
-                value="detailed" 
-                v-model="printSettings.displayMode" 
+            <div
+              class="layout-radio-option"
+              :class="{ 'radio-selected': printSettings.displayMode === 'detailed' }"
+              @click="printSettings.displayMode = 'detailed'"
+            >
+              <FormRadio
+                v-model="printSettings.displayMode"
+                name="salaryDisplayMode"
+                value="detailed"
+                size="sm"
+                label="Detail Matrix Grid"
+                description="Full 2D compensation grid with all grade bands and step progression columns. Paginated to A4 paper."
               />
-              <span class="radio-custom-circle"></span>
-              <div class="radio-content">
-                <span class="radio-title">Detail Matrix Grid</span>
-                <span class="radio-desc">
-                  Full 2D compensation grid with all grade bands and step progression columns. Paginated to A4 paper.
-                </span>
-              </div>
-            </label>
+            </div>
 
             <!-- Option 2: Summary Mode -->
-            <label class="layout-radio-option" :class="{ 'radio-selected': printSettings.displayMode === 'summary' }">
-              <input 
-                type="radio" 
-                name="salaryDisplayMode" 
-                value="summary" 
-                v-model="printSettings.displayMode" 
+            <div
+              class="layout-radio-option"
+              :class="{ 'radio-selected': printSettings.displayMode === 'summary' }"
+              @click="printSettings.displayMode = 'summary'"
+            >
+              <FormRadio
+                v-model="printSettings.displayMode"
+                name="salaryDisplayMode"
+                value="summary"
+                size="sm"
+                label="Summary Mode"
+                description="Displays a compact card showing consolidated pay guardrails and grade ranges. Fits on 1 page."
               />
-              <span class="radio-custom-circle"></span>
-              <div class="radio-content">
-                <span class="radio-title">Summary Mode</span>
-                <span class="radio-desc">
-                  Displays a compact card showing consolidated pay guardrails and grade ranges. Fits on 1 page.
-                </span>
-              </div>
-            </label>
+            </div>
           </div>
 
         </div>
@@ -387,20 +370,20 @@ const downloadPDF = () => {
 
       <!-- ═══ MODAL FOOTER (Matching Image 1) ═══ -->
       <div class="print-modal-footer">
-        <button type="button" class="btn-footer-close" @click="closeModal">
-          <X :size="15" />
+        <AppButton variant="outline" size="sm" @click="closeModal">
+          <template #icon-left><X :size="15" /></template>
           <span>Close</span>
-        </button>
+        </AppButton>
 
         <div class="footer-action-buttons">
-          <button type="button" class="btn-footer-pdf" @click="downloadPDF">
-            <Download :size="15" />
+          <AppButton variant="outline" size="sm" @click="downloadPDF">
+            <template #icon-left><Download :size="15" /></template>
             <span>PDF</span>
-          </button>
-          <button type="button" class="btn-footer-print" @click="executePrint">
-            <Printer :size="15" />
+          </AppButton>
+          <AppButton variant="primary" size="sm" @click="executePrint">
+            <template #icon-left><Printer :size="15" /></template>
             <span>Print</span>
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -525,44 +508,7 @@ const downloadPDF = () => {
   color: #334155;
 }
 
-/* iOS-Style Toggle Switch */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-}
-.switch input { opacity: 0; width: 0; height: 0; }
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #cbd5e1;
-  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 24px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-input:checked + .slider {
-  background-color: #0B529C;
-}
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-
-/* Layout Selector Section (Image 1 Radios) */
+/* Layout Selector Section (QMT Radio Cards) */
 .layout-selector-section {
   display: flex;
   flex-direction: column;
@@ -582,69 +528,21 @@ input:checked + .slider:before {
 .layout-radio-option {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   cursor: pointer;
   background: #ffffff;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
   position: relative;
 }
 .layout-radio-option:hover {
-  border-color: #cbd5e1;
+  border-color: var(--qmt-checkbox-border-hover, #0b529c);
   background: #fafbfd;
 }
 .layout-radio-option.radio-selected {
-  border-color: #0B529C;
-  background: #f0f7ff;
-}
-
-.layout-radio-option input {
-  position: absolute;
-  opacity: 0;
-}
-
-.radio-custom-circle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid #cbd5e1;
-  margin-top: 2px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-.radio-selected .radio-custom-circle {
-  border-color: #0B529C;
-  background-color: #ffffff;
-}
-.radio-selected .radio-custom-circle:after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #0B529C;
-}
-
-.radio-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.radio-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.radio-desc {
-  font-size: 11.5px;
-  color: #64748b;
-  line-height: 1.45;
+  border-color: var(--qmt-checkbox-radio-border-checked, #0b529c);
+  background: var(--qmt-checkbox-radio-bg-checked, #f1f7fe);
 }
 
 /* ─── RIGHT: SCROLLABLE PREVIEW CANVAS (Matching Image 1) ─── */

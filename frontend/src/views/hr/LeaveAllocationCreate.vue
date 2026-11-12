@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  MoreVertical, X, Calendar, User, Info, 
-  CheckCircle2, Award, Scale, Users, AlertCircle,
-  Save, FileText, Check, Sparkles, RefreshCw
-} from 'lucide-vue-next';
+import {
+  MoreVertical, X, CheckCircle2, Scale,
+  Save, FileText
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
@@ -228,22 +229,21 @@ const handleSubmit = () => {
       <!-- STRICTLY NO separate back button! Breadcrumb itself navigates. -->
       <div class="breadcrumb-group">
         <AppBreadcrumb :items="breadcrumbItems" />
-        <span class="save-badge" :class="isSaved ? 'badge-saved' : 'badge-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <SaveStateBadge :isSaved="isSaved" />
       </div>
 
       <div class="actions-group">
         <!-- Dynamic 3-Dots More Menu [ ⋮ ] (Draft Support per Rule 4) -->
         <div class="more-menu-wrapper" @click.stop>
-          <button 
-            type="button" 
-            class="btn-more-options" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             title="More actions"
             @click="showMoreDropdown = !showMoreDropdown"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
 
           <Transition name="dropdown-fade">
             <div v-if="showMoreDropdown" class="more-dropdown-menu">
@@ -256,16 +256,23 @@ const handleSubmit = () => {
         </div>
 
         <!-- Clear Form Secondary Button -->
-        <button type="button" class="btn-clear-form" @click="handleClearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="handleClearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Button (Rule 6: Rectangular 8px, text: Save) -->
-        <button type="button" class="btn-save-primary" @click="handleSubmit">
-          <Save :size="14" />
-          <span>Save</span>
-        </button>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSubmit"
+        >
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -452,8 +459,8 @@ const handleSubmit = () => {
 .allocation-create-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -641,7 +648,7 @@ const handleSubmit = () => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px 20px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
   margin-bottom: 16px;
 }
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Search, CheckCircle2, XCircle, Clock, 
-  Check, X, Calendar, CalendarDays, Award, 
-  Repeat, TrendingUp, MoreVertical, Eye,
-  Maximize2, User, Users, FileText
-} from 'lucide-vue-next';
+import {
+  Plus, Search, CheckCircle2, Clock,
+  Check, Award, Repeat, TrendingUp,
+  MoreVertical, Eye
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import MetricCard from '../../components/MetricCard.vue';
@@ -119,9 +119,15 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Quick Create Modal State & Handlers ───
@@ -282,14 +288,10 @@ const formatDateRange = (start: string, end: string) => {
 
       <!-- Primary Action in Top Right Slot (+ Allocate Leave) -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-allocate-primary"
-          @click="openCreateModal"
-        >
-          <Plus :size="16" />
-          <span>Allocate Leave</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openCreateModal">
+  <template #icon-left><Plus :size="15" /></template>
+  Allocate Leave
+</AppButton>
       </template>
 
       <!-- Table Body (Atomic Columns per Rule 9) -->
@@ -525,8 +527,8 @@ const formatDateRange = (start: string, end: string) => {
 .leave-allocations-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }
@@ -833,7 +835,7 @@ const formatDateRange = (start: string, end: string) => {
 .form-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .entitlement-calc-card {

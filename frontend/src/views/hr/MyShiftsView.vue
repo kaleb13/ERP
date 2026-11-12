@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  CalendarDays, Clock, MapPin, User, CheckCircle2, AlertCircle,
-  ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight, Calendar,
-  Coffee, ShieldCheck, Check, Sparkles, Building2
-} from 'lucide-vue-next';
+import {
+  Clock, MapPin, User, CheckCircle2,
+  ArrowLeftRight, ChevronLeft, ChevronRight, Coffee,
+  Sparkles
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 
 const router = useRouter();
@@ -456,8 +456,8 @@ const navigateToSwaps = () => {
 .my-shifts-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

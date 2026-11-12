@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  MoreVertical, X, Calendar, User, Info, 
-  ChevronDown, ChevronUp, CheckCircle2, AlertCircle, 
-  FileText, Check, Bold, Italic, Underline, List, RotateCcw
-} from 'lucide-vue-next';
+import {
+  MoreVertical, X, Info, ChevronDown,
+  ChevronUp, CheckCircle2, FileText, Check,
+  Bold, Italic, Underline, List,
+  RotateCcw
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
@@ -180,14 +182,15 @@ const formatCurrency = (val: number) => {
       <div class="top-bar-actions">
         <!-- 3-Dots More Menu (Rule 4: Mandatory because LEAVE_REQUEST_STATE supports draft) -->
         <div class="more-menu-wrapper" @click.stop>
-          <button
-            type="button"
-            class="btn-icon-more"
+          <AppButton
+            variant="outline"
+            size="sm"
+            iconOnly
             title="More Options"
             @click="showMoreDropdown = !showMoreDropdown"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
 
           <Transition name="dropdown-fade">
             <div v-if="showMoreDropdown" class="more-dropdown">
@@ -200,24 +203,24 @@ const formatCurrency = (val: number) => {
         </div>
 
         <!-- Clear Form Secondary Button (Rule 31: 38px height, 16px padding, 8px radius) -->
-        <button
-          type="button"
-          class="btn-secondary-clear"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="handleClearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Button (Rule 27: Plain text "Save", ZERO icons, 8px radius) -->
-        <button
-          type="button"
-          class="btn-primary-save"
+        <AppButton
+          variant="primary"
+          size="sm"
           :disabled="isExceedingQuota"
           @click="handleSave"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -453,7 +456,7 @@ const formatCurrency = (val: number) => {
 .create-encashment-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   position: relative;
   width: 100%;
 }
@@ -757,7 +760,7 @@ const formatCurrency = (val: number) => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-group {

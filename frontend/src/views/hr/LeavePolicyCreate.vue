@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  X, Save, Plus, Trash2, Expand, 
-  CheckCircle2, ShieldCheck, Layers, 
-  ChevronDown, ArrowRight, ArrowUp, ArrowDown, Copy 
-} from 'lucide-vue-next';
+import {
+  X, Save, Plus, Expand,
+  CheckCircle2, ShieldCheck, Layers, ChevronDown,
+  ArrowRight, ArrowUp, ArrowDown, Copy
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import IconColumnSolid from '../../components/IconColumnSolid.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
@@ -625,21 +628,27 @@ const handleClearForm = () => {
 
       <div class="top-actions-cluster">
         <!-- Save State Indicator -->
-        <span class="save-status-pill" :class="isSaved ? 'pill-saved' : 'pill-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <SaveStateBadge :isSaved="isSaved" style="margin-left: 0" />
 
         <!-- Clear Form Secondary Button -->
-        <button class="btn-secondary-action" @click="handleClearForm" title="Clear all fields">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          title="Clear all fields"
+          @click="handleClearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Blue Button -->
-        <button class="btn-primary-action" @click="handleSavePolicy">
-          <Save :size="15" />
-          <span>Save Policy</span>
-        </button>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSavePolicy"
+        >
+          Save Policy
+        </AppButton>
       </div>
     </div>
 
@@ -754,10 +763,10 @@ const handleClearForm = () => {
             <p class="tab-nav-title">Next Step: Entitlement Rules</p>
             <p class="tab-nav-sub">Configure statutory days, carry-forward rollover ceilings, and pay percentages per leave type.</p>
           </div>
-          <button class="btn-primary-action" @click="activeTab = 'rules'">
-            <span>Continue to Entitlement Rules</span>
-            <ArrowRight :size="15" />
-          </button>
+          <AppButton variant="primary" size="sm" @click="activeTab = 'rules'">
+            Continue to Entitlement Rules
+            <template #icon-right><ArrowRight :size="15" /></template>
+          </AppButton>
         </div>
       </div>
 
@@ -793,11 +802,7 @@ const handleClearForm = () => {
                 <th class="child-th" style="min-width: 130px;">Days / Yr</th>
                 <th class="child-th" style="min-width: 120px;">Pay %</th>
                 <th class="child-th child-th-col-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                    <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                  </svg>
+                  <IconColumnSolid :size="13" class="col-icon-solid" />
                 </th>
               </tr>
             </thead>
@@ -1177,8 +1182,8 @@ const handleClearForm = () => {
 .leave-policy-create-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -1333,7 +1338,7 @@ const handleClearForm = () => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px 20px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
   margin-bottom: 16px;
 }
 

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  ShieldCheck, Calendar, Clock, Building2, 
+import {
+  ShieldCheck, Calendar, Clock, Building2,
   CheckCircle2, AlertCircle, Maximize2, X,
-  Check, FileText, Sparkles, Scale, Info,
-  Sliders, Edit3, Calculator, ChevronRight,
-  ArrowRight, Award, History, Layers
-} from 'lucide-vue-next';
+  Check, Scale, Edit3, Calculator
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import { 
   getPolicyById, 
@@ -142,16 +141,16 @@ const simProgressionRows = computed(() => {
         </span>
 
         <!-- Edit Policy Action -->
-        <button type="button" class="btn-secondary-action" @click="goToEdit">
-          <Edit3 :size="14" />
-          <span>Edit Policy</span>
-        </button>
+        <AppButton variant="outline" size="sm" @click="goToEdit">
+          <template #icon-left><Edit3 :size="14" /></template>
+          Edit Policy
+        </AppButton>
 
         <!-- Toggle State Action Button -->
-        <button type="button" class="btn-secondary-action" @click="togglePolicyState">
-          <ShieldCheck :size="14" />
-          <span>Mark as {{ policy.state === 'active' ? 'Inactive' : 'Active' }}</span>
-        </button>
+        <AppButton variant="outline" size="sm" @click="togglePolicyState">
+          <template #icon-left><ShieldCheck :size="14" /></template>
+          Mark as {{ policy.state === 'active' ? 'Inactive' : 'Active' }}
+        </AppButton>
       </div>
     </div>
 
@@ -608,9 +607,9 @@ const simProgressionRows = computed(() => {
       <AlertCircle :size="36" class="empty-icon" />
       <h2 class="empty-title">Policy Not Found</h2>
       <p class="empty-desc">The requested leave policy could not be found or has been removed.</p>
-      <button class="btn-primary-action" @click="router.push('/hr/leave-policies')">
-        <span>Go to Leave Policies</span>
-      </button>
+      <AppButton variant="primary" size="sm" @click="router.push('/hr/leave-policies')">
+        Go to Leave Policies
+      </AppButton>
     </div>
 
     <!-- ─── RULE INSPECTION MODAL (AGENTS.md Rule 11 Architecture) ─── -->
@@ -731,9 +730,9 @@ const simProgressionRows = computed(() => {
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn-primary-action" @click="closeInspectModal">
-              <span>Dismiss</span>
-            </button>
+            <AppButton variant="primary" size="sm" @click="closeInspectModal">
+              Dismiss
+            </AppButton>
           </div>
         </div>
       </div>
@@ -745,8 +744,8 @@ const simProgressionRows = computed(() => {
 .leave-policy-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  X, Save, CheckCircle2, ShieldCheck, 
-  Calendar, Heart, Activity, UserCheck, 
-  Users, GraduationCap, Clock, Check
-} from 'lucide-vue-next';
+import {
+  X, Save, CheckCircle2, Calendar,
+  Heart, Activity, UserCheck, Users,
+  GraduationCap, Clock
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
@@ -139,21 +141,26 @@ const handleSave = () => {
       <AppBreadcrumb :items="breadcrumbItems" />
 
       <div class="top-actions-cluster">
-        <span class="save-status-pill" :class="isSaved ? 'pill-saved' : 'pill-not-saved'">
-          {{ isSaved ? 'Saved' : 'Not Saved' }}
-        </span>
+        <SaveStateBadge :isSaved="isSaved" style="margin-left: 0" />
 
         <!-- Clear Form Secondary Button -->
-        <button class="btn-secondary-action" @click="handleClearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="handleClearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Save Primary Blue Button -->
-        <button class="btn-primary-action" @click="handleSave">
-          <Save :size="15" />
-          <span>Save</span>
-        </button>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSave"
+        >
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -265,8 +272,8 @@ const handleSave = () => {
 .leave-type-create-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -399,7 +406,7 @@ const handleSave = () => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px 20px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
   margin-bottom: 16px;
 }
 

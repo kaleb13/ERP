@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, Briefcase, Plus, Trash2, 
-  ChevronDown, Search, Check, List, Table, Link as LinkIcon, 
-  Image as ImageIcon, Undo, Redo, UserCheck, DollarSign, 
-  Calculator, Truck, Building2, Scale, Laptop, ShieldCheck, 
-  Award, BadgeCheck, Users, Landmark, Clock, HeartPulse, 
-  FileText, ShoppingBag, Target, BookOpen, Wrench, GraduationCap
-} from 'lucide-vue-next';
+import {
+  X, Briefcase, Search, UserCheck,
+  DollarSign, Calculator, Truck, Building2,
+  Scale, Laptop, ShieldCheck, Award,
+  BadgeCheck, Users, Landmark, Clock,
+  HeartPulse, FileText, ShoppingBag, Target,
+  BookOpen, Wrench, GraduationCap
+} from 'lucide-vue-next';;
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = [
+  { label: 'Job Titles & Roles', to: '/hr/job-titles' },
+  { label: 'Create Job Title' }
+];
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -171,34 +180,29 @@ onMounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar (Exact Critic Standard) -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/job-titles" class="bc-link">Job Titles &amp; Roles</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Job Title</span>
-          <SaveStateBadge :isSaved="isSaved" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
-        <button 
-          type="button" 
-          class="btn-clear-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="clearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button 
-          type="button" 
-          class="btn-save-action" 
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -296,64 +300,14 @@ onMounted(() => {
           />
         </div>
 
-        <!-- ─── STRATEGIC JOB SUMMARY & SCOPE (Rule 18 Standard Rich Editor) ─── -->
+        <!-- ─── STRATEGIC JOB SUMMARY & SCOPE ─── -->
         <div class="biography-section mt-5">
-          <label class="gc-field-label">Role Purpose &amp; Operational Scope</label>
-
-          <div class="rich-editor-container">
-            <!-- Toolbar -->
-            <div class="editor-toolbar">
-              <div class="toolbar-dropdown">
-                <span>Paragraph</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-dropdown">
-                <span>Font Type</span>
-                <ChevronDown :size="12" />
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-icon-btn" title="List"><List :size="14" /><ChevronDown :size="10" /></button>
-                <button type="button" class="editor-icon-btn font-bold" title="Bold">B</button>
-                <button type="button" class="editor-icon-btn italic" title="Italic">I</button>
-                <button type="button" class="editor-icon-btn underline" title="Underline">U</button>
-                <button type="button" class="editor-icon-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="editor-icon-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="editor-icon-btn" title="Table"><Table :size="14" /></button>
-              </div>
-
-              <div class="toolbar-divider"></div>
-
-              <div class="toolbar-icon-group">
-                <button type="button" class="editor-color-box" title="Text Color"></button>
-                <button type="button" class="editor-icon-btn" title="Insert Link"><LinkIcon :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Insert Image"><ImageIcon :size="14" /></button>
-              </div>
-
-              <div class="toolbar-icon-group ml-auto">
-                <button type="button" class="editor-icon-btn" title="Undo"><Undo :size="14" /></button>
-                <button type="button" class="editor-icon-btn" title="Redo"><Redo :size="14" /></button>
-              </div>
-            </div>
-
-            <!-- Text Area -->
-            <textarea
-              v-model="form.description"
-              rows="6"
-              class="editor-textarea"
-            ></textarea>
-
-            <!-- Footer Bar with Character Counter -->
-            <div class="editor-footer">
-              <span class="char-count-pill">{{ form.description.length }} / 5,000 Characters</span>
-              <div class="editor-resize-handle">//</div>
-            </div>
-          </div>
+          <FormRichText
+            v-model="form.description"
+            label="Role Purpose & Operational Scope"
+            placeholder="Outline core responsibilities, strategic role purpose, and reporting relationships..."
+            :max-length="5000"
+          />
         </div>
       </div>
     </div>
@@ -423,9 +377,9 @@ onMounted(() => {
         </div>
 
         <div class="icon-modal-footer">
-          <button type="button" class="btn-modal-cancel" @click="showIconPickerModal = false">
+          <AppButton variant="outline" size="sm" @click="showIconPickerModal = false">
             Cancel
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -434,7 +388,7 @@ onMounted(() => {
 
 <style scoped>
 .job-title-create-page {
-  padding: 16px 24px 80px 24px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
   box-sizing: border-box;
@@ -677,7 +631,7 @@ onMounted(() => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 20px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 /* Strategic Rich Text Editor (Rule 18) */

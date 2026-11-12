@@ -2,14 +2,10 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  FileText, Plus, Eye, CheckCircle2, XCircle, Clock,
-  Calendar, ShieldCheck, ArrowRight, ShieldAlert,
-  AlertTriangle, Filter, MoreVertical, Maximize2,
-  Printer, Download, Send, Building2, User, Check, X,
-  Sparkles, SlidersHorizontal, RefreshCw, Briefcase,
-  ChevronDown, ChevronRight, ExternalLink, ArrowUpDown,
-  Columns, ArrowUpRight
-} from 'lucide-vue-next';
+  FileText, Plus, CheckCircle2, Filter,
+  MoreVertical, Printer, Download, X,
+  ChevronDown, ChevronRight, ArrowUpRight
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
@@ -17,6 +13,7 @@ import UnderlineTabs, { type UnderlineTabItem } from '../../components/Underline
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import AppButton from '../../components/AppButton.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import {
   employeeLettersData,
@@ -80,8 +77,32 @@ const underlineTabs = computed<UnderlineTabItem<LetterTabKey>[]>(() => [
 ]);
 
 // ─── Filtered Dataset ───
+const onlyExitReviews = ref(false);
+
+const handleFilterTab = (tab: LetterTabKey) => {
+  onlyExitReviews.value = false;
+  if (activeTab.value === tab) {
+    activeTab.value = 'all';
+  } else {
+    activeTab.value = tab;
+  }
+};
+
+const handleFilterExitReviews = () => {
+  onlyExitReviews.value = !onlyExitReviews.value;
+  activeTab.value = 'all';
+};
+
+const isColVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
+};
+
 const filteredLetters = computed(() => {
   return employeeLettersData.value.filter(l => {
+    // Exit review filter
+    if (onlyExitReviews.value && !l.remind_on_separation) return false;
+
     // State Tab filter
     if (activeTab.value !== 'all' && l.letter_state !== activeTab.value) return false;
 
@@ -101,6 +122,14 @@ const filteredLetters = computed(() => {
 
     return true;
   });
+});
+
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const paginatedLetters = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredLetters.value.slice(start, start + perPage.value);
 });
 
 // ─── Table Columns (Matching Figma 7454:138268 exactly) ───
@@ -447,80 +476,81 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
       </div>
     </transition>
 
-    <!-- Top KPI Metrics (Matches Figma 7454:138268 exactly) -->
+    <!-- Top KPI Metrics (Rule 2 - Interactive Click-to-Filter) -->
     <div class="metrics-grid">
-      <MetricCard
-        label="TOTAL LETTERS ISSUED"
-        :value="metrics.total"
-        subtext="All letters on corporate file"
-      />
-      <MetricCard
-        label="PENDING HR APPROVAL"
-        :value="metrics.pending"
-        subtext="Awaiting executive sign-off"
-      />
-      <MetricCard
-        label="ACTIVE ISSUED LETTERS"
-        :value="metrics.issued"
-        subtext="Official valid documentation"
-      />
-      <MetricCard
-        label="EXIT BOND REVIEWS"
-        :value="metrics.separationReminders"
-        subtext="Tracked on employee exit"
-      />
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'all' && !onlyExitReviews }"
+        @click="handleFilterTab('all')"
+      >
+        <MetricCard
+          label="TOTAL LETTERS ISSUED"
+          :value="metrics.total"
+          subtext="All letters on corporate file"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'pending_approval' && !onlyExitReviews }"
+        @click="handleFilterTab('pending_approval')"
+      >
+        <MetricCard
+          label="PENDING HR APPROVAL"
+          :value="metrics.pending"
+          subtext="Awaiting executive sign-off"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'issued' && !onlyExitReviews }"
+        @click="handleFilterTab('issued')"
+      >
+        <MetricCard
+          label="ACTIVE ISSUED LETTERS"
+          :value="metrics.issued"
+          subtext="Official valid documentation"
+          :show-menu="false"
+        />
+      </div>
+
+      <div
+        class="metric-interactive"
+        :class="{ 'metric-active': onlyExitReviews }"
+        @click="handleFilterExitReviews"
+      >
+        <MetricCard
+          label="EXIT BOND REVIEWS"
+          :value="metrics.separationReminders"
+          subtext="Tracked on employee exit"
+          :show-menu="false"
+        />
+      </div>
     </div>
 
     <!-- Main Data Table Container (Matching Figma 7454:138268) -->
     <AppDataTable
       title="Employee Letters"
       subtitle="Manage official company letters, employment certificates, bank undertakings, and statutory experience letters."
+      v-model:searchQuery="searchQuery"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
       :columns="tableColumns"
+      :totalEntries="filteredLetters.length"
+      :showPagination="true"
       @toggleColumn="handleToggleColumn"
     >
       <!-- Actions Slot -->
       <template #actions>
-        <button class="btn-primary-blue" @click="handleOpenCreateDrawer">
-          <Plus :size="16" />
-          <span>+ Create Letter</span>
-        </button>
-      </template>
-
-      <!-- Subheader Filters & Search -->
-      <template #subheader>
-        <div class="table-controls-wrapper">
-          <div class="table-filter-bar">
-            <div class="search-box">
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search by Name..."
-                class="search-input"
-              />
-            </div>
-
-            <div class="table-toolbar-actions">
-              <button class="btn-secondary-toolbar" title="Filter letters">
-                <Filter :size="14" />
-                <span>Filter</span>
-              </button>
-
-              <button class="btn-secondary-toolbar" title="Sort letters">
-                <ArrowUpDown :size="14" />
-                <span>Sort</span>
-                <ChevronDown :size="12" />
-              </button>
-
-              <button class="btn-icon-toolbar" title="Toggle columns">
-                <Columns :size="16" />
-              </button>
-
-              <button class="btn-icon-toolbar" title="Maximize view">
-                <Maximize2 :size="16" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <AppButton variant="primary" size="sm" @click="handleOpenCreateDrawer">
+          <template #icon-left>
+            <Plus :size="16" />
+          </template>
+          Create Letter
+        </AppButton>
       </template>
 
       <!-- Table Body -->
@@ -529,32 +559,32 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
           <table class="erp-table">
             <thead>
               <tr>
-                <th v-if="tableColumns[0].visible" class="th-check">
+                <th v-if="isColVisible('select')" class="th-check">
                   <input type="checkbox" class="table-checkbox" />
                 </th>
-                <th v-if="tableColumns[1].visible" class="th-name">Name</th>
-                <th v-if="tableColumns[2].visible">Letter Template</th>
-                <th v-if="tableColumns[3].visible">Review on Exit</th>
-                <th v-if="tableColumns[4].visible">Addressed To</th>
-                <th v-if="tableColumns[5].visible">Direction</th>
-                <th v-if="tableColumns[6].visible">Status</th>
-                <th v-if="tableColumns[7].visible" class="th-actions">Actions</th>
+                <th v-if="isColVisible('employee')" class="th-name">Name</th>
+                <th v-if="isColVisible('letter_template')">Letter Template</th>
+                <th v-if="isColVisible('review_on_exit')">Review on Exit</th>
+                <th v-if="isColVisible('addressed_to')">Addressed To</th>
+                <th v-if="isColVisible('letter_state')">Direction</th>
+                <th v-if="isColVisible('state')">Status</th>
+                <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="letter in filteredLetters"
+                v-for="letter in paginatedLetters"
                 :key="letter.id"
                 class="table-row-hover"
                 @click="handleViewDocument(letter)"
               >
                 <!-- Checkbox -->
-                <td v-if="tableColumns[0].visible" class="td-check" @click.stop>
+                <td v-if="isColVisible('select')" class="td-check" @click.stop>
                   <input type="checkbox" class="table-checkbox" />
                 </td>
 
                 <!-- Primary Identity: Avatar + Name + Subtext (Figma 7454:138268) -->
-                <td v-if="tableColumns[1].visible" class="td-employee">
+                <td v-if="isColVisible('employee')" class="td-employee">
                   <div class="employee-identity-cell">
                     <img :src="letter.employee_avatar" :alt="letter.employee_name" class="emp-avatar" />
                     <div class="emp-details">
@@ -565,36 +595,36 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
                 </td>
 
                 <!-- Letter Template (Plain text) -->
-                <td v-if="tableColumns[2].visible" class="td-tertiary">
+                <td v-if="isColVisible('letter_template')" class="td-tertiary">
                   <span class="cell-plain-text">{{ letter.template_name }}</span>
                 </td>
 
                 <!-- Review on Exit (Plain text: Yes / No) -->
-                <td v-if="tableColumns[3].visible" class="td-tertiary">
+                <td v-if="isColVisible('review_on_exit')" class="td-tertiary">
                   <span class="cell-plain-text">{{ letter.remind_on_separation ? 'Yes' : 'No' }}</span>
                 </td>
 
                 <!-- Addressed To -->
-                <td v-if="tableColumns[4].visible" class="td-tertiary">
+                <td v-if="isColVisible('addressed_to')" class="td-tertiary">
                   <span class="cell-plain-text">{{ letter.addressed_to?.organization || '—' }}</span>
                 </td>
 
                 <!-- Direction / Lifecycle Status (Soft pill) -->
-                <td v-if="tableColumns[5].visible" class="td-status">
+                <td v-if="isColVisible('letter_state')" class="td-status">
                   <span class="direction-soft-pill" :class="'dir-' + letter.letter_state">
                     {{ letter.letter_state === 'pending_approval' ? 'Pending' : (letter.letter_state === 'issued' ? 'Issued' : (letter.letter_state === 'draft' ? 'Draft' : letter.letter_state)) }}
                   </span>
                 </td>
 
                 <!-- Status (Active / Inactive state pill) -->
-                <td v-if="tableColumns[6].visible" class="td-state">
+                <td v-if="isColVisible('state')" class="td-state">
                   <span class="state-pill" :class="letter.state === 'active' ? 'state-active' : 'state-inactive'">
                     {{ letter.state === 'active' ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
 
                 <!-- Row Actions -->
-                <td v-if="tableColumns[7].visible" class="td-actions" @click.stop>
+                <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
                   <button class="btn-action-dots" title="More options" @click="handleViewDocument(letter)">
                     <MoreVertical :size="16" />
                   </button>
@@ -613,35 +643,6 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
               </tr>
             </tbody>
           </table>
-
-          <!-- Minimalist Pagination Bar matching Figma -->
-          <div class="figma-pagination-bar">
-            <div class="pagination-left">
-              <span>Showing 1 to {{ filteredLetters.length }} of {{ filteredLetters.length }} entries</span>
-              <div class="per-page-wrapper">
-                <span>Per Page:</span>
-                <select class="per-page-select">
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pagination-right">
-              <button class="btn-pag-nav" disabled>
-                <span>&larr; Previous</span>
-              </button>
-              <button class="btn-pag-num active">1</button>
-              <button class="btn-pag-num">2</button>
-              <span class="pag-ellipsis">...</span>
-              <button class="btn-pag-num">9</button>
-              <button class="btn-pag-num">10</button>
-              <button class="btn-pag-nav">
-                <span>Next &rarr;</span>
-              </button>
-            </div>
-          </div>
         </div>
       </template>
     </AppDataTable>
@@ -663,10 +664,10 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
           <div class="drawer-header-right">
             <!-- Go to Printing button (Matches Figma 7454:138647) -->
-            <button class="btn-outline-action" @click="handleOpenPrintSettings">
-              <ArrowUpRight :size="15" />
+            <AppButton variant="outline" size="sm" @click="handleOpenPrintSettings">
+              <template #icon-left><ArrowUpRight :size="15" /></template>
               <span>Go to Printing</span>
-            </button>
+            </AppButton>
 
             <!-- Segmented View Mode Switcher -->
             <div class="drawer-segmented-pills">
@@ -994,14 +995,14 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
         <!-- Drawer Footer (Matches Figma 7454:138647) -->
         <div class="drawer-footer">
-          <button class="btn-footer-close" @click="isCreateDrawerOpen = false">
-            <X :size="14" />
+          <AppButton variant="outline" size="sm" @click="isCreateDrawerOpen = false">
+            <template #icon-left><X :size="14" /></template>
             <span>Close</span>
-          </button>
+          </AppButton>
 
-          <button class="btn-footer-save" @click="handleSaveBottomDrawer">
-            <span>Save</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="handleSaveBottomDrawer">
+            Save
+          </AppButton>
         </div>
       </div>
     </div>
@@ -1180,20 +1181,20 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
         <!-- Footer -->
         <div class="drawer-footer">
-          <button class="btn-footer-close" @click="isPrintSettingsOpen = false">
-            <X :size="14" />
+          <AppButton variant="outline" size="sm" @click="isPrintSettingsOpen = false">
+            <template #icon-left><X :size="14" /></template>
             <span>Close</span>
-          </button>
+          </AppButton>
 
           <div class="footer-right-buttons">
-            <button class="btn-footer-pdf" @click="showToast('Exporting PDF document...')">
-              <Download :size="14" />
+            <AppButton variant="outline" size="sm" @click="showToast('Exporting PDF document...')">
+              <template #icon-left><Download :size="14" /></template>
               <span>PDF</span>
-            </button>
-            <button class="btn-footer-print" @click="window.print()">
-              <Printer :size="14" />
+            </AppButton>
+            <AppButton variant="primary" size="sm" @click="window.print()">
+              <template #icon-left><Printer :size="14" /></template>
               <span>Print</span>
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>
@@ -1208,10 +1209,10 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
             <h2 class="doc-title">{{ selectedLetter.template_name }}</h2>
           </div>
           <div class="doc-header-actions">
-            <button class="btn-outline-action" @click="window.print()">
-              <Printer :size="14" />
+            <AppButton variant="outline" size="sm" @click="window.print()">
+              <template #icon-left><Printer :size="14" /></template>
               <span>Print</span>
-            </button>
+            </AppButton>
             <button class="btn-close-header" @click="isDocumentModalOpen = false">
               <X :size="18" />
             </button>
@@ -1301,7 +1302,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 <style scoped>
 .employee-letters-page {
-  padding: 24px;
+  padding: 0;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -1333,6 +1334,21 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.metric-interactive {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.metric-interactive.metric-active {
+  box-shadow: 0 0 0 2px #0B529C;
+  border-radius: 10px;
 }
 
 @media (max-width: 900px) {
@@ -1918,13 +1934,13 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 .form-grid-1 {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .mt-3 {

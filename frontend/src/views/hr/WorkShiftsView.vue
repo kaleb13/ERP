@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Clock, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Layers, ChevronRight,
-  Maximize2, ArrowRight, Moon, Shield, Info, LayoutGrid, List
-} from 'lucide-vue-next';
+import {
+  Clock, Plus, Filter, MoreVertical,
+  Edit2, Trash2, Copy, CheckCircle2,
+  Moon, LayoutGrid, List
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import UnderlineTabs from '../../components/UnderlineTabs.vue';
 
@@ -293,9 +294,15 @@ const toggleActionMenu = (id: number) => {
   activeActionMenuId.value = activeActionMenuId.value === id ? null : id;
 };
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 const handleSelectAll = (checked: boolean) => {
@@ -334,7 +341,8 @@ const handleBatchDelete = () => {
       title="Work Shifts"
       subtitle="Define labour time windows, shift rotations, break deductions, and statutory night-work intervals."
       :columns="tableColumns"
-      :data="filteredShifts"
+      :totalEntries="filteredShifts.length"
+      v-model:searchQuery="searchQuery"
       @toggleColumn="handleToggleColumn"
     >
       <!-- Custom Toolbar Actions -->
@@ -363,14 +371,10 @@ const handleBatchDelete = () => {
           </div>
 
           <!-- Primary Create Action (Well-rounded rectangle, NOT pill) -->
-          <button 
-            type="button" 
-            class="btn-create-shift"
-            @click="handleOpenQuickCreate"
-          >
-            <Plus :size="15" />
-            <span>Create Shift</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="handleOpenQuickCreate">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Shift
+</AppButton>
         </div>
       </template>
 
@@ -391,21 +395,22 @@ const handleBatchDelete = () => {
             <thead>
               <tr>
                 <th class="th-checkbox">
-                  <input 
-                    type="checkbox" 
-                    class="erp-checkbox"
-                    :checked="selectedRowIds.length === filteredShifts.length && filteredShifts.length > 0"
-                    @change="handleSelectAll(($event.target as HTMLInputElement).checked)"
+                  <FormCheckbox 
+                    :model-value="selectedRowIds.length === filteredShifts.length && filteredShifts.length > 0"
+                    :indeterminate="selectedRowIds.length > 0 && selectedRowIds.length < filteredShifts.length"
+                    size="sm"
+                    @change="(val) => handleSelectAll(Boolean(val))"
+                    aria-label="Select all rows"
                   />
                 </th>
-                <th v-if="tableColumns.find(c => c.key === 'name')?.visible" class="th-name">Shift Name</th>
-                <th v-if="tableColumns.find(c => c.key === 'category')?.visible">Category</th>
-                <th v-if="tableColumns.find(c => c.key === 'window')?.visible">Working Window</th>
-                <th v-if="tableColumns.find(c => c.key === 'duration')?.visible">Net Work Hours</th>
-                <th v-if="tableColumns.find(c => c.key === 'grace')?.visible">Grace Tolerances</th>
-                <th v-if="tableColumns.find(c => c.key === 'night_work')?.visible">Night Window</th>
-                <th v-if="tableColumns.find(c => c.key === 'entity')?.visible">Owning Entity</th>
-                <th v-if="tableColumns.find(c => c.key === 'state')?.visible">State</th>
+                <th v-if="isColVisible('name')" class="th-name">Shift Name</th>
+                <th v-if="isColVisible('category')">Category</th>
+                <th v-if="isColVisible('window')">Working Window</th>
+                <th v-if="isColVisible('duration')">Net Work Hours</th>
+                <th v-if="isColVisible('grace')">Grace Tolerances</th>
+                <th v-if="isColVisible('night_work')">Night Window</th>
+                <th v-if="isColVisible('entity')">Owning Entity</th>
+                <th v-if="isColVisible('state')">State</th>
                 <th class="th-actions">Actions</th>
               </tr>
             </thead>
@@ -417,17 +422,17 @@ const handleBatchDelete = () => {
                 :class="{ 'row-selected': selectedRowIds.includes(shift.id) }"
               >
                 <!-- Checkbox -->
-                <td class="td-checkbox">
-                  <input 
-                    type="checkbox" 
-                    class="erp-checkbox"
-                    :checked="selectedRowIds.includes(shift.id)"
-                    @change="handleToggleRow(shift.id)"
+                <td class="td-checkbox" @click.stop>
+                  <FormCheckbox 
+                    :model-value="selectedRowIds.includes(shift.id)"
+                    size="sm"
+                    @change="() => handleToggleRow(shift.id)"
+                    aria-label="Select row"
                   />
                 </td>
 
                 <!-- Name & Code (Name-First Rule) -->
-                <td v-if="tableColumns.find(c => c.key === 'name')?.visible" class="td-name">
+                <td v-if="isColVisible('name')" class="td-name">
                   <div class="name-cell-wrapper">
                     <span class="table-name-primary">{{ shift.name.en }}</span>
                     <span class="table-code-subtext">{{ shift.code }}</span>
@@ -435,12 +440,12 @@ const handleBatchDelete = () => {
                 </td>
 
                 <!-- Category -->
-                <td v-if="tableColumns.find(c => c.key === 'category')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('category')" class="td-tertiary">
                   <span class="plain-cell-text capitalize">{{ shift.category_label }}</span>
                 </td>
 
                 <!-- Working Window -->
-                <td v-if="tableColumns.find(c => c.key === 'window')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('window')" class="td-tertiary">
                   <div class="window-cell">
                     <span class="font-medium text-slate-700">{{ shift.start_time }} – {{ shift.end_time }}</span>
                     <span v-if="shift.is_overnight" class="overnight-badge">+1 Day</span>
@@ -448,7 +453,7 @@ const handleBatchDelete = () => {
                 </td>
 
                 <!-- Net Work Hours -->
-                <td v-if="tableColumns.find(c => c.key === 'duration')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('duration')" class="td-tertiary">
                   <div class="duration-cell">
                     <span class="font-medium text-slate-700">{{ formatDuration(calculateMinutes(shift.start_time, shift.end_time, shift.is_overnight) - shift.break_minutes) }}</span>
                     <span class="break-subtext">({{ shift.break_minutes }}m break)</span>
@@ -456,12 +461,12 @@ const handleBatchDelete = () => {
                 </td>
 
                 <!-- Grace Tolerances -->
-                <td v-if="tableColumns.find(c => c.key === 'grace')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('grace')" class="td-tertiary">
                   <span class="plain-cell-text">{{ shift.grace_in_minutes }}m in / {{ shift.grace_out_minutes }}m out</span>
                 </td>
 
                 <!-- Night Window -->
-                <td v-if="tableColumns.find(c => c.key === 'night_work')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('night_work')" class="td-tertiary">
                   <span v-if="shift.night_hours_from" class="night-cell-text">
                     {{ shift.night_hours_from }} – {{ shift.night_hours_to }}
                   </span>
@@ -469,7 +474,7 @@ const handleBatchDelete = () => {
                 </td>
 
                 <!-- Owning Entity -->
-                <td v-if="tableColumns.find(c => c.key === 'entity')?.visible" class="td-tertiary">
+                <td v-if="isColVisible('entity')" class="td-tertiary">
                   <span class="plain-cell-text">{{ shift.entity_name }}</span>
                 </td>
 
@@ -675,13 +680,14 @@ const handleBatchDelete = () => {
 
 <style scoped>
 .work-shifts-page {
-  padding: 1.25rem 2rem 3rem 2rem;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
 
 .breadcrumb-container {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
 }
 
 .action-toast {

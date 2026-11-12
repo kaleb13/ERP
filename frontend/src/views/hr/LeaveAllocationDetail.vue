@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  Award, Calendar, Clock, User, CheckCircle2, 
-  X, AlertCircle, ArrowRight, ShieldCheck, 
-  RefreshCw, FileText, Check, ArrowUpRight,
-  Printer, CornerDownLeft, Shield, CheckCheck,
-  Edit3, ExternalLink
-} from 'lucide-vue-next';
+import {
+  Award, Clock, User, CheckCircle2,
+  X, AlertCircle, ArrowRight, ShieldCheck,
+  RefreshCw, ArrowUpRight, Printer, CornerDownLeft
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import FormInput from '../../components/FormInput.vue';
 import { 
@@ -154,10 +153,10 @@ const formatDateTime = (val?: string | null) => {
 
       <div class="top-actions-cluster" v-if="allocation">
         <!-- Print Slip Button -->
-        <button type="button" class="btn-secondary-action" @click="handlePrintSlip">
-          <Printer :size="14" />
-          <span>Print Entitlement Slip</span>
-        </button>
+        <AppButton variant="outline" size="sm" @click="handlePrintSlip">
+          <template #icon-left><Printer :size="14" /></template>
+          Print Entitlement Slip
+        </AppButton>
 
         <!-- Status Pill (LEAVE_ALLOCATION_STATE) -->
         <span class="status-pill" :class="`state-${allocation.allocation_state}`">
@@ -166,13 +165,13 @@ const formatDateTime = (val?: string | null) => {
 
         <!-- Contextual Action Buttons in Header -->
         <template v-if="allocation.allocation_state === 'approved'">
-          <button class="btn-secondary-action" @click="openRescheduleModal">
-            <RefreshCw :size="14" />
-            <span>Reschedule Window</span>
-          </button>
-          <button class="btn-outline-action" @click="handleMarkConsumed">
-            <span>Close / Consume</span>
-          </button>
+          <AppButton variant="outline" size="sm" @click="openRescheduleModal">
+            <template #icon-left><RefreshCw :size="14" /></template>
+            Reschedule Window
+          </AppButton>
+          <AppButton variant="outline" size="sm" @click="handleMarkConsumed">
+            Close / Consume
+          </AppButton>
         </template>
       </div>
     </div>
@@ -469,25 +468,25 @@ const formatDateTime = (val?: string | null) => {
             </div>
 
             <div class="approver-actions-row">
-              <button
-                type="button"
-                class="btn-reject-action"
+              <AppButton
+                variant="destructive"
+                size="sm"
                 :disabled="isSubmittingDecision"
                 @click="handleReject"
               >
-                <X :size="14" />
-                <span>Reject</span>
-              </button>
+                <template #icon-left><X :size="14" /></template>
+                Reject
+              </AppButton>
 
-              <button
-                type="button"
-                class="btn-approve-action"
+              <AppButton
+                variant="primary"
+                size="sm"
                 :disabled="isSubmittingDecision"
+                :loading="isSubmittingDecision"
                 @click="handleApprove"
               >
-                <Check :size="15" />
-                <span>{{ isSubmittingDecision ? 'Certifying...' : 'Approve & Certify Quota' }}</span>
-              </button>
+                Approve &amp; Certify Quota
+              </AppButton>
             </div>
           </div>
 
@@ -641,13 +640,13 @@ const formatDateTime = (val?: string | null) => {
         </div>
 
         <div class="modal-footer">
-          <button class="btn-secondary-action" @click="isRescheduleModalOpen = false">
-            <span>Cancel</span>
-          </button>
-          <button class="btn-primary-action" @click="submitReschedule">
-            <RefreshCw :size="14" />
-            <span>Confirm &amp; Spawn Forward-Chain</span>
-          </button>
+          <AppButton variant="outline" size="sm" @click="isRescheduleModalOpen = false">
+            Cancel
+          </AppButton>
+          <AppButton variant="primary" size="sm" @click="submitReschedule">
+            <template #icon-left><RefreshCw :size="14" /></template>
+            Confirm &amp; Spawn Forward-Chain
+          </AppButton>
         </div>
       </div>
     </div>
@@ -658,8 +657,8 @@ const formatDateTime = (val?: string | null) => {
 .allocation-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

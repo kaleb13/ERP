@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { Search, ChevronDown, Plus, Check } from 'lucide-vue-next';
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { Search, ChevronDown, Plus, AlertCircle } from 'lucide-vue-next';;
 
 export interface ComboboxOption {
   id: number | string;
@@ -23,6 +23,7 @@ interface Props {
   disabled?: boolean;
   error?: string;
   helperText?: string;
+  hint?: string;
   id?: string;
 }
 
@@ -39,8 +40,11 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   error: '',
   helperText: '',
+  hint: '',
   id: undefined
 });
+
+const displayHelper = computed(() => props.hint || props.helperText || '');
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -195,7 +199,10 @@ onBeforeUnmount(() => {
       <span class="combobox-display-text" :class="{ 'is-placeholder': !modelValue }">
         {{ modelValue || placeholder }}
       </span>
-      <ChevronDown :size="14" class="combobox-chevron" :class="{ 'is-rotated': isOpen }" />
+      <span class="combobox-trailing-icons">
+        <AlertCircle v-if="error" :size="16" class="combobox-error-icon" aria-hidden="true" />
+        <ChevronDown :size="15" class="combobox-chevron" :class="{ 'is-rotated': isOpen }" />
+      </span>
     </div>
 
     <!-- Dropdown Popover (Screenshot Style) -->
@@ -250,7 +257,7 @@ onBeforeUnmount(() => {
 
     <!-- Error / Helper Text -->
     <p v-if="error" class="error-text">{{ error }}</p>
-    <p v-else-if="helperText" class="helper-text">{{ helperText }}</p>
+    <p v-else-if="displayHelper" class="helper-text">{{ displayHelper }}</p>
   </div>
 </template>
 
@@ -267,7 +274,7 @@ onBeforeUnmount(() => {
 .combobox-label {
   font-size: 12.5px;
   font-weight: 500;
-  color: #404040;
+  color: var(--qmt-input-label, #404040);
   user-select: none;
   display: inline-flex;
   align-items: center;
@@ -276,7 +283,7 @@ onBeforeUnmount(() => {
 }
 
 .required-asterisk {
-  color: #dc2626;
+  color: var(--qmt-input-error-icon, #e7000b);
   font-weight: 600;
   margin-left: 3px;
 }
@@ -284,31 +291,52 @@ onBeforeUnmount(() => {
 /* Trigger Box */
 .combobox-trigger {
   width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  height: var(--qmt-input-sm-height, 38px);
+  padding: 0 var(--qmt-input-sm-padding-x, 12px);
+  background-color: var(--qmt-input-bg, #ffffff);
+  border: var(--qmt-input-border-width, 1px) solid var(--qmt-input-border, #d4d4d4);
+  border-radius: var(--qmt-input-radius, 8px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px 0 var(--qmt-color-shadow-faint);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .combobox-control-wrapper.is-open .combobox-trigger,
 .combobox-trigger:hover {
-  border-color: #0B529C;
+  border-color: var(--qmt-input-border-focus, #83bff6);
 }
 
 .combobox-control-wrapper.is-open .combobox-trigger {
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+  box-shadow:
+    0 0 0 var(--qmt-focus-ring-width, 4px) var(--qmt-color-focus-ring-brand, #e1eefd),
+    0 1px 2px 0 var(--qmt-color-shadow-faint);
+}
+
+.combobox-control-wrapper.has-error .combobox-trigger {
+  border-color: var(--qmt-input-border-error, #ffa2a2);
+}
+
+.combobox-control-wrapper.has-error.is-open .combobox-trigger {
+  border-color: var(--qmt-input-border-error, #ffa2a2);
+  box-shadow:
+    0 0 0 var(--qmt-focus-ring-width, 4px) var(--qmt-color-focus-ring-error, #ffe2e2),
+    0 1px 2px 0 var(--qmt-color-shadow-faint);
+}
+
+.combobox-control-wrapper.is-disabled .combobox-trigger {
+  background-color: var(--qmt-input-bg-disabled, #fafafa);
+  color: var(--qmt-input-fg-disabled, #a1a1a1);
+  border-color: var(--qmt-input-border-disabled, #d4d4d4);
+  cursor: not-allowed;
 }
 
 .combobox-display-text {
   font-size: 13.5px;
-  color: #404040;
+  color: var(--qmt-input-fg, #404040);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -316,13 +344,25 @@ onBeforeUnmount(() => {
 }
 
 .combobox-display-text.is-placeholder {
-  color: #94a3b8;
+  color: var(--qmt-input-placeholder, #737373);
+}
+
+.combobox-trailing-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.combobox-error-icon {
+  color: var(--qmt-input-error-icon, #e7000b);
+  flex-shrink: 0;
 }
 
 .combobox-chevron {
-  color: #737373;
+  color: var(--qmt-input-icon, #737373);
   flex-shrink: 0;
-  margin-left: 8px;
   transition: transform 0.2s ease;
 }
 
@@ -330,21 +370,23 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
-/* Popover Panel (Exact Match to Screenshot) */
+/* Popover Panel */
 .combobox-popover {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 60;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  background: var(--qmt-input-popover-bg, #ffffff);
+  border: 1px solid var(--qmt-input-popover-border, #e5e5e5);
+  border-radius: var(--qmt-input-popover-radius, 8px);
+  padding: 6px;
+  box-shadow:
+    0 12px 16px -4px var(--qmt-color-shadow-medium, rgba(10, 13, 18, 0.14)),
+    0 4px 6px -2px var(--qmt-color-shadow-faint, rgba(10, 13, 18, 0.05));
 }
 
-/* Search Box with Blue Focus Border */
+/* Search Box */
 .combobox-search-box {
   position: relative;
   display: flex;
@@ -355,7 +397,7 @@ onBeforeUnmount(() => {
 .combobox-search-icon {
   position: absolute;
   left: 10px;
-  color: #94a3b8;
+  color: var(--qmt-input-icon, #737373);
   pointer-events: none;
 }
 
@@ -363,18 +405,18 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 36px;
   padding: 0 12px 0 32px;
-  border: 1.5px solid #38bdf8;
-  border-radius: 8px;
+  border: 1px solid var(--qmt-input-border, #d4d4d4);
+  border-radius: 6px;
   font-size: 13px;
-  color: #404040;
+  color: var(--qmt-input-fg, #404040);
   outline: none;
-  background: #ffffff;
+  background: var(--qmt-input-bg, #ffffff);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .combobox-search-input:focus {
-  border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+  border-color: var(--qmt-input-border-focus, #83bff6);
+  box-shadow: 0 0 0 3px var(--qmt-color-focus-ring-brand, #e1eefd);
 }
 
 /* Options List */
@@ -410,15 +452,15 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: var(--qmt-input-option-padding-y, 8px) var(--qmt-input-option-padding-x, 10px);
+  border-radius: var(--qmt-input-option-radius, 6px);
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
 
 .combobox-item:hover,
 .combobox-item.is-selected {
-  background-color: #f4f4f5;
+  background-color: var(--qmt-input-option-bg-active, #f5f5f5);
 }
 
 .combobox-item-info {
@@ -487,15 +529,15 @@ onBeforeUnmount(() => {
 /* Helper & Error */
 .helper-text {
   font-size: 11.5px;
-  color: #737373;
+  color: var(--qmt-input-hint, #737373);
   margin: 2px 0 0 0;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .error-text {
   font-size: 11.5px;
-  color: #dc2626;
+  color: var(--qmt-input-hint-error, #c10007);
   margin: 2px 0 0 0;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 </style>

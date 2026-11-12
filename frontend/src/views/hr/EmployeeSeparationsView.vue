@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  UserMinus, Plus, Eye, CheckCircle2, XCircle, Clock, 
-  Calendar, ShieldCheck, ArrowRight, ShieldAlert,
-  AlertTriangle, Filter, MoreVertical, FileText,
-  Check, CheckSquare, X
-} from 'lucide-vue-next';
+import {
+  Plus, Eye, CheckCircle2, Clock,
+  Calendar, Filter, MoreVertical, Check,
+  CheckSquare, X
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
@@ -347,14 +347,10 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
     >
       <!-- Primary Action in Toolbar #actions Slot (AGENTS.md Rule 10) -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-primary-create"
-          @click="isQuickCreateOpen = true"
-        >
-          <Plus :size="15" />
-          <span>Initiate Separation</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="isQuickCreateOpen = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Initiate Separation
+</AppButton>
       </template>
 
       <!-- Canonical Table (AGENTS.md Rule 8, 9, 10) -->
@@ -701,10 +697,10 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 
 <style scoped>
 .page-container {
-  padding: 16px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
 }

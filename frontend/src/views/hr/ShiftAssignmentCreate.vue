@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  CalendarRange, Clock, ArrowLeft, Save, X, RotateCcw, 
-  CheckCircle2, MoreVertical, AlertCircle, Info, Coffee, 
-  User, Building2, Repeat, ShieldCheck, Sun, Moon
-} from 'lucide-vue-next';
+import {
+  CalendarRange, Clock, Save, X,
+  CheckCircle2, MoreVertical, User, Building2
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
@@ -287,21 +287,25 @@ const handleSavePublished = () => {
     <!-- Top Action Bar -->
     <div class="top-bar-container">
       <div class="top-bar-left">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :is-saved="isSaved" :is-draft="isDraft" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :is-saved="isSaved" :is-draft="isDraft" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-bar-actions">
         <!-- 3-Dots More Menu (Draft state supported in schema SHIFT_ASSIGNMENT_STATE) -->
         <div class="more-menu-wrapper" @click.stop>
-          <button 
-            type="button" 
-            class="btn-more-dots"
+          <AppButton 
+            variant="outline" 
+            size="sm"
+            iconOnly
             @click="showMoreMenu = !showMoreMenu"
             title="More Options"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           <div v-if="showMoreMenu" class="more-dropdown-menu">
             <button 
               type="button" 
@@ -313,24 +317,24 @@ const handleSavePublished = () => {
           </div>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-clear-form"
+        <AppButton 
+          variant="outline" 
+          size="sm"
           @click="handleClearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
-        <button 
-          type="button" 
-          class="btn-save-primary"
+        <AppButton 
+          variant="primary" 
+          size="sm"
           :disabled="isSubmitting"
+          :loading="isSubmitting"
           @click="handleSavePublished"
         >
-          <Save :size="14" />
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -527,7 +531,7 @@ const handleSavePublished = () => {
 
 <style scoped>
 .shift-assignment-create-page {
-  padding: 16px 24px 48px;
+  padding: 0;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -723,7 +727,7 @@ const handleSavePublished = () => {
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
   margin-bottom: 20px;
 }
 

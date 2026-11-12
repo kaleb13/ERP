@@ -2,30 +2,13 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Plus,
-  Search,
-  Filter,
-  ArrowUpDown,
-  Columns,
-  Maximize2,
-  MoreVertical,
-  CheckCircle2,
-  FileText,
-  Users,
-  Building2,
-  Briefcase,
-  X,
-  Eye,
-  Check,
-  Send,
-  LifeBuoy,
-  UserCheck,
-  ExternalLink,
-  Clock,
-  AlertCircle
-} from 'lucide-vue-next';
+  Plus, Search, MoreVertical, CheckCircle2,
+  FileText, X, Eye, Check,
+  LifeBuoy
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -129,27 +112,26 @@ const toggleSelectRow = (id: number) => {
   }
 };
 
-// ─── TABLE COLUMNS (Rule 9: Atomic columns, Name/Subject first, Code subtext)
-interface TableCol {
-  id: string;
-  name: string;
-  visible: boolean;
-}
+import { type ColumnDef } from '../../components/BaseTable.vue';
 
-const tableColumns = ref<TableCol[]>([
-  { id: 'subject', name: 'Subject & Ticket', visible: true },
-  { id: 'employee', name: 'Requester Employee', visible: true },
-  { id: 'category', name: 'Service Category', visible: true },
-  { id: 'assigned_to', name: 'Assigned Handler', visible: true },
-  { id: 'status', name: 'Status', visible: true },
-  { id: 'actions', name: 'Actions', visible: true },
-  { id: 'linked_reference', name: 'Linked Fulfillment', visible: false },
-  { id: 'state', name: 'State', visible: false }
+// ─── TABLE COLUMNS (Exact Match to Figma Design 7528:132644) ────────────
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'subject', label: 'Name', visible: true },
+  { key: 'audience', label: 'Audience', visible: true },
+  { key: 'category', label: 'Service Category', visible: true },
+  { key: 'assigned_to', label: 'Assigned Handler', visible: true },
+  { key: 'status', label: 'Status', visible: true },
+  { key: 'actions', label: 'Actions', visible: true }
 ]);
 
-const isColumnVisible = (id: string) => {
-  const col = tableColumns.value.find(c => c.id === id);
-  return col ? col.visible : true;
+const handleToggleColumn = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  if (col) col.visible = !col.visible;
+};
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? (col.visible !== false) : true;
 };
 
 // ─── QUICK CREATE MODAL (AGENTS.md Rule 4: <= 5 Required Fields Standard) ─
@@ -369,39 +351,43 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
       <AppBreadcrumb :items="breadcrumbs" />
     </div>
 
-    <!-- KPI Metric Cards (Rule 2) -->
+    <!-- KPI Metric Cards (Rule 2 & Figma Layout) -->
     <div class="metrics-grid">
       <MetricCard
         label="TOTAL REQUESTS"
         :value="totalRequests"
         subtext="All employee service tickets logged"
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'all' }"
+        @click="activeTab = 'all'"
       />
       <MetricCard
         label="OPEN & UNASSIGNED"
         :value="openRequests"
         subtext="Pending first triage review"
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'open' }"
+        @click="activeTab = activeTab === 'open' ? 'all' : 'open'"
       />
       <MetricCard
         label="IN PROGRESS"
         :value="inProgressRequests"
         subtext="Assigned & active HR fulfillment"
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'in_progress' }"
+        @click="activeTab = activeTab === 'in_progress' ? 'all' : 'in_progress'"
       />
       <MetricCard
         label="RESOLVED & CLOSED"
         :value="resolvedClosedRequests"
         subtext="Successfully completed tickets"
+        class="metric-interactive"
+        :class="{ 'metric-active': activeTab === 'resolved' }"
+        @click="activeTab = activeTab === 'resolved' ? 'all' : 'resolved'"
       />
     </div>
 
-    <!-- Secondary UnderlineTabs (Rule 1) -->
-    <div class="tabs-container">
-      <UnderlineTabs
-        v-model="activeTab"
-        :tabs="statusTabs"
-      />
-    </div>
-
-    <!-- Unified Table Card (Rule 10) -->
+    <!-- Unified Table Card (Rule 10 & Figma Screen 7528:132644) -->
     <div class="table-card-wrapper">
       <AppDataTable
         title="HR Service Requests"
@@ -410,21 +396,14 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
         :current-page="1"
         :per-page="10"
         :columns="tableColumns"
-        @toggle-column="(colId) => {
-          const col = tableColumns.find(c => c.id === colId);
-          if (col) col.visible = !col.visible;
-        }"
+        @toggle-column="handleToggleColumn"
       >
         <!-- Table Toolbar Actions Slot -->
         <template #actions>
-          <button
-            type="button"
-            class="btn-primary-add"
-            @click="handleOpenQuickCreate"
-          >
-            <Plus :size="16" />
-            <span>Create Service Request</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="handleOpenQuickCreate">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Service Request
+</AppButton>
         </template>
 
         <!-- Search Bar -->
@@ -435,12 +414,12 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
               v-model="searchQuery"
               type="text"
               class="search-input"
-              placeholder="Search by subject, code, employee, handler..."
+              placeholder="Search by Name..."
             />
           </div>
         </template>
 
-        <!-- Data Table (Rules 8, 9) -->
+        <!-- Data Table (Rules 8, 9 & Figma Columns: Name, Audience, Category, Handler, Status, Actions) -->
         <template #default>
           <table class="erp-table">
             <thead>
@@ -453,13 +432,11 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
                     @change="toggleSelectAll"
                   />
                 </th>
-                <th v-if="isColumnVisible('subject')">Subject & Ticket</th>
-                <th v-if="isColumnVisible('employee')">Requester</th>
+                <th v-if="isColumnVisible('subject')">Name</th>
+                <th v-if="isColumnVisible('audience')">Audience</th>
                 <th v-if="isColumnVisible('category')">Service Category</th>
                 <th v-if="isColumnVisible('assigned_to')">Assigned Handler</th>
-                <th v-if="isColumnVisible('linked_reference')">Linked Fulfillment</th>
                 <th v-if="isColumnVisible('status')">Status</th>
-                <th v-if="isColumnVisible('state')">State</th>
                 <th v-if="isColumnVisible('actions')" class="th-actions"></th>
               </tr>
             </thead>
@@ -480,7 +457,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
                   />
                 </td>
 
-                <!-- Subject & Code (Rule 4: Zero standalone code column, Name/Subject first) -->
+                <!-- Subject & Code (Figma Standard: Subject on top, Code below) -->
                 <td v-if="isColumnVisible('subject')" class="td-subject">
                   <div class="subject-cell-wrapper" @click="openDetailModal(item)">
                     <span class="table-name-primary">{{ item.subject }}</span>
@@ -488,10 +465,9 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
                   </div>
                 </td>
 
-                <!-- Requester (Rule 8: Cross-entity plain text name in tertiary color) -->
-                <td v-if="isColumnVisible('employee')" class="td-requester">
-                  <span class="table-name-tertiary">{{ item.employee_name }}</span>
-                  <span class="table-sub-tertiary">{{ item.employee_code }} • {{ item.department }}</span>
+                <!-- Audience / Requester Scope -->
+                <td v-if="isColumnVisible('audience')" class="td-audience">
+                  <span class="tertiary-text">{{ item.department || 'All Employees' }}</span>
                 </td>
 
                 <!-- Category (Rule 6: Anti-Badge Standard, plain text in tertiary color) -->
@@ -504,35 +480,13 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
                   <span class="tertiary-text">{{ item.assigned_to_name || '— (Unassigned)' }}</span>
                 </td>
 
-                <!-- Linked Fulfillment (Rule 6: Plain text with subtle link) -->
-                <td v-if="isColumnVisible('linked_reference')" class="td-fulfillment">
-                  <div v-if="item.linked_reference?.employee_letter_code" class="linked-badge-cell">
-                    <FileText :size="12" class="link-icon" />
-                    <span>Letter {{ item.linked_reference.employee_letter_code }}</span>
-                  </div>
-                  <span v-else-if="item.linked_reference?.note" class="tertiary-text">
-                    {{ item.linked_reference.note }}
-                  </span>
-                  <span v-else class="tertiary-text">—</span>
-                </td>
-
-                <!-- Status (Lifecycle state) -->
+                <!-- Status (Figma Status Pill) -->
                 <td v-if="isColumnVisible('status')">
                   <span
                     class="status-pill"
                     :class="`status-${item.request_state_lookup_value_id}`"
                   >
                     {{ formatRequestState(item.request_state_lookup_value_id) }}
-                  </span>
-                </td>
-
-                <!-- State (Rule 9: Active / Inactive) -->
-                <td v-if="isColumnVisible('state')">
-                  <span
-                    class="state-pill"
-                    :class="`state-${item.state}`"
-                  >
-                    {{ item.state.charAt(0).toUpperCase() + item.state.slice(1) }}
                   </span>
                 </td>
 
@@ -739,28 +693,28 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 
         <!-- Modal Footer Actions -->
         <div class="detail-footer">
-          <button type="button" class="btn-cancel" @click="closeDetailModal">
+          <AppButton variant="outline" size="sm" @click="closeDetailModal">
             Close
-          </button>
+          </AppButton>
           <div class="footer-right-actions">
-            <button
+            <AppButton
               v-if="['open', 'assigned', 'in_progress'].includes(selectedRequest.request_state_lookup_value_id)"
-              type="button"
-              class="btn-resolve-primary"
+              variant="primary"
+              size="sm"
               @click="handleResolveInModal"
             >
-              <Check :size="14" />
+              <template #icon-left><Check :size="14" /></template>
               <span>Mark as Resolved</span>
-            </button>
-            <button
+            </AppButton>
+            <AppButton
               v-if="selectedRequest.request_state_lookup_value_id === 'resolved'"
-              type="button"
-              class="btn-close-ticket"
+              variant="primary"
+              size="sm"
               @click="handleCloseInModal"
             >
-              <CheckCircle2 :size="14" />
+              <template #icon-left><CheckCircle2 :size="14" /></template>
               <span>Close Ticket</span>
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>
@@ -772,8 +726,8 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 .service-requests-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 24px 32px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
@@ -782,15 +736,26 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
   margin-bottom: -4px;
 }
 
-/* Metrics Grid (Rule 2) */
+/* Metrics Grid (Rule 2 & Figma Layout) */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-.tabs-container {
-  margin-top: 4px;
+.metric-interactive {
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-interactive:hover {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+}
+
+.metric-active {
+  border-color: #0B529C !important;
+  box-shadow: 0 0 0 1px #0B529C !important;
 }
 
 /* Table Card Wrapper (Rule 10) */
@@ -1121,7 +1086,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 /* Detail Modal Styles */

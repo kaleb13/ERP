@@ -20,8 +20,10 @@ const props = withDefaults(
     modelValue: T;
     /** Tabs array with label, optional count, icon, and badge. */
     tabs: UnderlineTabItem<T>[];
-    /** Visual size. `sm` (compact), `md` (standard default), `lg` (prominent). */
+    /** Visual size. `sm` (36px), `md` (40px standard default), `lg` (44px prominent). */
     size?: 'sm' | 'md' | 'lg';
+    /** Color scheme. `brand` (#0b529c with #e1eefd active bg) or `light` (neutral). */
+    color?: 'brand' | 'light';
     /** Whether tabs expand to fill 100% width. */
     fullWidth?: boolean;
     /** Alignment of tabs: `start` (default), `center`, `end`, `between`. */
@@ -35,6 +37,7 @@ const props = withDefaults(
   }>(),
   {
     size: 'md',
+    color: 'brand',
     fullWidth: false,
     justify: 'start',
     showBottomBorder: true,
@@ -83,7 +86,7 @@ const scrollActiveIntoView = () => {
   nextTick(() => {
     const el = tabsRef.value;
     if (!el) return;
-    const activeEl = el.querySelector<HTMLElement>('.underline-tab.active');
+    const activeEl = el.querySelector<HTMLElement>('.qmt-underline-tab.active');
     if (activeEl) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
@@ -103,41 +106,42 @@ onMounted(() => {
     });
     resizeObserver.observe(tabsRef.value);
   }
-  window.addEventListener('resize', updateScrollState);
 });
 
 onUnmounted(() => {
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
-  window.removeEventListener('resize', updateScrollState);
 });
 
-watch(() => props.tabs, () => {
-  nextTick(updateScrollState);
-}, { deep: true });
+watch(
+  () => props.modelValue,
+  () => {
+    scrollActiveIntoView();
+  }
+);
 
-watch(() => props.modelValue, () => {
-  scrollActiveIntoView();
-});
+watch(
+  () => props.tabs,
+  () => {
+    nextTick(() => {
+      updateScrollState();
+    });
+  },
+  { deep: true }
+);
 </script>
 
 <template>
   <div 
-    class="underline-tabs-container"
-    :class="[
-      { 'has-bottom-border': showBottomBorder },
-      `justify-${justify}`
-    ]"
+    class="qmt-tabs-container"
+    :class="{ 'has-bottom-border': showBottomBorder }"
   >
-    <!-- Optional Prefix Slot -->
-    <slot name="prefix" />
-
     <!-- Left Scroll Arrow Button -->
     <button 
       v-if="showScrollArrows && canScrollLeft" 
       type="button" 
-      class="tab-scroll-btn tab-scroll-btn--left" 
+      class="qmt-tab-scroll-btn qmt-tab-scroll-btn--left" 
       aria-label="Scroll tabs left"
       title="Scroll tabs left"
       @click="scrollTabs('left')"
@@ -145,17 +149,20 @@ watch(() => props.modelValue, () => {
       <ChevronLeft :size="15" />
     </button>
 
-    <!-- Scrollable Tab Buttons Track -->
+    <!-- Scrollable Tab Strip -->
     <div 
-      ref="tabsRef"
-      class="underline-tabs"
+      ref="tabsRef" 
+      class="qmt-underline-tabs"
       :class="[
-        `underline-tabs--${size}`,
         `justify-${justify}`,
-        { 'underline-tabs--full': fullWidth }
+        { 'qmt-underline-tabs--full': fullWidth }
       ]"
-      @scroll="updateScrollState"
+      @scroll.passive="updateScrollState"
     >
+      <!-- Optional Prefix Slot inside tabs list -->
+      <slot name="prefix" />
+
+      <!-- Individual Tab Buttons (Figma Node 5577:151) -->
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -163,10 +170,11 @@ watch(() => props.modelValue, () => {
         :disabled="tab.disabled"
         :title="tab.tooltip"
         :class="[
-          'underline-tab',
-          `underline-tab--${size}`,
+          'qmt-underline-tab',
+          `qmt-underline-tab--${size}`,
+          `qmt-underline-tab--${color}`,
           tab.customClass,
-          { 
+          {
             active: modelValue === tab.id,
             'is-disabled': tab.disabled,
             'flex-1': fullWidth
@@ -180,21 +188,18 @@ watch(() => props.modelValue, () => {
           <component 
             :is="tab.icon" 
             v-if="tab.icon" 
-            :size="size === 'sm' ? 14 : size === 'lg' ? 17 : 15" 
-            class="tab-icon" 
+            :size="size === 'sm' ? 16 : size === 'lg' ? 20 : 18" 
+            class="qmt-tab-icon" 
           />
 
-          <!-- Label Text -->
-          <span class="tab-label">{{ tab.label }}</span>
+          <!-- Label -->
+          <span class="qmt-tab-label">{{ tab.label }}</span>
 
-          <!-- Count Badge Pill (hidden if showCount is false) -->
+          <!-- Count Badge (Figma QMT Tab Badge Node 5594:966) -->
           <span 
             v-if="showCount && tab.count !== undefined" 
-            :class="[
-              'tab-count-badge',
-              `count-variant-${tab.badgeVariant || 'default'}`,
-              { 'count-active': modelValue === tab.id }
-            ]"
+            class="qmt-tab-count-badge"
+            :class="{ 'count-active': modelValue === tab.id }"
           >
             {{ tab.count }}
           </span>
@@ -203,7 +208,7 @@ watch(() => props.modelValue, () => {
           <span 
             v-if="tab.badge" 
             :class="[
-              'tab-text-badge',
+              'qmt-tab-text-badge',
               `badge-variant-${tab.badgeVariant || 'primary'}`
             ]"
           >
@@ -211,8 +216,8 @@ watch(() => props.modelValue, () => {
           </span>
         </slot>
 
-        <!-- Active Bottom Blue Bar Indicator -->
-        <div v-if="modelValue === tab.id" class="active-indicator"></div>
+        <!-- Active Bottom Brand Indicator Line (Figma Node 5594:969) -->
+        <div v-if="modelValue === tab.id" class="qmt-active-indicator" />
       </button>
 
       <!-- Optional Suffix Slot inside tabs list -->
@@ -223,7 +228,7 @@ watch(() => props.modelValue, () => {
     <button 
       v-if="showScrollArrows && canScrollRight" 
       type="button" 
-      class="tab-scroll-btn tab-scroll-btn--right" 
+      class="qmt-tab-scroll-btn qmt-tab-scroll-btn--right" 
       aria-label="Scroll tabs right"
       title="Scroll tabs right"
       @click="scrollTabs('right')"
@@ -231,64 +236,65 @@ watch(() => props.modelValue, () => {
       <ChevronRight :size="15" />
     </button>
 
-    <!-- Right Actions Slot (e.g. search, filters, or add button) -->
-    <div v-if="$slots.right" class="underline-tabs-right">
+    <!-- Right Actions Slot -->
+    <div v-if="$slots.right" class="qmt-underline-tabs-right">
       <slot name="right" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.underline-tabs-container {
+/* QMT Underline Tabs Container: Figma Node 3345:29280 / 5577:151 */
+.qmt-tabs-container {
   display: flex;
   align-items: center;
   width: 100%;
   position: relative;
   min-width: 0;
+  font-family: var(--qmt-font-family-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
-.underline-tabs-container.has-bottom-border {
-  border-bottom: 1px solid #e2e8f0;
+.qmt-tabs-container.has-bottom-border {
+  border-bottom: 1px solid var(--qmt-tab-border-color, #e5e5e5);
 }
 
 /* Scroll Arrow Controls */
-.tab-scroll-btn {
-  display: flex;
+.qmt-tab-scroll-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   background-color: #ffffff;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
   transition: all 0.15s ease;
   z-index: 10;
   padding: 0;
 }
 
-.tab-scroll-btn:hover {
-  background-color: #f8fafc;
-  color: #0B529C;
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+.qmt-tab-scroll-btn:hover {
+  background-color: #f5f5f5;
+  color: #171717;
+  border-color: #d4d4d4;
 }
 
-.tab-scroll-btn--left {
+.qmt-tab-scroll-btn--left {
   margin-right: 6px;
 }
 
-.tab-scroll-btn--right {
+.qmt-tab-scroll-btn--right {
   margin-left: 6px;
 }
 
-.underline-tabs {
+.qmt-underline-tabs {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--qmt-tab-gap, 8px);
   overflow-x: auto;
   user-select: none;
   scrollbar-width: none;
@@ -297,11 +303,11 @@ watch(() => props.modelValue, () => {
   min-width: 0;
 }
 
-.underline-tabs::-webkit-scrollbar {
+.qmt-underline-tabs::-webkit-scrollbar {
   display: none;
 }
 
-.underline-tabs--full {
+.qmt-underline-tabs--full {
   width: 100%;
 }
 
@@ -310,112 +316,163 @@ watch(() => props.modelValue, () => {
 .justify-end { justify-content: flex-end; }
 .justify-between { justify-content: space-between; }
 
-.underline-tab {
+/* QMT Tab Base (Figma Node 5577:151) */
+.qmt-underline-tab {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--qmt-tab-gap, 8px);
   border: none;
-  background: none;
-  color: #64748b;
+  background: transparent;
+  color: var(--qmt-tab-fg, #737373);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   outline: none;
   text-decoration: none;
+  border-radius: 6px 6px 0 0;
+  box-sizing: border-box;
 }
 
-.underline-tab:hover:not(.is-disabled) {
-  color: #0f172a;
+/* Sizes */
+.qmt-underline-tab--sm {
+  height: var(--qmt-tab-sm-height, 36px);
+  padding: 0 var(--qmt-tab-sm-padding-x, 12px);
+  font-size: var(--qmt-tab-sm-font-size, 13px);
+  font-weight: 600;
+  line-height: 18px;
 }
 
-.underline-tab.active {
-  color: #0B529C;
+.qmt-underline-tab--md {
+  height: var(--qmt-tab-md-height, 40px);
+  padding: 0 var(--qmt-tab-md-padding-x, 14px);
+  font-size: var(--qmt-tab-md-font-size, 14px);
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.qmt-underline-tab--lg {
+  height: var(--qmt-tab-lg-height, 44px);
+  padding: 0 var(--qmt-tab-lg-padding-x, 16px);
+  font-size: var(--qmt-tab-lg-font-size, 15px);
+  font-weight: 600;
+  line-height: 22px;
+}
+
+/* Hover State */
+.qmt-underline-tab:hover:not(.is-disabled) {
+  background-color: var(--qmt-tab-bg-hover, #f5f5f5);
+  color: var(--qmt-tab-fg-hover, #404040);
+}
+
+/* Brand Color Scheme Active (Figma 5577:151: bg #e1eefd, text #0b529c) */
+.qmt-underline-tab--brand.active {
+  background-color: var(--qmt-tab-brand-bg-current, #e1eefd);
+  color: var(--qmt-tab-brand-fg-current, #0b529c);
   font-weight: 600;
 }
 
-.underline-tab.is-disabled {
+/* Light Color Scheme Active */
+.qmt-underline-tab--light.active {
+  background-color: transparent;
+  color: var(--qmt-tab-light-fg-current, #171717);
+  font-weight: 600;
+}
+
+.qmt-underline-tab.is-disabled {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.tab-icon {
+.qmt-tab-icon {
   color: currentColor;
   flex-shrink: 0;
 }
 
-.tab-label {
-  line-height: 1.2;
+.qmt-tab-label {
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* Active Bottom Blue Indicator */
-.active-indicator {
+/* Active Bottom Indicator Line (Figma Node 5594:969) */
+.qmt-active-indicator {
   position: absolute;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   right: 0;
-  height: 2.5px;
-  background-color: #0B529C;
+  height: 2px;
+  background-color: var(--qmt-tab-brand-indicator, #0b529c);
   border-radius: 2px 2px 0 0;
   z-index: 2;
 }
 
-/* Count Badges */
-.tab-count-badge {
-  font-size: 11px;
+.qmt-underline-tab--light .qmt-active-indicator {
+  background-color: var(--qmt-tab-light-indicator, #171717);
+}
+
+/* Count Badges (Figma Node 5594:966 / I5594:966;3345:21149) */
+.qmt-tab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 7.5px;
-  border-radius: 12px;
-  background: #f1f5f9;
-  color: #475569;
-  line-height: 1.2;
-  transition: all 0.2s ease;
+  line-height: 18px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background-color: var(--qmt-badge-gray-bg, #f5f5f5);
+  color: var(--qmt-badge-gray-fg, #404040);
+  transition: all 0.15s ease;
 }
 
-.underline-tab.active .tab-count-badge {
-  background: #eff6ff;
-  color: #0B529C;
+.qmt-underline-tab--brand.active .qmt-tab-count-badge {
+  background-color: var(--qmt-badge-brand-bg, #e1eefd);
+  color: var(--qmt-badge-brand-fg, #0b529c);
 }
-
-.count-variant-success { background: #dcfce7 !important; color: #15803d !important; }
-.count-variant-warning { background: #fef3c7 !important; color: #b45309 !important; }
-.count-variant-danger  { background: #fee2e2 !important; color: #b91c1c !important; }
-.count-variant-info    { background: #e0f2fe !important; color: #0369a1 !important; }
 
 /* Text Badges */
-.tab-text-badge {
-  font-size: 10px;
-  font-weight: 700;
+.qmt-tab-text-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-.badge-variant-primary { background: #0B529C; color: #ffffff; }
-
-/* Sizes */
-.underline-tab--sm {
-  padding: 8px 12px;
-  font-size: 12.5px;
+  letter-spacing: 0.02em;
 }
 
-.underline-tab--md {
-  padding: 10px 16px;
-  font-size: 13.5px;
+.badge-variant-primary {
+  background-color: #e1eefd;
+  color: #0b529c;
 }
 
-.underline-tab--lg {
-  padding: 12px 20px;
-  font-size: 14.5px;
+.badge-variant-success {
+  background-color: #d0fae5;
+  color: #007a55;
 }
 
-.underline-tabs-right {
-  margin-left: auto;
+.badge-variant-warning {
+  background-color: #fef3c6;
+  color: #bb4d00;
+}
+
+.badge-variant-danger {
+  background-color: #ffe2e2;
+  color: #c10007;
+}
+
+.badge-variant-info {
+  background-color: #dff2fe;
+  color: #0069a8;
+}
+
+.qmt-underline-tabs-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 12px;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-left: 16px;
 }
 </style>

@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import {
-  Calendar, Clock, Plus, ChevronLeft, ChevronRight, Edit2, Trash2,
-  CheckCircle2, AlertCircle, CalendarRange, Layers, MoreVertical,
-  Check, Info, X, Sliders, ArrowRight
-} from 'lucide-vue-next';
+import { Calendar, Plus, Edit2, Info } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import UnderlineTabs from '../../components/UnderlineTabs.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -318,10 +315,29 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
 };
+
+const isColVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
+};
+
+const searchQuery = ref('');
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const filteredCalendars = computed(() => {
+  let list = calendars.value;
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.entity_name.toLowerCase().includes(q));
+  }
+  return list;
+});
 </script>
 
 <template>
@@ -380,15 +396,17 @@ const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean })
             </div>
           </div>
 
-          <!-- Primary Create Calendar Action (8-10px well-rounded rectangle) -->
-          <button 
-            type="button" 
-            class="btn-create-calendar"
+          <!-- Primary Create Calendar Action (AppButton Primary Pill) -->
+          <AppButton 
+            variant="primary"
+            size="sm"
             @click="router.push('/hr/work-calendars/create')"
           >
-            <Plus :size="15" />
-            <span>Create Calendar</span>
-          </button>
+            <template #icon-left>
+              <Plus :size="15" />
+            </template>
+            Create Calendar
+          </AppButton>
         </div>
       </div>
 
@@ -539,82 +557,105 @@ const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean })
       <!-- TAB 3: ALL WORK CALENDARS DIRECTORY (WorkCalendar [REF])        -->
       <!-- ============================================================== -->
       <div v-show="activeSubTab === 'all_calendars'" class="tab-view-container p-0">
-        <div class="directory-table-responsive">
-          <table class="erp-table">
-            <thead>
-              <tr>
-                <th v-if="tableColumns.find(c => c.key === 'name')?.visible" class="th-name">Calendar Name</th>
-                <th v-if="tableColumns.find(c => c.key === 'entity')?.visible">Owning Entity</th>
-                <th v-if="tableColumns.find(c => c.key === 'weekly_hours')?.visible">Weekly Hours</th>
-                <th v-if="tableColumns.find(c => c.key === 'payroll_days')?.visible">Payroll Divisor</th>
-                <th v-if="tableColumns.find(c => c.key === 'fy_start')?.visible">Fiscal Year Start</th>
-                <th v-if="tableColumns.find(c => c.key === 'is_default')?.visible">Default</th>
-                <th v-if="tableColumns.find(c => c.key === 'state')?.visible">State</th>
-                <th class="th-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="cal in calendars" 
-                :key="cal.id"
-                class="erp-table-row"
-                :class="{ 'row-active-calendar': selectedCalendarId === cal.id }"
-                @click="selectedCalendarId = cal.id; activeSubTab = 'weekdays'"
-              >
-                <!-- Name & Code -->
-                <td class="td-name">
-                  <div class="name-cell-wrapper">
-                    <span class="table-name-primary">{{ cal.name }}</span>
-                    <span class="table-code-subtext">{{ cal.code }}</span>
-                  </div>
-                </td>
+        <AppDataTable
+          title="Work Calendars"
+          subtitle="Directory of organizational work calendars, weekly standard hours, and statutory payroll divisors."
+          :columns="tableColumns"
+          v-model:searchQuery="searchQuery"
+          v-model:currentPage="currentPage"
+          v-model:perPage="perPage"
+          :totalEntries="filteredCalendars.length"
+          :showPagination="true"
+          @toggleColumn="handleToggleColumn"
+        >
+          <template #actions>
+            <AppButton variant="primary" size="sm" @click="router.push('/hr/work-calendars/create')">
+              <template #icon-left>
+                <Plus :size="15" />
+              </template>
+              Create Calendar
+            </AppButton>
+          </template>
 
-                <!-- Entity -->
-                <td class="td-tertiary">
-                  <span class="plain-cell-text">{{ cal.entity_name }}</span>
-                </td>
-
-                <!-- Weekly Hours -->
-                <td class="td-tertiary">
-                  <span class="font-medium text-slate-700">{{ cal.default_weekly_hours.toFixed(2) }} hrs/wk</span>
-                </td>
-
-                <!-- Payroll Divisor -->
-                <td class="td-tertiary">
-                  <span class="plain-cell-text">{{ cal.payroll_days_per_month }} Days/mo</span>
-                </td>
-
-                <!-- FY Start -->
-                <td class="td-tertiary">
-                  <span class="plain-cell-text">Hamle 1 (Jul 8)</span>
-                </td>
-
-                <!-- Default Pill -->
-                <td>
-                  <span v-if="cal.is_default" class="badge-default-mini">Default</span>
-                  <span v-else class="plain-cell-text">—</span>
-                </td>
-
-                <!-- State -->
-                <td>
-                  <span class="status-pill status-active">Active</span>
-                </td>
-
-                <!-- Actions -->
-                <td class="td-actions" @click.stop>
-                  <button 
-                    type="button" 
-                    class="btn-action-dots"
-                    @click="router.push(`/hr/work-calendars/${cal.id}`)"
-                    title="Edit Calendar"
+          <template #default>
+            <div class="directory-table-responsive">
+              <table class="erp-table">
+                <thead>
+                  <tr>
+                    <th v-if="isColVisible('name')" class="th-name">Calendar Name</th>
+                    <th v-if="isColVisible('entity')">Owning Entity</th>
+                    <th v-if="isColVisible('weekly_hours')">Weekly Hours</th>
+                    <th v-if="isColVisible('payroll_days')">Payroll Divisor</th>
+                    <th v-if="isColVisible('fy_start')">Fiscal Year Start</th>
+                    <th v-if="isColVisible('is_default')">Default</th>
+                    <th v-if="isColVisible('state')">State</th>
+                    <th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr 
+                    v-for="cal in filteredCalendars" 
+                    :key="cal.id"
+                    class="erp-table-row"
+                    :class="{ 'row-active-calendar': selectedCalendarId === cal.id }"
+                    @click="selectedCalendarId = cal.id; activeSubTab = 'weekdays'"
                   >
-                    <Edit2 :size="14" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                    <!-- Name & Code -->
+                    <td class="td-name">
+                      <div class="name-cell-wrapper">
+                        <span class="table-name-primary">{{ cal.name }}</span>
+                        <span class="table-code-subtext">{{ cal.code }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Entity -->
+                    <td class="td-tertiary">
+                      <span class="plain-cell-text">{{ cal.entity_name }}</span>
+                    </td>
+
+                    <!-- Weekly Hours -->
+                    <td class="td-tertiary">
+                      <span class="font-medium text-slate-700">{{ cal.default_weekly_hours.toFixed(2) }} hrs/wk</span>
+                    </td>
+
+                    <!-- Payroll Divisor -->
+                    <td class="td-tertiary">
+                      <span class="plain-cell-text">{{ cal.payroll_days_per_month }} Days/mo</span>
+                    </td>
+
+                    <!-- FY Start -->
+                    <td class="td-tertiary">
+                      <span class="plain-cell-text">Hamle 1 (Jul 8)</span>
+                    </td>
+
+                    <!-- Default Pill -->
+                    <td>
+                      <span v-if="cal.is_default" class="badge-default-mini">Default</span>
+                      <span v-else class="plain-cell-text">—</span>
+                    </td>
+
+                    <!-- State -->
+                    <td>
+                      <span class="status-pill status-active">Active</span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="td-actions" @click.stop>
+                      <button 
+                        type="button" 
+                        class="btn-action-dots"
+                        @click="router.push(`/hr/work-calendars/${cal.id}`)"
+                        title="Edit Calendar"
+                      >
+                        <Edit2 :size="14" />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </AppDataTable>
       </div>
     </div>
 
@@ -658,13 +699,14 @@ const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean })
 
 <style scoped>
 .work-calendars-page {
-  padding: 1.25rem 2rem 3rem 2rem;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }
 
 .breadcrumb-container {
-  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
 }
 
 /* Master Card */

@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Users, User, UserCheck, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MapPin, Heart, GraduationCap, Award, Briefcase, Sparkles, Languages, 
-  MoreVertical, Edit2, Trash2, Eye, EyeOff, Copy, Check, Phone, Mail, Globe, 
-  Building2, ShieldCheck, FileText, Calendar, CheckCircle2, AlertCircle, 
-  Layers, ExternalLink, X, PlusCircle, UserPlus, Info, ChevronLeft, ArrowDown, ArrowUp,
-  CreditCard, Landmark, Shield, Clock, FileCheck, AlertTriangle, Download,
-  LayoutDashboard, ChevronRight, UploadCloud, Monitor, DollarSign, CalendarDays,
-  Clock4, CheckCircle, ArrowUpRight
-} from 'lucide-vue-next';
+import {
+  Users, User, Plus, Search,
+  Filter, ArrowUpDown, MapPin, Heart,
+  GraduationCap, Award, Briefcase, Sparkles,
+  Languages, MoreVertical, Edit2, Eye,
+  EyeOff, Copy, Check, Phone,
+  Mail, ShieldCheck, FileText, CheckCircle2,
+  Info, Landmark, Shield, Clock,
+  AlertTriangle, LayoutDashboard, CalendarDays, Clock4
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -1253,14 +1254,10 @@ onUnmounted(() => {
         @toggleColumn="handleToggleColumn"
       >
         <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="showQuickCreate = true"
-          >
-            <Plus :size="15" />
-            <span>+ Create Employee</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="showQuickCreate = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Employee
+</AppButton>
         </template>
 
         <template #filter>
@@ -2562,7 +2559,7 @@ onUnmounted(() => {
 
 <style scoped>
 .employee-master-page {
-  padding: 16px 24px;
+  padding: 0;
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: calc(100vh - 60px);
 }

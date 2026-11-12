@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Plus, Search, CheckCircle2, XCircle, Clock, 
-  Check, X, Calendar, CalendarDays, AlertCircle, 
-  FileText, User, UserCheck, MoreVertical, Eye,
-  ArrowRight, ShieldCheck, Maximize2, Users
-} from 'lucide-vue-next';
+import {
+  Plus, Search, CheckCircle2, Clock,
+  Check, X, FileText, User,
+  MoreVertical, Eye, Users
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import MetricCard from '../../components/MetricCard.vue';
@@ -309,9 +309,14 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string) => {
+  const col = tableColumns.value.find(c => c.key === colKey);
+  if (col) col.visible = !col.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Inline Approval & Rejection Actions ───
@@ -496,31 +501,18 @@ const formatDateRange = (start: string, end: string) => {
     <AppDataTable
       title="Leave Requests"
       subtitle="Submit and track personal leave applications, schedule half-day leaves, handover coverage, and monitor approval progression."
+      v-model:searchQuery="searchQuery"
       :columns="tableColumns"
+      :totalEntries="filteredRequests.length"
       :show-view-action="false"
       @toggleColumn="handleToggleColumn"
     >
-      <!-- Sub-view Underline Tabs (Rule 1) -->
-      <template #header-extra>
-        <div class="tabs-subview-wrapper">
-          <UnderlineTabs
-            v-model="activeTab"
-            :tabs="subTabs"
-            size="sm"
-          />
-        </div>
-      </template>
-
       <!-- Primary Action in Top Right Slot (+ Create Leave Request matching screenshot) -->
       <template #actions>
-        <button
-          type="button"
-          class="btn-create-leave-primary"
-          @click="openCreateModal"
-        >
-          <Plus :size="16" />
-          <span>Create Leave Request</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="openCreateModal">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Leave Request
+</AppButton>
       </template>
 
       <!-- Table Body (Exact Columns & Data from User Screenshot) -->
@@ -536,13 +528,13 @@ const formatDateRange = (start: string, end: string) => {
                   @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
                 />
               </th>
-              <th>Name</th>
-              <th>Leave Type</th>
-              <th>Duration</th>
-              <th>Leave Period</th>
-              <th>Handover Cover</th>
-              <th>Status</th>
-              <th class="th-actions">Actions</th>
+              <th v-if="isColVisible('name')">Name</th>
+              <th v-if="isColVisible('leave_type')">Leave Type</th>
+              <th v-if="isColVisible('duration')">Duration</th>
+              <th v-if="isColVisible('period')">Leave Period</th>
+              <th v-if="isColVisible('handover')">Handover Cover</th>
+              <th v-if="isColVisible('status')">Status</th>
+              <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -563,7 +555,7 @@ const formatDateRange = (start: string, end: string) => {
               </td>
 
               <!-- Name Column: Avatar + Full Name in bold + Code underneath (Exact Match to Screenshot) -->
-              <td class="td-name-cell">
+              <td v-if="isColVisible('name')" class="td-name-cell">
                 <div class="employee-identity-block">
                   <img :src="item.employee_avatar" :alt="item.employee_name" class="table-avatar" />
                   <div class="name-subtext-group">
@@ -574,34 +566,34 @@ const formatDateRange = (start: string, end: string) => {
               </td>
 
               <!-- Leave Type: Tertiary Color #737373 -->
-              <td class="td-tertiary">
+              <td v-if="isColVisible('leave_type')" class="td-tertiary">
                 {{ item.leave_type_name }}
               </td>
 
               <!-- Duration (Tertiary color #737373) -->
-              <td class="td-tertiary">
+              <td v-if="isColVisible('duration')" class="td-tertiary">
                 {{ item.duration_text }}
               </td>
 
               <!-- Leave Period (Tertiary color #737373) -->
-              <td class="td-tertiary">
+              <td v-if="isColVisible('period')" class="td-tertiary">
                 {{ formatDateRange(item.start_date, item.end_date) }}
               </td>
 
               <!-- Handover Cover (Tertiary color #737373) -->
-              <td class="td-tertiary">
+              <td v-if="isColVisible('handover')" class="td-tertiary">
                 {{ item.handover_employee_name || '—' }}
               </td>
 
               <!-- Status Pill (Approved: green, Rejected: red, Pending: amber) -->
-              <td>
+              <td v-if="isColVisible('status')">
                 <span class="status-pill" :class="`status-${item.request_state}`">
                   {{ item.request_state.charAt(0).toUpperCase() + item.request_state.slice(1) }}
                 </span>
               </td>
 
               <!-- Actions (⋮ 3-dots button with Approval / Detail actions) -->
-              <td class="td-actions" @click.stop>
+              <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
                 <div class="action-menu-wrapper">
                   <button
                     type="button"
@@ -720,8 +712,8 @@ const formatDateRange = (start: string, end: string) => {
 .leave-requests-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }
@@ -1022,7 +1014,7 @@ const formatDateRange = (start: string, end: string) => {
 .form-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .checkbox-wrapper-row {

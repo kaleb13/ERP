@@ -1,23 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import InventoryDashboard from '../views/InventoryDashboard.vue';
-import StockSummary from '../views/StockSummary.vue';
-import StockLedger from '../views/StockLedger.vue';
-import GatePass from '../views/GatePass.vue';
-import GatePassCreate from '../views/GatePassCreate.vue';
-import StockReservation from '../views/StockReservation.vue';
-import StockReservationCreate from '../views/StockReservationCreate.vue';
 import Home from '../views/Home.vue';
-import CompanySetup from '../views/CompanySetup.vue';
-import UserAndAccess from '../views/UserAndAccess.vue';
-import CreateUser from '../views/CreateUser.vue';
-import AuditLogs from '../views/AuditLogs.vue';
-import Customers from '../views/Customers.vue';
-import CustomerGroups from '../views/CustomerGroups.vue';
-import BuyingModule from '../views/BuyingModule.vue';
-import Products from '../views/Products.vue';
-import ProductVariants from '../views/ProductVariants.vue';
-import ProductModifiers from '../views/ProductModifiers.vue';
-import ProductGroups from '../views/ProductGroups.vue';
+import StockSummary from '../views/StockSummary.vue';
 import EmployeeProfile from '../views/hr/EmployeeProfile.vue';
 import EmployeeCreate from '../views/hr/EmployeeCreate.vue';
 import OrgStructuresView from '../views/hr/OrgStructuresView.vue';
@@ -38,8 +21,6 @@ import FieldsOfStudyView from '../views/hr/FieldsOfStudyView.vue';
 import InstitutionsView from '../views/hr/InstitutionsView.vue';
 import CommitteesView from '../views/hr/CommitteesView.vue';
 import CommitteeCreate from '../views/hr/CommitteeCreate.vue';
-import WorkCalendarsView from '../views/hr/WorkCalendarsView.vue';
-import WorkCalendarCreate from '../views/hr/WorkCalendarCreate.vue';
 import CalendarView from '../views/hr/CalendarView.vue';
 import WorkShiftsView from '../views/hr/WorkShiftsView.vue';
 import WorkShiftCreate from '../views/hr/WorkShiftCreate.vue';
@@ -50,11 +31,13 @@ import ShiftAssignmentsView from '../views/hr/ShiftAssignmentsView.vue';
 import ShiftAssignmentCreate from '../views/hr/ShiftAssignmentCreate.vue';
 import ShiftAssignPlanner from '../views/hr/ShiftAssignPlanner.vue';
 import AttendanceView from '../views/hr/AttendanceView.vue';
+import MyAttendanceView from '../views/hr/MyAttendanceView.vue';
 import BiometricDevicesView from '../views/hr/BiometricDevicesView.vue';
 import DeviceCreate from '../views/hr/DeviceCreate.vue';
 import OvertimeRequestsView from '../views/hr/OvertimeRequestsView.vue';
 import OvertimeRequestCreate from '../views/hr/OvertimeRequestCreate.vue';
 import ShiftSwapsView from '../views/hr/ShiftSwapsView.vue';
+import ShiftSwapCreate from '../views/hr/ShiftSwapCreate.vue';
 import HolidaysView from '../views/hr/HolidaysView.vue';
 import HolidayCreate from '../views/hr/HolidayCreate.vue';
 import EmployeeMovementsView from '../views/hr/EmployeeMovementsView.vue';
@@ -93,130 +76,42 @@ import HRServiceAgreementsView from '../views/hr/HRServiceAgreementsView.vue';
 import HRServiceAgreementCreate from '../views/hr/HRServiceAgreementCreate.vue';
 import ClientAssignmentsView from '../views/hr/ClientAssignmentsView.vue';
 import ClientAssignmentCreate from '../views/hr/ClientAssignmentCreate.vue';
+import ProcurementCategoriesView from '../views/procurement/ProcurementCategoriesView.vue';
+import ProcurementCategoryCreate from '../views/procurement/ProcurementCategoryCreate.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      redirect: '/home'
-    },
-    {
-      path: '/home',
       name: 'home',
       component: Home,
       meta: { noSidebar: true }
     },
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: InventoryDashboard
+      path: '/home',
+      redirect: '/'
     },
     {
-      path: '/stock-summary',
+      path: '/inventory',
+      redirect: '/inventory/stock-summary'
+    },
+    {
+      path: '/inventory/stock-summary',
       name: 'stockSummary',
       component: StockSummary
     },
     {
+      path: '/stock-summary',
+      redirect: '/inventory/stock-summary'
+    },
+    {
       path: '/stock-ledger',
-      name: 'stockLedger',
-      component: StockLedger
+      redirect: '/inventory/stock-summary'
     },
     {
-      path: '/gate-pass',
-      name: 'gatePass',
-      component: GatePass
-    },
-    {
-      path: '/gate-pass/create',
-      name: 'gatePassCreate',
-      component: GatePassCreate
-    },
-    {
-      path: '/stock-reservation',
-      name: 'stockReservation',
-      component: StockReservation
-    },
-    {
-      path: '/stock-reservation/create',
-      name: 'stockReservationCreate',
-      component: StockReservationCreate
-    },
-    {
-      path: '/company-setup',
-      name: 'companySetup',
-      component: CompanySetup
-    },
-    {
-      path: '/company-setup/user-and-access',
-      name: 'userAndAccess',
-      component: UserAndAccess
-    },
-    {
-      path: '/company-setup/user-and-access/users/create',
-      name: 'createUser',
-      component: CreateUser
-    },
-    {
-      path: '/company-setup/user-and-access/users/:id',
-      name: 'editUser',
-      component: CreateUser
-    },
-    {
-      path: '/company-setup/audit-logs',
-      name: 'auditLogs',
-      component: AuditLogs
-    },
-    {
-      path: '/system-config/audit-logs',
-      redirect: '/company-setup/audit-logs'
-    },
-    {
-      path: '/sales',
-      redirect: '/sales/customers'
-    },
-    {
-      path: '/sales/customers',
-      name: 'customers',
-      component: Customers
-    },
-    {
-      path: '/sales/customer-groups',
-      name: 'customerGroups',
-      component: CustomerGroups
-    },
-    {
-      path: '/buying',
-      name: 'buying',
-      component: BuyingModule
-    },
-    {
-      path: '/inventory/products',
-      name: 'products',
-      component: Products
-    },
-    {
-      path: '/inventory/product-variants',
-      name: 'productVariants',
-      component: ProductVariants
-    },
-    {
-      path: '/inventory/product-modifiers',
-      name: 'productModifiers',
-      component: ProductModifiers
-    },
-    {
-      path: '/inventory/product-group',
-      name: 'productGroups',
-      component: ProductGroups
-    },
-    {
-      path: '/inventory/product-attribute',
-      redirect: '/inventory/products'
-    },
-    {
-      path: '/inventory/locations',
-      redirect: '/inventory/products'
+      path: '/procurement',
+      redirect: '/procurement/categories'
     },
     // Human Resources (HR) Module Routes
     {
@@ -235,23 +130,19 @@ const router = createRouter({
     },
     {
       path: '/hr/movements',
-      name: 'hrEmployeeMovements',
-      component: EmployeeMovementsView
+      redirect: '/hr/employees'
     },
     {
       path: '/hr/movements/admin',
-      name: 'hrEmployeeMovementsAdmin',
-      component: EmployeeMovementsAdminView
+      redirect: '/hr/employees'
     },
     {
       path: '/hr/movements/create',
-      name: 'hrEmployeeMovementCreate',
-      component: EmployeeMovementCreate
+      redirect: '/hr/employees'
     },
     {
       path: '/hr/movements/:id',
-      name: 'hrEmployeeMovementDetail',
-      component: EmployeeMovementDetail
+      redirect: '/hr/employees'
     },
     {
       path: '/hr/leave-requests',
@@ -348,8 +239,7 @@ const router = createRouter({
     },
     {
       path: '/hr/org-units',
-      name: 'hrOrgUnits',
-      component: OrganizationUnitsView
+      redirect: '/hr/org-structures'
     },
     {
       path: '/hr/salary-scales',
@@ -459,18 +349,15 @@ const router = createRouter({
     },
     {
       path: '/hr/work-calendars',
-      name: 'hrWorkCalendars',
-      component: WorkCalendarsView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/work-calendars/create',
-      name: 'hrWorkCalendarCreate',
-      component: WorkCalendarCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/work-calendars/:id',
-      name: 'hrWorkCalendarDetail',
-      component: WorkCalendarCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/calendar',
@@ -479,13 +366,11 @@ const router = createRouter({
     },
     {
       path: '/hr/shifts',
-      name: 'hrWorkShifts',
-      component: WorkShiftsView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shifts/create',
-      name: 'hrWorkShiftCreate',
-      component: WorkShiftCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-patterns',
@@ -499,23 +384,23 @@ const router = createRouter({
     },
     {
       path: '/hr/my-shifts',
-      name: 'hrMyShifts',
-      component: MyShiftsView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-assignments',
-      name: 'hrShiftAssignments',
-      component: ShiftAssignmentsView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-assignments/create',
-      name: 'hrShiftAssignmentCreate',
-      component: ShiftAssignmentCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-assignments/assign',
-      name: 'hrShiftAssignPlanner',
-      component: ShiftAssignPlanner
+      redirect: '/hr/calendar'
+    },
+    {
+      path: '/hr/my-attendance',
+      redirect: '/hr/attendance'
     },
     {
       path: '/hr/attendance',
@@ -524,27 +409,23 @@ const router = createRouter({
     },
     {
       path: '/hr/attendance-devices',
-      name: 'hrAttendanceDevices',
-      component: BiometricDevicesView
+      redirect: '/hr/attendance'
     },
     {
       path: '/hr/attendance-devices/create',
-      name: 'hrAttendanceDeviceCreate',
-      component: DeviceCreate
+      redirect: '/hr/attendance'
     },
     {
       path: '/hr/overtime-requests',
-      name: 'hrOvertimeRequests',
-      component: OvertimeRequestsView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/overtime-requests/create',
-      name: 'hrOvertimeRequestCreate',
-      component: OvertimeRequestCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-roster',
-      redirect: '/hr/shift-assignments'
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/shift-swaps',
@@ -552,14 +433,17 @@ const router = createRouter({
       component: ShiftSwapsView
     },
     {
+      path: '/hr/shift-swaps/create',
+      name: 'hrShiftSwapCreate',
+      component: ShiftSwapCreate
+    },
+    {
       path: '/hr/holidays',
-      name: 'hrHolidays',
-      component: HolidaysView
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/holidays/create',
-      name: 'hrHolidayCreate',
-      component: HolidayCreate
+      redirect: '/hr/calendar'
     },
     {
       path: '/hr/separations',
@@ -661,6 +545,16 @@ const router = createRouter({
       path: '/hr/client-assignments/:id/edit',
       name: 'hrClientAssignmentEdit',
       component: ClientAssignmentCreate
+    },
+    {
+      path: '/procurement/categories',
+      name: 'procurementCategories',
+      component: ProcurementCategoriesView
+    },
+    {
+      path: '/procurement/categories/create',
+      name: 'procurementCategoryCreate',
+      component: ProcurementCategoryCreate
     }
   ]
 });

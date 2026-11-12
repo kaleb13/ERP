@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  X, Sliders, Plus, Trash2, Calendar, 
-  Check, Percent, CheckCircle2,
-  ChevronDown, ChevronRight, Columns, Maximize2,
-  FileSpreadsheet
-} from 'lucide-vue-next';
+import {
+  X, Sliders, Plus, Trash2,
+  Calendar, Percent, CheckCircle2, ChevronDown,
+  ChevronRight, Maximize2, FileSpreadsheet
+} from 'lucide-vue-next';;
+import IconColumnSolid from '../../components/IconColumnSolid.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 
 const router = useRouter();
@@ -267,17 +268,28 @@ const breadcrumbItems = [
     <!-- ═══ TOP BAR (Clean Breadcrumbs Only - Zero Back Button) ═══ -->
     <div class="top-action-bar">
       <div class="top-bar-left">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :isSaved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
       <div class="top-bar-right">
-        <button type="button" class="btn-secondary-action" @click="clearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button type="button" class="btn-primary-action" @click="handleSave">
-          <span>Save</span>
-        </button>
+        <AppButton 
+          variant="outline" 
+          size="sm" 
+          @click="clearForm"
+        >
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton 
+          variant="primary" 
+          size="sm" 
+          @click="handleSave"
+        >
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -474,7 +486,7 @@ const breadcrumbItems = [
                       <th class="th-amount">Monthly Amount</th>
                       <th class="th-wait">Wait Year to Qualify</th>
                       <th class="th-actions" style="width: 44px; text-align: right;">
-                        <Columns :size="14" class="header-col-icon" />
+                        <IconColumnSolid :size="14" class="header-col-icon" />
                       </th>
                     </tr>
                   </thead>
@@ -565,9 +577,9 @@ const breadcrumbItems = [
         </div>
 
         <div class="modal-dialog-footer">
-          <button type="button" class="btn-modal-primary" @click="handleApplyAdjustment">
+          <AppButton variant="primary" size="sm" @click="handleApplyAdjustment">
             Apply Adjustment
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -625,9 +637,9 @@ const breadcrumbItems = [
         </div>
 
         <div class="modal-dialog-footer">
-          <button type="button" class="btn-modal-primary" @click="saveStepModal">
+          <AppButton variant="primary" size="sm" @click="saveStepModal">
             Save Details
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -641,7 +653,7 @@ const breadcrumbItems = [
 
 .scale-create-page {
   min-height: 100vh;
-  padding: 24px 28px 60px;
+  padding: 0;
   background-color: #f8fafc;
 }
 
@@ -776,13 +788,13 @@ const breadcrumbItems = [
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 860px) {

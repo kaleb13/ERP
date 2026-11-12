@@ -2,26 +2,13 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Plus,
-  Search,
-  MoreVertical,
-  Building2,
-  Users,
-  Briefcase,
-  FileText,
-  Clock,
-  Eye,
-  CheckCircle2,
-  AlertTriangle,
-  X,
-  ExternalLink,
-  ShieldCheck,
-  Percent,
-  Coins,
-  Calendar
-} from 'lucide-vue-next';
+  Plus, Search, MoreVertical, Users,
+  FileText, Eye, CheckCircle2, AlertTriangle,
+  X
+} from 'lucide-vue-next';;
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -120,30 +107,32 @@ const toggleSelectRow = (id: number) => {
   }
 };
 
-// ─── TABLE COLUMNS (Rule 9: Atomic columns, Name first, Code subtext) ────
-interface TableCol {
-  id: string;
-  name: string;
-  visible: boolean;
-}
+import { type ColumnDef } from '../../components/BaseTable.vue';
 
-const tableColumns = ref<TableCol[]>([
-  { id: 'client', name: 'Client & Agreement', visible: true },
-  { id: 'provider', name: 'Provider Entity', visible: true },
-  { id: 'agreement_type', name: 'Agreement Type', visible: true },
-  { id: 'valid_period', name: 'Effective Timeline', visible: true },
-  { id: 'status', name: 'Status', visible: true },
-  { id: 'actions', name: 'Actions', visible: true },
-  { id: 'client_type', name: 'Client Tenancy', visible: false },
-  { id: 'payroll_resp', name: 'Payroll Responsibility', visible: false },
-  { id: 'fee_model', name: 'Service Fee Model', visible: false },
-  { id: 'headcount_cap', name: 'Headcount Cap', visible: false },
-  { id: 'state', name: 'State', visible: false }
+// ─── TABLE COLUMNS (Rule 9: Atomic columns, Name first, Code subtext) ────
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'client', label: 'Client & Agreement', visible: true },
+  { key: 'provider', label: 'Provider Entity', visible: true },
+  { key: 'agreement_type', label: 'Agreement Type', visible: true },
+  { key: 'valid_period', label: 'Effective Timeline', visible: true },
+  { key: 'status', label: 'Status', visible: true },
+  { key: 'actions', label: 'Actions', visible: true },
+  { key: 'client_type', label: 'Client Tenancy', visible: false },
+  { key: 'payroll_resp', label: 'Payroll Responsibility', visible: false },
+  { key: 'fee_model', label: 'Service Fee Model', visible: false },
+  { key: 'headcount_cap', label: 'Headcount Cap', visible: false },
+  { key: 'state', label: 'State', visible: false }
 ]);
 
-const isColumnVisible = (id: string) => {
-  const col = tableColumns.value.find(c => c.id === id);
-  return col ? col.visible : true;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find(c => c.key === key);
+  return col ? col.visible !== false : true;
 };
 
 // ─── FORMATTERS & HELPERS ─────────────────────────────────────────────────
@@ -293,38 +282,17 @@ const handleStateChange = (id: number, newState: AgreementState) => {
       <AppDataTable
         title="HR Service Agreements"
         subtitle="Manage workforce supply contracts, employer-of-record facilities, cross-entity staffing, and service fee models."
-        :total-items="filteredAgreements.length"
-        :current-page="1"
-        :per-page="10"
+        :totalEntries="filteredAgreements.length"
+        v-model:searchQuery="searchQuery"
         :columns="tableColumns"
-        @toggle-column="(colId) => {
-          const col = tableColumns.find(c => c.id === colId);
-          if (col) col.visible = !col.visible;
-        }"
+        @toggleColumn="handleToggleColumn"
       >
         <!-- Table Toolbar Actions Slot -->
         <template #actions>
-          <button
-            type="button"
-            class="btn-primary-add"
-            @click="handleCreateAgreement"
-          >
-            <Plus :size="16" />
-            <span>Create Service Agreement</span>
-          </button>
-        </template>
-
-        <!-- Search Bar -->
-        <template #search>
-          <div class="table-search-box">
-            <Search :size="14" class="search-icon" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Search by client, code, provider entity, terms..."
-            />
-          </div>
+          <AppButton variant="primary" size="sm" @click="handleCreateAgreement">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Service Agreement
+</AppButton>
         </template>
 
         <!-- Data Table (Rules 8, 9) -->
@@ -661,12 +629,12 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 
 <style scoped>
 .service-agreements-page {
-  padding: 24px 32px 80px 32px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 .page-breadcrumb {

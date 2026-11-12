@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Users, UserCheck, Plus, Trash2, Calendar, ChevronDown, 
-  Check, ShieldCheck, FileText, CheckCircle2, AlertCircle,
-  Columns, Expand, X, ArrowDown, ArrowUp, Copy
-} from 'lucide-vue-next';
+import {
+  Users, UserCheck, Plus, Calendar,
+  ChevronDown, CheckCircle2, Expand, X,
+  ArrowDown, ArrowUp, Copy
+} from 'lucide-vue-next';;
+import IconColumnSolid from '../../components/IconColumnSolid.vue';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -13,6 +14,7 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -293,28 +295,31 @@ const handleSaveCommittee = () => {
     <div class="top-nav-bar">
       <!-- Breadcrumbs + Save Status Pill Badge (Rule 3, 4 & 5) -->
       <div class="top-nav-left">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :isSaved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <!-- Top Right Action Buttons (Rule 4: Clear Form + Save) -->
       <div class="top-actions-cluster">
-        <button 
-          type="button" 
-          class="btn-clear-form" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="handleClearForm"
         >
-          <span>✕</span>
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
-        <button 
-          type="button" 
-          class="btn-save-primary" 
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSaveCommittee"
         >
           Save
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -460,11 +465,7 @@ const handleSaveCommittee = () => {
                 <th class="child-th" style="min-width: 145px;">Appointment Date</th>
                 <th class="child-th" style="min-width: 145px;">Dissolution / End Date</th>
                 <th class="child-th child-th-col-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                    <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                  </svg>
+                  <IconColumnSolid :size="13" class="col-icon-solid" />
                 </th>
               </tr>
             </thead>
@@ -707,12 +708,12 @@ const handleSaveCommittee = () => {
 
 <style scoped>
 .committee-create-page {
-  padding: 16px 24px 40px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* ─── Top Bar Navigation (Rule 29: Zero-Background Standard) ─── */
@@ -847,7 +848,7 @@ const handleSaveCommittee = () => {
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px 20px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .field-item {

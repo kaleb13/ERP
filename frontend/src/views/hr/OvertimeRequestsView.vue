@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Clock, Plus, CheckCircle2, XCircle, AlertCircle, 
-  Search, Eye, ShieldCheck, Check, X, Calendar, 
-  ArrowUpRight, Award, DollarSign
-} from 'lucide-vue-next';
+import {
+  Plus, CheckCircle2, XCircle, Search,
+  Eye, X
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
@@ -232,10 +232,10 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
     >
       <!-- Action Toolbar (Rule 10: Primary Action in #actions Slot) -->
       <template #actions>
-        <button class="btn-primary-action" @click="router.push('/hr/overtime-requests/create')">
-          <Plus :size="15" />
-          <span>Log Overtime Request</span>
-        </button>
+        <AppButton variant="primary" size="sm" @click="router.push('/hr/overtime-requests/create')">
+          <template #icon-left><Plus :size="15" /></template>
+          Log Overtime Request
+        </AppButton>
       </template>
 
       <!-- Custom Filter Controls -->
@@ -496,19 +496,19 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
         </div>
 
         <div class="modal-footer-row">
-          <button type="button" class="btn-modal-dismiss" @click="inspectingRequest = null">
+          <AppButton variant="outline" size="sm" @click="inspectingRequest = null">
             Cancel
-          </button>
+          </AppButton>
 
           <template v-if="inspectingRequest.request_state === 'pending' || inspectingRequest.request_state === 'draft'">
-            <button type="button" class="btn-reject" @click="handleReject">
-              <XCircle :size="14" />
+            <AppButton variant="destructive" size="sm" @click="handleReject">
+              <template #icon-left><XCircle :size="14" /></template>
               <span>Reject Request</span>
-            </button>
-            <button type="button" class="btn-approve" @click="handleApprove">
-              <CheckCircle2 :size="14" />
+            </AppButton>
+            <AppButton variant="primary" size="sm" @click="handleApprove">
+              <template #icon-left><CheckCircle2 :size="14" /></template>
               <span>Approve Overtime</span>
-            </button>
+            </AppButton>
           </template>
         </div>
       </div>
@@ -520,8 +520,8 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 .overtime-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

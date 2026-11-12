@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  ArrowLeft, CheckCircle2, Clock, ShieldCheck, 
-  UserMinus, CheckSquare, Receipt, AlertCircle,
-  Calendar, FileText, Check, X, AlertTriangle, ArrowRight,
-  User, Building2, Briefcase, Award, ShieldAlert,
-  Banknote, DollarSign, Plus, Zap
-} from 'lucide-vue-next';
+import {
+  ArrowLeft, Clock, ShieldCheck, CheckSquare,
+  Receipt, AlertCircle, X, AlertTriangle,
+  ArrowRight, Banknote, DollarSign, Plus,
+  Zap
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import BaseTabs from '../../components/BaseTabs.vue';
 import {
   separationsData,
@@ -178,15 +178,14 @@ const handleDisburseSettlement = () => {
 
           <!-- Quick Case Actions Block -->
           <div class="sidebar-actions-block">
-            <button 
+            <AppButton 
               v-if="separationCase.separation_state === 'pending'"
-              type="button" 
-              class="btn-sidebar-action is-primary"
+              variant="primary"
+              size="sm"
               @click="handleApproveCase"
             >
-              <Check :size="14" />
-              <span>Approve Separation</span>
-            </button>
+              Approve Separation
+            </AppButton>
             <router-link 
               v-if="separationCase.separation_state === 'approved'"
               :to="{ path: '/hr/exit-clearance', query: { separation_id: String(separationCase.id), openRegister: 'true' } }"
@@ -257,14 +256,21 @@ const handleDisburseSettlement = () => {
                 </div>
               </div>
               <div class="approval-btn-group">
-                <button type="button" class="btn-approval-reject" @click="handleRejectCase">
-                  <X :size="14" />
-                  <span>Reject / Cancel Notice</span>
-                </button>
-                <button type="button" class="btn-approval-confirm" @click="handleApproveCase">
-                  <Check :size="14" />
-                  <span>Approve &amp; Authorize Clearance</span>
-                </button>
+                <AppButton 
+                  variant="destructive" 
+                  size="sm" 
+                  @click="handleRejectCase"
+                >
+                  <template #icon-left><X :size="14" /></template>
+                  Reject / Cancel Notice
+                </AppButton>
+                <AppButton 
+                  variant="primary" 
+                  size="sm" 
+                  @click="handleApproveCase"
+                >
+                  Approve &amp; Authorize Clearance
+                </AppButton>
               </div>
             </div>
 
@@ -480,10 +486,9 @@ const handleDisburseSettlement = () => {
                       <p class="approval-box-desc">Verify severance, leave accruals, and clearance deduction offsets before approving payroll disbursement.</p>
                     </div>
                   </div>
-                  <button type="button" class="btn-approval-confirm" @click="handleApproveSettlement">
-                    <Check :size="14" />
-                    <span>Approve Settlement for Payout</span>
-                  </button>
+                  <AppButton variant="primary" size="sm" @click="handleApproveSettlement">
+                    Approve Settlement for Payout
+                  </AppButton>
                 </div>
               </div>
 
@@ -499,10 +504,10 @@ const handleDisburseSettlement = () => {
                       <p class="approval-box-desc">Approved by {{ relatedSettlement.approved_by_name || 'Solomon Worku (HR Director)' }}. Ready to settle terminal payout through PaymentBatch.</p>
                     </div>
                   </div>
-                  <button type="button" class="btn-approval-confirm" @click="handleDisburseSettlement">
-                    <DollarSign :size="14" />
-                    <span>Disburse Payment (Batch Payroll)</span>
-                  </button>
+                  <AppButton variant="primary" size="sm" @click="handleDisburseSettlement">
+                    <template #icon-left><DollarSign :size="14" /></template>
+                    Disburse Payment (Batch Payroll)
+                  </AppButton>
                 </div>
               </div>
 
@@ -548,10 +553,10 @@ const handleDisburseSettlement = () => {
 
 <style scoped>
 .detail-page-container {
-  padding: 16px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
   background-color: var(--primitive-color-neutral-50, #f8fafc);
   min-height: 100vh;
 }

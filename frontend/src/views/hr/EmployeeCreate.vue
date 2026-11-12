@@ -1,23 +1,36 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, ChevronDown, X, Check, Loader2, Image as ImageIcon,
-  User, Briefcase, Landmark, GraduationCap, ShieldCheck, Heart,
-  Calendar, UploadCloud, Upload, Info, Plus, Trash2, List, ListOrdered,
-  Square, Link, Undo2, Redo2, Table, Expand, Copy, ArrowDown, ArrowUp,
-  ShieldAlert, MapPin, MoreVertical, FileText
-} from 'lucide-vue-next';
+import {
+  ChevronRight, ChevronDown, X, Check,
+  Image as ImageIcon, User, Briefcase, Landmark,
+  GraduationCap, ShieldCheck, Heart, Calendar,
+  Upload, PenTool, Info, Plus,
+  Trash2, Table, Expand, Copy,
+  ArrowDown, ArrowUp, ShieldAlert, MapPin,
+  MoreVertical, FileText, HelpCircle
+} from 'lucide-vue-next';;
 import BaseTabs from '../../components/BaseTabs.vue';
+import BaseButton from '../../components/BaseButton.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormCombobox, { type ComboboxOption } from '../../components/FormCombobox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import DynamicSubTable, { type DynamicTableColumn } from '../../components/DynamicSubTable.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = [
+  { label: 'Employee Directory', to: '/hr/employees' },
+  { label: 'Create Employee' }
+];
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -574,7 +587,24 @@ const addStatutoryExemptionRow = () => statutoryExemptionsList.value.push(create
 const addBankAccount = () => bankAccountsList.value.push(createBlankRow('bankAccountsList'));
 const addSalaryComponent = () => salaryComponentsList.value.push(createBlankRow('salaryComponentsList'));
 
-// ─── Address Cards Repeater Helpers ───
+// ─── Address Cards Repeater Helpers & Options ───
+const addressTypeOptions = [
+  { value: 'residence', label: 'Residence / Primary Home' },
+  { value: 'postal', label: 'Postal Address' },
+  { value: 'work', label: 'Work Location' },
+  { value: 'emergency', label: 'Emergency Domicile' },
+  { value: 'birth_place', label: 'Place of Birth' },
+  { value: 'other', label: 'Other Domicile' }
+];
+
+const addressCountryOptions = [
+  { value: 'Ethiopia', label: 'Ethiopia' },
+  { value: 'Kenya', label: 'Kenya' },
+  { value: 'Djibouti', label: 'Djibouti' },
+  { value: 'United States', label: 'United States' },
+  { value: 'United Kingdom', label: 'United Kingdom' }
+];
+
 const getRegionsForRow = (row: PartyAddressRow) => {
   if (!row.country || row.country === 'Ethiopia') {
     return ethiopianRegions;
@@ -1135,6 +1165,198 @@ const paymentProviders = [
   'Enterprise Digital Wallet'
 ];
 
+// ─── Dynamic Sub-Tables Column Definitions (Figma 6095:96580 & 3345:71204) ───
+const salaryComponentsColumns: DynamicTableColumn[] = [
+  { 
+    key: 'component_name', 
+    label: 'Allowance / Component', 
+    type: 'select', 
+    minWidth: '240px',
+    options: [
+      'Transport Allowance',
+      'Housing Allowance',
+      'Representation Allowance',
+      'Hardship Allowance',
+      'Fuel & Mileage Allowance',
+      'Mobile & Communication',
+      'Food & Subsistence',
+      'Other Special Allowance'
+    ] 
+  },
+  { 
+    key: 'calc_type', 
+    label: 'Calculation Type', 
+    type: 'select', 
+    minWidth: '180px',
+    options: [
+      { label: 'Fixed Amount (ETB)', value: 'Fixed Amount' },
+      { label: '% of Basic Salary', value: 'Percentage of Basic' }
+    ] 
+  },
+  { key: 'amount', label: 'Amount / Value', type: 'custom', minWidth: '160px', align: 'right' }
+];
+
+const bankAccountsColumns: DynamicTableColumn[] = [
+  { key: 'payment_provider', label: 'Payment Provider', type: 'select', minWidth: '180px', options: paymentProviders },
+  { key: 'account_number', label: 'Account Number / Wallet ID', type: 'text', minWidth: '160px' },
+  { key: 'account_holder_name', label: 'Account Holder Name', type: 'text', minWidth: '160px' },
+  { key: 'branch_name', label: 'Branch Name', type: 'text', minWidth: '140px' },
+  { key: 'split_percent', label: 'Split Share (%)', type: 'number', width: '110px', align: 'right' },
+  { key: 'is_primary', label: 'Primary', type: 'custom', width: '80px', align: 'center' }
+];
+
+const academicQualificationsColumns: DynamicTableColumn[] = [
+  { 
+    key: 'degree_level', 
+    label: 'Degree Level', 
+    type: 'select', 
+    minWidth: '160px',
+    options: [
+      { label: 'Primary', value: 'Primary School' },
+      { label: 'Secondary', value: 'Secondary School' },
+      { label: 'TVET Certificate', value: 'TVET / Level IV Certificate' },
+      { label: 'Diploma', value: 'Diploma' },
+      { label: "Bachelor's Degree", value: "Bachelor's Degree" },
+      { label: "Master's Degree", value: "Master's Degree" },
+      { label: 'Doctorate (PhD)', value: 'Doctorate (PhD)' }
+    ] 
+  },
+  { key: 'field_of_study', label: 'Field of Study', type: 'custom', minWidth: '180px' },
+  { key: 'awarding_institute', label: 'Awarding Institute', type: 'custom', minWidth: '180px' },
+  { key: 'graduation_date', label: 'Graduation Date', type: 'text', minWidth: '140px' }
+];
+
+const professionalCertificationsColumns: DynamicTableColumn[] = [
+  { key: 'certification', label: 'Certification / License', type: 'custom', minWidth: '180px' },
+  { key: 'issuing_institution', label: 'Issuing Institution', type: 'custom', minWidth: '170px' },
+  { key: 'certificate_number', label: 'Certificate / License No.', type: 'text', minWidth: '160px' },
+  { key: 'issued_date', label: 'Issued Date', type: 'text', minWidth: '130px' },
+  { key: 'expiry_date', label: 'Expiry Date', type: 'text', minWidth: '130px' }
+];
+
+const priorWorkExperiencesColumns: DynamicTableColumn[] = [
+  { key: 'previous_employer', label: 'Previous Employer', type: 'text', minWidth: '180px' },
+  { key: 'job_title', label: 'Job Title', type: 'text', minWidth: '160px' },
+  { 
+    key: 'employment_type', 
+    label: 'Employment Type', 
+    type: 'select', 
+    minWidth: '150px',
+    options: [
+      'Permanent', 'Contract', 'Temporary', 'Probation', 'Part-time', 'Internship', 'Consultancy'
+    ] 
+  },
+  { key: 'start_date', label: 'Start Date', type: 'text', minWidth: '130px' },
+  { key: 'end_date', label: 'End Date', type: 'text', minWidth: '130px' }
+];
+
+const technicalSkillsColumns: DynamicTableColumn[] = [
+  { key: 'skill', label: 'Skill / Competency', type: 'custom', minWidth: '200px' },
+  { 
+    key: 'proficiency', 
+    label: 'Proficiency', 
+    type: 'select', 
+    minWidth: '150px',
+    options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'] 
+  },
+  { key: 'years_of_experience', label: 'Years of Exp.', type: 'number', width: '120px', align: 'right' }
+];
+
+const spokenLanguagesColumns: DynamicTableColumn[] = [
+  { key: 'language', label: 'Language', type: 'custom', minWidth: '180px' },
+  { 
+    key: 'fluency_level', 
+    label: 'Fluency Level', 
+    type: 'select', 
+    minWidth: '150px',
+    options: ['Basic', 'Conversational', 'Fluent', 'Native'] 
+  },
+  { key: 'is_native', label: 'Mother Tongue', type: 'custom', width: '120px', align: 'center' }
+];
+
+const statutoryExemptionsColumns: DynamicTableColumn[] = [
+  { 
+    key: 'rule_type', 
+    label: 'Exemption Rule', 
+    type: 'select', 
+    minWidth: '220px',
+    options: [
+      { label: 'Pension (Employee Contribution)', value: 'pension_employee' },
+      { label: 'Pension (Employer Contribution)', value: 'pension_employer' },
+      { label: 'Employment Income Tax', value: 'income_tax' },
+      { label: 'Overtime Rate', value: 'overtime_rate' },
+      { label: 'Weekly Working Hours Limit', value: 'working_hours_weekly' },
+      { label: 'Severance Pay', value: 'severance' },
+      { label: 'Notice Period', value: 'notice_period' },
+      { label: 'Annual Leave Minimum', value: 'annual_leave_minimum' },
+      { label: 'Probation Maximum', value: 'probation_maximum' }
+    ] 
+  },
+  { key: 'reason', label: 'Statutory Reason / Reference', type: 'text', minWidth: '240px' }
+];
+
+const regulatoryClearancesColumns: DynamicTableColumn[] = [
+  { 
+    key: 'clearance_type', 
+    label: 'Compliance Item', 
+    type: 'select', 
+    minWidth: '220px',
+    options: [
+      { label: 'Fayda National ID Verification', value: 'fayda_verification' },
+      { label: 'Pension Registration Confirmation', value: 'pension_registration' },
+      { label: 'Work Permit / Visa', value: 'work_permit' },
+      { label: 'Pre-Employment Medical Check', value: 'medical_check' },
+      { label: 'Police Background Clearance', value: 'police_clearance' },
+      { label: 'Professional / Board License', value: 'professional_license' },
+      { label: 'Tax Registration / TIN Verification', value: 'tax_registration' }
+    ] 
+  },
+  { key: 'ref_number', label: 'Reference / Permit No.', type: 'text', minWidth: '180px' },
+  { key: 'expiry_date', label: 'Expiry Date', type: 'text', minWidth: '140px' },
+  { 
+    key: 'verification_status', 
+    label: 'Compliance Status', 
+    type: 'select', 
+    minWidth: '160px',
+    options: ['Valid / Cleared', 'Pending Verification', 'Statutorily Waived'] 
+  }
+];
+
+const emergencyContactsColumns: DynamicTableColumn[] = [
+  { key: 'full_name', label: 'Full Name', type: 'text', minWidth: '200px' },
+  { 
+    key: 'relationship', 
+    label: 'Relationship', 
+    type: 'select', 
+    minWidth: '150px',
+    options: ['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Colleague', 'Friend'] 
+  },
+  { key: 'phone', label: 'Phone Number', type: 'text', minWidth: '160px' },
+  { 
+    key: 'priority', 
+    label: 'Priority', 
+    type: 'select', 
+    minWidth: '140px',
+    options: [
+      { label: '1 - Primary', value: 1 },
+      { label: '2 - Secondary', value: 2 }
+    ] 
+  }
+];
+
+const dependentsColumns: DynamicTableColumn[] = [
+  { key: 'dependent_name', label: 'Dependent Full Name', type: 'text', minWidth: '200px' },
+  { 
+    key: 'relationship', 
+    label: 'Relationship', 
+    type: 'select', 
+    minWidth: '150px',
+    options: ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'] 
+  },
+  { key: 'birth_date', label: 'Date of Birth', type: 'text', minWidth: '140px' },
+  { key: 'is_beneficiary', label: 'Beneficiary', type: 'custom', width: '110px', align: 'center' }
+];
+
 // Computed Gross Monthly Package
 const grossStartingPackage = computed(() => {
   const base = Number(form.value.basic_amount) || 0;
@@ -1607,6 +1829,10 @@ const onSigSelected = (event: Event) => {
 
 // ─── Dual-Mode Signature Canvas System ───
 const signatureMode = ref<'upload' | 'draw'>('upload');
+const signatureTabs = [
+  { id: 'upload' as const, label: 'Upload Specimen', icon: Upload },
+  { id: 'draw' as const, label: 'Draw Digital Signature', icon: PenTool }
+];
 const signatureCanvas = ref<HTMLCanvasElement | null>(null);
 const isDrawing = ref(false);
 const hasDrawn = ref(false);
@@ -1906,29 +2132,25 @@ onUnmounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/employees" class="bc-link">Employee Directory</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">Create Employee</span>
-          <SaveStateBadge :isSaved="isSaved" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
         <!-- 3-Dots Action Menu (Available for Draft support) -->
         <div class="header-more-menu-wrapper">
-          <button 
-            type="button" 
-            class="btn-more-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             @click.stop="showMoreMenu = !showMoreMenu"
             aria-label="More Options"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           
           <div v-if="showMoreMenu" class="header-more-dropdown" @click.stop>
             <button type="button" class="more-menu-item" @click="handleSaveAsDraft">
@@ -1938,13 +2160,13 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <button type="button" class="btn-clear-action" @click="clearForm">
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
-        <button type="button" class="btn-save-action" @click="handleSave">
-          <span>Save</span>
-        </button>
+        <AppButton variant="outline" size="sm" @click="clearForm">
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
+        <AppButton variant="primary" size="sm" @click="handleSave">
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -1974,9 +2196,9 @@ onUnmounted(() => {
           </div>
           <div class="avatar-meta-col">
             <input ref="fileInput" type="file" accept="image/*" class="hidden-file-input" @change="onFileSelected" />
-            <button type="button" class="btn-upload-photo" @click="triggerFileInput">
+            <AppButton variant="outline" size="sm" @click="triggerFileInput">
               Upload New Photo
-            </button>
+            </AppButton>
             <span class="avatar-advice-text">
               At least 800×800 px recommended and size should be less than 10MB. JPG or PNG is allowed
             </span>
@@ -1995,15 +2217,15 @@ onUnmounted(() => {
                 @input="isIdVerified = false"
               />
             </div>
-            <button 
-              type="button" 
-              class="btn-verify-id" 
+            <AppButton 
+              variant="primary" 
+              size="sm" 
               :disabled="!form.fayda_id || isVerifying"
+              :loading="isVerifying"
               @click="verifyFayda"
             >
-              <Loader2 v-if="isVerifying" :size="14" class="animate-spin" />
-              <span v-else>{{ isIdVerified ? 'Verified' : 'Verify ID' }}</span>
-            </button>
+              {{ isIdVerified ? 'Verified' : 'Verify ID' }}
+            </AppButton>
           </div>
           <p v-if="isIdVerified" class="id-verified-subtext">
             ID Verified Successfully.
@@ -2022,19 +2244,23 @@ onUnmounted(() => {
 
         <!-- Contact Channels 3-Column Grid -->
         <div class="form-grid-3 mt-4">
-          <!-- Phone Input Group -->
+          <!-- Phone Input Group (QMT 3345:3184 Leading Dropdown) -->
           <div class="form-field-wrap">
             <label class="field-label">Phone Number <span class="required-asterisk">*</span></label>
-            <div class="phone-composite-input">
-              <div class="country-pill-btn">
-                <span>ET</span>
-                <ChevronDown :size="12" class="text-neutral-500" />
+            <div class="qmt-leading-dropdown-input">
+              <div class="leading-dropdown-select" title="Select Country Dial Code">
+                <span class="leading-code">ET</span>
+                <ChevronDown :size="14" class="leading-chevron" />
               </div>
               <input 
                 type="tel" 
                 v-model="form.phone" 
-                class="phone-field-inner"
+                class="leading-text-input"
+                placeholder="+251 900 000 000"
               />
+              <span class="trailing-help-wrap" title="Primary mobile phone number for authentication and notifications">
+                <HelpCircle :size="16" class="text-neutral-400" />
+              </span>
             </div>
           </div>
 
@@ -2052,19 +2278,13 @@ onUnmounted(() => {
             required 
           />
 
-          <!-- Date of Birth with Calendar Icon & GC Badge -->
-          <div class="form-field-wrap">
-            <label class="field-label">Date of Birth <span class="required-asterisk">*</span></label>
-            <div class="date-composite-input">
-              <Calendar :size="15" class="date-cal-icon" />
-              <input 
-                type="text" 
-                v-model="form.birth_date" 
-                class="date-field-inner"
-              />
-              <span class="gc-badge">GC</span>
-            </div>
-          </div>
+          <!-- Date of Birth (QMT 3345:3123 Date Input) -->
+          <FormInput 
+            label="Date of Birth" 
+            type="date" 
+            v-model="form.birth_date" 
+            required 
+          />
 
           <FormSelect 
             label="Marital Status" 
@@ -2126,103 +2346,101 @@ onUnmounted(() => {
               :key="row.id" 
               class="address-item-card"
             >
-              <!-- Card Header: Pill Badge & Delete Icon -->
+              <!-- Card Header: Pill Badge & Delete Action -->
               <div class="address-card-header">
                 <span class="address-card-badge">Address {{ idx + 1 }}</span>
-                <button 
+                <BaseButton 
                   type="button" 
-                  class="btn-delete-address-card" 
-                  @click="removeAddressItem(idx)" 
+                  variant="tertiary-gray" 
+                  size="sm"
+                  destructive
+                  :icon="Trash2"
                   title="Remove Address"
-                >
-                  <Trash2 :size="16" />
-                </button>
+                  @click="removeAddressItem(idx)" 
+                />
               </div>
 
               <!-- Grid Row 1: Address Type | Country | Region -->
-              <div class="address-form-grid">
-                <div class="address-form-group">
-                  <label class="address-field-label">Address Type</label>
-                  <select v-model="row.address_type" class="address-field-select">
-                    <option value="" disabled>Select Type</option>
-                    <option value="residence">Residence / Primary Home</option>
-                    <option value="postal">Postal Address</option>
-                    <option value="work">Work Location</option>
-                    <option value="emergency">Emergency Domicile</option>
-                    <option value="birth_place">Place of Birth</option>
-                    <option value="other">Other Domicile</option>
-                  </select>
-                </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormSelect
+                  v-model="row.address_type"
+                  label="Address Type"
+                  placeholder="Select Type"
+                  :options="addressTypeOptions"
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Country</label>
-                  <select v-model="row.country" class="address-field-select" @change="onRowCountryChange(row)">
-                    <option value="" disabled>Select Country</option>
-                    <option value="Ethiopia">Ethiopia</option>
-                    <option value="Kenya">Kenya</option>
-                    <option value="Djibouti">Djibouti</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                  </select>
-                </div>
+                <FormSelect
+                  v-model="row.country"
+                  label="Country"
+                  placeholder="Select Country"
+                  :options="addressCountryOptions"
+                  @change="onRowCountryChange(row)"
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Region</label>
-                  <select v-model="row.region" class="address-field-select" @change="onRowRegionChange(row)">
-                    <option value="" disabled>Select Region</option>
-                    <option v-for="r in getRegionsForRow(row)" :key="r" :value="r">{{ r }}</option>
-                  </select>
-                </div>
+                <FormSelect
+                  v-model="row.region"
+                  label="Region"
+                  placeholder="Select Region"
+                  :options="getRegionsForRow(row)"
+                  searchable
+                  @change="onRowRegionChange(row)"
+                />
               </div>
 
               <!-- Grid Row 2: Zone | Woreda | Kebele -->
-              <div class="address-form-grid">
-                <div class="address-form-group">
-                  <label class="address-field-label">Zone</label>
-                  <select v-model="row.subcity_zone" class="address-field-select" @change="onRowZoneChange(row)">
-                    <option value="" disabled>Select Zone</option>
-                    <option v-for="z in getZonesForRow(row)" :key="z" :value="z">{{ z }}</option>
-                  </select>
-                </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <FormSelect
+                  v-model="row.subcity_zone"
+                  label="Zone"
+                  placeholder="Select Zone"
+                  :options="getZonesForRow(row)"
+                  searchable
+                  @change="onRowZoneChange(row)"
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Woreda</label>
-                  <select v-model="row.woreda" class="address-field-select" @change="onRowWoredaChange(row)">
-                    <option value="" disabled>Select Woreda</option>
-                    <option v-for="w in getWoredasForRow(row)" :key="w" :value="w">{{ w }}</option>
-                  </select>
-                </div>
+                <FormSelect
+                  v-model="row.woreda"
+                  label="Woreda"
+                  placeholder="Select Woreda"
+                  :options="getWoredasForRow(row)"
+                  searchable
+                  @change="onRowWoredaChange(row)"
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Kebele</label>
-                  <select v-model="row.kebele" class="address-field-select" @change="onRowKebeleChange(row)">
-                    <option value="" disabled>Select Kebele</option>
-                    <option v-for="k in getKebelesForRow(row)" :key="k" :value="k">{{ k }}</option>
-                  </select>
-                </div>
+                <FormSelect
+                  v-model="row.kebele"
+                  label="Kebele"
+                  placeholder="Select Kebele"
+                  :options="getKebelesForRow(row)"
+                  searchable
+                  @change="onRowKebeleChange(row)"
+                />
               </div>
 
               <!-- Grid Row 3: House Number | Street | Postal Code / P.O. Box -->
-              <div class="address-form-grid">
-                <div class="address-form-group">
-                  <label class="address-field-label">House Number</label>
-                  <input type="text" v-model="row.house_number" class="address-field-input" />
-                  <p class="address-field-hint">Used for legal address records and official correspondence.</p>
-                </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <FormInput
+                  v-model="row.house_number"
+                  label="House Number"
+                  placeholder="e.g. 1045/B"
+                  hint="Used for legal address records and official correspondence."
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Street</label>
-                  <input type="text" v-model="row.line" class="address-field-input" />
-                </div>
+                <FormInput
+                  v-model="row.line"
+                  label="Street"
+                  placeholder="e.g. Cameroon St., Bole"
+                />
 
-                <div class="address-form-group">
-                  <label class="address-field-label">Postal Code / P.O. Box</label>
-                  <input type="text" v-model="row.postal_code" class="address-field-input" />
-                </div>
+                <FormInput
+                  v-model="row.postal_code"
+                  label="Postal Code / P.O. Box"
+                  placeholder="e.g. 1176"
+                />
               </div>
 
               <!-- Row 4: Primary Address Checkbox -->
-              <div class="address-primary-row">
+              <div class="address-primary-row mt-3">
                 <FormCheckbox 
                   :id="'address_primary_' + row.id"
                   v-model="row.is_primary"
@@ -2236,14 +2454,21 @@ onUnmounted(() => {
 
           <!-- Empty State -->
           <div v-if="addressesList.length === 0" class="address-empty-state">
-            <p class="text-sm text-slate-500">No address configured. Click below to add an address record.</p>
+            <p class="text-sm text-neutral-500">No address configured. Click below to add an address record.</p>
           </div>
 
           <!-- Add Address Action Button -->
-          <button type="button" class="btn-add-address-card" @click="addAddressItem">
-            <Plus :size="15" />
-            <span>Add Address</span>
-          </button>
+          <div class="mt-3">
+            <BaseButton
+              type="button"
+              variant="secondary-gray"
+              size="sm"
+              :icon="Plus"
+              @click="addAddressItem"
+            >
+              Add Address
+            </BaseButton>
+          </div>
         </div>
       </div>
 
@@ -2257,30 +2482,16 @@ onUnmounted(() => {
         <div v-if="sections.remarksSignature" class="card-accordion-divider" />
         <div v-if="sections.remarksSignature" class="card-accordion-body">
           <div class="scanned-sig-wrapper">
-            <div class="flex items-center justify-between mb-2">
-              <label class="field-label mb-0">Legal Specimen Signature</label>
+            <div class="flex items-center justify-between mb-3">
+              <label class="qmt-form-label mb-0 text-sm font-semibold text-[#404040]">Legal Specimen Signature</label>
               <div class="sig-mode-switch">
-                <button 
-                  type="button" 
-                  class="sig-tab-btn" 
-                  :class="{ 'active': signatureMode === 'upload' }"
-                  @click="signatureMode = 'upload'"
-                >
-                  <Upload :size="13" />
-                  <span>Upload Specimen</span>
-                </button>
-                <button 
-                  type="button" 
-                  class="sig-tab-btn" 
-                  :class="{ 'active': signatureMode === 'draw' }"
-                  @click="signatureMode = 'draw'"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                    <path d="m15 5 4 4"/>
-                  </svg>
-                  <span>Draw Digital Signature</span>
-                </button>
+                <BaseTabs
+                  v-model="signatureMode"
+                  :tabs="signatureTabs"
+                  type="underline"
+                  size="sm"
+                  color="brand"
+                />
               </div>
             </div>
 
@@ -2293,9 +2504,9 @@ onUnmounted(() => {
                   <span class="sig-replace-link">Click to replace signature</span>
                 </div>
                 <div v-else class="sig-empty-content">
-                  <Upload :size="18" class="sig-upload-icon" />
+                  <Upload :size="18" class="sig-upload-icon text-qmt-icon-brand" />
                   <div class="sig-upload-text">
-                    <span class="text-blue-600 font-medium">Click to upload</span> or drag and drop
+                    <span class="text-[#0B529C] font-medium">Click to upload</span> or drag and drop
                   </div>
                   <div class="sig-upload-subtext">Picture files up to 10MB</div>
                 </div>
@@ -2310,25 +2521,32 @@ onUnmounted(() => {
                     <Check :size="14" class="text-emerald-600" />
                     <span>Digital Signature Adopted & Stored</span>
                   </div>
-                  <button type="button" class="text-xs text-rose-600 hover:underline font-medium" @click="clearSignatureCanvas">
+                  <BaseButton 
+                    type="button" 
+                    variant="tertiary-gray" 
+                    size="xs" 
+                    destructive 
+                    @click="clearSignatureCanvas"
+                  >
                     Redraw / Clear
-                  </button>
+                  </BaseButton>
                 </div>
-                <div class="p-3 bg-white border border-slate-200 rounded-md flex justify-center items-center h-28">
+                <div class="p-3 bg-white border border-neutral-200 rounded-md flex justify-center items-center h-28">
                   <img :src="form.signature" class="max-h-24 max-w-full object-contain" alt="Adopted Digital Signature" />
                 </div>
               </div>
 
               <div v-else>
-                <div class="sig-canvas-header mb-1 flex items-center justify-between text-xs text-slate-500">
+                <div class="sig-canvas-header mb-1.5 flex items-center justify-between text-xs text-neutral-500">
                   <span>Sign within the box below using mouse or stylus:</span>
-                  <button 
+                  <BaseButton 
                     type="button" 
-                    class="text-xs text-slate-500 hover:text-slate-700 underline" 
+                    variant="tertiary-gray" 
+                    size="xs" 
                     @click="clearSignatureCanvas"
                   >
                     Clear Canvas
-                  </button>
+                  </BaseButton>
                 </div>
                 <div class="sig-canvas-wrapper">
                   <canvas 
@@ -2345,24 +2563,26 @@ onUnmounted(() => {
                     @touchend="stopDrawing"
                   ></canvas>
                 </div>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-[11px] text-slate-400">Merged onto payslips, contracts, and letters.</span>
+                <div class="flex items-center justify-between mt-3">
+                  <span class="text-xs text-neutral-500">Merged onto payslips, contracts, and letters.</span>
                   <div class="flex items-center gap-2">
-                    <button 
+                    <BaseButton 
                       type="button" 
-                      class="btn-secondary-sm" 
+                      variant="secondary-gray" 
+                      size="sm" 
                       @click="clearSignatureCanvas"
                     >
                       Clear
-                    </button>
-                    <button 
+                    </BaseButton>
+                    <BaseButton 
                       type="button" 
-                      class="btn-adopt-sig" 
+                      variant="primary" 
+                      size="sm" 
+                      :icon="Check" 
                       @click="adoptDrawnSignature"
                     >
-                      <Check :size="13" />
-                      <span>Adopt Signature</span>
-                    </button>
+                      Adopt Signature
+                    </BaseButton>
                   </div>
                 </div>
               </div>
@@ -2370,46 +2590,12 @@ onUnmounted(() => {
           </div>
 
           <div class="remark-editor-wrapper mt-4">
-            <label class="field-label">Remark</label>
-            <div class="wysiwyg-editor-box">
-              <div class="wysiwyg-toolbar">
-                <select class="toolbar-select">
-                  <option>Paragraph</option>
-                  <option>Heading 1</option>
-                  <option>Heading 2</option>
-                </select>
-                <select class="toolbar-select">
-                  <option>Font Type</option>
-                  <option>Sans Serif</option>
-                  <option>Monospace</option>
-                </select>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn" title="Bullet List"><List :size="14" /></button>
-                <button type="button" class="tb-btn" title="Numbered List"><ListOrdered :size="14" /></button>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn font-bold" title="Bold">B</button>
-                <button type="button" class="tb-btn italic font-serif" title="Italic">I</button>
-                <button type="button" class="tb-btn underline" title="Underline">U</button>
-                <button type="button" class="tb-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="tb-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="tb-btn" title="Table"><Table :size="14" /></button>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn" title="Color"><Square :size="14" class="fill-current text-neutral-800" /></button>
-                <button type="button" class="tb-btn" title="Link"><Link :size="14" /></button>
-                <button type="button" class="tb-btn" title="Image"><ImageIcon :size="14" /></button>
-                <div class="toolbar-spacer" />
-                <button type="button" class="tb-btn" title="Undo"><Undo2 :size="14" /></button>
-                <button type="button" class="tb-btn" title="Redo"><Redo2 :size="14" /></button>
-              </div>
-              <textarea 
-                v-model="form.notes" 
-                class="wysiwyg-textarea"
-                maxlength="5000"
-              />
-              <div class="wysiwyg-status-bar">
-                <span class="char-count">{{ (form.notes || '').length }} / 5,000 Characters</span>
-              </div>
-            </div>
+            <FormRichText
+              v-model="form.notes"
+              label="Remark"
+              placeholder="Enter remarks or background notes..."
+              :max-length="5000"
+            />
           </div>
         </div>
       </div>
@@ -2478,46 +2664,12 @@ onUnmounted(() => {
 
           <!-- Row 3: Approved Workplace Accommodations / Assistive Tools -->
           <div class="remark-editor-wrapper mt-4">
-            <label class="field-label">Approved Workplace Accommodations / Assistive Tools</label>
-            <div class="wysiwyg-editor-box">
-              <div class="wysiwyg-toolbar">
-                <select class="toolbar-select">
-                  <option>Paragraph</option>
-                  <option>Heading 1</option>
-                  <option>Heading 2</option>
-                </select>
-                <select class="toolbar-select">
-                  <option>Font Type</option>
-                  <option>Sans Serif</option>
-                  <option>Monospace</option>
-                </select>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn" title="Bullet List"><List :size="14" /></button>
-                <button type="button" class="tb-btn" title="Numbered List"><ListOrdered :size="14" /></button>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn font-bold" title="Bold">B</button>
-                <button type="button" class="tb-btn italic font-serif" title="Italic">I</button>
-                <button type="button" class="tb-btn underline" title="Underline">U</button>
-                <button type="button" class="tb-btn line-through" title="Strikethrough">S</button>
-                <button type="button" class="tb-btn" title="Code">&lt;&gt;</button>
-                <button type="button" class="tb-btn" title="Table"><Table :size="14" /></button>
-                <span class="toolbar-divider" />
-                <button type="button" class="tb-btn" title="Color"><Square :size="14" class="fill-current text-neutral-800" /></button>
-                <button type="button" class="tb-btn" title="Link"><Link :size="14" /></button>
-                <button type="button" class="tb-btn" title="Image"><ImageIcon :size="14" /></button>
-                <div class="toolbar-spacer" />
-                <button type="button" class="tb-btn" title="Undo"><Undo2 :size="14" /></button>
-                <button type="button" class="tb-btn" title="Redo"><Redo2 :size="14" /></button>
-              </div>
-              <textarea 
-                v-model="form.accommodation_notes" 
-                class="wysiwyg-textarea"
-                maxlength="5000"
-              />
-              <div class="wysiwyg-status-bar">
-                <span class="char-count">{{ (form.accommodation_notes || '').length }} / 5,000 Characters</span>
-              </div>
-            </div>
+            <FormRichText
+              v-model="form.accommodation_notes"
+              label="Approved Workplace Accommodations / Assistive Tools"
+              placeholder="Document specific accommodation requirements, equipment specifications, or adjustments..."
+              :max-length="5000"
+            />
           </div>
         </div>
       </div>
@@ -2640,37 +2792,25 @@ onUnmounted(() => {
           </div>
 
           <div class="form-grid-4 mt-4">
-            <div class="form-field-wrap">
-              <label class="field-label">Contract Start Date</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="date" 
-                  v-model="form.hire_date" 
-                  class="date-field-inner"
-                />
-                <span class="gc-badge">GC</span>
-              </div>
-            </div>
+            <FormInput 
+              label="Contract Start Date" 
+              type="date" 
+              v-model="form.hire_date" 
+            />
 
-            <div class="form-field-wrap">
-              <label class="field-label">
-                Contract Expiration Date 
-                <span v-if="!isPermanentEmployment" class="text-rose-500">*</span>
-              </label>
-              <div v-if="isPermanentEmployment" class="date-composite-disabled">
+            <div v-if="isPermanentEmployment" class="form-field-wrap">
+              <label class="field-label">Contract Expiration Date</label>
+              <div class="date-composite-disabled">
                 <span class="text-xs text-slate-500 font-medium">Indefinite Duration (N/A)</span>
               </div>
-              <div v-else class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="date" 
-                  v-model="form.end_date" 
-                  class="date-field-inner"
-                />
-                <span class="gc-badge">GC</span>
-              </div>
             </div>
+            <FormInput 
+              v-else 
+              label="Contract Expiration Date" 
+              type="date" 
+              v-model="form.end_date" 
+              required 
+            />
 
             <FormSelect 
               label="Assigned Shift" 
@@ -2700,19 +2840,12 @@ onUnmounted(() => {
               v-model="form.probation_months" 
               helper-text="Defined trial period for performance evaluation before full employment confirmation."
             />
-            <div class="form-field-wrap">
-              <label class="field-label">Planned Probation End Date</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="date" 
-                  v-model="form.probation_end_date" 
-                  class="date-field-inner"
-                  readonly
-                />
-                <span class="gc-badge">GC</span>
-              </div>
-            </div>
+            <FormInput 
+              label="Planned Probation End Date" 
+              type="date" 
+              v-model="form.probation_end_date" 
+              readonly 
+            />
             <FormInput 
               label="Notice Period (Days)" 
               type="number" 
@@ -2808,32 +2941,16 @@ onUnmounted(() => {
                
               helper-text="Designated officer who approved this compensation package offer."
             />
-            <div class="form-field-wrap">
-              <label class="field-label">Salary Effective Date</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="text" 
-                  v-model="form.salary_effective_date" 
-                  class="date-field-inner"
-                  
-                />
-                <span class="gc-badge">GC</span>
-              </div>
-            </div>
-            <div class="form-field-wrap">
-              <label class="field-label">Effective Until</label>
-              <div class="date-composite-input">
-                <Calendar :size="15" class="date-cal-icon" />
-                <input 
-                  type="text" 
-                  v-model="form.salary_effective_until" 
-                  class="date-field-inner"
-                  
-                />
-                <span class="gc-badge">GC</span>
-              </div>
-            </div>
+            <FormInput 
+              label="Salary Effective Date" 
+              type="date" 
+              v-model="form.salary_effective_date" 
+            />
+            <FormInput 
+              label="Effective Until" 
+              type="date" 
+              v-model="form.salary_effective_until" 
+            />
           </div>
 
         </div>
@@ -2861,75 +2978,25 @@ onUnmounted(() => {
         <div v-if="sections.allowances" class="card-accordion-body">
           <p class="card-plain-desc">Configure monthly recurring cash allowances (transport, housing, hardship, representation) and non-base earnings attached to this employee's salary package.</p>
 
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(salaryComponentsList, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 240px;">Allowance / Component</th>
-                  <th class="child-th" style="min-width: 180px;">Calculation Type</th>
-                  <th class="child-th" style="min-width: 160px;">Amount / Value</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="salaryComponentsList.length === 0">
-                  <td colspan="6" class="child-td-empty">No Recurring Allowances Added (Basic Salary Only)</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in salaryComponentsList" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <select v-model="row.component_name" class="child-inline-select">
-                      <option value="Transport Allowance">Transport Allowance</option>
-                      <option value="Housing Allowance">Housing Allowance</option>
-                      <option value="Representation Allowance">Representation Allowance</option>
-                      <option value="Hardship Allowance">Hardship Allowance</option>
-                      <option value="Fuel & Mileage Allowance">Fuel & Mileage Allowance</option>
-                      <option value="Mobile & Communication">Mobile & Communication Allowance</option>
-                      <option value="Food & Subsistence">Food Allowance</option>
-                      <option value="Other Special Allowance">Other Allowance</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.calc_type" class="child-inline-select">
-                      <option value="Fixed Amount">Fixed Amount (ETB)</option>
-                      <option value="Percentage of Basic">% of Basic Salary</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <div class="relative flex items-center">
-                      <input type="number" v-model="row.amount" class="child-inline-input text-right pr-9" />
-                      <span class="absolute right-2 text-[11px] font-semibold text-slate-400 select-none pointer-events-none">
-                        {{ row.calc_type === 'Percentage of Basic' ? '%' : 'ETB' }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('salaryComponentsList', row, idx)" title="Expand Allowance Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addSalaryComponent">
-            <Plus :size="13" />
-            <span>Add Allowance</span>
-          </button>
+          <DynamicSubTable
+            v-model="salaryComponentsList"
+            :columns="salaryComponentsColumns"
+            entity-name="Allowance"
+            entity-name-plural="Allowances"
+            empty-text="No Recurring Allowances Added (Basic Salary Only)"
+            :new-row-factory="() => createBlankRow('salaryComponentsList')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('salaryComponentsList', row, idx)"
+          >
+            <template #cell-amount="{ row }">
+              <div class="relative flex items-center">
+                <input type="number" v-model="row.amount" class="cell-inline-input text-right pr-9" />
+                <span class="absolute right-2 text-[11px] font-semibold text-neutral-400 select-none pointer-events-none">
+                  {{ row.calc_type === 'Percentage of Basic' ? '%' : 'ETB' }}
+                </span>
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
 
@@ -2944,79 +3011,26 @@ onUnmounted(() => {
         <div v-if="sections.primaryBank" class="card-accordion-body">
           <p class="card-plain-desc">Configure direct deposit bank accounts, mobile wallets, and payment percentage splits for payroll disbursement.</p>
 
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(bankAccountsList, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 170px;">Payment Provider</th>
-                  <th class="child-th" style="min-width: 150px;">Account Number / Wallet ID</th>
-                  <th class="child-th" style="min-width: 160px;">Account Holder Name</th>
-                  <th class="child-th" style="min-width: 140px;">Branch Name</th>
-                  <th class="child-th" style="width: 110px;">Split Share (%)</th>
-                  <th class="child-th text-center" style="width: 80px;">Primary</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="bankAccountsList.length === 0">
-                  <td colspan="9" class="child-td-empty">No Account Configured (Disbursed in Cash)</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in bankAccountsList" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <select v-model="row.payment_provider" class="child-inline-select">
-                      <option value="" disabled>Select Provider</option>
-                      <option v-for="prov in paymentProviders" :key="prov" :value="prov">{{ prov }}</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.account_number" class="child-inline-input"  />
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.account_holder_name" class="child-inline-input"  />
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.branch_name" class="child-inline-input"  />
-                  </td>
-                  <td class="child-td">
-                    <input type="number" v-model="row.split_percent" class="child-inline-input text-right"  min="1" max="100" />
-                  </td>
-                  <td class="child-td text-center">
-                    <input 
-                      type="checkbox" 
-                      :checked="row.is_primary" 
-                      @change="setPrimaryAccount(idx)" 
-                      class="custom-squircle-check" 
-                      title="Primary Account"
-                    />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('bankAccountsList', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addBankAccount">
-            <Plus :size="13" />
-            <span>Add Account</span>
-          </button>
+          <DynamicSubTable
+            v-model="bankAccountsList"
+            :columns="bankAccountsColumns"
+            entity-name="Bank Account"
+            entity-name-plural="Bank Accounts"
+            empty-text="No Account Configured (Disbursed in Cash)"
+            :new-row-factory="() => createBlankRow('bankAccountsList')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('bankAccountsList', row, idx)"
+          >
+            <template #cell-is_primary="{ row, index }">
+              <div class="flex items-center justify-center h-full w-full">
+                <FormCheckbox 
+                  :model-value="row.is_primary" 
+                  @update:model-value="setPrimaryAccount(index)" 
+                  title="Primary Account"
+                />
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
     </div>
@@ -3034,71 +3048,26 @@ onUnmounted(() => {
         </div>
         <div v-if="sections.academicQualifications" class="card-accordion-divider" />
         <div v-if="sections.academicQualifications" class="card-accordion-body">
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(academicQualifications, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Degree Level</th>
-                  <th class="child-th">Field of Study</th>
-                  <th class="child-th">Awarding Institute</th>
-                  <th class="child-th">Graduation Date</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="academicQualifications.length === 0">
-                  <td colspan="7" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in academicQualifications" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td" style="min-width: 140px;">
-                    <select v-model="row.degree_level" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Primary School">Primary</option>
-                      <option value="Secondary School">Secondary</option>
-                      <option value="TVET / Level IV Certificate">TVET Certificate</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="Bachelor's Degree">Bachelor's Degree</option>
-                      <option value="Master's Degree">Master's Degree</option>
-                      <option value="Doctorate (PhD)">Doctorate (PhD)</option>
-                    </select>
-                  </td>
-                  <td class="child-td" style="min-width: 160px;">
-                    <input type="text" v-model="row.field_of_study" class="child-inline-input" list="fieldsOfStudyList" />
-                  </td>
-                  <td class="child-td" style="min-width: 170px;">
-                    <input type="text" v-model="row.awarding_institute" class="child-inline-input" list="institutionsList" />
-                  </td>
-                  <td class="child-td" style="min-width: 130px;">
-                    <input type="date" v-model="row.graduation_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('academicQualifications', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addAcademicQualification">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="academicQualifications"
+            :columns="academicQualificationsColumns"
+            entity-name="Academic Qualification"
+            entity-name-plural="Academic Qualifications"
+            empty-text="No Academic Qualifications Added"
+            :new-row-factory="() => createBlankRow('academicQualifications')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('academicQualifications', row, idx)"
+          >
+            <template #cell-field_of_study="{ row }">
+              <input type="text" v-model="row.field_of_study" class="cell-inline-input" list="fieldsOfStudyList" />
+            </template>
+            <template #cell-awarding_institute="{ row }">
+              <input type="text" v-model="row.awarding_institute" class="cell-inline-input" list="institutionsList" />
+            </template>
+            <template #cell-graduation_date="{ row }">
+              <input type="date" v-model="row.graduation_date" class="cell-inline-input" />
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
 
@@ -3111,66 +3080,29 @@ onUnmounted(() => {
         </div>
         <div v-if="sections.professionalCertifications" class="card-accordion-divider" />
         <div v-if="sections.professionalCertifications" class="card-accordion-body">
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(professionalCertifications, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Certification / License</th>
-                  <th class="child-th">Issuing Institution</th>
-                  <th class="child-th">Certificate / License No.</th>
-                  <th class="child-th">Issued Date</th>
-                  <th class="child-th">Expiry Date</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="professionalCertifications.length === 0">
-                  <td colspan="8" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in professionalCertifications" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td" style="min-width: 170px;">
-                    <input type="text" v-model="row.certification" class="child-inline-input" list="certificationsList" />
-                  </td>
-                  <td class="child-td" style="min-width: 160px;">
-                    <input type="text" v-model="row.issuing_institution" class="child-inline-input" list="certInstitutionsList" />
-                  </td>
-                  <td class="child-td" style="min-width: 140px;">
-                    <input type="text" v-model="row.certificate_number" class="child-inline-input" />
-                  </td>
-                  <td class="child-td" style="min-width: 120px;">
-                    <input type="date" v-model="row.issued_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td" style="min-width: 120px;">
-                    <input type="date" v-model="row.expiry_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('professionalCertifications', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addProfessionalCertification">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="professionalCertifications"
+            :columns="professionalCertificationsColumns"
+            entity-name="Professional Certification"
+            entity-name-plural="Professional Certifications"
+            empty-text="No Professional Certifications Added"
+            :new-row-factory="() => createBlankRow('professionalCertifications')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('professionalCertifications', row, idx)"
+          >
+            <template #cell-certification="{ row }">
+              <input type="text" v-model="row.certification" class="cell-inline-input" list="certificationsList" />
+            </template>
+            <template #cell-issuing_institution="{ row }">
+              <input type="text" v-model="row.issuing_institution" class="cell-inline-input" list="certInstitutionsList" />
+            </template>
+            <template #cell-issued_date="{ row }">
+              <input type="date" v-model="row.issued_date" class="cell-inline-input" />
+            </template>
+            <template #cell-expiry_date="{ row }">
+              <input type="date" v-model="row.expiry_date" class="cell-inline-input" />
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
 
@@ -3183,75 +3115,23 @@ onUnmounted(() => {
         </div>
         <div v-if="sections.priorWorkExperience" class="card-accordion-divider" />
         <div v-if="sections.priorWorkExperience" class="card-accordion-body">
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(priorWorkExperiences, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 170px;">Previous Employer</th>
-                  <th class="child-th" style="min-width: 160px;">Job Title</th>
-                  <th class="child-th" style="min-width: 140px;">Employment Type</th>
-                  <th class="child-th" style="min-width: 130px;">Start Date</th>
-                  <th class="child-th" style="min-width: 130px;">End Date</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="priorWorkExperiences.length === 0">
-                  <td colspan="8" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in priorWorkExperiences" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.previous_employer" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.job_title" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.employment_type" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Permanent">Permanent</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Temporary">Temporary</option>
-                      <option value="Probation">Probation</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Internship">Internship</option>
-                      <option value="Consultancy">Consultancy</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <input type="date" v-model="row.start_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <input type="date" v-model="row.end_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('priorWorkExperiences', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addPriorWorkExperience">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="priorWorkExperiences"
+            :columns="priorWorkExperiencesColumns"
+            entity-name="Work Experience"
+            entity-name-plural="Work Experiences"
+            empty-text="No Prior Work Experiences Added"
+            :new-row-factory="() => createBlankRow('priorWorkExperiences')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('priorWorkExperiences', row, idx)"
+          >
+            <template #cell-start_date="{ row }">
+              <input type="date" v-model="row.start_date" class="cell-inline-input" />
+            </template>
+            <template #cell-end_date="{ row }">
+              <input type="date" v-model="row.end_date" class="cell-inline-input" />
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
 
@@ -3267,131 +3147,46 @@ onUnmounted(() => {
           <div class="sub-section-title">Technical Skills</div>
           <p class="table-section-desc">Select practical capabilities and expertise level.</p>
 
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(technicalSkills, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 180px;">Skill / Competency</th>
-                  <th class="child-th" style="min-width: 140px;">Proficiency</th>
-                  <th class="child-th" style="width: 110px;">Years of Exp.</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="technicalSkills.length === 0">
-                  <td colspan="6" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in technicalSkills" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.skill" class="child-inline-input" list="skillsCatalogList" />
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.proficiency" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                      <option value="Expert">Expert</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <input type="number" step="0.5" v-model="row.years_of_experience" class="child-inline-input text-right" />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('technicalSkills', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <DynamicSubTable
+            v-model="technicalSkills"
+            :columns="technicalSkillsColumns"
+            entity-name="Technical Skill"
+            entity-name-plural="Technical Skills"
+            empty-text="No Technical Skills Added"
+            :new-row-factory="() => createBlankRow('technicalSkills')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('technicalSkills', row, idx)"
+          >
+            <template #cell-skill="{ row }">
+              <input type="text" v-model="row.skill" class="cell-inline-input" list="skillsCatalogList" />
+            </template>
+          </DynamicSubTable>
 
-          <button type="button" class="btn-add-row mb-6" @click="addTechnicalSkill">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
-
-          <div class="sub-section-title mt-4">Spoken Languages</div>
+          <div class="sub-section-title mt-6">Spoken Languages</div>
           <p class="table-section-desc">Multilingual capabilities for client and team operations.</p>
 
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(spokenLanguages, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th">Language</th>
-                  <th class="child-th">Fluency Level</th>
-                  <th class="child-th text-center" style="width: 110px;">Mother Tongue</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="spokenLanguages.length === 0">
-                  <td colspan="6" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in spokenLanguages" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td" style="min-width: 160px;">
-                    <input type="text" v-model="row.language" class="child-inline-input" list="languagesCatalogList" />
-                  </td>
-                  <td class="child-td" style="min-width: 140px;">
-                    <select v-model="row.fluency_level" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Basic">Basic</option>
-                      <option value="Conversational">Conversational</option>
-                      <option value="Fluent">Fluent</option>
-                      <option value="Native">Native</option>
-                    </select>
-                  </td>
-                  <td class="child-td text-center">
-                    <input 
-                      type="checkbox" 
-                      v-model="row.is_native" 
-                      class="custom-squircle-check" 
-                      title="Mother Tongue / Native Language"
-                    />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('spokenLanguages', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addSpokenLanguage">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="spokenLanguages"
+            :columns="spokenLanguagesColumns"
+            entity-name="Spoken Language"
+            entity-name-plural="Spoken Languages"
+            empty-text="No Spoken Languages Added"
+            :new-row-factory="() => createBlankRow('spokenLanguages')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('spokenLanguages', row, idx)"
+          >
+            <template #cell-language="{ row }">
+              <input type="text" v-model="row.language" class="cell-inline-input" list="languagesCatalogList" />
+            </template>
+            <template #cell-is_native="{ row }">
+              <div class="flex items-center justify-center h-full w-full">
+                <FormCheckbox 
+                  v-model="row.is_native" 
+                  title="Mother Tongue / Native Language"
+                />
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
     </div>
@@ -3426,65 +3221,16 @@ onUnmounted(() => {
               <p class="table-section-desc mb-0">Record authorized tax or pension exemptions (e.g. bilateral expatriate pension waiver, diplomatic tax status, or re-hired retirees).</p>
             </div>
 
-            <div class="child-table-wrapper">
-              <table class="child-table">
-                <thead>
-                  <tr class="child-table-header">
-                    <th class="child-th child-th-check">
-                      <input type="checkbox" @change="toggleSelectAll(statutoryExemptionsList, $event)" class="table-checkbox" />
-                    </th>
-                    <th class="child-th child-th-no">No.</th>
-                    <th class="child-th" style="min-width: 240px;">Rule Type</th>
-                    <th class="child-th">Legal Reason / Exemption Basis</th>
-                    <th class="child-th child-th-col-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                        <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                        <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                        <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                      </svg>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="statutoryExemptionsList.length === 0">
-                    <td colspan="5" class="child-td-empty">No Row</td>
-                  </tr>
-                  <tr v-else v-for="(row, idx) in statutoryExemptionsList" :key="row.id" class="child-tr">
-                    <td class="child-td child-td-check">
-                      <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                    </td>
-                    <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                    <td class="child-td">
-                      <select v-model="row.rule_type" class="child-inline-select">
-                        <option value="" disabled>Select</option>
-                        <option value="pension_employee">Pension (Employee Contribution)</option>
-                        <option value="pension_employer">Pension (Employer Contribution)</option>
-                        <option value="income_tax">Employment Income Tax</option>
-                        <option value="overtime_rate">Overtime Rate</option>
-                        <option value="working_hours_weekly">Weekly Working Hours Limit</option>
-                        <option value="severance">Severance Pay</option>
-                        <option value="notice_period">Notice Period</option>
-                        <option value="annual_leave_minimum">Annual Leave Minimum</option>
-                        <option value="probation_maximum">Probation Maximum</option>
-                      </select>
-                    </td>
-                    <td class="child-td">
-                      <input type="text" v-model="row.reason" class="child-inline-input" />
-                    </td>
-                    <td class="child-td child-td-col-icon">
-                      <button type="button" class="btn-row-expand" @click="openRowModal('statutoryExemptionsList', row, idx)" title="Expand Row Details">
-                        <Expand :size="14" />
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <button type="button" class="btn-add-row" @click="addStatutoryExemptionRow">
-              <Plus :size="13" />
-              <span>Add Row</span>
-            </button>
+            <DynamicSubTable
+              v-model="statutoryExemptionsList"
+              :columns="statutoryExemptionsColumns"
+              entity-name="Statutory Exemption"
+              entity-name-plural="Statutory Exemptions"
+              empty-text="No Statutory Exemptions Added"
+              :new-row-factory="() => createBlankRow('statutoryExemptionsList')"
+              :use-custom-modal="true"
+              @expand-row="(idx, row) => openRowModal('statutoryExemptionsList', row, idx)"
+            />
           </div>
         </div>
       </div>
@@ -3500,76 +3246,20 @@ onUnmounted(() => {
         <div v-if="sections.regulatoryClearances" class="card-accordion-body">
           <p class="child-sub-desc mb-4">Record mandatory pre-employment medical checks, police background clearances, work permits, and statutory compliance verifications.</p>
 
-        <div class="child-table-wrapper">
-          <table class="child-table">
-            <thead>
-              <tr class="child-table-header">
-                <th class="child-th child-th-check">
-                  <input type="checkbox" @change="toggleSelectAll(regulatoryClearances, $event)" class="table-checkbox" />
-                </th>
-                <th class="child-th child-th-no">No.</th>
-                <th class="child-th" style="min-width: 220px;">Compliance Item</th>
-                <th class="child-th" style="min-width: 170px;">Reference / Permit No.</th>
-                <th class="child-th" style="min-width: 130px;">Expiry Date</th>
-                <th class="child-th" style="min-width: 150px;">Compliance Status</th>
-                <th class="child-th child-th-col-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                    <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                    <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                  </svg>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="regulatoryClearances.length === 0">
-                <td colspan="7" class="child-td-empty">No Row</td>
-              </tr>
-              <tr v-else v-for="(row, idx) in regulatoryClearances" :key="row.id" class="child-tr">
-                <td class="child-td child-td-check">
-                  <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                </td>
-                <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                <td class="child-td">
-                  <select v-model="row.clearance_type" class="child-inline-select">
-                    <option value="" disabled>Select</option>
-                    <option value="fayda_verification">Fayda National ID Verification</option>
-                    <option value="pension_registration">Pension Registration Confirmation</option>
-                    <option value="work_permit">Work Permit / Visa</option>
-                    <option value="medical_check">Pre-Employment Medical Check</option>
-                    <option value="police_clearance">Police Background Clearance</option>
-                    <option value="professional_license">Professional / Board License</option>
-                    <option value="tax_registration">Tax Registration / TIN Verification</option>
-                  </select>
-                </td>
-                <td class="child-td">
-                  <input type="text" v-model="row.ref_number" class="child-inline-input" />
-                </td>
-                <td class="child-td">
-                  <input type="date" v-model="row.expiry_date" class="child-inline-input" />
-                </td>
-                <td class="child-td">
-                  <select v-model="row.verification_status" class="child-inline-select">
-                    <option value="" disabled>Select</option>
-                    <option value="Valid / Cleared">Valid / Cleared</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Statutorily Waived">Statutorily Waived</option>
-                  </select>
-                </td>
-                <td class="child-td child-td-col-icon">
-                  <button type="button" class="btn-row-expand" @click="openRowModal('regulatoryClearances', row, idx)" title="Expand Row Details">
-                    <Expand :size="14" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <button type="button" class="btn-add-row" @click="addRegulatoryClearance">
-          <Plus :size="13" />
-          <span>Add Row</span>
-        </button>
+          <DynamicSubTable
+            v-model="regulatoryClearances"
+            :columns="regulatoryClearancesColumns"
+            entity-name="Clearance Item"
+            entity-name-plural="Clearance Items"
+            empty-text="No Clearances or Compliance Records Added"
+            :new-row-factory="() => createBlankRow('regulatoryClearances')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('regulatoryClearances', row, idx)"
+          >
+            <template #cell-expiry_date="{ row }">
+              <input type="date" v-model="row.expiry_date" class="cell-inline-input" />
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
 
@@ -3601,14 +3291,15 @@ onUnmounted(() => {
               </div>
               <p class="banner-reason">{{ currentPositionGuarantee.reason }}</p>
               <div class="banner-footer-row">
-                <button 
+                <BaseButton 
                   v-if="form.guaranteed_amount !== currentPositionGuarantee.amount.toString()" 
                   type="button" 
-                  class="banner-apply-btn" 
+                  variant="primary" 
+                  size="sm"
                   @click="applyPositionGuarantee"
                 >
                   Apply Required Amount ({{ currentPositionGuarantee.amount.toLocaleString() }} ETB)
-                </button>
+                </BaseButton>
                 <div v-else class="banner-satisfied-pill">
                   <Check :size="13" class="text-emerald-600" />
                   <span>Requirement Amount Matched</span>
@@ -3751,75 +3442,16 @@ onUnmounted(() => {
         </div>
         <div v-if="sections.emergencyContacts" class="card-accordion-divider" />
         <div v-if="sections.emergencyContacts" class="card-accordion-body">
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(emergencyContactsList, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 170px;">Contact Full Name</th>
-                  <th class="child-th" style="min-width: 140px;">Relationship</th>
-                  <th class="child-th" style="min-width: 150px;">Primary Phone</th>
-                  <th class="child-th" style="width: 120px;">Call Priority</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="emergencyContactsList.length === 0">
-                  <td colspan="7" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in emergencyContactsList" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.full_name" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.relationship" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Parent">Parent</option>
-                      <option value="Child">Child</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Relative">Relative</option>
-                      <option value="Colleague">Colleague</option>
-                      <option value="Friend">Friend</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <input type="tel" v-model="row.phone" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.priority" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option :value="1">1 - Primary</option>
-                      <option :value="2">2 - Secondary</option>
-                    </select>
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('emergencyContactsList', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addEmergencyContactPerson">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="emergencyContactsList"
+            :columns="emergencyContactsColumns"
+            entity-name="Emergency Contact"
+            entity-name-plural="Emergency Contacts"
+            empty-text="No Emergency Contacts Added"
+            :new-row-factory="() => createBlankRow('emergencyContactsList')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('emergencyContactsList', row, idx)"
+          />
         </div>
       </div>
 
@@ -3832,74 +3464,28 @@ onUnmounted(() => {
         </div>
         <div v-if="sections.dependents" class="card-accordion-divider" />
         <div v-if="sections.dependents" class="card-accordion-body">
-          <div class="child-table-wrapper">
-            <table class="child-table">
-              <thead>
-                <tr class="child-table-header">
-                  <th class="child-th child-th-check">
-                    <input type="checkbox" @change="toggleSelectAll(dependentsList, $event)" class="table-checkbox" />
-                  </th>
-                  <th class="child-th child-th-no">No.</th>
-                  <th class="child-th" style="min-width: 170px;">Dependent Full Name</th>
-                  <th class="child-th" style="min-width: 140px;">Relationship</th>
-                  <th class="child-th" style="min-width: 130px;">Date of Birth</th>
-                  <th class="child-th text-center" style="width: 100px;">Beneficiary</th>
-                  <th class="child-th child-th-col-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="col-icon-solid">
-                      <rect x="3" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="10" y="3" width="4" height="18" rx="1.5" />
-                      <rect x="17" y="3" width="4" height="18" rx="1.5" />
-                    </svg>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="dependentsList.length === 0">
-                  <td colspan="7" class="child-td-empty">No Row</td>
-                </tr>
-                <tr v-else v-for="(row, idx) in dependentsList" :key="row.id" class="child-tr">
-                  <td class="child-td child-td-check">
-                    <input type="checkbox" v-model="row.selected" class="table-checkbox" />
-                  </td>
-                  <td class="child-td child-td-no">{{ idx + 1 }}</td>
-                  <td class="child-td">
-                    <input type="text" v-model="row.dependent_name" class="child-inline-input" />
-                  </td>
-                  <td class="child-td">
-                    <select v-model="row.relationship" class="child-inline-select">
-                      <option value="" disabled>Select</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Child">Child</option>
-                      <option value="Parent">Parent</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </td>
-                  <td class="child-td">
-                    <input type="date" v-model="row.birth_date" class="child-inline-input" />
-                  </td>
-                  <td class="child-td text-center">
-                    <input 
-                      type="checkbox" 
-                      v-model="row.is_beneficiary" 
-                      class="custom-squircle-check" 
-                      title="Included in healthcare insurance and pension survivor benefits"
-                    />
-                  </td>
-                  <td class="child-td child-td-col-icon">
-                    <button type="button" class="btn-row-expand" @click="openRowModal('dependentsList', row, idx)" title="Expand Row Details">
-                      <Expand :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" class="btn-add-row" @click="addDependentItem">
-            <Plus :size="13" />
-            <span>Add Row</span>
-          </button>
+          <DynamicSubTable
+            v-model="dependentsList"
+            :columns="dependentsColumns"
+            entity-name="Dependent"
+            entity-name-plural="Dependents"
+            empty-text="No Dependents or Beneficiaries Added"
+            :new-row-factory="() => createBlankRow('dependentsList')"
+            :use-custom-modal="true"
+            @expand-row="(idx, row) => openRowModal('dependentsList', row, idx)"
+          >
+            <template #cell-birth_date="{ row }">
+              <input type="date" v-model="row.birth_date" class="cell-inline-input" />
+            </template>
+            <template #cell-is_beneficiary="{ row }">
+              <div class="flex items-center justify-center h-full w-full">
+                <FormCheckbox 
+                  v-model="row.is_beneficiary" 
+                  title="Included in healthcare insurance and pension survivor benefits"
+                />
+              </div>
+            </template>
+          </DynamicSubTable>
         </div>
       </div>
     </div>
@@ -4320,45 +3906,14 @@ onUnmounted(() => {
                 </p>
               </div>
 
-              <!-- Reason in Rich Text / WYSIWYG Editor as requested by user -->
+              <!-- Reason in Standard Rich Text Component -->
               <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Exemption Reason & Legal Justification (Rich Text)</label>
-                <div class="wysiwyg-editor-box">
-                  <div class="wysiwyg-toolbar">
-                    <select class="toolbar-select">
-                      <option>Paragraph</option>
-                      <option>Heading 1</option>
-                      <option>Heading 2</option>
-                    </select>
-                    <select class="toolbar-select">
-                      <option>Font Type</option>
-                      <option>Sans Serif</option>
-                      <option>Monospace</option>
-                    </select>
-                    <span class="toolbar-divider" />
-                    <button type="button" class="tb-btn font-bold" title="Bold">B</button>
-                    <button type="button" class="tb-btn italic font-serif" title="Italic">I</button>
-                    <button type="button" class="tb-btn underline" title="Underline">U</button>
-                    <button type="button" class="tb-btn line-through" title="Strikethrough">S</button>
-                    <button type="button" class="tb-btn" title="Table"><Table :size="14" /></button>
-                    <span class="toolbar-divider" />
-                    <button type="button" class="tb-btn" title="Bullet List"><List :size="14" /></button>
-                    <button type="button" class="tb-btn" title="Numbered List"><ListOrdered :size="14" /></button>
-                    <span class="toolbar-divider" />
-                    <button type="button" class="tb-btn" title="Link"><Link :size="14" /></button>
-                    <div class="toolbar-spacer" />
-                    <button type="button" class="tb-btn" title="Undo"><Undo2 :size="14" /></button>
-                    <button type="button" class="tb-btn" title="Redo"><Redo2 :size="14" /></button>
-                  </div>
-                  <textarea 
-                    v-model="activeRowData.reason" 
-                    class="wysiwyg-textarea" 
-                    rows="4" 
-                  ></textarea>
-                  <div class="wysiwyg-status-bar">
-                    <span class="char-count">{{ (activeRowData.reason || '').length }} Characters</span>
-                  </div>
-                </div>
+                <FormRichText
+                  v-model="activeRowData.reason"
+                  label="Exemption Reason & Legal Justification"
+                  placeholder="Detail the legal justification and reasons for this statutory exemption..."
+                  :max-length="5000"
+                />
               </div>
             </div>
 
@@ -4646,52 +4201,57 @@ onUnmounted(() => {
 
           <!-- Footer (Matching Screenshot 2) -->
           <div class="row-modal-footer">
-            <button type="button" class="btn-modal-delete" @click="deleteModalRow">
+            <BaseButton type="button" variant="tertiary-gray" size="sm" destructive @click="deleteModalRow">
               Delete
-            </button>
-            <div class="row-modal-actions-right">
-              <button 
+            </BaseButton>
+            <div class="row-modal-actions-right flex items-center gap-2">
+              <BaseButton 
                 type="button" 
-                class="btn-modal-ctrl-icon" 
+                variant="secondary-gray" 
+                size="sm" 
                 :disabled="isLastRow" 
                 @click="moveRowDown" 
                 title="Move Down"
               >
                 <ArrowDown :size="15" />
-              </button>
-              <button 
+              </BaseButton>
+              <BaseButton 
                 type="button" 
-                class="btn-modal-ctrl-icon" 
+                variant="secondary-gray" 
+                size="sm" 
                 :disabled="isFirstRow" 
                 @click="moveRowUp" 
                 title="Move Up"
               >
                 <ArrowUp :size="15" />
-              </button>
-              <button 
+              </BaseButton>
+              <BaseButton 
                 type="button" 
-                class="btn-modal-ctrl-action" 
+                variant="secondary-gray" 
+                size="sm" 
+                :icon="Copy" 
                 @click="duplicateModalRow"
               >
-                <Copy :size="13" />
-                <span>Duplicate Row</span>
-              </button>
-              <button 
+                Duplicate Row
+              </BaseButton>
+              <BaseButton 
                 type="button" 
-                class="btn-modal-ctrl-action" 
+                variant="secondary-gray" 
+                size="sm" 
+                :icon="Plus" 
                 @click="insertRowAbove"
               >
-                <Plus :size="13" />
-                <span>Insert Above</span>
-              </button>
-              <button 
+                Insert Above
+              </BaseButton>
+              <BaseButton 
                 type="button" 
-                class="btn-modal-ctrl-action" 
+                variant="secondary-gray" 
+                size="sm" 
+                :icon="Plus" 
                 @click="insertRowBelow"
               >
-                <Plus :size="13" />
-                <span>Insert Below</span>
-              </button>
+                Insert Below
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -4818,7 +4378,7 @@ onUnmounted(() => {
 <style scoped>
 /* ─── Page Container & Header ─── */
 .employee-create-page {
-  padding: 16px 28px 48px;
+  padding: 0;
   background-color: #fafafa;
   min-height: calc(100vh - 60px);
   font-family: inherit;
@@ -4828,7 +4388,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .header-left {
@@ -5245,38 +4805,43 @@ onUnmounted(() => {
   margin-left: 2px;
 }
 
-/* Composite Phone Input */
-.phone-composite-input {
+/* QMT 3345:3184 Leading Dropdown Input (Phone) */
+.qmt-leading-dropdown-input {
   display: flex;
   align-items: center;
   height: 38px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d4d4d4;
   border-radius: 8px;
   background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 1px 2px 0 var(--qmt-color-shadow-faint, rgba(10, 13, 18, 0.05));
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.phone-composite-input:focus-within {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
+.qmt-leading-dropdown-input:focus-within {
+  border-color: #83bff6;
+  box-shadow: 0 0 0 4px #e1eefd, 0 1px 2px 0 rgba(10, 13, 18, 0.05);
 }
 
-.country-pill-btn {
+.leading-dropdown-select {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 10px;
+  padding: 0 12px;
   height: 100%;
-  border-right: 1px solid #e2e8f0;
-  font-size: 12.5px;
-  font-weight: 500;
+  border-right: 1px solid #e5e5e5;
+  background: #fafafa;
   color: #404040;
-  background: #f8fafc;
+  font-size: 13.5px;
+  font-weight: 500;
   user-select: none;
   cursor: pointer;
+  flex-shrink: 0;
+}
+.leading-chevron {
+  color: #737373;
 }
 
-.phone-field-inner {
+.leading-text-input {
   flex: 1;
   height: 100%;
   border: none;
@@ -5285,6 +4850,18 @@ onUnmounted(() => {
   font-size: 13.5px;
   color: #404040;
   background: transparent;
+  font-family: inherit;
+}
+.leading-text-input::placeholder {
+  color: #737373;
+}
+
+.trailing-help-wrap {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 12px;
+  cursor: help;
+  flex-shrink: 0;
 }
 
 /* Composite Date Input */
@@ -5334,19 +4911,19 @@ onUnmounted(() => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 /* ─── Card Internal Row Divider ─── */
@@ -6741,7 +6318,7 @@ onUnmounted(() => {
 .field-checkbox-title {
   font-size: 13.5px;
   font-weight: 500;
-  color: #262626;
+  color: #404040;
   line-height: 1.35;
 }
 

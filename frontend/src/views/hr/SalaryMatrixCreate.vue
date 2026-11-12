@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, Sliders, Award,
-  Plus, Trash2, Calendar, ChevronDown, Columns,
-  Maximize2, Check, Calculator, Sparkles, Grid, Eye, Edit3,
-  Percent, ArrowRight, Download, Printer
-} from 'lucide-vue-next';
+import {
+  X, Sliders, Plus, Trash2,
+  Calendar, Calculator, Grid, Percent
+} from 'lucide-vue-next';;
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -17,6 +17,12 @@ const route = useRoute();
 // ─── Mode: Interactive Editor vs Official Document View ───
 type ViewMode = 'edit' | 'preview';
 const viewMode = ref<ViewMode>('edit');
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = computed(() => [
+  { label: 'Salary Matrices', to: '/hr/salary-matrices' },
+  { label: `${form.value.entity_id || 'Entity'} — Pay Scale Matrix` }
+]);
 
 // ─── Document State ───
 const isSaved = ref(false);
@@ -371,16 +377,11 @@ onMounted(() => {
     <!-- Top Action & Breadcrumb Navigation Bar -->
     <div class="create-header-bar">
       <div class="header-left">
-        <div class="breadcrumb-strip">
-          <router-link to="/home" class="bc-home-icon" title="Home">
-            <Monitor :size="15" />
-          </router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <router-link to="/hr/salary-matrices" class="bc-link">Salary Matrices</router-link>
-          <ChevronRight :size="13" class="bc-sep" />
-          <span class="bc-current">{{ form.entity_id || 'Entity' }} — Pay Scale Matrix</span>
-          <SaveStateBadge :isSaved="isSaved" />
-        </div>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="header-actions">
@@ -390,22 +391,22 @@ onMounted(() => {
           <span class="meta-label font-medium">Compensation Matrix Builder</span>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-clear-action" 
+        <AppButton 
+          variant="outline" 
+          size="sm" 
           @click="clearForm"
         >
-          <X :size="14" />
-          <span>Reset Grid</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Reset Grid
+        </AppButton>
         
-        <button 
-          type="button" 
-          class="btn-save-action" 
+        <AppButton 
+          variant="primary" 
+          size="sm" 
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -676,8 +677,8 @@ onMounted(() => {
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="showAdjustmentModal = false">Cancel</button>
-          <button type="button" class="btn-apply" @click="applyGlobalAdjustment">Apply Adjustment</button>
+          <AppButton variant="outline" size="sm" @click="showAdjustmentModal = false">Cancel</AppButton>
+          <AppButton variant="primary" size="sm" @click="applyGlobalAdjustment">Apply Adjustment</AppButton>
         </div>
       </div>
     </div>
@@ -686,7 +687,7 @@ onMounted(() => {
 
 <style scoped>
 .salary-matrix-grid-page {
-  padding: 20px 32px 64px 32px;
+  padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
 }

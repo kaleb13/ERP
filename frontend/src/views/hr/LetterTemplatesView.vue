@@ -2,18 +2,16 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  FileText, Plus, Eye, CheckCircle2, Clock,
-  Filter, MoreVertical, Maximize2,
-  Printer, Download, Building2, User, Check, X,
-  Copy, Edit3, Trash2, ShieldCheck, Tag, ArrowUpRight,
-  Sparkles, FileCheck, AlertCircle, RefreshCw,
-  ChevronDown, ChevronRight, ArrowUpDown, Columns
+  FileText, Plus, CheckCircle2, MoreVertical, X, Tag,
+  ChevronDown, ChevronRight
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import {
   letterTemplatesData,
@@ -65,6 +63,14 @@ const filteredTemplates = computed(() => {
   });
 });
 
+const currentPage = ref(1);
+const perPage = ref(10);
+
+const paginatedTemplates = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredTemplates.value.slice(start, start + perPage.value);
+});
+
 // ─── Table Columns (Matching Figma 7454:138158 exactly) ───
 const tableColumns = ref<ColumnDef[]>([
   { key: 'select', label: '', width: '40px', sortable: false, visible: true },
@@ -76,9 +82,17 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', width: '60px', sortable: false, visible: true }
 ]);
 
-const handleToggleColumn = (key: string) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) {
+    col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+  }
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = !col.visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Bottom Drawer State (Figma 7454:138406 & 7454:138747) ───
@@ -233,51 +247,21 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
       title="Letter Templates"
       subtitle="Configure corporate letter designs, dynamic merge tokens, and governance sign-off workflows."
       :columns="tableColumns"
+      v-model:searchQuery="searchQuery"
+      v-model:currentPage="currentPage"
+      v-model:perPage="perPage"
+      :totalEntries="filteredTemplates.length"
+      :showPagination="true"
       @toggleColumn="handleToggleColumn"
     >
       <!-- Actions Slot -->
       <template #actions>
-        <button class="btn-primary-blue" @click="handleOpenCreateDrawer">
-          <Plus :size="16" />
-          <span>+ Create Template</span>
-        </button>
-      </template>
-
-      <!-- Subheader Filters & Search (Figma 7454:138158) -->
-      <template #subheader>
-        <div class="table-controls-wrapper">
-          <div class="table-filter-bar">
-            <div class="search-box">
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search by Name..."
-                class="search-input"
-              />
-            </div>
-
-            <div class="table-toolbar-actions">
-              <button class="btn-secondary-toolbar" title="Filter templates">
-                <Filter :size="14" />
-                <span>Filter</span>
-              </button>
-
-              <button class="btn-secondary-toolbar" title="Sort templates">
-                <ArrowUpDown :size="14" />
-                <span>Sort</span>
-                <ChevronDown :size="12" />
-              </button>
-
-              <button class="btn-icon-toolbar" title="Toggle columns">
-                <Columns :size="16" />
-              </button>
-
-              <button class="btn-icon-toolbar" title="Maximize view">
-                <Maximize2 :size="16" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <AppButton variant="primary" size="sm" @click="handleOpenCreateDrawer">
+          <template #icon-left>
+            <Plus :size="16" />
+          </template>
+          Create Template
+        </AppButton>
       </template>
 
       <!-- Table Body -->
@@ -286,31 +270,31 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
           <table class="erp-table">
             <thead>
               <tr>
-                <th v-if="tableColumns[0].visible" class="th-check">
+                <th v-if="isColVisible('select')" class="th-check">
                   <input type="checkbox" class="table-checkbox" />
                 </th>
-                <th v-if="tableColumns[1].visible" class="th-name">Name</th>
-                <th v-if="tableColumns[2].visible">Template Type</th>
-                <th v-if="tableColumns[3].visible">Approval Required</th>
-                <th v-if="tableColumns[4].visible">Owning Entity</th>
-                <th v-if="tableColumns[5].visible">Status</th>
-                <th v-if="tableColumns[6].visible" class="th-actions">Actions</th>
+                <th v-if="isColVisible('name')" class="th-name">Name</th>
+                <th v-if="isColVisible('template_type')">Template Type</th>
+                <th v-if="isColVisible('approval_required')">Approval Required</th>
+                <th v-if="isColVisible('owning_entity')">Owning Entity</th>
+                <th v-if="isColVisible('status')">Status</th>
+                <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="tmpl in filteredTemplates"
+                v-for="tmpl in paginatedTemplates"
                 :key="tmpl.id"
                 class="table-row-hover"
                 @click="handleInspectTemplate(tmpl)"
               >
                 <!-- Checkbox -->
-                <td v-if="tableColumns[0].visible" class="td-check" @click.stop>
+                <td v-if="isColVisible('select')" class="td-check" @click.stop>
                   <input type="checkbox" class="table-checkbox" />
                 </td>
 
                 <!-- Name Column (Title on top, code on bottom) -->
-                <td v-if="tableColumns[1].visible" class="td-name">
+                <td v-if="isColVisible('name')" class="td-name">
                   <div class="template-name-cell">
                     <span class="table-name-primary">{{ tmpl.name }}</span>
                     <span class="table-code-subtext">{{ tmpl.code }}</span>
@@ -318,29 +302,29 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
                 </td>
 
                 <!-- Template Type (Plain text) -->
-                <td v-if="tableColumns[2].visible" class="td-tertiary">
+                <td v-if="isColVisible('template_type')" class="td-tertiary">
                   <span class="cell-plain-text">{{ LETTER_TYPE_MAP[tmpl.letter_type]?.label || tmpl.letter_type }}</span>
                 </td>
 
                 <!-- Approval Required (Plain text: Yes / No) -->
-                <td v-if="tableColumns[3].visible" class="td-tertiary">
+                <td v-if="isColVisible('approval_required')" class="td-tertiary">
                   <span class="cell-plain-text">{{ tmpl.requires_approval ? 'Yes' : 'No' }}</span>
                 </td>
 
                 <!-- Owning Entity -->
-                <td v-if="tableColumns[4].visible" class="td-tertiary">
+                <td v-if="isColVisible('owning_entity')" class="td-tertiary">
                   <span class="cell-plain-text">{{ tmpl.entity_name || 'Bole Branch' }}</span>
                 </td>
 
                 <!-- Status (Active / Inactive State Pill) -->
-                <td v-if="tableColumns[5].visible" class="td-state">
+                <td v-if="isColVisible('status')" class="td-state">
                   <span class="state-pill" :class="tmpl.state === 'active' ? 'state-active' : 'state-inactive'">
                     {{ tmpl.state === 'active' ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
 
                 <!-- Row Actions -->
-                <td v-if="tableColumns[6].visible" class="td-actions" @click.stop>
+                <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
                   <button class="btn-action-dots" title="More options" @click="handleInspectTemplate(tmpl)">
                     <MoreVertical :size="16" />
                   </button>
@@ -359,35 +343,6 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
               </tr>
             </tbody>
           </table>
-
-          <!-- Minimalist Pagination Bar matching Figma 7454:138158 -->
-          <div class="figma-pagination-bar">
-            <div class="pagination-left">
-              <span>Showing 1 to {{ filteredTemplates.length }} of {{ filteredTemplates.length }} entries</span>
-              <div class="per-page-wrapper">
-                <span>Per Page:</span>
-                <select class="per-page-select">
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pagination-right">
-              <button class="btn-pag-nav" disabled>
-                <span>&larr; Previous</span>
-              </button>
-              <button class="btn-pag-num active">1</button>
-              <button class="btn-pag-num">2</button>
-              <span class="pag-ellipsis">...</span>
-              <button class="btn-pag-num">9</button>
-              <button class="btn-pag-num">10</button>
-              <button class="btn-pag-nav">
-                <span>Next &rarr;</span>
-              </button>
-            </div>
-          </div>
         </div>
       </template>
     </AppDataTable>
@@ -521,16 +476,14 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
                   </div>
                 </div>
 
-                <!-- Letter Body Textarea -->
-                <div class="form-field-wrapper">
-                  <label class="figma-field-label">Letter Body</label>
-                  <textarea
-                    v-model="templateForm.body"
-                    rows="4"
-                    class="figma-textarea"
-                    placeholder="Enter letter body description..."
-                  ></textarea>
-                </div>
+                <!-- Letter Body (Figma Node 8779:68714 Rich Text Component) -->
+                <FormRichText
+                  v-model="templateForm.body"
+                  label="Letter Body"
+                  placeholder="Enter formal letter template body (supports merge tokens like {{employee_name}}, {{position}}, etc.)..."
+                  required
+                  :max-length="5000"
+                />
               </div>
 
               <!-- Accordion: Description For This template (Figma 7454:138406) -->
@@ -626,14 +579,14 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
         <!-- Drawer Footer (Figma 7454:138747) -->
         <div class="drawer-footer">
-          <button class="btn-footer-close" @click="isCreateDrawerOpen = false">
-            <X :size="14" />
+          <AppButton variant="outline" size="sm" @click="isCreateDrawerOpen = false">
+            <template #icon-left><X :size="14" /></template>
             <span>Close</span>
-          </button>
+          </AppButton>
 
-          <button class="btn-footer-save" @click="handleSaveTemplate">
-            <span>Save</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="handleSaveTemplate">
+            Save
+          </AppButton>
         </div>
       </div>
     </div>
@@ -716,7 +669,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 <style scoped>
 .letter-templates-page {
-  padding: 24px;
+  padding: 0;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -1196,7 +1149,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-field-wrapper {

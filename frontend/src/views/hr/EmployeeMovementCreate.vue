@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  MoreVertical, X, Calendar, User, Info, ChevronDown, 
-  ChevronUp, List, Code, Table, Square, Link2, Image, 
-  Undo2, Redo2, Check, ArrowRight, Save
-} from 'lucide-vue-next';
+import {
+  MoreVertical, X, Calendar, User,
+  Info, ChevronDown, ChevronUp, Save
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
 
 const router = useRouter();
 
@@ -247,21 +249,25 @@ const closeMenus = () => {
     <!-- ─── TOP BAR: Breadcrumb + Not Saved Badge + Action Buttons (Matching Image 1 & 2) ─── -->
     <div class="top-nav-bar">
       <div class="breadcrumb-group">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <span class="badge-not-saved">Not Saved</span>
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :isSaved="false" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="actions-group">
         <!-- 3-Dots More Options (Save as Draft) per Rule 4 -->
         <div class="more-menu-wrapper" @click.stop>
-          <button 
-            type="button" 
-            class="btn-more-options" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            iconOnly
             title="More actions"
             @click="showMoreDropdown = !showMoreDropdown"
           >
             <MoreVertical :size="16" />
-          </button>
+          </AppButton>
           <div v-if="showMoreDropdown" class="more-dropdown-menu">
             <button type="button" class="dropdown-item" @click="handleSaveDraft">
               <Save :size="14" />
@@ -271,23 +277,23 @@ const closeMenus = () => {
         </div>
 
         <!-- Clear Form Button -->
-        <button 
-          type="button" 
-          class="btn-clear-form"
+        <AppButton 
+          variant="outline" 
+          size="sm"
           @click="handleClearForm"
         >
-          <X :size="14" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="14" /></template>
+          Clear Form
+        </AppButton>
 
         <!-- Primary Save Button -->
-        <button 
-          type="button" 
-          class="btn-save-primary"
+        <AppButton 
+          variant="primary" 
+          size="sm"
           @click="handleSave"
         >
-          <span>Save</span>
-        </button>
+          Save
+        </AppButton>
       </div>
     </div>
 
@@ -492,60 +498,19 @@ const closeMenus = () => {
       </div>
     </div>
 
-    <!-- ─── CARD 3: Movement Description (Accordion with WYSIWYG Editor) ─── -->
+    <!-- ─── CARD 3: Movement Description (Accordion with Standard Rich Text Component) ─── -->
     <div class="accordion-section-card">
       <div class="accordion-header" @click="isDescriptionOpen = !isDescriptionOpen">
         <span class="accordion-title">Movement Description</span>
         <component :is="isDescriptionOpen ? ChevronUp : ChevronDown" :size="16" class="accordion-chevron" />
       </div>
 
-      <div v-if="isDescriptionOpen" class="wysiwyg-box">
-        <!-- Editor Toolbar -->
-        <div class="wysiwyg-toolbar">
-          <div class="tb-dropdown-btn">
-            <span>Paragraph</span>
-            <ChevronDown :size="12" />
-          </div>
-
-          <div class="tb-dropdown-btn">
-            <span>Font Type</span>
-            <ChevronDown :size="12" />
-          </div>
-
-          <div class="tb-dropdown-btn">
-            <List :size="13" />
-            <ChevronDown :size="12" />
-          </div>
-
-          <div class="tb-divider"></div>
-
-          <button type="button" class="tb-icon-btn font-bold" title="Bold">B</button>
-          <button type="button" class="tb-icon-btn italic" title="Italic">I</button>
-          <button type="button" class="tb-icon-btn underline" title="Underline">U</button>
-          <button type="button" class="tb-icon-btn line-through" title="Strikethrough">S</button>
-          <button type="button" class="tb-icon-btn" title="Code"><Code :size="13" /></button>
-          <button type="button" class="tb-icon-btn" title="Table"><Table :size="13" /></button>
-          <button type="button" class="tb-icon-btn" title="Color"><Square :size="12" class="fill-current" /></button>
-          <button type="button" class="tb-icon-btn" title="Link"><Link2 :size="13" /></button>
-          <button type="button" class="tb-icon-btn" title="Image"><Image :size="13" /></button>
-
-          <div class="tb-spacer"></div>
-
-          <button type="button" class="tb-icon-btn" title="Undo"><Undo2 :size="13" /></button>
-          <button type="button" class="tb-icon-btn" title="Redo"><Redo2 :size="13" /></button>
-        </div>
-
-        <!-- Editor Content Area -->
-        <textarea 
+      <div v-if="isDescriptionOpen" class="accordion-content-body" style="padding: 16px 20px 20px 20px;">
+        <FormRichText 
           v-model="form.description" 
-          class="wysiwyg-textarea"
-          rows="6"
-        ></textarea>
-
-        <!-- Editor Footer: 0 / 5,000 Characters -->
-        <div class="wysiwyg-footer">
-          <span class="char-count-text">{{ (form.description || '').length }} / 5,000 Characters</span>
-        </div>
+          placeholder="Document the reason, business justification, or relevant terms for this movement..."
+          :max-length="5000"
+        />
       </div>
     </div>
   </div>
@@ -555,8 +520,8 @@ const closeMenus = () => {
 .create-movement-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

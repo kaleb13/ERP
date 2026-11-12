@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  PieChart, Plus, Calendar, CalendarDays, Award, Clock,
-  CheckCircle2, AlertCircle, TrendingDown, ArrowUpRight,
-  ArrowDownLeft, History, FileText, ChevronRight, User,
-  Building2, Briefcase, RefreshCw, Layers, Check
-} from 'lucide-vue-next';
+import {
+  Plus, CalendarDays, Award, Clock,
+  AlertCircle, History
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
@@ -932,7 +930,7 @@ const formatTransactionType = (t: string) => {
 
 <style scoped>
 .leave-balances-page {
-  padding: 16px 24px 40px;
+  padding: 0;
   max-width: 1360px;
   margin: 0 auto;
 }

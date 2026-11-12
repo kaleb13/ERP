@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  Monitor, ChevronRight, X, Check, Calendar,
-  ShieldCheck, User, CheckCircle2, FileText,
-  Clock, CornerUpLeft, Bold, Italic, Underline,
-  Strikethrough, Code, List, ListOrdered, Link, Image,
-  Table, Undo, Redo
-} from 'lucide-vue-next';
+import {
+  X, Calendar, ShieldCheck, User,
+  CheckCircle2, FileText, Clock
+} from 'lucide-vue-next';;
 import FormSelect from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
+import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 
 const router = useRouter();
 const route = useRoute();
 
 // ─── Dual Role Persona (Executive Approver vs Department Creator) ───
 const userRole = ref<'approver' | 'creator'>('creator');
+
+// ─── Breadcrumb Navigation ───
+const breadcrumbItems = computed(() => [
+  { label: 'Headcount Budgets', to: '/hr/headcount-planning' },
+  { label: userRole.value === 'approver' ? 'Approve Headcount Budgets' : 'Create Headcount Budgets' }
+]);
 
 // ─── Lifecycle & Save State ───
 const isSaved = ref(false);
@@ -77,11 +84,6 @@ const currencyOptions = [
   { value: 'USD', label: 'USD' },
   { value: 'EUR', label: 'EUR' }
 ];
-
-// Rich Text Editor Commands
-const execFormat = (cmd: string, val: string | undefined = undefined) => {
-  document.execCommand(cmd, false, val);
-};
 
 // Toast
 const showToast = (msg: string) => {
@@ -146,28 +148,14 @@ onMounted(() => {
     <div class="page-top-action-bar">
       <!-- Breadcrumbs Cluster -->
       <div class="breadcrumb-cluster">
-        <router-link to="/home" class="breadcrumb-root-btn" title="Home">
-          <Monitor :size="16" />
-        </router-link>
-        <ChevronRight :size="14" class="breadcrumb-separator" />
-        <span class="breadcrumb-link" @click="router.push('/hr/headcount-planning')">Headcount Budgets</span>
-        <ChevronRight :size="14" class="breadcrumb-separator" />
-        
-        <!-- Current Page Title -->
-        <span class="breadcrumb-current">
-          {{ userRole === 'approver' ? 'Approve Headcount Budgets' : 'Create Headcount Budgets' }}
-        </span>
-
-        <!-- Status Badge -->
-        <span v-if="userRole === 'creator'" class="status-pill status-pill-not-saved">
-          Not Saved
-        </span>
-        <span v-else-if="form.budget_state === 'draft'" class="status-pill status-pill-draft">
-          Draft
-        </span>
-        <span v-else-if="form.budget_state === 'approved'" class="status-pill status-pill-approved">
-          Approved
-        </span>
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge
+              :isSaved="isSaved"
+              :state="userRole === 'creator' ? 'unsaved' : form.budget_state"
+            />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <!-- Right Action Cluster -->
@@ -198,41 +186,41 @@ onMounted(() => {
 
         <!-- Creator Actions (Image 3: "[ ✕ Clear Form ] [ Save ]") -->
         <template v-if="userRole === 'creator'">
-          <button 
-            type="button" 
-            class="btn-secondary-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
             @click="handleClearForm"
           >
-            <X :size="14" />
-            <span>Clear Form</span>
-          </button>
+            <template #icon-left><X :size="14" /></template>
+            Clear Form
+          </AppButton>
 
-          <button 
-            type="button" 
-            class="btn-primary-action" 
+          <AppButton 
+            variant="primary" 
+            size="sm" 
             @click="handleSave"
           >
-            <span>Save</span>
-          </button>
+            Save
+          </AppButton>
         </template>
 
         <!-- Approver Actions (Image 5: "[ Cancel ] [ Approve ]") -->
         <template v-else>
-          <button 
-            type="button" 
-            class="btn-secondary-action" 
+          <AppButton 
+            variant="outline" 
+            size="sm" 
             @click="handleCancel"
           >
-            <span>Cancel</span>
-          </button>
+            Cancel
+          </AppButton>
 
-          <button 
-            type="button" 
-            class="btn-primary-action" 
+          <AppButton 
+            variant="primary" 
+            size="sm" 
             @click="handleApprove"
           >
-            <span>Approve</span>
-          </button>
+            Approve
+          </AppButton>
         </template>
       </div>
     </div>
@@ -357,95 +345,14 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Row 5: Capacity Justification with WYSIWYG Editor Toolbar -->
+      <!-- Row 5: Capacity Justification with Standard Rich Text Component -->
       <div class="form-field-wrap full-width mt-2">
-        <label class="field-label">Capacity Justification</label>
-        
-        <div class="wysiwyg-container">
-          <!-- Toolbar (Matching Image 3) -->
-          <div class="wysiwyg-toolbar">
-            <div class="toolbar-group">
-              <select class="toolbar-select" @change="execFormat('formatBlock', ($event.target as HTMLSelectElement).value)">
-                <option value="p">Paragraph</option>
-                <option value="h3">Heading 3</option>
-                <option value="h4">Heading 4</option>
-              </select>
-              <select class="toolbar-select" @change="execFormat('fontName', ($event.target as HTMLSelectElement).value)">
-                <option value="Inter">Font Type</option>
-                <option value="Inter">Inter</option>
-                <option value="monospace">Mono</option>
-              </select>
-            </div>
-
-            <div class="toolbar-divider"></div>
-
-            <div class="toolbar-group">
-              <button type="button" class="toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet List">
-                <List :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered List">
-                <ListOrdered :size="14" />
-              </button>
-            </div>
-
-            <div class="toolbar-divider"></div>
-
-            <div class="toolbar-group">
-              <button type="button" class="toolbar-btn font-bold" @click="execFormat('bold')" title="Bold">
-                <Bold :size="13" />
-              </button>
-              <button type="button" class="toolbar-btn italic" @click="execFormat('italic')" title="Italic">
-                <Italic :size="13" />
-              </button>
-              <button type="button" class="toolbar-btn underline" @click="execFormat('underline')" title="Underline">
-                <Underline :size="13" />
-              </button>
-              <button type="button" class="toolbar-btn line-through" @click="execFormat('strikeThrough')" title="Strikethrough">
-                <Strikethrough :size="13" />
-              </button>
-              <button type="button" class="toolbar-btn font-mono" @click="execFormat('formatBlock', 'pre')" title="Code">
-                <Code :size="13" />
-              </button>
-            </div>
-
-            <div class="toolbar-divider"></div>
-
-            <div class="toolbar-group">
-              <button type="button" class="toolbar-btn" title="Table">
-                <Table :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" title="Link">
-                <Link :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" title="Image">
-                <Image :size="14" />
-              </button>
-            </div>
-
-            <div class="toolbar-group ml-auto">
-              <button type="button" class="toolbar-btn" @click="execFormat('undo')" title="Undo">
-                <Undo :size="14" />
-              </button>
-              <button type="button" class="toolbar-btn" @click="execFormat('redo')" title="Redo">
-                <Redo :size="14" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Editable Content Area -->
-          <div 
-            class="wysiwyg-content" 
-            contenteditable="true"
-            @input="form.notes = ($event.target as HTMLElement).innerText"
-          >
-            {{ form.notes }}
-          </div>
-
-          <!-- Footer Character Counter -->
-          <div class="wysiwyg-footer">
-            <span class="char-count">{{ form.notes ? form.notes.length : 0 }} / 5,000 Characters</span>
-          </div>
-        </div>
+        <FormRichText
+          v-model="form.notes"
+          label="Capacity Justification"
+          placeholder="Provide strategic justification for this headcount allocation request..."
+          :max-length="5000"
+        />
       </div>
     </div>
 
@@ -642,7 +549,7 @@ onMounted(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 /* Page Top Action Bar (Rule 29: Clean transparent header) */
@@ -811,13 +718,13 @@ onMounted(() => {
 .form-grid-2col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 .form-grid-3col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
 }
 
 @media (max-width: 840px) {

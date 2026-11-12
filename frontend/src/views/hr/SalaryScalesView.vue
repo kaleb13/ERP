@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Award, Plus, Search, Filter, ArrowUpDown, ChevronDown, 
-  MoreVertical, Edit2, Trash2, Eye, Copy, Check, Calendar, 
-  CheckCircle2, AlertCircle, X, Sliders, Grid, Building2
-} from 'lucide-vue-next';
+import {
+  Plus, Search, Filter, MoreVertical,
+  Edit2, Trash2, Eye, Check,
+  Calendar, CheckCircle2, Grid
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import FormSelect from '../../components/FormSelect.vue';
@@ -170,9 +171,10 @@ const isColumnVisible = (key: string) => {
   return col ? col.visible !== false : true;
 };
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
 };
 
 const formatDate = (d: string) => {
@@ -321,14 +323,10 @@ onUnmounted(() => {
       >
         <!-- Primary Action (Rule 10.2 / Rule 4) -->
         <template #actions>
-          <button 
-            type="button" 
-            class="btn-primary-create" 
-            @click="showQuickModal = true"
-          >
-            <Plus :size="15" />
-            <span>Create Salary Scale</span>
-          </button>
+          <AppButton variant="primary" size="sm" @click="showQuickModal = true">
+  <template #icon-left><Plus :size="15" /></template>
+  Create Salary Scale
+</AppButton>
         </template>
 
         <!-- Filter Drawer Content -->

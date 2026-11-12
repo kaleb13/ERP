@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  CheckCircle2, XCircle, Clock, ShieldCheck, 
-  Check, X, User, Calendar, CalendarDays, AlertCircle,
-  FileText, UserCheck, ChevronRight, Eye, MoreVertical
-} from 'lucide-vue-next';
+import {
+  CheckCircle2, Clock, ShieldCheck, Check,
+  X, UserCheck, MoreVertical
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import MetricCard from '../../components/MetricCard.vue';
@@ -301,9 +301,15 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
-const handleToggleColumn = ({ key, visible }: { key: string; visible: boolean }) => {
+const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
+  const k = typeof colKey === 'string' ? colKey : colKey.key;
+  const col = tableColumns.value.find(c => c.key === k);
+  if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
+};
+
+const isColVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
-  if (col) col.visible = visible;
+  return col ? col.visible !== false : true;
 };
 
 // ─── Decision Modal State & Handlers ───
@@ -647,8 +653,8 @@ const formatDateRange = (start: string, end: string) => {
 .leave-approvals-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

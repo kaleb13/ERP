@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  ArrowLeft, CheckCircle2, XCircle, Clock, ShieldCheck, 
-  ArrowUpRight, ArrowRight, User, Building2, Briefcase, 
-  Award, FileText, Check, X, AlertCircle, Share2, Printer,
-  ShieldAlert
-} from 'lucide-vue-next';
+import {
+  CheckCircle2, Clock, ShieldCheck, ArrowUpRight,
+  ArrowRight, User, Check, X,
+  Share2, Printer, ShieldAlert
+} from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 
 const router = useRouter();
@@ -394,22 +394,22 @@ const handleEffectMovement = () => {
       </div>
 
       <div class="top-nav-actions">
-        <button
-          type="button"
-          class="btn-secondary-action"
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="showToast('Movement dossier link copied to clipboard.')"
         >
-          <Share2 :size="14" />
-          <span>Share</span>
-        </button>
-        <button
-          type="button"
-          class="btn-secondary-action"
+          <template #icon-left><Share2 :size="14" /></template>
+          Share
+        </AppButton>
+        <AppButton
+          variant="outline"
+          size="sm"
           @click="window?.print?.()"
         >
-          <Printer :size="14" />
-          <span>Print Dossier</span>
-        </button>
+          <template #icon-left><Printer :size="14" /></template>
+          Print Dossier
+        </AppButton>
       </div>
     </div>
 
@@ -698,25 +698,25 @@ const handleEffectMovement = () => {
           </div>
 
           <div class="action-buttons-row">
-            <button
-              type="button"
-              class="btn-reject-action"
+            <AppButton
+              variant="destructive"
+              size="sm"
               :disabled="isSubmittingAction"
               @click="handleRejectStep"
             >
-              <X :size="14" />
-              <span>Reject / Return</span>
-            </button>
+              <template #icon-left><X :size="14" /></template>
+              Reject / Return
+            </AppButton>
 
-            <button
-              type="button"
-              class="btn-approve-action"
+            <AppButton
+              variant="primary"
+              size="sm"
               :disabled="isSubmittingAction"
+              :loading="isSubmittingAction"
               @click="handleApproveStep"
             >
-              <Check :size="14" />
-              <span>Approve Step</span>
-            </button>
+              Approve Step
+            </AppButton>
           </div>
         </div>
 
@@ -730,14 +730,13 @@ const handleEffectMovement = () => {
             All required organizational approvals have been fulfilled. Executing this step will commit the new assignment to live employment records.
           </p>
 
-          <button
-            type="button"
-            class="btn-effect-action"
+          <AppButton
+            variant="primary"
+            size="sm"
             @click="handleEffectMovement"
           >
-            <ArrowUpRight :size="15" />
-            <span>Formally Effect Assignment</span>
-          </button>
+            Formally Effect Assignment
+          </AppButton>
         </div>
 
         <!-- Effected Confirmation Card -->
@@ -778,8 +777,8 @@ const handleEffectMovement = () => {
 .movement-detail-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 80px 24px;
+  gap: var(--alias-spacing-3xl, 24px);
+  padding: 0;
   background-color: var(--alias-color-bg-canvas, #f8fafc);
   min-height: 100vh;
 }

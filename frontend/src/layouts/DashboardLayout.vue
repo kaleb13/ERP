@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { 
-  Search, Maximize, Moon, Languages, Bell, ChevronDown
+  Search, Maximize, Moon, Languages, Bell, ChevronDown, PanelLeft
 } from 'lucide-vue-next';
 import AppSidebar from '../components/AppSidebar.vue';
 
@@ -20,72 +20,44 @@ const toggleSidebar = () => {
 
     <!-- MAIN CONTENT -->
     <main class="main-wrapper">
-      <!-- TOP BAR -->
+      <!-- TOP BAR (Figma Node 4237:9495) -->
       <header class="topbar">
         <div class="topbar-left">
           <button 
             @click="toggleSidebar" 
             class="sidebar-toggle-btn" 
-            :data-tooltip="isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
+            :title="isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              stroke-width="2.2" 
-              stroke-linecap="round" 
-              stroke-linejoin="round" 
-              class="panel-toggle-svg"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="4.5" ry="4.5" />
-              <path d="M9 3v18" />
-              <!-- Left arrow (points left, visible when expanded and hovered, centered in right side pane) -->
-              <path 
-                d="m15.5 15-3-3 3-3" 
-                class="chevron-left-path" 
-                :class="{ 'show-arrow': !isSidebarCollapsed }"
-              />
-              <!-- Right arrow (points right, visible when collapsed and hovered, centered in right side pane) -->
-              <path 
-                d="m13.5 9 3 3-3 3" 
-                class="chevron-right-path" 
-                :class="{ 'show-arrow': isSidebarCollapsed }"
-              />
-            </svg>
+            <PanelLeft :size="20" class="icon-secondary" />
           </button>
         </div>
         
         <div class="topbar-center">
           <div class="search-wrap">
-            <Search :size="16" class="search-icon" />
+            <Search :size="20" class="search-icon" />
             <input type="text" placeholder="Search Everything..." class="search-input" />
-            <div class="search-hint">/</div>
+            <div class="search-shortcut">⌘K</div>
           </div>
         </div>
 
         <div class="topbar-right">
-          <button class="btn-icon" title="Fullscreen"><Maximize :size="18" /></button>
-          <button class="btn-icon" title="Dark Mode"><Moon :size="18" /></button>
-          <button class="btn-icon" title="Language"><Languages :size="18" /></button>
-          <button class="btn-icon relative mr-2" title="Notifications">
-            <Bell :size="18" />
+          <button class="header-action-btn" title="Fullscreen"><Maximize :size="24" /></button>
+          <button class="header-action-btn" title="Dark Mode"><Moon :size="24" /></button>
+          <button class="header-action-btn" title="Language"><Languages :size="24" /></button>
+          <button class="header-action-btn relative" title="Notifications">
+            <Bell :size="24" />
             <span class="notification-badge">2</span>
           </button>
           
-          <div class="topbar-separator"></div>
+          <div class="topbar-divider"></div>
           
           <div class="profile-wrapper">
             <div class="avatar-container">
-              <img src="https://i.pravatar.cc/100?img=5" alt="Profile" class="avatar-sm" />
+              <img src="https://i.pravatar.cc/100?img=5" alt="Marta Tadesse" class="avatar-img" />
               <span class="status-indicator"></span>
             </div>
-            <div class="profile-info-text">
-              <span class="profile-name-text">Marta Tadesse</span>
-            </div>
-            <ChevronDown :size="14" class="text-gray-400" />
+            <span class="profile-name-text">Marta Tadesse</span>
+            <ChevronDown :size="16" class="profile-chevron" />
           </div>
         </div>
       </header>
@@ -124,205 +96,194 @@ const toggleSidebar = () => {
   background-color: #fafafa; 
 }
 
-/* TOP BAR */
+/* TOP BAR (Figma Node 4237:9495) */
 .topbar {
-  height: 64px;
+  height: 72px;
+  min-height: 72px;
+  max-height: 72px;
   flex-shrink: 0;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
+  background-color: var(--alias-color-generic-white, #ffffff);
+  border-bottom: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: var(--alias-spacing-xl, 16px) var(--alias-spacing-3xl, 24px);
   z-index: 50;
-}
-.topbar-center { flex: 1; display: flex; justify-content: center; padding: 0 40px; }
-.search-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-}
-.search-input {
-  width: 100%;
-  padding: 9px 12px 9px 38px;
-  border: 1px solid #e5e7eb;
-  border-radius: 24px;
-  font-size: 13px;
-  outline: none;
-  background: #fafafa;
-  transition: all 0.2s ease;
-}
-.search-input:focus { border-color: #d1d5db; background: #ffffff; box-shadow: 0 0 0 4px rgba(0,0,0,0.02); }
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; z-index: 10; }
-
-.topbar-right { display: flex; align-items: center; gap: 8px; }
-.btn-icon {
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  transition: all 0.2s;
-  position: relative;
-}
-.btn-icon:hover {
-  color: #111827;
-  background-color: #f3f4f6;
+  box-sizing: border-box;
 }
 
 .topbar-left {
-  position: relative;
-  z-index: 50;
   display: flex;
   align-items: center;
 }
 
 .sidebar-toggle-btn {
-  background-color: transparent;
+  background-color: var(--alias-color-background-secondary, #f5f5f5);
   border: none;
-  color: #6b7280;
+  color: var(--alias-color-icon-tertiary, #737373);
   cursor: pointer;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   position: relative;
 }
 .sidebar-toggle-btn:hover {
-  color: #111827;
-  background-color: #f3f4f6;
+  background-color: var(--alias-color-background-tertiary, #e5e5e5);
+  color: var(--alias-color-icon-secondary, #404040);
 }
 
-/* Custom interactive arrow paths within inline SVG */
-.chevron-left-path,
-.chevron-right-path {
-  opacity: 0;
-  transform: translateX(0);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.topbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--alias-spacing-4xl, 32px);
 }
 
-.sidebar-toggle-btn:hover .chevron-left-path.show-arrow {
-  opacity: 1;
-  transform: translateX(-1.5px);
+.search-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 562px;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-full, 9999px);
+  padding: 10px var(--alias-spacing-xl, 16px);
+  gap: var(--alias-spacing-md, 8px);
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.search-wrap:focus-within {
+  border-color: #d4d4d4;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
 }
 
-.sidebar-toggle-btn:hover .chevron-right-path.show-arrow {
-  opacity: 1;
-  transform: translateX(1.5px);
+.search-icon {
+  color: var(--alias-color-icon-tertiary, #737373);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+.search-wrap:focus-within .search-icon {
+  color: var(--alias-color-icon-secondary, #404040);
 }
 
-/* Tooltip styles */
-.sidebar-toggle-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%) scale(0.95);
-  background-color: #18181b;
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+.search-input {
+  flex: 1;
   border: none;
-  z-index: 99999;
+  outline: none;
+  font-size: var(--alias-font-size-xs, 12px);
+  line-height: var(--alias-line-height-xs, 18px);
+  color: var(--alias-color-text-secondary, #404040);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+.search-input::placeholder {
+  color: #a1a1a1;
 }
 
-.sidebar-toggle-btn::before {
-  content: '';
-  position: absolute;
-  left: calc(100% + 12px);
-  margin-left: -4px;
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background-color: #18181b;
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 99999;
+.search-shortcut {
+  background-color: var(--alias-color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-sm, 6px);
+  height: 20px;
+  padding: 3px var(--alias-spacing-xs, 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--alias-font-size-xs, 12px);
+  line-height: var(--alias-line-height-xs, 18px);
+  color: var(--alias-color-text-tertiary, #737373);
+  font-family: inherit;
+  user-select: none;
+  flex-shrink: 0;
 }
 
-.sidebar-toggle-btn:hover::after,
-.sidebar-toggle-btn:hover::before {
-  opacity: 1;
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--alias-spacing-md, 8px);
 }
 
-.sidebar-toggle-btn:hover::before {
-  transform: translateY(-50%) scale(1) rotate(45deg);
-}
-
-.sidebar-toggle-btn:hover::after {
-  transform: translateY(-50%) scale(1);
-}
-
-.search-hint {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+.header-action-btn {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 1px 6px;
-  font-size: 11px;
-  color: #9ca3af;
-  pointer-events: none;
+  border: none;
+  color: var(--alias-color-icon-tertiary, #737373);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--alias-radius-full, 9999px);
+  transition: all 0.15s ease;
+  position: relative;
+  padding: 0;
+}
+.header-action-btn:hover {
+  background-color: var(--alias-color-background-secondary, #f5f5f5);
+  color: var(--alias-color-icon-secondary, #404040);
 }
 
 .notification-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #ef4444;
-  color: white;
-  font-size: 9px;
-  min-width: 15px;
-  height: 15px;
+  top: 5px;
+  left: 19px;
+  background-color: var(--qmt-badge-solid-error-bg, #c10007);
+  color: #ffffff;
+  font-size: 9.75px;
+  font-weight: 600;
+  line-height: 14.6px;
+  min-width: 13px;
+  height: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  font-weight: 700;
-  border: 1.5px solid #ffffff;
+  border-radius: 9999px;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
-.topbar-separator {
+.topbar-divider {
   width: 1px;
-  height: 20px;
-  background-color: #e5e7eb;
-  margin: 0 12px;
+  height: 25px;
+  background-color: var(--alias-color-border-subtle, #e5e5e5);
+  margin: 0 var(--alias-spacing-xl, 16px);
 }
 
 .profile-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--alias-spacing-md, 8px);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 10px;
-  transition: background 0.2s;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
 }
 .profile-wrapper:hover {
-  background-color: #f3f4f6;
+  background-color: #f5f5f5;
+}
+.profile-wrapper:hover .profile-chevron {
+  color: var(--alias-color-icon-secondary, #404040);
 }
 
 .avatar-container {
   position: relative;
   display: flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--alias-radius-full, 9999px);
+  object-fit: cover;
 }
 
 .status-indicator {
@@ -331,23 +292,24 @@ const toggleSidebar = () => {
   right: 0;
   width: 8px;
   height: 8px;
-  background-color: #10b981;
+  background-color: #12b76a;
   border: 1.5px solid #ffffff;
-  border-radius: 50%;
-}
-
-.profile-info-text {
-  display: flex;
-  flex-direction: column;
+  border-radius: 4px;
 }
 
 .profile-name-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
+  font-size: var(--alias-font-size-xs, 12px);
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--alias-color-text-secondary, #404040);
+  white-space: nowrap;
 }
 
-.avatar-sm { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ffffff; box-shadow: 0 0 0 1px #e5e7eb; }
+.profile-chevron {
+  color: var(--alias-color-icon-tertiary, #737373);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
 
 /* PAGE CONTENT */
 .page-content { 
@@ -355,8 +317,11 @@ const toggleSidebar = () => {
   min-height: 0; 
   overflow-y: auto; 
   overflow-x: hidden; 
-  padding: 16px; 
-  background-color: #fafafa; 
+  padding-top: var(--alias-spacing-2xl, 20px);
+  padding-bottom: var(--alias-spacing-4xl, 32px);
+  padding-left: var(--alias-spacing-3xl, 24px);
+  padding-right: var(--alias-spacing-3xl, 24px);
+  background-color: var(--alias-color-background-primary, #fafafa); 
 }
 
 /* Custom sleek scrollbars for independent scrolling areas */

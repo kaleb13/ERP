@@ -2,11 +2,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Monitor, ChevronRight, MoreVertical, TrendingUp,
-  Bell, Filter, Calendar, ChevronDown, ExternalLink, ScrollText
-} from 'lucide-vue-next';
+  MoreVertical, Bell, Filter, Calendar,
+  ChevronDown, ExternalLink, ScrollText
+} from 'lucide-vue-next';;
 import MetricCard from '../components/MetricCard.vue';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import AppButton from '../components/AppButton.vue';
+import BaseBadge from '../components/BaseBadge.vue';
+import BadgeGroup from '../components/BadgeGroup.vue';
 
 const router = useRouter();
 
@@ -95,8 +98,18 @@ const ledger = [
 
 <template>
   <div class="stock-summary-page">
-    <!-- Standard Breadcrumbs -->
-    <AppBreadcrumb :items="[{ label: 'Stock Summary' }]" />
+    <!-- Standard Breadcrumbs with Feature Badge Group -->
+    <AppBreadcrumb :items="[{ label: 'Stock Summary' }]">
+      <template #extra>
+        <BadgeGroup
+          badgeLabel="Inventory v4.0"
+          message="Live valuation active"
+          color="brand"
+          size="md"
+          :clickable="true"
+        />
+      </template>
+    </AppBreadcrumb>
 
     <!-- KPI CARDS (Using Centralized MetricCard Component) -->
     <div class="kpi-grid">
@@ -118,7 +131,7 @@ const ledger = [
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">INVENTORY STATUS DISTRIBUTION</h3>
-          <span class="card-tag">GLOBALLY</span>
+          <BaseBadge type="pill-color" color="gray" size="sm">GLOBALLY</BaseBadge>
         </div>
         <div class="distribution-body">
           <div class="donut-wrap">
@@ -167,7 +180,9 @@ const ledger = [
               <p class="alert-main">{{ alert.title }}</p>
               <p class="alert-sub">{{ alert.sub }}</p>
             </div>
-            <button v-if="alert.action" class="btn-alert-action">{{ alert.action }}</button>
+            <AppButton v-if="alert.action" variant="outline" size="xs">
+              {{ alert.action }}
+            </AppButton>
           </li>
         </ul>
       </div>
@@ -264,10 +279,12 @@ const ledger = [
             <span class="timeline-text">
               {{ entry.actor }} {{ entry.action }} - {{ entry.time }}
             </span>
-            <button v-if="entry.hasDoc" class="btn-open-doc">
+            <AppButton v-if="entry.hasDoc" variant="outline" size="xs">
               Open Stock Operation document
-              <ExternalLink :size="14" />
-            </button>
+              <template #icon-right>
+                <ExternalLink :size="14" />
+              </template>
+            </AppButton>
           </div>
         </li>
       </ul>
@@ -280,7 +297,7 @@ const ledger = [
   animation: fadeIn 0.4s ease-out;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--alias-spacing-3xl, 24px);
 }
 
 @keyframes fadeIn {
