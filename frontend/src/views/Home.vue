@@ -157,7 +157,7 @@ const sections = ref([
         title: 'Settings', 
         desc: 'System customization, application parameters, themes, and notification rules.', 
         icon: Settings, 
-        iconColor: '#475569', // Charcoal
+        iconColor: '#737373', // Charcoal
         iconBg: '#F1F5F9',
         subscribed: false
       }
@@ -423,7 +423,7 @@ const handleModuleClick = (mod: any) => {
         </div>
 
         <div class="modal-footer-row">
-          <AppButton variant="outline" size="md" @click="closeUpgradeModal">Back to Home</AppButton>
+          <AppButton variant="outline" size="md" @click="closeUpgradeModal">Cancel</AppButton>
           <AppButton 
             variant="primary" 
             size="md"

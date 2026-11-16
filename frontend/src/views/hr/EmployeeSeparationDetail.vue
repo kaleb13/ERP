@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
-  ArrowLeft, Clock, ShieldCheck, CheckSquare,
+  Clock, ShieldCheck, CheckSquare,
   Receipt, AlertCircle, X, AlertTriangle,
   ArrowRight, Banknote, DollarSign, Plus,
   Zap
@@ -10,6 +10,8 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 import {
   separationsData,
   clearanceItemsData,
@@ -19,11 +21,14 @@ import {
   CLEARANCE_STATE_MAP,
   updateClearanceState,
   updateSettlementStatus,
-  type EmployeeSeparationRecord
+  type EmployeeSeparationRecord,
+  type SeparationStatus,
+  type ClearanceItemState
 } from './separationData';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 const separationId = computed(() => Number(route.params.id) || 12);
 
@@ -67,10 +72,38 @@ const formatDate = (dateStr?: string | null) => {
   }
 };
 
-const toastMessage = ref<string | null>(null);
-const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+const getSeparationStatusBadgeColor = (state: SeparationStatus): 'success' | 'warning' | 'error' | 'blue' | 'purple' | 'gray' => {
+  switch (state) {
+    case 'approved':
+    case 'cleared':
+    case 'settled':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'in_clearance':
+      return 'purple';
+    case 'draft':
+      return 'blue';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'gray';
+  }
+};
+
+const getClearanceItemBadgeColor = (state: ClearanceItemState): 'success' | 'warning' | 'error' | 'gray' => {
+  switch (state) {
+    case 'cleared':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'flagged':
+      return 'error';
+    case 'waived':
+      return 'gray';
+    default:
+      return 'gray';
+  }
 };
 
 const handleApproveCase = () => {
@@ -78,19 +111,19 @@ const handleApproveCase = () => {
   separationCase.value.separation_state = 'approved';
   separationCase.value.approved_by_name = 'Solomon Worku (HR Director)';
   separationCase.value.approved_at = new Date().toISOString();
-  showToast(`Exit case ${separationCase.value.code} approved. Clearance initiated.`);
+  toast.success('Case Approved', `Exit case ${separationCase.value.code} approved. Clearance initiated.`);
 };
 
 const handleRejectCase = () => {
   if (!separationCase.value) return;
   separationCase.value.separation_state = 'cancelled';
-  showToast(`Exit case ${separationCase.value.code} rejected and cancelled.`);
+  toast.error('Case Cancelled', `Exit case ${separationCase.value.code} rejected and cancelled.`);
 };
 
 const handleSendToClearance = () => {
   if (!separationCase.value) return;
   separationCase.value.separation_state = 'in_clearance';
-  showToast(`Exit case ${separationCase.value.code} advanced to active clearance.`);
+  toast.info('Clearance Active', `Exit case ${separationCase.value.code} advanced to active clearance.`);
 };
 
 const handleApproveSettlement = () => {
@@ -98,7 +131,7 @@ const handleApproveSettlement = () => {
   relatedSettlement.value.settlement_state = 'approved';
   relatedSettlement.value.approved_by_name = 'Solomon Worku (HR Director)';
   relatedSettlement.value.approved_at = new Date().toISOString();
-  showToast(`Settlement ${relatedSettlement.value.code} approved for payment disbursement.`);
+  toast.success('Settlement Approved', `Settlement ${relatedSettlement.value.code} approved for payment disbursement.`);
 };
 
 const handleDisburseSettlement = () => {
@@ -106,19 +139,25 @@ const handleDisburseSettlement = () => {
   relatedSettlement.value.settlement_state = 'paid';
   relatedSettlement.value.paid_at = new Date().toISOString();
   relatedSettlement.value.payroll_run_code = 'PR-2026-FST-008';
-  showToast(`Settlement ${relatedSettlement.value.code} successfully disbursed via payroll batch.`);
+  toast.success('Settlement Disbursed', `Settlement ${relatedSettlement.value.code} successfully disbursed via payroll batch.`);
 };
 </script>
 
 <template>
   <div class="detail-page-container">
-    <!-- Top Bar: Back Button & Breadcrumbs (Rule 10 & 15) -->
+    <!-- Top Bar: Breadcrumbs (Rule 10 & 15: Zero Back Buttons, Breadcrumbs Only) -->
     <div class="detail-top-nav">
-      <router-link to="/hr/separations" class="btn-back-link">
-        <ArrowLeft :size="16" />
-        <span>Back to Employee Separations</span>
-      </router-link>
-      <AppBreadcrumb :items="breadcrumbItems" noMargin />
+      <AppBreadcrumb :items="breadcrumbItems" noMargin>
+        <template #badge>
+          <BaseBadge 
+            v-if="separationCase"
+            :color="getSeparationStatusBadgeColor(separationCase.separation_state)"
+            size="sm"
+          >
+            {{ SEPARATION_STATUS_MAP[separationCase.separation_state].label }}
+          </BaseBadge>
+        </template>
+      </AppBreadcrumb>
     </div>
 
     <!-- Master-to-Detail Split Layout (Rule 15: Golden Triad) -->
@@ -129,15 +168,12 @@ const handleDisburseSettlement = () => {
         <div class="sidebar-identity-card">
           <div class="avatar-hero-container">
             <img :src="separationCase.employee_avatar" :alt="separationCase.employee_name" class="hero-avatar" />
-            <span 
-              class="hero-status-pill"
-              :style="{ 
-                backgroundColor: SEPARATION_STATUS_MAP[separationCase.separation_state].bg, 
-                color: SEPARATION_STATUS_MAP[separationCase.separation_state].color 
-              }"
+            <BaseBadge 
+              :color="getSeparationStatusBadgeColor(separationCase.separation_state)"
+              size="sm"
             >
               {{ SEPARATION_STATUS_MAP[separationCase.separation_state].label }}
-            </span>
+            </BaseBadge>
           </div>
 
           <h2 class="profile-name">{{ separationCase.employee_name }}</h2>
@@ -378,15 +414,12 @@ const handleDisburseSettlement = () => {
                 <td class="td-title">{{ item.title }}</td>
                 <td class="td-dept">{{ item.organization_unit_name }}</td>
                 <td>
-                  <span 
-                    class="status-pill"
-                    :style="{ 
-                      backgroundColor: CLEARANCE_STATE_MAP[item.clearance_state].bg, 
-                      color: CLEARANCE_STATE_MAP[item.clearance_state].color 
-                    }"
+                  <BaseBadge 
+                    :color="getClearanceItemBadgeColor(item.clearance_state)" 
+                    size="sm"
                   >
                     {{ CLEARANCE_STATE_MAP[item.clearance_state].label }}
-                  </span>
+                  </BaseBadge>
                 </td>
                 <td class="font-numeric">
                   <span v-if="item.flagged_amount" class="text-danger">
@@ -543,11 +576,6 @@ const handleDisburseSettlement = () => {
 
       </div>
     </div>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="toast-popup">
-      {{ toastMessage }}
-    </div>
   </div>
 </template>
 
@@ -564,26 +592,6 @@ const handleDisburseSettlement = () => {
 .detail-top-nav {
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-.btn-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0b529c;
-  text-decoration: none;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-}
-
-.btn-back-link:hover {
-  background-color: #f1f5f9;
 }
 
 /* Master Split Layout */
@@ -620,13 +628,6 @@ const handleDisburseSettlement = () => {
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #f1f5f9;
-}
-
-.hero-status-pill {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 2.5px 12px;
-  border-radius: 9999px;
 }
 
 .profile-name {
@@ -855,13 +856,7 @@ const handleDisburseSettlement = () => {
   color: #737373;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-}
+
 
 .font-numeric {
   font-variant-numeric: tabular-nums;
@@ -946,19 +941,6 @@ const handleDisburseSettlement = () => {
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
-}
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 2000;
 }
 
 /* Approval & Governance Sign-off Box Styles */

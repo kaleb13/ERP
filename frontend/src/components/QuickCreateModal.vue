@@ -131,15 +131,21 @@ watch(
         >
           <!-- MODAL HEADER (Title only, no subtitle, no bottom line) -->
           <div class="quick-modal-header">
-            <h3 class="quick-modal-title">{{ title }}</h3>
-            <button 
-              type="button" 
-              class="btn-close-modal" 
-              title="Close (Esc)" 
-              @click="handleClose"
-            >
-              <X :size="18" />
-            </button>
+            <div class="modal-header-left">
+              <h3 class="quick-modal-title">{{ title }}</h3>
+              <slot name="header-left" />
+            </div>
+            <div class="modal-header-actions">
+              <slot name="header-actions" />
+              <button 
+                type="button" 
+                class="btn-close-modal" 
+                title="Close (Esc)" 
+                @click="handleClose"
+              >
+                <X :size="18" />
+              </button>
+            </div>
           </div>
 
           <!-- MODAL FORM BODY (Max 5 Essential Fields) -->
@@ -224,6 +230,19 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: var(--alias-spacing-xl, 16px);
+}
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .quick-modal-title {

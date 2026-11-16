@@ -9,12 +9,14 @@ import {
 
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 
 import {
   announcementsData,
@@ -45,16 +47,13 @@ const breadcrumbItems = computed(() => [
 ]);
 
 // ─── SAVE / DRAFT STATE (Rule 30) ─────────────────────────────────────────
+const { toast } = useToast();
 const isSaved = ref(false);
 const isDraft = ref(false);
 const showDraftMenu = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => {
-    toastMessage.value = null;
-  }, 3200);
+  toast.success(msg);
 };
 
 // ─── TOP TABS (Rule 1: BaseTabs) ──────────────────────────────────────────
@@ -362,11 +361,6 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 
 <template>
   <div class="announcement-create-page">
-    <!-- Toast message alert -->
-    <div v-if="toastMessage" class="toast-alert">
-      {{ toastMessage }}
-    </div>
-
     <!-- Top Action Bar (AGENTS.md Rule 4 & 29: Zero-background, transparent) -->
     <div class="top-nav-bar">
       <div class="top-nav-left">
@@ -703,7 +697,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 
                   <!-- Line State Column -->
                   <td class="td-state">
-                    <span class="state-pill state-active">Active</span>
+                    <BaseBadge color="success">Active</BaseBadge>
                   </td>
 
                   <!-- Delete Action Column -->
@@ -745,19 +739,6 @@ const saveRecord = (stateToSet: AnnouncementState) => {
   padding: 0;
   background-color: #f8fafc;
   min-height: 100vh;
-}
-
-.toast-alert {
-  position: fixed;
-  top: 24px;
-  right: 32px;
-  z-index: 1000;
-  background-color: #0b529c;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ─── TOP ACTION BAR (AGENTS.md Rule 4 & 29) ────────────────────────────── */
@@ -996,7 +977,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 
 .tb-icon-btn:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .tb-spacer {
@@ -1260,19 +1241,9 @@ const saveRecord = (stateToSet: AnnouncementState) => {
   font-size: 12.5px;
 }
 
-.state-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-}
 
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
+
+
 
 .th-action-col,
 .td-actions {

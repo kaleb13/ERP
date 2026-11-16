@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue';
+import { ref, computed, onMounted, onUnmounted, type Component } from 'vue';
 import { RouterLink, type RouteLocationRaw } from 'vue-router';
 import { ChevronDown } from 'lucide-vue-next';
 
@@ -120,12 +120,71 @@ const resolvedTag = computed(() => {
   return 'div';
 });
 
+// ─── Collapsed Tooltip Teleport State ───
+const isTooltipVisible = ref(false);
+const tooltipPos = ref({ top: 0, left: 0 });
+
+const updateTooltipPos = (target: HTMLElement) => {
+  const rect = target.getBoundingClientRect();
+  const sidebar = target.closest('.app-sidebar');
+  const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : null;
+  
+  // Align left edge to the right of the sidebar boundary (or item boundary) with 10px spacing
+  const leftPos = sidebarRect ? sidebarRect.right + 10 : rect.right + 10;
+  
+  tooltipPos.value = {
+    top: rect.top + rect.height / 2,
+    left: leftPos
+  };
+};
+
+const handleMouseEnter = (event: MouseEvent) => {
+  if (props.type !== 'collapsed' || props.disabled) return;
+  const target = event.currentTarget as HTMLElement;
+  if (!target) return;
+  updateTooltipPos(target);
+  isTooltipVisible.value = true;
+};
+
+const handleMouseLeave = () => {
+  if (props.type !== 'collapsed') return;
+  isTooltipVisible.value = false;
+};
+
+const handleFocusIn = (event: FocusEvent) => {
+  if (props.type !== 'collapsed' || props.disabled) return;
+  const target = event.currentTarget as HTMLElement;
+  if (!target) return;
+  updateTooltipPos(target);
+  isTooltipVisible.value = true;
+};
+
+const handleFocusOut = () => {
+  if (props.type !== 'collapsed') return;
+  isTooltipVisible.value = false;
+};
+
+const handleScroll = () => {
+  if (isTooltipVisible.value) {
+    isTooltipVisible.value = false;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, true);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll, true);
+});
+
 const handleClick = (event: MouseEvent) => {
   if (props.disabled) {
     event.preventDefault();
     event.stopPropagation();
     return;
   }
+  isTooltipVisible.value = false;
   emit('click', event);
 };
 </script>
@@ -144,12 +203,17 @@ const handleClick = (event: MouseEvent) => {
       {
         'is-active': active,
         'is-disabled': disabled,
-        'is-expanded': expanded
+        'is-expanded': expanded,
+        'has-tile': Boolean(tileBg)
       }
     ]"
     :aria-disabled="disabled"
     :title="type !== 'collapsed' ? tooltip : undefined"
     @click="handleClick"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+    @focusin="handleFocusIn"
+    @focusout="handleFocusOut"
   >
     <!-- MEGA VARIANT (Figma Node 3345:24551 Type=Mega: 64px, tile box 40px, title + subtitle) -->
     <template v-if="type === 'mega'">
@@ -201,7 +265,25 @@ const handleClick = (event: MouseEvent) => {
 
     <!-- COLLAPSED VARIANT (Figma Node 3345:24551 Type=Collapsed: 40px icon with hover tooltip) -->
     <template v-else-if="type === 'collapsed'">
-      <slot name="icon">
+      <!-- When tileBg is provided (e.g. Top Module Icon in Collapsed Sidebar) -->
+      <div 
+        v-if="tileBg"
+        class="qmt-nav-item__tile qmt-nav-item__tile--collapsed"
+        :style="{ backgroundColor: tileBg }"
+      >
+        <slot name="icon">
+          <component 
+            :is="icon" 
+            v-if="icon" 
+            class="qmt-nav-item__tile-icon"
+            :style="{ color: tileColor || 'inherit' }"
+            :size="20"
+          />
+        </slot>
+      </div>
+
+      <!-- Standard Collapsed Icon (e.g. Regular Sidebar Navigation Item) -->
+      <slot v-else name="icon">
         <component 
           :is="icon" 
           v-if="icon" 
@@ -210,10 +292,23 @@ const handleClick = (event: MouseEvent) => {
         />
       </slot>
 
-      <!-- QMT Dark Tooltip (Node 3345:33314) -->
-      <div class="qmt-nav-item__tooltip" role="tooltip">
-        <span>{{ tooltip || label }}</span>
-      </div>
+      <!-- QMT Dark Tooltip Portal (Figma Node 3345:33314) Teleported to body to escape overflow clipping -->
+      <Teleport to="body">
+        <Transition name="qmt-tooltip-fade">
+          <div
+            v-if="isTooltipVisible && !expanded && (tooltip || label)"
+            class="qmt-nav-item__tooltip-portal"
+            role="tooltip"
+            :style="{
+              top: `${tooltipPos.top}px`,
+              left: `${tooltipPos.left}px`
+            }"
+          >
+            <span>{{ tooltip || label }}</span>
+            <div class="qmt-nav-item__tooltip-arrow" />
+          </div>
+        </Transition>
+      </Teleport>
     </template>
 
     <!-- STANDARD / SUB-ITEM / HORIZONTAL VARIANTS -->
@@ -531,11 +626,37 @@ const handleClick = (event: MouseEvent) => {
   pointer-events: none;
 }
 
-/* ─── COLLAPSED TOOLTIP (Figma Node 3345:33314) ─── */
-.qmt-nav-item__tooltip {
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
+/* ─── COLLAPSED TILE (When tileBg provided) ─── */
+.qmt-nav-item--collapsed.has-tile {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+.qmt-nav-item--collapsed .qmt-nav-item__tile--collapsed {
+  width: var(--qmt-nav-item-collapsed-tile-size, 38px);
+  height: var(--qmt-nav-item-collapsed-tile-size, 38px);
+  border-radius: var(--qmt-nav-item-mega-tile-radius, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.qmt-nav-item--collapsed.has-tile:hover .qmt-nav-item__tile--collapsed {
+  box-shadow: 0 2px 6px rgba(10, 13, 18, 0.12);
+  filter: brightness(0.96);
+  transform: translateY(-0.5px);
+}
+
+.qmt-nav-item--collapsed.has-tile.is-expanded .qmt-nav-item__tile--collapsed {
+  box-shadow: 0 0 0 2px rgba(11, 82, 156, 0.25);
+}
+
+/* ─── COLLAPSED TOOLTIP PORTAL (Figma Node 3345:33314) ─── */
+.qmt-nav-item__tooltip-portal {
+  position: fixed;
   transform: translateY(-50%);
   background-color: var(--qmt-tooltip-bg-dark, #171717);
   color: var(--qmt-tooltip-fg-dark, #f5f5f5);
@@ -547,15 +668,29 @@ const handleClick = (event: MouseEvent) => {
   border-radius: var(--qmt-tooltip-radius, 8px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
-  z-index: 1000;
+  z-index: 99999;
 }
 
-.qmt-nav-item--collapsed:hover .qmt-nav-item__tooltip,
-.qmt-nav-item--collapsed:focus-visible .qmt-nav-item__tooltip {
-  opacity: 1;
-  visibility: visible;
+.qmt-nav-item__tooltip-arrow {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-width: 5px 5px 5px 0;
+  border-style: solid;
+  border-color: transparent var(--qmt-tooltip-bg-dark, #171717) transparent transparent;
+}
+
+.qmt-tooltip-fade-enter-active,
+.qmt-tooltip-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.qmt-tooltip-fade-enter-from,
+.qmt-tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-4px);
 }
 </style>

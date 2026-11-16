@@ -10,7 +10,7 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -132,6 +132,19 @@ const handleToggleColumn = (colKey: string) => {
 const isColumnVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
   return col ? (col.visible !== false) : true;
+};
+
+const getRequestStateColor = (stateId: string): 'blue' | 'warning' | 'success' | 'gray' | 'error' => {
+  switch (stateId) {
+    case 'resolved': return 'success';
+    case 'open': return 'blue';
+    case 'assigned':
+    case 'in_progress':
+      return 'warning';
+    case 'closed': return 'gray';
+    case 'cancelled': return 'error';
+    default: return 'gray';
+  }
 };
 
 // ─── QUICK CREATE MODAL (AGENTS.md Rule 4: <= 5 Required Fields Standard) ─
@@ -482,12 +495,9 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 
                 <!-- Status (Figma Status Pill) -->
                 <td v-if="isColumnVisible('status')">
-                  <span
-                    class="status-pill"
-                    :class="`status-${item.request_state_lookup_value_id}`"
-                  >
+                  <BaseBadge :color="getRequestStateColor(item.request_state_lookup_value_id)">
                     {{ formatRequestState(item.request_state_lookup_value_id) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions Menu -->
@@ -603,9 +613,9 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
           <div>
             <div class="ticket-badge-row">
               <span class="ticket-code-pill">{{ selectedRequest.code }}</span>
-              <span class="status-pill" :class="`status-${selectedRequest.request_state_lookup_value_id}`">
+              <BaseBadge :color="getRequestStateColor(selectedRequest.request_state_lookup_value_id)">
                 {{ formatRequestState(selectedRequest.request_state_lookup_value_id) }}
-              </span>
+              </BaseBadge>
             </div>
             <h3 class="detail-subject-title">{{ selectedRequest.subject }}</h3>
           </div>
@@ -916,64 +926,6 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 
 .link-icon {
   color: #0B529C;
-}
-
-/* Status Pills */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-open {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.status-assigned {
-  background-color: #fef3c7;
-  color: #b45309;
-}
-
-.status-in_progress {
-  background-color: #fef9c3;
-  color: #a16207;
-}
-
-.status-resolved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-closed {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-.status-cancelled {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-/* State Pills (Active / Inactive) */
-.state-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action Dropdown Menu */

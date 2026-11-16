@@ -16,6 +16,7 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 
 import {
   clientAssignmentsData,
@@ -47,14 +48,11 @@ const breadcrumbItems = computed(() => [
 ]);
 
 // ─── SAVE STATE & TOAST ───────────────────────────────────────────────────
+const { toast } = useToast();
 const isSaved = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => {
-    toastMessage.value = null;
-  }, 3200);
+  toast.success(msg);
 };
 
 // ─── TAB NAVIGATION (Rule 1 & Rule 4: BaseTabs for 1:N relations) ─────────
@@ -623,14 +621,6 @@ const handleClear = () => {
 
 <template>
   <div class="client-assignment-create-page" @click="closeMoreMenu">
-    <!-- Toast Notification -->
-    <transition name="toast">
-      <div v-if="toastMessage" class="toast-popup">
-        <CheckCircle2 :size="16" class="toast-icon" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </transition>
-
     <!-- Top Action Bar (Rule 4) -->
     <div class="top-action-bar">
       <div class="left-nav-meta">
@@ -1286,35 +1276,6 @@ const handleClear = () => {
   display: flex;
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
-}
-
-/* Toast */
-.toast-popup {
-  position: fixed;
-  top: 24px;
-  right: 28px;
-  z-index: 1000;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background-color: #0b529c;
-  color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.25s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 
 /* Top Action Bar (Rule 4) */

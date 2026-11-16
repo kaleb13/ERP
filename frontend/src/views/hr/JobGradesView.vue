@@ -9,6 +9,7 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import BaseTabs, { type TabItem } from '../../components/BaseTabs.vue';
@@ -18,9 +19,11 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 // ─── Active Top Tab (<BaseTabs /> Capsule Standard) ───
 type HubTabId = 'matrix' | 'grades';
@@ -101,7 +104,6 @@ const showQuickCreateGrade = ref(false);
 const showReviseScaleModal = ref(false);
 const showStepLadderModal = ref(false);
 const selectedGradeForSteps = ref<JobGradeRecord | null>(null);
-const quickActionToast = ref<string | null>(null);
 
 // ─── Active Matrices per Entity (Schema lines 1056–1063) ───
 const activeMatrices = ref<SalaryMatrixRecord[]>([
@@ -417,11 +419,9 @@ const closeActionMenu = () => {
   activeActionMenuId.value = null;
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Job Grades', msg);
 };
 
 const formatETB = (val: number) => {
@@ -587,12 +587,6 @@ onUnmounted(() => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
-    </div>
-
     <!-- Top Tab Navigation (<BaseTabs /> Capsule Standard) -->
     <div class="hub-tabs-container">
       <BaseTabs 
@@ -638,9 +632,9 @@ onUnmounted(() => {
                 {{ currentActiveMatrix?.currency_code }}
               </span>
               <span class="meta-sep">•</span>
-              <span class="status-pill status-pill-active">
+              <BaseBadge color="blue">
                 Default Pay Scale
-              </span>
+              </BaseBadge>
             </div>
           </div>
 
@@ -879,9 +873,9 @@ onUnmounted(() => {
 
                 <!-- Badges reserved strictly for lifecycle state -->
                 <td v-if="isColumnVisible('state')" class="col-state">
-                  <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Action 3-dots -->
@@ -1129,7 +1123,7 @@ onUnmounted(() => {
                   />
                 </td>
                 <td class="td-step-state">
-                  <span class="status-pill status-pill-active">Active</span>
+                  <BaseBadge color="success">Active</BaseBadge>
                 </td>
               </tr>
             </tbody>
@@ -1145,14 +1139,14 @@ onUnmounted(() => {
             <Calculator :size="14" />
             <span>Auto-Calculate Linear Steps</span>
           </button>
-          <button 
-            type="button" 
-            class="btn-save-steps" 
+          <AppButton 
+            variant="primary" 
+            size="sm"
             @click="showStepLadderModal = false; showToast(`Updated steps for ${selectedGradeForSteps.name}.`);"
           >
-            <Check :size="14" />
-            <span>Done</span>
-          </button>
+            <template #icon-left><Check :size="14" /></template>
+            Done
+          </AppButton>
         </div>
       </div>
     </div>
@@ -1168,23 +1162,6 @@ onUnmounted(() => {
 
 .page-breadcrumb-bar {
   margin-bottom: 20px;
-}
-
-/* Toast Banner */
-.quick-toast-banner {
-  position: fixed;
-  top: 24px;
-  right: 32px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  font-size: 13px;
-  color: #404040;
 }
 
 /* Hub Tabs Switcher */
@@ -1516,26 +1493,6 @@ onUnmounted(() => {
 .text-tertiary {
   color: #737373;
   font-size: 13px;
-}
-
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action Dropdown */

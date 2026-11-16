@@ -29,8 +29,10 @@ Use dynamic sub-tables for all standard list-like child data where rows share a 
 
 Reference URLs:
 - **Dynamic Table Structure**: [Figma Frame 6095:96580](https://www.figma.com/design/Zo2sdiJUDpOdTRMjnswMXw/Haleta-ERP---HR-Module?node-id=6095-96580)
+- **Dynamic Table Modal & Actions**: [Figma Frame 6095:96369](https://www.figma.com/design/Zo2sdiJUDpOdTRMjnswMXw/Haleta-ERP---HR-Module?node-id=6095-96369) & [Figma Frame 6095:96370](https://www.figma.com/design/Zo2sdiJUDpOdTRMjnswMXw/Haleta-ERP---HR-Module?node-id=6095-96370)
 - **QMT Table Cells Library**: [Figma Frame 3345:71204](https://www.figma.com/design/EVkNwnkJXcHROkdv2QqXoU/QMT-team-library?node-id=3345-71204)
-- **Authoritative Shared Component**: `<DynamicSubTable />` (`frontend/src/components/DynamicSubTable.vue`)
+- **Authoritative Shared Component**: `<DynamicSubTable />` (`frontend/src/components/DynamicSubTable.vue`). This is the single unified dynamic table component across all modules in Haleta ERP. Never construct ad-hoc custom table templates or fork separate sub-table logic.
+- **Zero Bespoke Modals**: Never build custom row modal overlays or bypass `<DynamicSubTable />` with ad-hoc `:use-custom-modal="true"`. Always use the native `<DynamicTableModal />` (`frontend/src/components/DynamicTableModal.vue`) row expansion engine built into `<DynamicSubTable />`.
 
 1. **Compact Cell Standard & ERPNext Grid Cell Pattern (QMT `3345:71204`)**:
    - **Cell-As-Input Paradigm (ERPNext Grid Pattern)**:
@@ -76,6 +78,16 @@ Reference URLs:
    - The right border is omitted strictly on `:last-child`.
 
 5. **Selection & Floating Batch Deletion Bar (`<TableFloatingBar />`)**:
+   - **Lead Column Integration & Alignment Standard (Figma `7009:114120`)**:
+     - The first column combines the checkbox and sequence number into a single lead column (`th-lead` / `td-lead`, exactly 68px: `width: 68px; min-width: 68px; max-width: 68px;`).
+     - Never duplicate the sequence number as a separate user-defined column in the `columns` configuration.
+     - **Pixel-Perfect Alignment Guarantee**:
+       - Both header (`.dynamic-table th.th-lead`) and body (`.dynamic-table td.td-lead`) cells MUST share identical horizontal padding (`padding: 0 11px !important;`) and height (`44px`).
+       - `.td-cell { padding: 0 }` must NEVER override `.td-lead` (enforce via `.dynamic-table td.td-lead`).
+       - Both flex containers (`.lead-th-content` and `.lead-td-content`) MUST use `display: flex; align-items: center; gap: 12px;`.
+       - Checkboxes inside lead cells MUST have wrapper padding/margins neutralized (`padding: 0 !important; margin: 0 !important; width: 16px; height: 16px;`).
+       - This guarantees both the header checkbox and row checkboxes start at the exact same horizontal coordinate (`x = 11px`), and the header text (`No.`) and sequence numbers (`1`, `2`) start on the exact same vertical guide (`x = 40px`), perfectly matching Figma `7009:114120`.
+     - Table header row background is always `#FAFAFA` (`var(--color-background-primary, #fafafa)`).
    - **Mandatory Product Checkbox Component**: Row checkboxes and Select-All header checkbox MUST use the authoritative product checkbox component (`<FormCheckbox />`) from QMT (`3345:24771` / `frontend/src/components/FormCheckbox.vue`). Never use raw `<input type="checkbox">`.
    - Both header ("select all") and row checkboxes, as well as the column visibility popover checklist and catalog selection checklist, use `<FormCheckbox />`.
    - To delete rows from the dynamic table, users check the row checkbox(es), which displays the bottom-anchored floating pill bar (`<TableFloatingBar />`):
@@ -85,20 +97,31 @@ Reference URLs:
      - Divider (`|`).
      - Destructive batch action: `🗑 Delete` (in `#E7000B` red). Clicking Delete removes the selected rows and triggers the batch deletion callback.
 
-5. **Expand Row Modal ("EXPAND ICON ACTION")**:
+6. **Expand Row Modal ("EXPAND ICON ACTION", Figma `6095:96369` & `6095:96370`)**:
    - Triggered by clicking the `↗` expand icon (`<Maximize2 :size="13" />`) on any row.
    - Secondary attributes (effectivity dates, calculations, certificates, attachments, notes, rollover rules) belong in this modal.
-   - **Universal Modal Standard (`<QuickCreateModal />`)**:
-     - MUST use the authoritative `<QuickCreateModal />` component, ensuring the modal is 100% editable, saveable, and visually unified with all ERP dialogs.
-     - **Header**: Titled `Edit [Entity/Section Name] (Row [Index])` with top-right `(X)` close button.
-     - **Body**: Fully editable form fields mapped to row attributes. If custom table columns are used (`type: 'custom'`), the view can provide a dedicated `<template #expand-modal="{ row }">` slot with `<FormSelect>`, `<FormInput>`, etc.
-     - **Footer**: Bottom-right has standard plain-text **"Save"** primary button; bottom-left has an optional **"Delete Row"** destructive button.
-     - **No Ad-Hoc Modal Dialogs**: Never build raw custom modal shells with uneditable inputs.
+   - **Authoritative Modal Standard (`<DynamicTableModal />`)**:
+     - MUST use the authoritative `<DynamicTableModal />` component (`frontend/src/components/DynamicTableModal.vue`).
+     - **Header**: Titled `[Action/Entity]` with `(Row [Index])` in tertiary text (`#737373`), and circular `(X)` close button on the top right.
+     - **Body Representation**:
+       - 2-column input grid (`display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;`) on a clean white background (`#ffffff`).
+       - `type: 'readonly'` fields MUST be rendered as non-editable formatted text blocks (`.modal-readonly-block` with subtle surface background `#FAFAFA`, height 44px, border-radius 12px), NEVER as raw editable text inputs.
+       - Entity-specific or custom layouts can provide a dedicated `<template #expand-modal="{ row, index }">` slot.
+     - **Footer (Figma `6095:96395`)**:
+       - Canvas background (`#FAFAFA` / `var(--color/background/primary)`), height 74px, subtle border-top (`#E5E5E5`), padding 0 24px.
+       - **Bottom-Left**: Red error/destructive button **`Delete`** (`bg-[#fb2c36]`, rounded 8px, semi-bold white text).
+       - **Bottom-Right**: Group of standardized secondary buttons (`bg-white`, border `#D9D9D9`, rounded 8px, secondary text `#404040`):
+         1. `ArrowDown` icon button: Navigates down to the next row.
+         2. `ArrowUp` icon button: Navigates up to the previous row.
+         3. `Duplicate Row` button: `Copy` icon + "Duplicate Row". Duplicates the currently opened row.
+         4. `Insert Above` button: `Plus` icon + "Insert Above". Inserts a blank row above the current row.
+         5. `Insert Below` button: `Plus` icon + "Insert Below". Inserts a blank row below the current row.
+     - **Zero Ad-Hoc Modal Dialogs**: Never build raw custom modal shells or misuse `QuickCreateModal` for dynamic table rows.
 
-6. **Dropdown & Popover Teleportation Standard (Anti-Clipping & Anti-Scrollbar Rule)**:
+7. **Dropdown & Popover Teleportation Standard (Anti-Clipping & Anti-Scrollbar Rule)**:
    - **Column Hider Dropdown (`<IconColumnSolid />`)**: The column hide/show popover MUST ALWAYS be teleported to `body` (`<Teleport to="body">`) with dynamic fixed positioning (`getBoundingClientRect()`). It must NEVER be rendered inside the table header (`<th>`) or table scroll container, which would cause horizontal scrollbars or clipping.
    - **Select Menus (`<FormSelect />`)**: All dropdowns across dynamic tables and forms MUST default to `teleport: true` so their popovers float above cards, accordions, and modals without being hidden or clipped by parent containers with `overflow: hidden`.
-7. **Multi-Selection Modal & Search Dropdown ("+ Add Multiple", Figma `6095:96639` & `6095:96649`)**:
+8. **Multi-Selection Modal & Search Dropdown ("+ Add Multiple", Figma `6095:96639` & `6095:96649`)**:
    - Triggered by the `+ Add Multiple` button.
    - **Modal**: Titled `Select [Entities]` (e.g. `Select Customers`) with `Select... ⌵` multi-select field, embedded search bar (`🔍 Search...`), scrollable checklist with rounded checkboxes, and `Close` button.
    - Selected items highlighted with subtle surface background (`#F5F5F5`).

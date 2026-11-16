@@ -7,8 +7,10 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppButton from '../../components/AppButton.vue';
 import FormRichText from '../../components/FormRichText.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Breadcrumbs ───
 const breadcrumbItems = [
@@ -18,8 +20,6 @@ const breadcrumbItems = [
 
 const isSaved = ref(false);
 const isSubmitting = ref(false);
-const toastMessage = ref<string | null>(null);
-const errorMessage = ref<string | null>(null);
 
 // ─── Form Model Aligned with HR_Schema_final-v4.sql lines 1425–1450 ───
 const form = ref({
@@ -125,27 +125,23 @@ const handleClearForm = () => {
     counterpart_shift_id: '',
     reason: '',
   };
-  errorMessage.value = null;
-  toastMessage.value = 'Form cleared.';
-  setTimeout(() => { toastMessage.value = null; }, 2500);
+  toast.info('Form Cleared', 'Form cleared.');
 };
 
 // ─── Submit Shift Swap Request ───
 const handleRequest = () => {
-  errorMessage.value = null;
-
   if (!form.value.requester_id) {
-    errorMessage.value = 'Please select a requesting employee.';
+    toast.error('Validation Error', 'Please select a requesting employee.');
     return;
   }
 
   if (!form.value.requester_shift_id) {
-    errorMessage.value = 'Please select the assigned shift slot to give away.';
+    toast.error('Validation Error', 'Please select the assigned shift slot to give away.');
     return;
   }
 
   if (form.value.counterpart_id && !form.value.counterpart_shift_id) {
-    errorMessage.value = 'Please select the counterpart colleague\'s shift in return, or clear the counterpart to create an Open Giveaway.';
+    toast.error('Validation Error', "Please select the counterpart colleague's shift in return, or clear the counterpart to create an Open Giveaway.");
     return;
   }
 
@@ -154,7 +150,7 @@ const handleRequest = () => {
   setTimeout(() => {
     isSubmitting.value = false;
     isSaved.value = true;
-    toastMessage.value = 'Shift swap request successfully created!';
+    toast.success('Shift Swap Created', 'Shift swap request successfully created!');
 
     setTimeout(() => {
       router.push('/hr/shift-swaps');
@@ -197,17 +193,6 @@ const handleRequest = () => {
           <span>{{ isSubmitting ? 'Submitting...' : 'Request' }}</span>
         </AppButton>
       </div>
-    </div>
-
-    <!-- Feedback Alerts -->
-    <div v-if="toastMessage" class="feedback-toast success">
-      <CheckCircle2 :size="16" class="text-emerald-600" />
-      <span>{{ toastMessage }}</span>
-    </div>
-
-    <div v-if="errorMessage" class="feedback-toast error">
-      <AlertCircle :size="16" class="text-red-600" />
-      <span>{{ errorMessage }}</span>
     </div>
 
     <!-- Main Content Container -->
@@ -326,30 +311,6 @@ const handleRequest = () => {
   gap: 12px;
 }
 
-/* Feedback Toast */
-.feedback-toast {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: var(--alias-radius-lg, 8px);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(10, 13, 18, 0.05);
-}
-
-.feedback-toast.success {
-  background-color: var(--alias-color-background-success-surface, #ecfdf5);
-  border: 1px solid var(--alias-color-background-success-subtle, #a4f4cf);
-  color: var(--alias-color-success-700, #007a55);
-}
-
-.feedback-toast.error {
-  background-color: var(--alias-color-background-error-surface, #fef2f2);
-  border: 1px solid var(--alias-color-background-error-subtle, #ffc9c9);
-  color: var(--primitive-color-red-600, #e7000b);
-}
-
 /* Canvas & Cards (Figma: rounded 16px, subtle border #e5e5e5, white surface) */
 .create-form-canvas {
   display: flex;
@@ -378,7 +339,7 @@ const handleRequest = () => {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
-  color: var(--alias-color-text-primary, #262626);
+  color: var(--alias-color-text-primary, #404040);
   margin: 0;
 }
 
@@ -443,7 +404,7 @@ const handleRequest = () => {
   border: 1px solid var(--alias-color-border-primary, #d4d4d4);
   border-radius: var(--alias-radius-lg, 8px);
   font-size: 14px;
-  color: var(--alias-color-text-primary, #262626);
+  color: var(--alias-color-text-primary, #404040);
   outline: none;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);

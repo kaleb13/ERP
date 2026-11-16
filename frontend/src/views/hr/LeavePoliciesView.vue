@@ -3,15 +3,17 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Plus, MoreVertical, Eye, CheckCircle2,
-  Trash2, ShieldCheck, AlertCircle, Calendar,
-  LayoutGrid, List, ArrowRight
-} from 'lucide-vue-next';;
+  Trash2, ShieldCheck, AlertCircle,
+  LayoutGrid, List
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
-import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   leavePoliciesData, 
   type LeavePolicyRecord 
@@ -19,27 +21,31 @@ import {
 
 const router = useRouter();
 
-// ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3: Exact Sidebar Page Name Only) ───
+// ─── Breadcrumb Navigation Standard (AGENTS.md: Exact Sidebar Page Name Only) ───
 const breadcrumbItems = [
   { label: 'Leave Policies' }
 ];
 
+const { toast } = useToast();
 const policies = leavePoliciesData;
 const searchQuery = ref('');
 const filterState = ref('All');
 const activeActionMenuId = ref<number | null>(null);
-const toastMessage = ref<string | null>(null);
 
-// Primary View Mode: Clean Minimal Cards (per user request)
+// Primary View Mode: Clean Minimal Cards (Figma Node 7009:113269 default) vs Table
 type ViewMode = 'cards' | 'table';
 const viewMode = ref<ViewMode>('cards');
 
+const viewTabs: BaseTabItem<ViewMode>[] = [
+  { id: 'cards', label: 'Card View', icon: LayoutGrid },
+  { id: 'table', label: 'Table View', icon: List }
+];
+
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
-// ─── Table Columns (AGENTS.md Rule 9) ───
+// ─── Table Columns (AGENTS.md Standard) ───
 const tableColumns = ref<ColumnDef[]>([
   { key: 'name', label: 'Policy Name & Code', visible: true, sortable: true },
   { key: 'entity_name', label: 'Owning Entity / Branch', visible: true, sortable: true },
@@ -47,7 +53,7 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'effective_period', label: 'Effective Period', visible: true, sortable: true },
   { key: 'rules_count', label: 'Entitlement Rules', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
-  { key: 'actions', label: '', width: '48px', align: 'center', visible: true }
+  { key: 'actions', label: 'Actions', width: '48px', align: 'center', visible: true }
 ]);
 
 const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) => {
@@ -56,18 +62,7 @@ const handleToggleColumn = (colKey: string | { key: string; visible: boolean }) 
   if (col) col.visible = typeof colKey === 'string' ? !col.visible : colKey.visible;
 };
 
-const isColVisible = (key: string) => {
-  const col = tableColumns.value.find(c => c.key === key);
-  return col ? col.visible !== false : true;
-};
-
 // ─── Filtering ───
-const stateFilterOptions: SelectOption[] = [
-  { value: 'All', label: 'All States' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' }
-];
-
 const filteredPolicies = computed(() => {
   return policies.value.filter(p => {
     if (searchQuery.value) {
@@ -85,7 +80,7 @@ const filteredPolicies = computed(() => {
   });
 });
 
-// ─── Selection for Batch Operations (AGENTS.md Rule 11) ───
+// ─── Selection for Batch Operations (AGENTS.md Standard) ───
 const selectedIds = ref<number[]>([]);
 
 const isAllSelected = computed(() => {
@@ -143,347 +138,233 @@ const handleDeletePolicy = (id: number) => {
 
 <template>
   <div class="leave-policies-page" @click="activeActionMenuId = null">
-    <!-- Breadcrumb Bar (AGENTS.md Rule 3: Exact Sidebar Page Name Only) -->
+    <!-- Breadcrumb Bar (AGENTS.md: Exact Sidebar Page Name Only) -->
     <div class="breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
+    <!-- ─── TOP HEADER CARD (Figma Node 7009:113278) ─── -->
+    <div class="policies-top-card">
+      <div class="header-main-row">
+        <div class="header-text-block">
+          <h1 class="page-title">Leave Policy Rulebooks</h1>
+          <p class="page-subtitle">
+            Organizational rule catalogs binding leave types to statutory accrual formulas, work calendars, and carry-forward ceilings.
+          </p>
+        </div>
+        <AppButton variant="primary" @click="goToCreate">
+          <template #icon-left><Plus :size="16" /></template>
+          Create Leave Policy
+        </AppButton>
       </div>
-    </Transition>
 
-    <!-- Table Card Container (AGENTS.md Rule 10: Unified Table Card Layout) -->
-    <AppDataTable
-      title="Leave Policies"
-      subtitle="Master rulebooks binding organizational entities to work calendars, statutory accrual formulas, and carry-forward ceilings."
-      :columns="tableColumns"
-      :data="filteredPolicies"
-      v-model:searchQuery="searchQuery"
-      searchPlaceholder="Search policies by name, code, entity, or calendar..."
-      @toggleColumn="handleToggleColumn"
-    >
-      <!-- Top Action Slot: Create Button -->
-      <template #actions>
+      <!-- Standalone Tabs Row (AGENTS.md: Primary Tab Rounded Group) -->
+      <div class="header-tabs-row">
+        <BaseTabs
+          v-model="viewMode"
+          :tabs="viewTabs"
+          type="rounded"
+        />
+      </div>
+    </div>
+
+    <!-- ─── VIEW 1: MINIMALIST CARDS VIEW (Figma Node 7009:113269 Default) ─── -->
+    <div v-if="viewMode === 'cards'" class="cards-view-wrapper">
+      <div class="policy-cards-grid">
+        <div 
+          v-for="item in filteredPolicies" 
+          :key="item.id"
+          class="minimal-policy-card"
+          @click="goToDetail(item.id)"
+        >
+          <!-- Card Header: Title + Code + BaseBadge (Figma Node 7009:113293) -->
+          <div class="card-header-line">
+            <div class="card-identity-block">
+              <h3 class="card-policy-name">{{ item.name }}</h3>
+              <span class="card-policy-code">{{ item.code }}</span>
+            </div>
+            <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
+              {{ item.state === 'active' ? 'Active' : 'Inactive' }}
+            </BaseBadge>
+          </div>
+
+          <!-- 2x2 Key-Value Metadata Grid (Figma Node 7009:113299) -->
+          <div class="card-meta-grid">
+            <div class="meta-col">
+              <span class="meta-label">Owning Entity</span>
+              <span class="meta-val">{{ item.entity_name }}</span>
+            </div>
+            <div class="meta-col">
+              <span class="meta-label">Working Calendar</span>
+              <span class="meta-val">{{ item.work_calendar_name }}</span>
+            </div>
+            <div class="meta-col">
+              <span class="meta-label">Effective Period</span>
+              <span class="meta-val">{{ item.effective_from }} ➔ {{ item.effective_to || 'Current' }}</span>
+            </div>
+            <div class="meta-col">
+              <span class="meta-label">Policy Rules</span>
+              <span class="meta-val">{{ item.rules_count || item.rules?.length || 4 }} Rules</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State in Cards View -->
+      <div v-if="filteredPolicies.length === 0" class="cards-empty-state">
+        <AlertCircle :size="32" class="empty-icon" />
+        <p class="empty-title">No Leave Policies Found</p>
+        <p class="empty-desc">Create your first organizational leave policy rulebook to configure statutory accrual formulas.</p>
         <AppButton variant="primary" size="sm" @click="goToCreate">
-  <template #icon-left><Plus :size="15" /></template>
-  Create Leave Policy
-</AppButton>
-      </template>
+          <template #icon-left><Plus :size="15" /></template>
+          Create Leave Policy
+        </AppButton>
+      </div>
+    </div>
 
-      <!-- Filters Slot with State Filter & View Mode Switcher -->
-      <template #filters>
-        <div class="filter-controls-cluster">
-          <div class="filter-dropdown-wrap">
-            <FormSelect
-              v-model="filterState"
-              :options="stateFilterOptions"
-              placeholder="Select"
-              class="filter-select"
-            />
-          </div>
-
-          <!-- View Mode Toggle: Cards (Default) vs Table -->
-          <div class="view-mode-toggle">
-            <button
-              type="button"
-              class="view-toggle-btn"
-              :class="{ 'active': viewMode === 'cards' }"
-              @click="viewMode = 'cards'"
-              title="Clean Minimal Cards View"
-            >
-              <LayoutGrid :size="14" />
-              <span>Cards</span>
-            </button>
-            <button
-              type="button"
-              class="view-toggle-btn"
-              :class="{ 'active': viewMode === 'table' }"
-              @click="viewMode = 'table'"
-              title="Dense Table View"
-            >
-              <List :size="14" />
-              <span>Table</span>
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <!-- Content Slot -->
-      <template #default>
-        <!-- VIEW 1: CLEAN MINIMAL BLUEPRINT CARDS (Default) -->
-        <div v-if="viewMode === 'cards'" class="policy-cards-grid">
-          <div 
-            v-for="item in filteredPolicies" 
-            :key="item.id"
-            class="clean-policy-card"
-            :class="{ 'card-selected': selectedIds.includes(item.id) }"
-            @click="goToDetail(item.id)"
-          >
-            <!-- Card Header: Checkbox + Title/Code (Schema: name, code) + State (Schema: state) + Actions -->
-            <div class="card-header-row">
-              <div class="card-identity-cluster">
-                <!-- Row Selection Checkbox -->
-                <div class="card-checkbox-wrap" @click.stop>
-                  <input
-                    type="checkbox"
-                    :checked="selectedIds.includes(item.id)"
-                    @change="toggleSelectRow(item.id)"
-                    class="table-checkbox"
-                    title="Select policy"
-                  />
-                </div>
-
-                <!-- Title & Code (Schema: name, code) -->
-                <div class="card-title-block">
-                  <h3 class="card-policy-name">{{ item.name }}</h3>
-                  <span class="card-policy-code">{{ item.code }}</span>
-                </div>
-              </div>
-
-              <!-- State Badge (Schema: state = active | inactive) & Action Menu -->
-              <div class="card-header-actions" @click.stop>
-                <span 
-                  class="status-pill"
-                  :class="item.state === 'active' ? 'state-active' : 'state-inactive'"
-                >
-                  {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
-
-                <div class="action-menu-relative">
-                  <button 
-                    type="button"
-                    class="btn-card-dots" 
-                    @click="activeActionMenuId = activeActionMenuId === item.id ? null : item.id"
-                    title="Actions"
+    <!-- ─── VIEW 2: DENSE DIRECTORY TABLE VIEW ─── -->
+    <div v-else class="table-view-wrapper">
+      <AppDataTable
+        title="Leave Policies Directory"
+        subtitle="Tabular rulebook register with column customization, batch selection, and inline actions."
+        :columns="tableColumns"
+        :data="filteredPolicies"
+        v-model:searchQuery="searchQuery"
+        searchPlaceholder="Search policies by name, code, entity, or calendar..."
+        @toggleColumn="handleToggleColumn"
+      >
+        <template #default>
+          <div class="table-responsive">
+            <table class="erp-table">
+              <thead>
+                <tr>
+                  <th class="th-checkbox" width="40">
+                    <input
+                      type="checkbox"
+                      :checked="isAllSelected"
+                      @change="toggleSelectAll"
+                      class="table-checkbox"
+                      aria-label="Select all policies"
+                    />
+                  </th>
+                  <th 
+                    v-for="col in tableColumns.filter(c => c.visible !== false)" 
+                    :key="col.key"
+                    :style="{ width: col.width, textAlign: col.align || 'left' }"
                   >
-                    <MoreVertical :size="15" />
-                  </button>
-
-                  <div v-if="activeActionMenuId === item.id" class="dropdown-action-menu">
-                    <button class="dropdown-item" @click="goToDetail(item.id)">
-                      <Eye :size="14" />
-                      <span>View Policy Blueprint</span>
-                    </button>
-                    <button class="dropdown-item" @click="handleToggleState(item)">
-                      <ShieldCheck :size="14" />
-                      <span>Mark as {{ item.state === 'active' ? 'Inactive' : 'Active' }}</span>
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item text-danger" @click="handleDeletePolicy(item.id)">
-                      <Trash2 :size="14" />
-                      <span>Delete Policy</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Optional Description (Schema: description) -->
-            <p v-if="item.description" class="card-policy-desc">{{ item.description }}</p>
-
-            <!-- Card Scope & Calendar Metadata Grid (Schema: entity_id, work_calendar_id, effective_from, effective_to) -->
-            <div class="card-meta-grid">
-              <div class="meta-item">
-                <span class="meta-label">Owning Entity</span>
-                <span class="meta-val">{{ item.entity_name }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Work Calendar</span>
-                <span class="meta-val">{{ item.work_calendar_name }} ({{ item.calendar_weekly_hours }}h)</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Effective Period</span>
-                <span class="meta-val">{{ item.effective_from }} ➔ {{ item.effective_to || 'Current' }}</span>
-              </div>
-            </div>
-
-            <!-- Child Relation: LeavePolicyRule Entitlement Summary -->
-            <div class="card-rules-block" v-if="item.rules && item.rules.length > 0">
-              <div class="rules-header-line">
-                <span class="rules-caption">Entitlement Rules</span>
-                <span class="rules-count-badge">{{ item.rules.length }} Rules</span>
-              </div>
-              <div class="rules-pills-row">
-                <div 
-                  v-for="rule in item.rules" 
-                  :key="rule.id" 
-                  class="rule-pill-item"
+                    {{ col.label }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  v-for="item in filteredPolicies" 
+                  :key="item.id"
+                  class="erp-row clickable-row"
+                  @click="goToDetail(item.id)"
                 >
-                  <span class="pill-type-name">{{ rule.leave_type_name }}</span>
-                  <span class="pill-days-val">{{ rule.days_per_year }}d{{ rule.extra_days_per_service_year > 0 ? ` (+${rule.extra_days_per_service_year}/yr)` : '' }}</span>
-                </div>
-              </div>
-            </div>
+                  <!-- Checkbox -->
+                  <td class="td-checkbox" @click.stop>
+                    <input
+                      type="checkbox"
+                      :checked="selectedIds.includes(item.id)"
+                      @change="toggleSelectRow(item.id)"
+                      class="table-checkbox"
+                      aria-label="Select policy row"
+                    />
+                  </td>
 
-            <!-- Card Footer -->
-            <div class="card-footer-row">
-              <span class="footer-note">Applies to subtree unless overridden</span>
-              <span class="card-view-link">
-                <span>View Details</span>
-                <ArrowRight :size="13" />
-              </span>
-            </div>
-          </div>
-
-          <!-- Empty State in Cards View -->
-          <div v-if="filteredPolicies.length === 0" class="cards-empty-state">
-            <AlertCircle :size="32" class="empty-icon" />
-            <p class="empty-title">No Leave Policies Found</p>
-            <p class="empty-desc">Create your first organizational leave policy rulebook to configure statutory accrual formulas.</p>
-            <AppButton variant="primary" size="sm" @click="goToCreate">
-              <template #icon-left><Plus :size="15" /></template>
-              Create Leave Policy
-            </AppButton>
-          </div>
-        </div>
-
-        <!-- VIEW 2: DENSE TABULAR VIEW -->
-        <div v-else class="table-responsive">
-          <table class="erp-table">
-            <thead>
-              <tr>
-                <th class="th-checkbox" width="40">
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    @change="toggleSelectAll"
-                    class="table-checkbox"
-                    aria-label="Select all policies"
-                  />
-                </th>
-                <th 
-                  v-for="col in tableColumns.filter(c => c.visible !== false)" 
-                  :key="col.key"
-                  :style="{ width: col.width, textAlign: col.align || 'left' }"
-                >
-                  {{ col.label }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="item in filteredPolicies" 
-                :key="item.id"
-                class="erp-row clickable-row"
-                @click="goToDetail(item.id)"
-              >
-                <!-- Checkbox -->
-                <td class="td-checkbox" @click.stop>
-                  <input
-                    type="checkbox"
-                    :checked="selectedIds.includes(item.id)"
-                    @change="toggleSelectRow(item.id)"
-                    class="table-checkbox"
-                    aria-label="Select policy row"
-                  />
-                </td>
-
-                <!-- Name & Code (Rule 4: Name on top, Code as subtext) -->
-                <td v-if="tableColumns.find(c => c.key === 'name')?.visible !== false">
-                  <div class="name-column-wrap">
-                    <span class="table-name-primary">{{ item.name }}</span>
-                    <span class="table-code-subtext">{{ item.code }}</span>
-                  </div>
-                </td>
-
-                <!-- Owning Entity / Branch (Rule 5: Tertiary color #737373) -->
-                <td v-if="tableColumns.find(c => c.key === 'entity_name')?.visible !== false">
-                  <span class="table-text-tertiary">{{ item.entity_name }}</span>
-                </td>
-
-                <!-- Work Calendar (Rule 5: Tertiary color #737373) -->
-                <td v-if="tableColumns.find(c => c.key === 'work_calendar_name')?.visible !== false">
-                  <div class="calendar-cell-wrap">
-                    <span class="table-text-tertiary">{{ item.work_calendar_name }}</span>
-                    <span class="calendar-hours-subtext">{{ item.calendar_weekly_hours }} hrs/wk</span>
-                  </div>
-                </td>
-
-                <!-- Effective Period -->
-                <td v-if="tableColumns.find(c => c.key === 'effective_period')?.visible !== false">
-                  <span class="table-text-tertiary">
-                    {{ item.effective_from }} ➔ {{ item.effective_to || 'Current' }}
-                  </span>
-                </td>
-
-                <!-- Rules Count (Rule 6: Plain text default, no decorative pills) -->
-                <td v-if="tableColumns.find(c => c.key === 'rules_count')?.visible !== false">
-                  <span class="table-text-tertiary font-medium">{{ item.rules_count }} Rules</span>
-                </td>
-
-                <!-- State (Rule 9: Active/Inactive solely on State column) -->
-                <td v-if="tableColumns.find(c => c.key === 'state')?.visible !== false">
-                  <span 
-                    class="status-pill"
-                    :class="item.state === 'active' ? 'state-active' : 'state-inactive'"
-                  >
-                    {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-
-                <!-- Actions Menu -->
-                <td 
-                  v-if="tableColumns.find(c => c.key === 'actions')?.visible !== false" 
-                  class="td-actions"
-                  @click.stop
-                >
-                  <div class="action-menu-relative">
-                    <button 
-                      type="button"
-                      class="btn-action-dots" 
-                      @click="activeActionMenuId = activeActionMenuId === item.id ? null : item.id"
-                      title="Actions"
-                    >
-                      <MoreVertical :size="15" />
-                    </button>
-
-                    <div v-if="activeActionMenuId === item.id" class="dropdown-action-menu">
-                      <button class="dropdown-item" @click="goToDetail(item.id)">
-                        <Eye :size="14" />
-                        <span>View Policy Blueprint</span>
-                      </button>
-                      <button class="dropdown-item" @click="handleToggleState(item)">
-                        <ShieldCheck :size="14" />
-                        <span>Mark as {{ item.state === 'active' ? 'Inactive' : 'Active' }}</span>
-                      </button>
-                      <div class="dropdown-divider"></div>
-                      <button class="dropdown-item text-danger" @click="handleDeletePolicy(item.id)">
-                        <Trash2 :size="14" />
-                        <span>Delete Policy</span>
-                      </button>
+                  <!-- Name & Code -->
+                  <td v-if="tableColumns.find(c => c.key === 'name')?.visible !== false">
+                    <div class="name-column-wrap">
+                      <span class="table-name-primary">{{ item.name }}</span>
+                      <span class="table-code-subtext">{{ item.code }}</span>
                     </div>
-                  </div>
-                </td>
-              </tr>
+                  </td>
 
-              <!-- Empty Table State -->
-              <tr v-if="filteredPolicies.length === 0">
-                <td colspan="8" class="empty-table-cell">
-                  <div class="empty-table-state">
-                    <AlertCircle :size="28" class="empty-icon" />
-                    <p class="empty-title">No Leave Policies Found</p>
-                    <p class="empty-desc">Create your first organizational leave policy rulebook to configure statutory accrual formulas.</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
-    </AppDataTable>
+                  <!-- Owning Entity / Branch -->
+                  <td v-if="tableColumns.find(c => c.key === 'entity_name')?.visible !== false">
+                    <span class="table-text-tertiary">{{ item.entity_name }}</span>
+                  </td>
 
-    <!-- Floating Batch Action Bar (AGENTS.md Rule 11) -->
-    <TableFloatingBar 
-      :show="selectedIds.length > 0"
+                  <!-- Work Calendar -->
+                  <td v-if="tableColumns.find(c => c.key === 'work_calendar_name')?.visible !== false">
+                    <div class="calendar-cell-wrap">
+                      <span class="table-text-tertiary">{{ item.work_calendar_name }}</span>
+                      <span class="calendar-hours-subtext">{{ item.calendar_weekly_hours }} hrs/wk</span>
+                    </div>
+                  </td>
+
+                  <!-- Effective Period -->
+                  <td v-if="tableColumns.find(c => c.key === 'effective_period')?.visible !== false">
+                    <span class="table-text-tertiary">
+                      {{ item.effective_from }} ➔ {{ item.effective_to || 'Current' }}
+                    </span>
+                  </td>
+
+                  <!-- Rules Count -->
+                  <td v-if="tableColumns.find(c => c.key === 'rules_count')?.visible !== false">
+                    <span class="table-text-tertiary font-medium">{{ item.rules_count }} Rules</span>
+                  </td>
+
+                  <!-- State (Standard BaseBadge) -->
+                  <td v-if="tableColumns.find(c => c.key === 'state')?.visible !== false">
+                    <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
+                      {{ item.state === 'active' ? 'Active' : 'Inactive' }}
+                    </BaseBadge>
+                  </td>
+
+                  <!-- Actions Menu (3-dot kebab MoreVertical) -->
+                  <td 
+                    v-if="tableColumns.find(c => c.key === 'actions')?.visible !== false" 
+                    class="td-actions"
+                    @click.stop
+                  >
+                    <div class="action-menu-relative">
+                      <button 
+                        type="button"
+                        class="btn-action-dots" 
+                        @click="activeActionMenuId = activeActionMenuId === item.id ? null : item.id"
+                        title="Actions"
+                      >
+                        <MoreVertical :size="15" />
+                      </button>
+
+                      <div v-if="activeActionMenuId === item.id" class="dropdown-action-menu">
+                        <button class="dropdown-item" @click="goToDetail(item.id)">
+                          <Eye :size="14" />
+                          <span>View Policy Blueprint</span>
+                        </button>
+                        <button class="dropdown-item" @click="handleToggleState(item)">
+                          <ShieldCheck :size="14" />
+                          <span>Mark as {{ item.state === 'active' ? 'Inactive' : 'Active' }}</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item text-danger" @click="handleDeletePolicy(item.id)">
+                          <Trash2 :size="14" />
+                          <span>Delete Policy</span>
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+      </AppDataTable>
+    </div>
+
+    <!-- Table Floating Action Bar for Batch Selection -->
+    <TableFloatingBar
       :selected-count="selectedIds.length"
-      :total-count="filteredPolicies.length"
-      @delete="handleBatchDelete" 
-      @close="selectedIds = []" 
-    />
+      @clear="selectedIds = []"
+    >
+      <button class="btn-floating-action btn-danger" @click="handleBatchDelete">
+        <Trash2 :size="14" />
+        <span>Delete Selected ({{ selectedIds.length }})</span>
+      </button>
+    </TableFloatingBar>
   </div>
 </template>
 
@@ -493,7 +374,7 @@ const handleDeletePolicy = (id: number) => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -502,340 +383,186 @@ const handleDeletePolicy = (id: number) => {
   align-items: center;
 }
 
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.25s ease;
-}
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-/* Primary Action Button (Rule 6: 8px to 10px rounded rectangle, NEVER pills) */
-.btn-primary-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #0B529C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  height: 38px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.btn-primary-action:hover {
-  background-color: #09427d;
-}
-
-.filter-controls-cluster {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-dropdown-wrap {
-  width: 150px;
-}
-
-/* View Mode Toggle Button Group */
-.view-mode-toggle {
-  display: inline-flex;
-  align-items: center;
-  background-color: #f1f5f9;
-  border-radius: 8px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.view-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 32px;
-  padding: 0 12px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 12.5px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.view-toggle-btn:hover {
-  color: #0f172a;
-}
-.view-toggle-btn.active {
-  background-color: #ffffff;
-  color: #0B529C;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-/* ═════════════════════════════════════════════════════════════════════ */
-/* VIEW 1: CLEAN & MINIMAL BLUEPRINT CARDS                               */
-/* ═════════════════════════════════════════════════════════════════════ */
-.policy-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 16px;
-  padding: 6px 0;
-}
-
-.clean-policy-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 18px 20px;
+/* ─── TOP HEADER CARD (Figma Node 7009:113278) ─── */
+.policies-top-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-.clean-policy-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 22px -4px rgba(11, 82, 156, 0.08);
-  transform: translateY(-2px);
-}
-.clean-policy-card.card-selected {
-  border-color: #0B529C;
-  background-color: #f8fafc;
-  box-shadow: 0 0 0 1px #0B529C;
+  gap: 20px;
 }
 
-/* Card Header */
-.card-header-row {
+.header-main-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 20px;
 }
 
-.card-identity-cluster {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.card-checkbox-wrap {
-  display: flex;
-  align-items: center;
-}
-
-.card-title-block {
+.header-text-block {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
-.card-policy-name {
-  font-size: 15.5px;
+.page-title {
+  font-size: 20px;
   font-weight: 600;
-  color: #404040;
+  color: #404040; /* Secondary is darkest standard color */
+  line-height: 30px;
   margin: 0;
-  line-height: 1.3;
 }
 
-.card-policy-code {
-  font-size: 11.5px;
-  color: #737373;
-  font-family: monospace;
-}
-
-.card-policy-desc {
-  font-size: 12.5px;
-  color: #737373;
+.page-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #737373; /* Tertiary */
+  line-height: 20px;
   margin: 0;
-  line-height: 1.4;
 }
 
-.card-header-actions {
+.header-tabs-row {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-.btn-card-dots {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-.btn-card-dots:hover {
-  background-color: #f1f5f9;
-  color: #404040;
+/* ─── CARDS VIEW WRAPPER & GRID (Figma Node 7009:113269) ─── */
+.cards-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* Card Scope & Calendar Metadata Grid (Clean 3-item grid) */
-.card-meta-grid {
+.policy-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 10px 14px;
-  background-color: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #f1f5f9;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
-@media (max-width: 640px) {
-  .card-meta-grid {
+
+@media (max-width: 960px) {
+  .policy-cards-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.meta-item {
+/* Minimalist Policy Card (Figma Node 7009:113288) */
+.minimal-policy-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.minimal-policy-card:hover {
+  border-color: #d4d4d4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.card-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid #e5e5e5;
+}
+
+.card-identity-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-policy-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #404040; /* Secondary */
+  line-height: 24px;
+  margin: 0;
+}
+
+.card-policy-code {
+  font-size: 14px;
+  font-weight: 400;
+  color: #737373; /* Tertiary */
+  line-height: 20px;
+}
+
+/* 2x2 Key-Value Metadata Grid (Figma Node 7009:113299) */
+.card-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .meta-label {
-  font-size: 11px;
-  color: #737373;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  color: #737373; /* Tertiary */
+  line-height: 20px;
 }
 
 .meta-val {
-  font-size: 12.5px;
-  color: #404040;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
+  color: #737373; /* Tertiary (Figma Node 7009:113299) */
+  line-height: 24px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Entitlement Rule Pills */
-.card-rules-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rules-header-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.rules-caption {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #737373;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.rules-count-badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: #0B529C;
-  background-color: #e0f2fe;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.rules-pills-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.rule-pill-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 11.5px;
-}
-
-.pill-type-name {
-  color: #404040;
-  font-weight: 500;
-}
-
-.pill-days-val {
-  color: #0B529C;
-  font-weight: 600;
-}
-
-/* Card Footer */
-.card-footer-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.footer-note {
-  font-size: 11.5px;
-  color: #94a3b8;
-}
-
-.card-view-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0B529C;
-  transition: gap 0.15s ease;
-}
-.clean-policy-card:hover .card-view-link {
-  gap: 7px;
-}
-
+/* Cards Empty State */
 .cards-empty-state {
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 60px 20px;
   background-color: #ffffff;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
+  border: 1px dashed #e5e5e5;
+  border-radius: 16px;
   text-align: center;
 }
-.empty-btn {
-  margin-top: 12px;
+
+.empty-icon {
+  color: #a3a3a3;
+  margin-bottom: 12px;
 }
 
-/* ═════════════════════════════════════════════════════════════════════ */
-/* VIEW 2: DENSE TABLE VIEW                                              */
-/* ═════════════════════════════════════════════════════════════════════ */
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0 0 6px 0;
+}
+
+.empty-desc {
+  font-size: 14px;
+  color: #737373;
+  max-width: 440px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+/* ─── TABLE VIEW STYLING ─── */
+.table-view-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -843,128 +570,115 @@ const handleDeletePolicy = (id: number) => {
 
 .erp-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
 }
 
-.erp-table th {
-  height: 36px;
-  padding: 8px 16px;
+.erp-table thead th {
+  padding: 12px 16px;
   font-size: 12px;
   font-weight: 500;
   color: #737373;
+  border-bottom: 1px solid #e5e5e5;
   background-color: #fafafa;
-  border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
-}
-
-.erp-table td {
-  height: 48px;
-  padding: 8px 16px;
-  font-size: 13px;
-  color: #404040;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
-}
-
-.clickable-row {
-  cursor: pointer;
-  transition: background-color 0.12s ease;
-}
-.clickable-row:hover {
-  background-color: #f8fafc;
 }
 
 .th-checkbox,
 .td-checkbox {
   width: 40px;
+  padding: 12px 0 12px 16px;
   text-align: center;
-  padding-left: 14px !important;
-  padding-right: 8px !important;
 }
 
 .table-checkbox {
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
-  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
   accent-color: #0B529C;
+}
+
+.erp-row {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.15s ease;
+}
+
+.erp-row:hover {
+  background-color: #f8fafc;
+}
+
+.clickable-row {
   cursor: pointer;
 }
 
-/* Name Column Hierarchy (AGENTS.md Rule 4 & 5) */
+.erp-table tbody td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
 .name-column-wrap {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+
 .table-name-primary {
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: #404040;
 }
+
 .table-code-subtext {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #737373;
-  font-family: monospace;
+}
+
+.table-text-tertiary {
+  color: #737373;
+  font-size: 13px;
 }
 
 .calendar-cell-wrap {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
+
 .calendar-hours-subtext {
-  font-size: 11.5px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: #a3a3a3;
 }
 
-.table-text-tertiary {
-  color: #737373;
-}
-
-/* Status Pill (Rule 9: Active/Inactive solely on State column) */
-.status-pill {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  display: inline-block;
-  white-space: nowrap;
-}
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-/* Actions Menu */
+/* 3-Dot Action Menu */
 .td-actions {
-  text-align: center;
   width: 48px;
+  text-align: center;
+  position: relative;
 }
+
 .action-menu-relative {
   position: relative;
   display: inline-block;
 }
+
 .btn-action-dots {
-  width: 28px;
-  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: none;
   background: transparent;
-  border-radius: 6px;
   color: #737373;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
+
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #f0f0f0;
+  color: #404040;
 }
 
 .dropdown-action-menu {
@@ -972,77 +686,73 @@ const handleDeletePolicy = (id: number) => {
   right: 0;
   top: 100%;
   margin-top: 4px;
-  width: 190px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   padding: 4px;
+  min-width: 170px;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  animation: dropdownIn 0.12s ease-out;
-}
-@keyframes dropdownIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  font-size: 12.5px;
+  padding: 8px 12px;
+  font-size: 13px;
   color: #404040;
+  background: none;
   border: none;
-  background: transparent;
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.15s ease;
+  width: 100%;
 }
+
 .dropdown-item:hover {
-  background-color: #f8fafc;
+  background-color: #f5f5f5;
 }
+
 .dropdown-item.text-danger {
-  color: #ef4444;
+  color: #e7000b;
 }
+
 .dropdown-item.text-danger:hover {
   background-color: #fef2f2;
 }
+
 .dropdown-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #e5e5e5;
   margin: 4px 0;
 }
 
-/* Empty Table State */
-.empty-table-cell {
-  padding: 48px 24px !important;
-  text-align: center;
-}
-.empty-table-state {
-  display: flex;
-  flex-direction: column;
+/* Floating bar action button */
+.btn-floating-action {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-}
-.empty-icon {
-  color: #94a3b8;
-  margin-bottom: 8px;
-}
-.empty-title {
-  font-size: 14px;
-  font-weight: 600;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: #ffffff;
   color: #404040;
-  margin: 0 0 4px;
 }
-.empty-desc {
-  font-size: 12.5px;
-  color: #737373;
-  margin: 0;
-  max-width: 380px;
+
+.btn-floating-action.btn-danger {
+  color: #e7000b;
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
+.btn-floating-action.btn-danger:hover {
+  background-color: #fee2e2;
 }
 </style>

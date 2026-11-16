@@ -5,6 +5,7 @@ import {
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import MetricCard from '../../components/MetricCard.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
@@ -393,20 +394,20 @@ const paginatedRecords = computed(() => {
               </div>
             </td>
 
-            <!-- Hiring Gate Status Pill (Matching Image 2) -->
+            <!-- Hiring Gate Status (BaseBadge) -->
             <td v-if="isColumnVisible('gate_status')" class="col-gate">
-              <span 
+              <BaseBadge 
                 v-if="row.filled_headcount >= row.approved_headcount" 
-                class="gate-status-pill pill-locked"
+                color="error"
               >
                 Locked (0 Avail)
-              </span>
-              <span 
+              </BaseBadge>
+              <BaseBadge 
                 v-else 
-                class="gate-status-pill pill-open"
+                color="success"
               >
                 Open ({{ getAvailableSeats(row) }} Avail)
-              </span>
+              </BaseBadge>
             </td>
 
             <!-- Actions: 3-Dots Button -->
@@ -666,26 +667,6 @@ const paginatedRecords = computed(() => {
 
 .progress-bar-fill.fill-locked {
   background-color: #94a3b8;
-}
-
-/* Gate Status Pill (Image 2) */
-.gate-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 12px;
-  border-radius: 100px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.pill-locked {
-  background-color: #F1F5F9;
-  color: #64748B;
-}
-
-.pill-open {
-  background-color: #DCFCE7;
-  color: #16A34A;
 }
 
 /* Action Dots & Menu */

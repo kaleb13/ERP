@@ -4,16 +4,18 @@ import { useRouter } from 'vue-router';
 import {
   ArrowLeftRight, Check, X, Clock,
   CheckCircle2, Plus, Info, LayoutGrid,
-  Hand, List
-} from 'lucide-vue-next';;
+  Hand, List, MoreVertical
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import AppButton from '../../components/AppButton.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -171,11 +173,33 @@ const swaps = ref<ShiftSwapRecord[]>([
   }
 ]);
 
-// ─── Notification Toast ───
-const toastMessage = ref<string | null>(null);
+// ─── Notification Toast & Status Helpers ───
+const { toast } = useToast();
+const activeActionMenuId = ref<string | null>(null);
+
+const getSwapStatusColor = (state: string): 'success' | 'blue' | 'warning' | 'error' => {
+  switch (state) {
+    case 'approved': return 'success';
+    case 'accepted': return 'blue';
+    case 'requested': return 'warning';
+    case 'rejected':
+    case 'cancelled':
+      return 'error';
+    default: return 'blue';
+  }
+};
+
+const getSwapStatusLabel = (state: string): string => {
+  switch (state) {
+    case 'approved': return 'Approved';
+    case 'accepted': return 'Counterpart Accepted';
+    case 'rejected': return 'Rejected';
+    default: return 'Awaiting Consent';
+  }
+};
+
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3500);
+  toast.success(msg);
 };
 
 // ─── Metrics (Figma Node 6328:117898) ───
@@ -324,12 +348,6 @@ const paginatedTableSwaps = computed(() => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Notification Toast -->
-    <div v-if="toastMessage" class="action-toast">
-      <CheckCircle2 :size="16" class="text-emerald-600" />
-      <span>{{ toastMessage }}</span>
-    </div>
-
     <!-- ─── UNIFIED TOP SECTION CARD (Figma Node 6328:117889 "personal details") ─── -->
     <div class="swaps-top-card">
       <!-- Row 1: Header Row with Title, Subtitle, and + Create Shift Swaps Button -->
@@ -341,14 +359,13 @@ const paginatedTableSwaps = computed(() => {
           </p>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-create-swap"
+        <AppButton 
+          variant="primary" 
           @click="router.push('/hr/shift-swaps/create')"
         >
-          <Plus :size="18" />
-          <span>Create Shift Swaps</span>
-        </button>
+          <template #icon-left><Plus :size="16" /></template>
+          Create Shift Swaps
+        </AppButton>
       </div>
 
       <!-- Row 2: 4 Metric Cards in a single row (Figma Node 6328:117898) -->
@@ -763,42 +780,50 @@ const paginatedTableSwaps = computed(() => {
                   </div>
                 </td>
                 <td v-if="isColVisible('status')">
-                  <span class="swap-status-pill" :class="`state-${swap.swap_state}`">
-                    <template v-if="swap.swap_state === 'approved'">
-                      <CheckCircle2 :size="12" /> Approved
-                    </template>
-                    <template v-else-if="swap.swap_state === 'accepted'">
-                      <Clock :size="12" /> Counterpart Accepted
-                    </template>
-                    <template v-else-if="swap.swap_state === 'rejected'">
-                      <X :size="12" /> Rejected
-                    </template>
-                    <template v-else>
-                      <Clock :size="12" /> Awaiting Peer Consent
-                    </template>
-                  </span>
+                  <BaseBadge :color="getSwapStatusColor(swap.swap_state)">
+                    {{ getSwapStatusLabel(swap.swap_state) }}
+                  </BaseBadge>
                 </td>
                 <td v-if="isColVisible('submitted')" class="date-cell">
                   {{ new Date(swap.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                 </td>
-                <td v-if="isColVisible('actions')" class="th-actions">
-                  <div v-if="swap.swap_state === 'accepted'" class="table-actions-row">
-                    <button type="button" class="btn-table-action reject" @click="handleReject(swap)" title="Reject">
-                      <X :size="13" />
+                <td v-if="isColVisible('actions')" class="th-actions" @click.stop>
+                  <div class="action-dropdown-wrapper">
+                    <button
+                      type="button"
+                      class="btn-action-dots"
+                      title="Actions"
+                      @click="activeActionMenuId = activeActionMenuId === swap.id ? null : swap.id"
+                    >
+                      <MoreVertical :size="15" />
                     </button>
-                    <button type="button" class="btn-table-action approve" @click="handleApprove(swap)" title="Approve">
-                      <Check :size="13" />
-                    </button>
+
+                    <div v-if="activeActionMenuId === swap.id" class="action-popup-menu">
+                      <template v-if="swap.swap_state === 'accepted'">
+                        <button type="button" class="popup-item item-approve" @click="handleApprove(swap); activeActionMenuId = null;">
+                          <Check :size="13" />
+                          <span>Approve Swap</span>
+                        </button>
+                        <button type="button" class="popup-item item-reject" @click="handleReject(swap); activeActionMenuId = null;">
+                          <X :size="13" />
+                          <span>Reject Swap</span>
+                        </button>
+                      </template>
+                      <button 
+                        v-else-if="swap.is_open_giveaway && swap.swap_state === 'requested'"
+                        type="button" 
+                        class="popup-item"
+                        @click="handleClaim(swap); activeActionMenuId = null;"
+                      >
+                        <Hand :size="13" />
+                        <span>Claim Coverage</span>
+                      </button>
+                      <button type="button" class="popup-item" @click="activeActionMenuId = null;">
+                        <Info :size="13" />
+                        <span>View Details</span>
+                      </button>
+                    </div>
                   </div>
-                  <button 
-                    v-else-if="swap.is_open_giveaway && swap.swap_state === 'requested'"
-                    type="button" 
-                    class="btn-table-claim"
-                    @click="handleClaim(swap)"
-                  >
-                    <Hand :size="12" /> Claim
-                  </button>
-                  <span v-else class="table-audit-state">{{ swap.swap_state === 'approved' ? 'Approved' : 'Pending' }}</span>
                 </td>
               </tr>
             </tbody>
@@ -847,25 +872,6 @@ const paginatedTableSwaps = computed(() => {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
-}
-
-/* Toast */
-.action-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #ffffff;
-  color: #404040;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e5e5;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
 }
 
 /* ─── UNIFIED TOP SECTION CARD (Figma Node 6328:117889) ─── */
@@ -1496,64 +1502,80 @@ const paginatedTableSwaps = computed(() => {
   color: #404040;
 }
 
-.swap-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 16px;
+.action-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-.swap-status-pill.state-approved {
-  background: #ecfdf5;
-  color: #009966;
-}
-
-.swap-status-pill.state-accepted {
-  background: #e1eefd;
-  color: #0b529c;
-}
-
-.swap-status-pill.state-rejected {
-  background: #fef2f2;
-  color: #e7000b;
-}
-
-.swap-status-pill.state-requested {
-  background: #fef3c6;
-  color: #bb4d00;
-}
-
-.table-actions-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-table-action {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+.btn-action-dots {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e5e5e5;
-  background: #ffffff;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #737373;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
 }
 
-.btn-table-action.approve {
+.btn-action-dots:hover {
+  background-color: #f1f5f9;
+  color: #404040;
+}
+
+.action-popup-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 150px;
+  padding: 4px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #404040;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.popup-item:hover {
+  background-color: #f8fafc;
+}
+
+.popup-item.item-approve {
   color: #009966;
-  border-color: #a4f4cf;
+}
+
+.popup-item.item-approve:hover {
   background-color: #ecfdf5;
 }
 
-.btn-table-action.reject {
+.popup-item.item-reject {
   color: #e7000b;
-  border-color: #ffc9c9;
+}
+
+.popup-item.item-reject:hover {
   background-color: #fef2f2;
 }
 

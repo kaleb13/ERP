@@ -13,6 +13,8 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -118,11 +120,20 @@ const entityFilter = ref('all');
 const shiftTypeFilter = ref('all');
 const stateFilter = ref('all');
 const selectedRowIds = ref<number[]>([]);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getAssignmentStateColor = (state: string): 'success' | 'warning' | 'purple' | 'error' | 'blue' => {
+  switch (state) {
+    case 'published': return 'success';
+    case 'planned': return 'warning';
+    case 'swapped': return 'purple';
+    case 'cancelled': return 'error';
+    default: return 'blue';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const entityOptions = [
@@ -321,14 +332,6 @@ const shiftSelectOptions = [
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- Master Unified Table Card (Rule 10) -->
     <AppDataTable
       title="Shift Assignments"
@@ -462,12 +465,9 @@ const shiftSelectOptions = [
 
               <!-- State: Lifecycle Pills Strictly Reserved -->
               <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                <span
-                  class="status-pill"
-                  :class="`state-${item.assignment_state}`"
-                >
+                <BaseBadge :color="getAssignmentStateColor(item.assignment_state)">
                   {{ item.assignment_state.charAt(0).toUpperCase() + item.assignment_state.slice(1) }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Pattern Origin -->
@@ -663,9 +663,9 @@ const shiftSelectOptions = [
 
           <div class="info-group">
             <span class="info-label">Roster State</span>
-            <span class="status-pill" :class="`state-${viewingRecord.assignment_state}`">
+            <BaseBadge :color="getAssignmentStateColor(viewingRecord.assignment_state)">
               {{ viewingRecord.assignment_state }}
-            </span>
+            </BaseBadge>
           </div>
 
           <div class="info-group">
@@ -703,34 +703,6 @@ const shiftSelectOptions = [
 .breadcrumb-container {
   display: flex;
   align-items: center;
-}
-
-/* Toast */
-.toast-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #0f172a;
-  color: #ffffff;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 
 /* Table Actions Strip */
@@ -921,36 +893,6 @@ const shiftSelectOptions = [
   color: #737373;
 }
 
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 9px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.state-planned {
-  background-color: #eff6ff;
-  color: #2563eb;
-}
-
-.state-published {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-swapped {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.state-cancelled {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
 /* Actions Menu */
 .th-actions,
 .td-actions {
@@ -980,7 +922,7 @@ const shiftSelectOptions = [
 
 .btn-action-dots:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .action-popover {

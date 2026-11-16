@@ -15,6 +15,7 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   leaveTypesData, 
   leavePoliciesData, 
@@ -30,12 +31,11 @@ const breadcrumbItems = [
   { label: 'Create Leave Policy' }
 ];
 
+const { toast } = useToast();
 const isSaved = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Top Capsule Tabs (<BaseTabs /> AGENTS.md Rule 1) ───
@@ -647,12 +647,13 @@ const handleClearForm = () => {
   <div class="leave-policy-create-page">
     <!-- Top Bar Navigation (AGENTS.md Rule 4 & Breadcrumb Standard) -->
     <div class="top-nav-bar">
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems">
+        <template #badge>
+          <SaveStateBadge :isSaved="isSaved" />
+        </template>
+      </AppBreadcrumb>
 
       <div class="top-actions-cluster">
-        <!-- Save State Indicator -->
-        <SaveStateBadge :isSaved="isSaved" style="margin-left: 0" />
-
         <!-- Clear Form Secondary Button -->
         <AppButton 
           variant="outline" 
@@ -681,14 +682,6 @@ const handleClearForm = () => {
       :tabs="policyTabs" 
       size="md" 
     />
-
-    <!-- Toast Feedback -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <div class="policy-creation-body">
       <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -1192,15 +1185,16 @@ const handleClearForm = () => {
   min-height: 100vh;
 }
 
-/* Top Bar Navigation */
+/* Top Bar Navigation (AGENTS.md: Breadcrumb bar is strictly transparent on canvas, NEVER a white card) */
 .top-nav-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
-  padding: 12px 18px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  width: 100%;
 }
 
 .top-actions-cluster {
@@ -1210,12 +1204,7 @@ const handleClearForm = () => {
 }
 
 /* Save State Status Pill */
-.save-status-pill {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 3px 10px;
-  border-radius: 9999px;
-}
+
 .pill-not-saved {
   background-color: #fef3c7;
   color: #92400e;
@@ -1223,31 +1212,6 @@ const handleClearForm = () => {
 .pill-saved {
   background-color: #ecfdf5;
   color: #059669;
-}
-
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.25s ease;
-}
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
 }
 
 /* Button Standards (Rule 6: 8px to 10px rounded rectangle, NEVER pills) */
@@ -1550,7 +1514,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .btn-row-expand:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -1642,7 +1606,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -1781,7 +1745,7 @@ const handleClearForm = () => {
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
   opacity: 0.4;
@@ -1805,7 +1769,7 @@ const handleClearForm = () => {
 }
 .btn-modal-ctrl-action:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
   border-color: #cbd5e1;
 }
 </style>

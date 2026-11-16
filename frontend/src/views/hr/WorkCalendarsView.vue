@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { Calendar, Plus, Edit2, Info } from 'lucide-vue-next';;
+import { Calendar, Plus, Edit2, Info, MoreVertical, Eye } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
@@ -13,6 +14,7 @@ import FormCheckbox from '../../components/FormCheckbox.vue';
 import type { ColumnDef } from '../../components/BaseTable.vue';
 
 const router = useRouter();
+const activeActionMenuId = ref<number | null>(null);
 
 // ─── Breadcrumbs (Exact Sidebar Page Name Only) ───
 const breadcrumbItems = [
@@ -415,11 +417,12 @@ const filteredCalendars = computed(() => {
         </div>
       </div>
 
-      <!-- Secondary Sub-Navigation Tabs (<UnderlineTabs>) -->
+      <!-- Primary Sub-Navigation Tabs (AGENTS.md Single Tab Rule) -->
       <div class="tabs-subnav-row">
-        <UnderlineTabs 
+        <BaseTabs 
           v-model="activeSubTab" 
           :tabs="subTabs" 
+          type="rounded"
         />
       </div>
 
@@ -636,19 +639,34 @@ const filteredCalendars = computed(() => {
 
                     <!-- State -->
                     <td>
-                      <span class="status-pill status-active">Active</span>
+                      <BaseBadge :color="cal.state === 'active' ? 'success' : 'gray'">
+                        {{ cal.state === 'active' ? 'Active' : 'Inactive' }}
+                      </BaseBadge>
                     </td>
 
-                    <!-- Actions -->
+                    <!-- Actions (Standard 3-Dot Kebab Menu) -->
                     <td class="td-actions" @click.stop>
-                      <button 
-                        type="button" 
-                        class="btn-action-dots"
-                        @click="router.push(`/hr/work-calendars/${cal.id}`)"
-                        title="Edit Calendar"
-                      >
-                        <Edit2 :size="14" />
-                      </button>
+                      <div class="action-menu-relative">
+                        <button 
+                          type="button" 
+                          class="btn-action-dots"
+                          @click="activeActionMenuId = activeActionMenuId === cal.id ? null : cal.id"
+                          title="Actions"
+                        >
+                          <MoreVertical :size="15" />
+                        </button>
+
+                        <div v-if="activeActionMenuId === cal.id" class="dropdown-action-menu">
+                          <button class="dropdown-item" @click="router.push(`/hr/work-calendars/${cal.id}`); activeActionMenuId = null;">
+                            <Eye :size="14" />
+                            <span>View Calendar</span>
+                          </button>
+                          <button class="dropdown-item" @click="router.push(`/hr/work-calendars/${cal.id}/edit`); activeActionMenuId = null;">
+                            <Edit2 :size="14" />
+                            <span>Edit Calendar</span>
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -1258,19 +1276,6 @@ const filteredCalendars = computed(() => {
 .plain-cell-text {
   font-size: 13px;
   color: #737373;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
 }
 
 .th-actions, .td-actions {

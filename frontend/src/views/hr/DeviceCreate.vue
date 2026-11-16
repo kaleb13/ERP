@@ -9,8 +9,10 @@ import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3 & 4) ───
 const breadcrumbItems = [
@@ -19,11 +21,10 @@ const breadcrumbItems = [
 ];
 
 const isSaved = ref(false);
-const toastMessage = ref<string | null>(null);
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success('Device Registration', msg);
 };
 
 // ─── Branch Entity Preset Coordinates ───
@@ -170,14 +171,6 @@ const radiusOptions = [50, 100, 150, 250, 500, 1000];
         </AppButton>
       </div>
     </div>
-
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <div class="form-layout-container">
       <!-- ═══ CARD 1: GENERAL DEVICE IDENTIFIERS ═══ -->
@@ -384,12 +377,7 @@ const radiusOptions = [50, 100, 150, 250, 500, 1000];
   gap: 10px;
 }
 
-.save-status-pill {
-  padding: 3px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
+
 
 .pill-not-saved {
   background-color: #f1f5f9;
@@ -646,20 +634,6 @@ const radiusOptions = [50, 100, 150, 250, 500, 1000];
   height: 6px;
   border-radius: 50%;
   background: #0B529C;
-}
-
-/* ─── Toast Bar ─── */
-.toast-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  font-weight: 500;
 }
 
 .spin-icon {

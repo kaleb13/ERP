@@ -128,20 +128,20 @@ const ledger = [
     <!-- ROW: STATUS DISTRIBUTION + ALERTS -->
     <div class="split-grid">
       <!-- Status Distribution -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">INVENTORY STATUS DISTRIBUTION</h3>
-          <BaseBadge type="pill-color" color="gray" size="sm">GLOBALLY</BaseBadge>
+      <div class="card status-card">
+        <div class="status-card-header">
+          <span class="status-card-title">Inventory Status Distribution</span>
+          <span class="status-card-scope">Globally</span>
         </div>
         <div class="distribution-body">
           <div class="donut-wrap">
-            <svg class="donut" viewBox="0 0 180 180">
-              <circle class="donut-track" cx="90" cy="90" :r="RADIUS" />
+            <svg class="donut" viewBox="0 0 208 208">
+              <circle class="donut-track" cx="104" cy="104" :r="RADIUS" />
               <circle
                 v-for="(seg, i) in donutSegments"
                 :key="i"
-                cx="90"
-                cy="90"
+                cx="104"
+                cy="104"
                 :r="RADIUS"
                 :stroke="seg.color"
                 :stroke-dasharray="seg.dashArray"
@@ -157,8 +157,10 @@ const ledger = [
 
           <ul class="legend">
             <li v-for="s in statusData" :key="s.label" class="legend-item">
-              <span class="legend-dot" :style="{ backgroundColor: s.color }"></span>
-              <span class="legend-label">{{ s.label }}</span>
+              <div class="legend-item-left">
+                <span class="legend-dot" :style="{ backgroundColor: s.color }"></span>
+                <span class="legend-label">{{ s.label }}</span>
+              </div>
               <span class="legend-value">{{ s.count.toLocaleString() }} - {{ s.pct }}%</span>
             </li>
           </ul>
@@ -430,17 +432,43 @@ const ledger = [
 }
 @media (max-width: 1024px) { .split-grid { grid-template-columns: 1fr; } }
 
-/* Distribution */
+/* Distribution Card */
+.status-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.status-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.status-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #404040;
+  letter-spacing: 0.02em;
+}
+.status-card-scope {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #737373;
+  letter-spacing: 0.02em;
+}
 .distribution-body {
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 24px;
+  gap: 24px;
+  width: 100%;
 }
 .donut-wrap {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 208px;
+  height: 208px;
   flex-shrink: 0;
 }
 .donut {
@@ -451,13 +479,13 @@ const ledger = [
 .donut-track {
   fill: none;
   stroke: #f3f4f6;
-  stroke-width: 20;
+  stroke-width: 34;
 }
 .donut-segment {
   fill: none;
-  stroke-width: 20;
-  stroke-linecap: round;
-  transition: stroke-width 0.2s ease;
+  stroke-width: 34;
+  stroke-linecap: butt; /* Flat/flush straight edge - strictly NO rounded edges */
+  transition: opacity 0.2s ease;
 }
 .donut-center {
   position: absolute;
@@ -466,26 +494,61 @@ const ledger = [
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
-.donut-pct { font-size: 32px; font-weight: 700; color: #111827; line-height: 1; }
-.donut-pct-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #9ca3af; margin-top: 4px; }
+.donut-pct {
+  font-size: 35px;
+  font-weight: 700;
+  color: #404040;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.donut-pct-label {
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: #737373;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
 
 .legend {
   list-style: none;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
+  padding: 0;
+  margin: 0;
 }
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
+  justify-content: space-between;
+  font-size: 14px;
+  line-height: 20px;
 }
-.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.legend-label { color: #374151; }
-.legend-value { margin-left: auto; color: #6b7280; font-weight: 500; }
+.legend-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-label {
+  color: #737373;
+  font-size: 14px;
+  font-weight: 400;
+}
+.legend-value {
+  color: #737373;
+  font-size: 14px;
+  font-weight: 400;
+}
 
 /* Alerts */
 .alert-title { display: flex; align-items: center; gap: 8px; }
@@ -692,7 +755,7 @@ const ledger = [
   padding: 9px 12px;
   font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: #737373;
   background: none;
   border: none;
   border-radius: 6px;
@@ -700,7 +763,7 @@ const ledger = [
   text-align: left;
   transition: all 0.15s ease;
 }
-.ledger-dropdown-item:hover { background: #f1f5f9; color: #0f172a; }
+.ledger-dropdown-item:hover { background: #f1f5f9; color: #404040; }
 
 .timeline {
   list-style: none;

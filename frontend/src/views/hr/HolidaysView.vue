@@ -7,6 +7,7 @@ import {
   List
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -14,7 +15,9 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -148,7 +151,7 @@ const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
 const isQuickSubmitting = ref(false);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 
 // ─── Filter Tabs ───
 const categoryTabs = computed(() => [
@@ -229,8 +232,7 @@ const handleSaveQuick = () => {
     holidays.value.unshift(newRecord);
     isQuickSubmitting.value = false;
     showQuickCreate.value = false;
-    toastMessage.value = `Holiday "${quickForm.value.name_en}" saved successfully.`;
-    setTimeout(() => { toastMessage.value = null; }, 3500);
+    toast.success(`Holiday "${quickForm.value.name_en}" saved successfully.`);
   }, 400);
 };
 
@@ -256,10 +258,9 @@ const handleToggleRow = (id: number) => {
 };
 
 const handleBatchDelete = () => {
+  toast.success(`${selectedRowIds.value.length} holidays deleted.`);
   holidays.value = holidays.value.filter(h => !selectedRowIds.value.includes(h.id));
-  toastMessage.value = `${selectedRowIds.value.length} holidays deleted.`;
   selectedRowIds.value = [];
-  setTimeout(() => { toastMessage.value = null; }, 3000);
 };
 </script>
 
@@ -268,12 +269,6 @@ const handleBatchDelete = () => {
     <!-- Breadcrumb Standard -->
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Notification Toast -->
-    <div v-if="toastMessage" class="action-toast">
-      <CheckCircle2 :size="16" class="text-emerald-600" />
-      <span>{{ toastMessage }}</span>
     </div>
 
     <!-- Unified Table Card Layout -->
@@ -308,23 +303,24 @@ const handleBatchDelete = () => {
             </button>
           </div>
 
-          <button 
-            type="button" 
-            class="btn-create-holiday" 
+          <AppButton 
+            variant="primary" 
+            size="sm"
             @click="handleOpenQuickCreate"
           >
-            <Plus :size="15" />
-            <span>Create Holiday</span>
-          </button>
+            <template #icon-left><Plus :size="15" /></template>
+            Create Holiday
+          </AppButton>
         </div>
       </template>
 
-      <!-- Category Filter Tabs inside Table Card -->
+      <!-- Category Filter Tabs inside Table Card (AGENTS.md Single Tab Rule) -->
       <template #pre-table>
         <div class="table-subnav">
-          <UnderlineTabs 
+          <BaseTabs 
             v-model="activeTab" 
             :tabs="categoryTabs"
+            type="rounded"
           />
         </div>
       </template>
@@ -414,9 +410,9 @@ const handleBatchDelete = () => {
 
                 <!-- State -->
                 <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                  <span class="status-pill" :class="hol.state === 'active' ? 'status-active' : 'status-inactive'">
+                  <BaseBadge :color="hol.state === 'active' ? 'success' : 'gray'">
                     {{ hol.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions -->
@@ -555,24 +551,6 @@ const handleBatchDelete = () => {
 .breadcrumb-container {
   display: flex;
   align-items: center;
-}
-
-.action-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #ffffff;
-  color: #404040;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
 }
 
 .toolbar-actions {
@@ -725,24 +703,6 @@ const handleBatchDelete = () => {
   font-size: 12px;
   font-weight: 600;
   color: #059669;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Actions */
@@ -904,7 +864,7 @@ const handleBatchDelete = () => {
   padding: 2px 6px;
   border-radius: 4px;
   background: #f1f5f9;
-  color: #475569;
+  color: #737373;
 }
 
 .tag-paid {

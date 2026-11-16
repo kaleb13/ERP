@@ -10,8 +10,10 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
+import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 
 import {
@@ -120,6 +122,16 @@ const filteredAnnouncements = computed(() => {
 
 // ─── SELECTION ───────────────────────────────────────────────────────────
 const selectedIds = ref<number[]>([]);
+const getAnnouncementStateColor = (state: string): 'success' | 'warning' | 'gray' | 'blue' => {
+  switch (state) {
+    case 'published': return 'success';
+    case 'scheduled': return 'blue';
+    case 'archived': return 'gray';
+    case 'draft': return 'warning';
+    default: return 'gray';
+  }
+};
+
 const isAllSelected = computed(() => {
   return (
     filteredAnnouncements.value.length > 0 &&
@@ -142,6 +154,10 @@ const toggleSelectRow = (id: number) => {
   } else {
     selectedIds.value.push(id);
   }
+};
+
+const handleBatchDelete = () => {
+  selectedIds.value = [];
 };
 
 // ─── TABLE COLUMNS (Rule 9: Atomic columns, Name first, Code subtext) ────
@@ -351,11 +367,10 @@ const handleDelete = (id: number) => {
             <thead>
               <tr>
                 <th class="th-checkbox">
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    class="table-checkbox"
-                    @change="toggleSelectAll"
+                  <FormCheckbox
+                    :model-value="isAllSelected"
+                    :indeterminate="selectedIds.length > 0 && !isAllSelected"
+                    @update:model-value="toggleSelectAll"
                   />
                 </th>
                 <th v-if="isColumnVisible('title')">Notice Title</th>
@@ -366,7 +381,7 @@ const handleDelete = (id: number) => {
                 <th v-if="isColumnVisible('published_by')">Published By</th>
                 <th v-if="isColumnVisible('status')">Status</th>
                 <th v-if="isColumnVisible('state')">State</th>
-                <th v-if="isColumnVisible('actions')" class="th-actions"></th>
+                <th v-if="isColumnVisible('actions')" class="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -378,11 +393,9 @@ const handleDelete = (id: number) => {
               >
                 <!-- Checkbox -->
                 <td class="td-checkbox">
-                  <input
-                    type="checkbox"
-                    :checked="selectedIds.includes(item.id)"
-                    class="table-checkbox"
-                    @change="toggleSelectRow(item.id)"
+                  <FormCheckbox
+                    :model-value="selectedIds.includes(item.id)"
+                    @update:model-value="toggleSelectRow(item.id)"
                   />
                 </td>
 
@@ -433,22 +446,16 @@ const handleDelete = (id: number) => {
 
                 <!-- Status (Lifecycle state) -->
                 <td v-if="isColumnVisible('status')">
-                  <span
-                    class="status-pill"
-                    :class="`status-${item.announcement_state}`"
-                  >
+                  <BaseBadge :color="getAnnouncementStateColor(item.announcement_state)">
                     {{ item.announcement_state.charAt(0).toUpperCase() + item.announcement_state.slice(1) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- State (Rule 9: Active / Inactive) -->
                 <td v-if="isColumnVisible('state')">
-                  <span
-                    class="state-pill"
-                    :class="`state-${item.state}`"
-                  >
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions Menu (3-dots) -->
@@ -525,6 +532,16 @@ const handleDelete = (id: number) => {
           </table>
         </template>
       </AppDataTable>
+
+      <!-- Floating Batch Bar -->
+      <TableFloatingBar
+        :show="selectedIds.length > 0"
+        :count="selectedIds.length"
+        :total="filteredAnnouncements.length"
+        @delete="handleBatchDelete"
+        @close="selectedIds = []"
+        @clear="selectedIds = []"
+      />
     </div>
 
     <!-- ─── COMPLIANCE ACKNOWLEDGMENT PROGRESS MODAL ────────────────────── -->
@@ -858,55 +875,6 @@ const handleDelete = (id: number) => {
   height: 100%;
   background-color: #0b529c;
   border-radius: 9999px;
-}
-
-/* Status & State Pills (Rule 9) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-published {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-scheduled {
-  background-color: #eff6ff;
-  color: #0284c7;
-}
-
-.status-draft {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.status-archived {
-  background-color: #f8fafc;
-  color: #94a3b8;
-}
-
-.state-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Actions Menu */

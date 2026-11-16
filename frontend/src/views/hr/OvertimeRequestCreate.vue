@@ -11,6 +11,7 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   createOvertimeRequest, 
   OVERTIME_TYPE_MAP, 
@@ -28,13 +29,12 @@ const breadcrumbItems = [
   { label: 'Create Overtime Request' }
 ];
 
+const { toast } = useToast();
 const isSaved = ref(false);
 const showDraftMenu = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Master Form State conforming to Schema Lines 1953–1982 ───
@@ -387,12 +387,7 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
   gap: 10px;
 }
 
-.save-status-pill {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 9999px;
-}
+
 
 .pill-not-saved {
   background-color: #fef3c7;

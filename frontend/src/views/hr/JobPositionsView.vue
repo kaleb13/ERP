@@ -9,12 +9,14 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -79,7 +81,7 @@ const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
 const showDetailModal = ref(false);
 const selectedPositionForDetail = ref<JobPositionRecord | null>(null);
-const quickActionToast = ref<string | null>(null);
+const { toast } = useToast();
 
 // ─── Table Columns (Strict Single-Information & Name-First Hierarchy) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -384,10 +386,7 @@ const closeActionMenu = () => {
 };
 
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success(msg);
 };
 
 const formatETB = (val: number) => {
@@ -508,12 +507,6 @@ onUnmounted(() => {
     <!-- Breadcrumb Bar -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- MAIN DATA TABLE -->
@@ -660,9 +653,12 @@ onUnmounted(() => {
 
               <!-- Badges reserved strictly for lifecycle state -->
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                <BaseBadge 
+                  :color="item.state === 'active' ? 'success' : 'gray'"
+                  size="sm"
+                >
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Action 3-dots -->
@@ -917,21 +913,6 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
-/* Toast Banner */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  font-size: 13.5px;
-  color: #065f46;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
 .directory-view-wrapper {
   background: #ffffff;
   border-radius: 12px;
@@ -1063,26 +1044,6 @@ onUnmounted(() => {
 .text-tertiary {
   color: #737373;
   font-size: 13px;
-}
-
-/* Lifecycle Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action 3-dots Menu */

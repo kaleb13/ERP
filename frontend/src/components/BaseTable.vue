@@ -679,11 +679,20 @@ if (typeof window !== 'undefined') {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
   transition: all 0.15s ease;
 }
 
 :deep(.btn-action-dots:hover) {
   background-color: #f1f5f9;
   color: #404040;
+}
+
+:deep(.btn-action-dots:focus),
+:deep(.btn-action-dots:focus-visible),
+:deep(.btn-action-dots:active) {
+  outline: none !important;
+  box-shadow: none !important;
 }
 </style>

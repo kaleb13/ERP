@@ -166,7 +166,7 @@ const isColVisible = (key: string) => {
   - **Never use `<BaseTabs />`** as a top-level switcher between a Directory list table and a Detail profile view.
   - Directory table is always the root view.
   - Clicking a record row or selecting "View Details" from the action menu transitions to the detail view (`viewMode = 'detail'`).
-  - The detail view provides breadcrumb and back-button navigation (`← Back to [Entities]`) to return to the table.
+  - **Zero Back Buttons (Strict Breadcrumb-Only Navigation)**: Detail views and sub-pages MUST navigate strictly via the clickable breadcrumb (`AppBreadcrumb`). **NEVER** create a "Back" button, back arrow, or `← Back to [Entities]` button.
   - **Strict Data Isolation**: Detail pages MUST be dedicated exclusively to the selected record. **NEVER** display other entities as selector tabs or pill bars inside a detail page.
 
 ---
@@ -312,3 +312,38 @@ const isColVisible = (key: string) => {
 - **Outside-Click & Cleanup**:
   - Register a document/window click handler to automatically close the action popover when the user clicks elsewhere.
   - Always clean up the event listener in `onUnmounted`.
+
+---
+
+## 12. Zero Scrollable Tables (Full-Bleed 100% Fit Standard)
+- **Strict Prohibition of Horizontal Scrollbars**:
+  - Tables across all standard ERP directory and listing views MUST fit 100% of the container width naturally without horizontal scrollbars (`overflow-x: auto;` or horizontal overflow wrappers).
+  - Never set artificial horizontal scroll containers on standard directory tables.
+- **Compact & High-Signal Column Architectures**:
+  - Maintain 5 to 8 high-signal scanning columns by default. Non-essential, detailed, or secondary columns should be toggleable via the Column Hider (`visible: false` by default).
+  - Never dump every database column into the default directory table view, which forces table containers to overflow and scroll.
+
+---
+
+## 13. Mandatory Action Column Header Label
+- **Explicit Column Title**:
+  - The Actions column header MUST ALWAYS display an explicit column title (`Action` or `Actions`), matching Figma specifications.
+  - **NEVER** leave the Action column header empty (`label: ''` or empty `<th>`), which causes confusing blank gaps in the table header row.
+
+---
+
+## 14. Zero Focus Outline on Action Buttons (`MoreVertical` / `.btn-action-dots`)
+- **No Browser Focus Halos**:
+  - Clicking the 3-dot kebab action menu button must NEVER display a browser focus outline, halo ring, or black/blue focus border.
+  - All `.btn-action-dots` styles MUST strictly specify:
+    ```css
+    .btn-action-dots,
+    .btn-action-dots:focus,
+    .btn-action-dots:focus-visible,
+    .btn-action-dots:active {
+      outline: none !important;
+      box-shadow: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    ```
+

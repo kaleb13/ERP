@@ -11,6 +11,7 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -21,13 +22,12 @@ const breadcrumbItems = [
 ];
 
 // ─── State & Save Tracking ───
+const { toast } = useToast();
 const isSaved = ref(false);
 const isDraft = ref(true);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Scope Parameters ───
@@ -452,14 +452,6 @@ const handlePublishRoster = () => {
       </div>
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- Scope & Parameters Toolbar -->
     <div class="scope-toolbar-card">
       <div class="scope-controls-group">
@@ -809,34 +801,6 @@ const handlePublishRoster = () => {
   background-color: #094380;
 }
 
-/* Toast */
-.toast-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #0f172a;
-  color: #ffffff;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
 /* Scope & Parameters Toolbar */
 .scope-toolbar-card {
   display: flex;
@@ -906,7 +870,7 @@ const handlePublishRoster = () => {
 
 .btn-nav-arrow:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .week-label-display {
@@ -927,7 +891,7 @@ const handlePublishRoster = () => {
   border: 1px solid #cbd5e1;
   border-radius: 4px;
   font-size: 11px;
-  color: #475569;
+  color: #737373;
   cursor: pointer;
 }
 
@@ -1175,7 +1139,7 @@ const handlePublishRoster = () => {
 
 .state-pub { color: #059669; }
 .state-swp { color: #7c3aed; }
-.state-dft { color: #2563eb; }
+.state-dft { color: #0B529C; }
 
 /* Tag Colors */
 .shift-tag-amber {
@@ -1195,7 +1159,7 @@ const handlePublishRoster = () => {
 
 .shift-tag-slate {
   background-color: #e2e8f0;
-  color: #334155;
+  color: #404040;
 }
 
 .shift-tag-emerald {

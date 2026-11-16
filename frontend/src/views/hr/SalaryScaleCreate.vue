@@ -13,8 +13,10 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Active Tab State (Capsule Tabs: Salary Scale Detail vs Pay Grade & Steps) ───
 type TabKey = 'scale' | 'grades';
@@ -27,7 +29,6 @@ const tabs: BaseTabItem<TabKey>[] = [
 
 // ─── Document State ───
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 const showAdjustmentModal = ref(false);
 const adjustmentPercent = ref(0);
 
@@ -146,10 +147,9 @@ watch(() => form.value.number_of_steps, (newVal) => {
   });
 });
 
-// ─── Handlers ───
+// ─── Handlers (Strict Centralized useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => { quickActionToast.value = null; }, 4000);
+  toast.success('Salary Scale', msg);
 };
 
 const handleAddGradeRow = () => {
@@ -292,12 +292,6 @@ const breadcrumbItems = [
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Toast Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- ═══ PRIMARY TABS (<BaseTabs /> Capsule Pills) ═══ -->
@@ -675,22 +669,9 @@ const breadcrumbItems = [
   gap: 12px;
 }
 
-.save-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-}
-.status-unsaved {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-.status-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
+
+
+
 
 .top-bar-right {
   display: flex;
@@ -738,26 +719,6 @@ const breadcrumbItems = [
 }
 
 /* ═══ TOAST BANNER ═══ */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  animation: fadeIn 0.2s ease;
-}
-.toast-icon { color: #059669; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* ═══ PRIMARY TABS (<BaseTabs /> Capsule Container) ═══ */
 .page-tabs-container {
   margin-bottom: 18px;
@@ -1239,7 +1200,7 @@ const breadcrumbItems = [
 .modal-dialog-title {
   font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
+  color: #404040;
   margin: 0;
 }
 
@@ -1258,7 +1219,7 @@ const breadcrumbItems = [
 }
 .btn-modal-close:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .modal-dialog-body {
@@ -1284,7 +1245,7 @@ const breadcrumbItems = [
 .modal-input-label {
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: #404040;
 }
 
 .modal-text-input {
@@ -1294,7 +1255,7 @@ const breadcrumbItems = [
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
-  color: #0f172a;
+  color: #404040;
   background-color: #ffffff;
   transition: border-color 0.15s, box-shadow 0.15s;
 }

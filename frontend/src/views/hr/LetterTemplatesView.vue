@@ -8,11 +8,13 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormRichText from '../../components/FormRichText.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import {
   letterTemplatesData,
   LETTER_TYPE_MAP,
@@ -37,11 +39,10 @@ const breadcrumbItems = [
 
 const searchQuery = ref('');
 const selectedTypeFilter = ref<string>('all');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Filtered Dataset ───
@@ -234,14 +235,6 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
     <!-- Breadcrumb Standard (AGENTS.md Rule 3) -->
     <AppBreadcrumb :items="breadcrumbItems" />
 
-    <!-- Toast Notification -->
-    <transition name="fade">
-      <div v-if="toastMessage" class="toast-notification">
-        <CheckCircle2 :size="16" class="toast-icon" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </transition>
-
     <!-- Unified Data Table Container (Matching Figma 7454:138158) -->
     <AppDataTable
       title="Letter Templates"
@@ -318,9 +311,9 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
                 <!-- Status (Active / Inactive State Pill) -->
                 <td v-if="isColVisible('status')" class="td-state">
-                  <span class="state-pill" :class="tmpl.state === 'active' ? 'state-active' : 'state-inactive'">
+                  <BaseBadge :color="tmpl.state === 'active' ? 'success' : 'gray'">
                     {{ tmpl.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Row Actions -->
@@ -674,27 +667,6 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   margin: 0 auto;
 }
 
-/* Toast */
-.toast-notification {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background-color: #065f46;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 2000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.toast-icon {
-  color: #34d399;
-}
-
 /* Table Controls */
 .table-controls-wrapper {
   padding: 0 16px 14px 16px;
@@ -770,7 +742,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .btn-icon-toolbar:hover {
   background-color: #f8fafc;
-  color: #0f172a;
+  color: #404040;
 }
 
 .btn-primary-blue {
@@ -860,18 +832,6 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   color: #737373;
   font-size: 13px;
 }
-
-/* Status State Pill (Active / Inactive) */
-.state-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.state-active { background-color: #ecfdf5; color: #059669; }
-.state-inactive { background-color: #f1f5f9; color: #64748b; }
 
 .btn-action-dots {
   width: 28px;
@@ -1064,7 +1024,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .seg-pill-btn.active {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #404040;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   font-weight: 600;
 }
@@ -1084,7 +1044,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .btn-close-header:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 /* Split Body */
@@ -1441,7 +1401,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 .figma-letter-body-block {
   font-size: 13px;
   line-height: 1.7;
-  color: #475569;
+  color: #737373;
   margin-bottom: 24px;
 }
 
@@ -1578,7 +1538,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .btn-close-header:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .document-paper-container {

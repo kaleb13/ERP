@@ -2,15 +2,17 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
-  MoreVertical, X, CheckCircle2, Scale,
-  Save, FileText
-} from 'lucide-vue-next';;
+  MoreVertical, X, CheckCircle2,
+  FileText
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   staffMembers, 
   createAllocation, 
@@ -21,21 +23,20 @@ import { leaveTypesData, leavePoliciesData } from './leavePolicyData';
 const router = useRouter();
 const route = useRoute();
 
-// ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3 & 4) ───
-// STRICTLY NO separate back button! Breadcrumb itself is the sole navigation.
+// ─── Breadcrumb Navigation Standard (AGENTS.md) ───
 const breadcrumbItems = [
   { label: 'Leave Allocations', to: '/hr/leave-allocations' },
   { label: 'Create Leave Allocation' }
 ];
 
 // Top bar state
+const { toast } = useToast();
 const isSaved = ref(false);
+const isDraft = ref(false);
 const showMoreDropdown = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Staff Options ───
@@ -115,7 +116,6 @@ const applyPolicyCalculation = () => {
   const rule = availablePolicyRules.value.find(r => r.value === form.value.leave_policy_rule_id);
   
   if (rule) {
-    // Ethiopian statutory formula: base + extra per service year
     const extra = Math.floor(staff.service_years / 2) * (rule.extraPerYear || 1.0);
     const computedDays = Math.min(rule.days + extra, rule.maxDays || 30.0);
     form.value.allocated_days = computedDays;
@@ -133,13 +133,6 @@ const handlePolicyRuleChange = () => {
 // Real-time calculated total entitled
 const computedTotalEntitled = computed(() => {
   return Number(form.value.allocated_days || 0) + Number(form.value.carried_forward_days || 0);
-});
-
-// Interactive Service Year Simulator in Assistant Panel
-const simYears = ref(3);
-const simCalculatedQuota = computed(() => {
-  const bonus = Math.floor(simYears.value / 2);
-  return Math.min(16 + bonus, 30);
 });
 
 // Sync from route query params if expanded from modal
@@ -184,6 +177,7 @@ const handleSaveDraft = () => {
     isDraft: true
   });
   isSaved.value = true;
+  isDraft.value = true;
   showToast(`Allocation ${record.code} saved as Draft.`);
   setTimeout(() => {
     router.push(`/hr/leave-allocations/${record.id}`);
@@ -215,6 +209,7 @@ const handleSubmit = () => {
   });
 
   isSaved.value = true;
+  isDraft.value = false;
   showToast(`Leave allocation ${record.code} granted successfully.`);
   setTimeout(() => {
     router.push(`/hr/leave-allocations/${record.id}`);
@@ -224,38 +219,39 @@ const handleSubmit = () => {
 
 <template>
   <div class="allocation-create-page" @click="showMoreDropdown = false">
-    <!-- Top Bar (AGENTS.md Rule 4 & Breadcrumb Standard) -->
-    <div class="top-nav-bar">
-      <!-- STRICTLY NO separate back button! Breadcrumb itself navigates. -->
-      <div class="breadcrumb-group">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :isSaved="isSaved" />
+    <!-- Top Action & Breadcrumb Navigation Bar -->
+    <div class="create-header-bar">
+      <div class="header-left">
+        <AppBreadcrumb :items="breadcrumbItems" noMargin>
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
-      <div class="actions-group">
-        <!-- Dynamic 3-Dots More Menu [ ⋮ ] (Draft Support per Rule 4) -->
-        <div class="more-menu-wrapper" @click.stop>
+      <div class="header-actions">
+        <!-- 3-Dots Action Menu (Available for Draft support) -->
+        <div class="header-more-menu-wrapper" @click.stop>
           <AppButton 
             variant="outline" 
             size="sm" 
             iconOnly
-            title="More actions"
+            title="More Options"
             @click="showMoreDropdown = !showMoreDropdown"
           >
             <MoreVertical :size="16" />
           </AppButton>
-
+          
           <Transition name="dropdown-fade">
-            <div v-if="showMoreDropdown" class="more-dropdown-menu">
+            <div v-if="showMoreDropdown" class="header-more-dropdown">
               <button type="button" class="more-menu-item" @click="handleSaveDraft">
-                <FileText :size="14" />
+                <FileText :size="14" class="menu-item-icon" />
                 <span>Save as Draft</span>
               </button>
             </div>
           </Transition>
         </div>
 
-        <!-- Clear Form Secondary Button -->
         <AppButton 
           variant="outline" 
           size="sm" 
@@ -265,7 +261,6 @@ const handleSubmit = () => {
           Clear Form
         </AppButton>
 
-        <!-- Save Primary Button (Rule 6: Rectangular 8px, text: Save) -->
         <AppButton 
           variant="primary" 
           size="sm" 
@@ -276,179 +271,114 @@ const handleSubmit = () => {
       </div>
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
+    <!-- Main Creation Form Content -->
+    <div class="create-content-stack">
+      <!-- Master Form Card: Allocation Details -->
+      <div class="clean-card">
+        <div class="section-title-box">
+          <h2 class="section-title">Leave Allocation Details</h2>
+        </div>
 
-    <div class="allocation-layout-columns">
-      <!-- MAIN COLUMN: ALLOCATION SPECIFICATION FORM -->
-      <div class="main-form-column">
-        <div class="clean-card">
-          <div class="card-header-bar">
-            <div>
-              <h2 class="card-title">Entitlement Holder &amp; Fiscal Period</h2>
-              <p class="card-subtitle">Designates the employee receiving annual leave and the Ethiopian statutory fiscal year.</p>
-            </div>
-          </div>
-
-          <div class="form-grid-2">
-            <!-- Select Employee -->
-            <div class="form-group">
-              <label class="form-label required">Entitlement Holder (Employee)</label>
-              <FormSelect
-                v-model="form.employee_id"
-                :options="employeeOptions"
-                placeholder="Select"
-                @update:modelValue="handleEmployeeChange"
-              />
-            </div>
-
-            <!-- Leave Type -->
-            <div class="form-group">
-              <label class="form-label required">Leave Type</label>
-              <FormSelect
-                v-model="form.leave_type_id"
-                :options="leaveTypeOptions"
-                placeholder="Select"
-              />
-            </div>
-          </div>
-
-          <!-- Policy Rule Binding (Schema Line 1640: leave_policy_rule_id) -->
-          <div class="policy-binding-section">
-            <FormCheckbox
-              v-model="form.is_policy_linked"
-              label="Link to Organizational Policy Rule"
-              description="Calculate statutory baseline and service year additions automatically using the enterprise rulebook."
-            />
-
-            <div v-if="form.is_policy_linked" class="rule-dropdown-wrap">
-              <label class="form-label required">Applicable Leave Policy Rule</label>
-              <FormSelect
-                v-model="form.leave_policy_rule_id"
-                :options="policyRuleSelectOptions"
-                placeholder="Select"
-                @update:modelValue="handlePolicyRuleChange"
-              />
-            </div>
-          </div>
-
-          <!-- Fiscal Period Grid -->
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label required">Fiscal Period Start</label>
-              <FormInput
-                type="date"
-                v-model="form.period_start"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Fiscal Period End</label>
-              <FormInput
-                type="date"
-                v-model="form.period_end"
-              />
-            </div>
-          </div>
-
-          <!-- Days Configuration Grid -->
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label required">Base Allocated Days</label>
-              <FormInput
-                type="number"
-                v-model="form.allocated_days"
-                hint="Statutory base (16.0d) plus completed service additions (+1.0d per 2 years)"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Carried Forward Days (Rollover)</label>
-              <FormInput
-                type="number"
-                v-model="form.carried_forward_days"
-                hint="Unused quota brought forward from prior fiscal cycle. Subject to 2-year statutory expiry"
-              />
-            </div>
-          </div>
-
-          <!-- Notes / Justification -->
+        <div class="form-grid-2">
+          <!-- Entitlement Holder (Employee) -->
           <div class="form-group">
-            <label class="form-label">Allocation Notes &amp; Statutory Justification</label>
-            <FormInput
-              v-model="form.notes"
+            <label class="form-label required">Entitlement Holder (Employee)</label>
+            <FormSelect
+              v-model="form.employee_id"
+              :options="employeeOptions"
+              placeholder="Select Employee"
+              :searchable="true"
+              @update:modelValue="handleEmployeeChange"
             />
+          </div>
+
+          <!-- Leave Type -->
+          <div class="form-group">
+            <label class="form-label required">Leave Type</label>
+            <FormSelect
+              v-model="form.leave_type_id"
+              :options="leaveTypeOptions"
+              placeholder="Select Leave Type"
+            />
+          </div>
+        </div>
+
+        <!-- Policy Rule Binding Section -->
+        <div class="policy-binding-section">
+          <FormCheckbox
+            v-model="form.is_policy_linked"
+            label="Link to Organizational Policy Rule"
+          />
+
+          <div v-if="form.is_policy_linked" class="rule-dropdown-wrap">
+            <label class="form-label required">Applicable Leave Policy Rule</label>
+            <FormSelect
+              v-model="form.leave_policy_rule_id"
+              :options="policyRuleSelectOptions"
+              placeholder="Select Rule"
+              @update:modelValue="handlePolicyRuleChange"
+            />
+          </div>
+        </div>
+
+        <!-- Fiscal Period Grid -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label required">Fiscal Period Start</label>
+            <FormInput
+              type="date"
+              v-model="form.period_start"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Fiscal Period End</label>
+            <FormInput
+              type="date"
+              v-model="form.period_end"
+            />
+          </div>
+        </div>
+
+        <!-- Days & Quota Allocation Grid -->
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label required">Base Allocated Days</label>
+            <FormInput
+              type="number"
+              v-model.number="form.allocated_days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Carried Forward Days (Rollover)</label>
+            <FormInput
+              type="number"
+              v-model.number="form.carried_forward_days"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Total Authorized Quota</label>
+            <div class="quota-total-display">
+              <span class="quota-total-value">{{ computedTotalEntitled.toFixed(1) }} Days</span>
+              <span class="quota-total-breakdown">({{ form.allocated_days || 0 }}d Base + {{ form.carried_forward_days || 0 }}d Rollover)</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- SIDEBAR COLUMN: LIVE QUOTA SUMMARY & STATUTORY ACCRUAL ASSISTANT -->
-      <div class="side-assistant-column">
-        <!-- Live Entitlement Card -->
-        <div class="clean-card preview-card">
-          <h3 class="side-card-title">Live Entitlement Calculation</h3>
-
-          <!-- Employee mini avatar -->
-          <div class="staff-mini-hero">
-            <img :src="selectedStaff.avatar" :alt="selectedStaff.name" class="staff-avatar-mini" />
-            <div>
-              <span class="staff-name-bold">{{ selectedStaff.name }}</span>
-              <span class="staff-code-sub">{{ selectedStaff.code }} • {{ selectedStaff.position }}</span>
-            </div>
-          </div>
-
-          <div class="entitlement-stat-block">
-            <span class="entitlement-label">TOTAL AUTHORIZED QUOTA</span>
-            <span class="entitlement-hero-val">{{ computedTotalEntitled.toFixed(1) }} Working Days</span>
-            <span class="entitlement-calc-sub">
-              {{ form.allocated_days.toFixed(1) }} Base + {{ form.carried_forward_days.toFixed(1) }} Rollover
-            </span>
-          </div>
-
-          <div class="statutory-specs-box">
-            <div class="spec-row">
-              <span class="spec-k">Service Tenancy:</span>
-              <span class="spec-v">{{ selectedStaff.service_years }} Completed Years</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-k">Rollover Expiry:</span>
-              <span class="spec-v">Jul 7, 2028 (2 Fiscal Cycles)</span>
-            </div>
-            <div class="spec-row">
-              <span class="spec-k">Encashable Rights:</span>
-              <span class="spec-v">Permitted at Separation</span>
-            </div>
-          </div>
+      <!-- Description / Justification Card: FormRichText -->
+      <div class="clean-card">
+        <div class="section-title-box">
+          <h2 class="section-title">Allocation Notes & Justification</h2>
         </div>
-
-        <!-- Statutory Policy Helper Assistant -->
-        <div class="clean-card helper-card">
-          <div class="helper-header">
-            <Scale :size="16" class="text-blue" />
-            <h4 class="helper-title">Ethiopian Labor Law Proclamation 1156/2019</h4>
-          </div>
-
-          <p class="helper-text">
-            Every full-time staff member completing 1 continuous service year is entitled to <b>16 working days</b> minimum rest leave, plus <b>+1 extra day</b> for every additional 2 service years, capped at <b>30 working days</b>.
-          </p>
-
-          <div class="simulator-mini">
-            <label class="sim-label">
-              Service Simulator: <b>{{ simYears }} Years</b> ➔ <b>{{ simCalculatedQuota }} Days</b>
-            </label>
-            <input 
-              type="range" 
-              v-model.number="simYears" 
-              min="1" 
-              max="25" 
-              class="sim-slider" 
-            />
-          </div>
+        <div class="rich-text-container">
+          <FormRichText
+            v-model="form.notes"
+            placeholder="Enter administrative notes, statutory justification, or policy reference..."
+            min-height="160px"
+          />
         </div>
       </div>
     </div>
@@ -459,82 +389,52 @@ const handleSubmit = () => {
 .allocation-create-page {
   display: flex;
   flex-direction: column;
-  gap: var(--alias-spacing-3xl, 24px);
+  gap: 20px;
   padding: 0;
-  background-color: #f8fafc;
+  background-color: var(--color-background-primary, #fafafa);
   min-height: 100vh;
 }
 
-/* Top Nav Bar */
-.top-nav-bar {
+/* Top Nav Bar (AGENTS.md: Breadcrumb bar is strictly transparent on canvas, NEVER a white card) */
+.create-header-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
-  padding: 12px 18px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  width: 100%;
 }
 
-.breadcrumb-group {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.save-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-.badge-not-saved {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-.badge-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.actions-group {
+.header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.more-menu-wrapper {
+.header-more-menu-wrapper {
   position: relative;
 }
 
-.btn-more-options {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #404040;
-  cursor: pointer;
-}
-.btn-more-options:hover {
-  background-color: #f8fafc;
-}
-
-.more-dropdown-menu {
+.header-more-dropdown {
   position: absolute;
-  top: 40px;
+  top: calc(100% + 6px);
   right: 0;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 4px;
   min-width: 150px;
   z-index: 50;
 }
+
 .more-menu-item {
   width: 100%;
   display: flex;
@@ -544,112 +444,69 @@ const handleSubmit = () => {
   border: none;
   background: transparent;
   font-size: 13px;
-  color: #404040;
+  color: var(--alias-color-text-secondary, #404040);
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
+  transition: background-color 0.15s ease;
 }
+
 .more-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-background-primary, #fafafa);
 }
 
-/* Button Standard (Rule 6: 8px to 10px rounded rectangle, NEVER pills) */
-.btn-clear-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #ffffff;
-  color: #404040;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  height: 36px;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.btn-clear-form:hover {
-  background-color: #f8fafc;
+.menu-item-icon {
+  color: var(--alias-color-text-secondary, #404040);
 }
 
-.btn-save-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #0B529C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  height: 36px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: all 0.15s ease;
 }
-.btn-save-primary:hover {
-  background-color: #09427d;
-}
-
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.25s ease;
-}
-.toast-fade-enter-from,
-.toast-fade-leave-to {
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(-4px);
 }
 
-/* 2-Column Responsive Layout */
-.allocation-layout-columns {
-  display: grid;
-  grid-template-columns: 1fr 340px;
+/* Content Stack */
+.create-content-stack {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: start;
+  width: 100%;
 }
 
 .clean-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 20px 24px;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 12px;
+  padding: 24px;
 }
 
-.card-header-bar {
-  margin-bottom: 18px;
+.section-title-box {
+  margin-bottom: 20px;
 }
-.card-title {
+
+.section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #404040;
+  color: var(--alias-color-text-secondary, #404040);
   margin: 0;
-}
-.card-subtitle {
-  font-size: 12.5px;
-  color: #737373;
-  margin: 4px 0 0;
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--alias-spacing-2xl, 20px) var(--alias-spacing-xl, 16px);
-  margin-bottom: 16px;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 8px;
 }
 
 .form-group {
@@ -658,151 +515,59 @@ const handleSubmit = () => {
 }
 
 .form-label {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
-  color: #404040;
-  margin-bottom: 4px;
+  color: var(--alias-color-text-secondary, #404040);
+  margin-bottom: 6px;
 }
+
 .form-label.required::after {
   content: ' *';
-  color: #dc2626;
+  color: #e7000b;
 }
 
 .policy-binding-section {
-  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .rule-dropdown-wrap {
-  margin-top: 12px;
-}
-
-/* Side Assistant */
-.side-assistant-column {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
-.preview-card {
-  padding: 18px;
-}
-.side-card-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0 0 12px;
-}
-
-.staff-mini-hero {
+.quota-total-display {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 14px;
-}
-.staff-avatar-mini {
-  width: 42px;
+  align-items: baseline;
+  gap: 8px;
   height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.staff-name-bold {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-}
-.staff-code-sub {
-  font-size: 11.5px;
-  color: #737373;
-}
-
-.entitlement-stat-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #eff6ff;
+  padding: 0 14px;
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 8px;
-  padding: 14px 12px;
-  margin-bottom: 14px;
-}
-.entitlement-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #1e40af;
-  letter-spacing: 0.5px;
-}
-.entitlement-hero-val {
-  font-size: 22px;
-  font-weight: 700;
-  color: #0B529C;
-  margin: 2px 0;
-}
-.entitlement-calc-sub {
-  font-size: 11.5px;
-  color: #3b82f6;
+  box-sizing: border-box;
 }
 
-.statutory-specs-box {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.spec-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11.5px;
-}
-.spec-k {
-  color: #737373;
-}
-.spec-v {
-  color: #404040;
-  font-weight: 500;
+.quota-total-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0b529c;
+  line-height: 42px;
 }
 
-.helper-card {
-  padding: 16px;
-}
-.helper-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.helper-title {
+.quota-total-breakdown {
   font-size: 12px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 42px;
 }
-.text-blue {
-  color: #0B529C;
-}
-.helper-text {
-  font-size: 12px;
-  color: #737373;
-  line-height: 1.45;
-  margin: 0 0 12px;
-}
-.simulator-mini {
-  background-color: #f8fafc;
-  padding: 10px;
-  border-radius: 6px;
-}
-.sim-label {
-  display: block;
-  font-size: 11px;
-  color: #404040;
-  margin-bottom: 6px;
-}
-.sim-slider {
+
+.rich-text-container {
   width: 100%;
-  accent-color: #0B529C;
-  cursor: pointer;
 }
 </style>

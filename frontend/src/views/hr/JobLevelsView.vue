@@ -9,11 +9,13 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -48,10 +50,10 @@ const filterStatus = ref('All');
 const filterState = ref('All');
 const currentSort = ref('name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
+const { toast } = useToast();
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
-const quickActionToast = ref<string | null>(null);
 
 // ─── Table Columns (Strict Single-Information & Name-First Hierarchy: Rule 9) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -238,8 +240,7 @@ const entityOptions = [
 ];
 
 const showToast = (message: string) => {
-  quickActionToast.value = message;
-  setTimeout(() => { quickActionToast.value = null; }, 3500);
+  toast.success(message);
 };
 
 const handleSaveQuickCreate = () => {
@@ -355,12 +356,6 @@ onUnmounted(() => {
     <!-- ═══ BREADCRUMB NAVIGATION (Rule 3) ═══ -->
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- ═══ TOAST BANNER NOTIFICATION ═══ -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- ═══ UNIFIED TABLE CARD: <AppDataTable /> (Rule 10.1 & Rule 9) ═══ -->
@@ -509,27 +504,22 @@ onUnmounted(() => {
 
               <!-- Status Badge Pill -->
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span 
-                  class="status-pill"
-                  :class="{
-                    'status-pill-approved': item.status === 'acceptForAll',
-                    'status-pill-entity': item.status === 'acceptForThis',
-                    'status-pill-pending': item.status === 'pending',
-                    'status-pill-rejected': item.status === 'rejected'
-                  }"
+                <BaseBadge 
+                  :color="item.status === 'acceptForAll' ? 'indigo' : item.status === 'acceptForThis' ? 'blue' : item.status === 'pending' ? 'warning' : 'error'"
+                  size="sm"
                 >
                   {{ item.status_label }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Lifecycle State (Rule 9.6: Badges reserved for lifecycle state) -->
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span 
-                  class="status-pill" 
-                  :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'"
+                <BaseBadge 
+                  :color="item.state === 'active' ? 'success' : 'gray'"
+                  size="sm"
                 >
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Actions 3-Dots Dropdown -->
@@ -658,27 +648,6 @@ onUnmounted(() => {
 .breadcrumb-container {
   display: flex;
   align-items: center;
-}
-
-/* ═══ TOAST NOTIFICATION BANNER ═══ */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  animation: fadeIn 0.2s ease;
-}
-.toast-icon { color: #059669; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ═══ TOOLBAR FILTERS & ACTIONS ═══ */
@@ -852,41 +821,6 @@ onUnmounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   max-width: 320px;
-}
-
-/* Status Pills (Rule 9.6: Badges reserved for lifecycle status) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
-.status-pill-active,
-.status-pill-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-entity {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.status-pill-pending {
-  background-color: #fefce8;
-  color: #a16207;
-}
-
-.status-pill-rejected {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* 3-Dots Action Button & Dropdown */

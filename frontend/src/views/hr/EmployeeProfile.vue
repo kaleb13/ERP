@@ -16,11 +16,13 @@ import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge, { type BadgeColor } from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 // ─── Lookups & Types ───
 export type EmploymentStatus = 'draft' | 'probation' | 'active' | 'suspended' | 'on_leave' | 'separated' | 'deactivated';
@@ -1026,7 +1028,7 @@ const calculateTenure = (hireDateStr?: string) => {
 };
 
 // ─── Quick Actions Feedback Toast ───
-const quickActionToast = ref<string | null>(null);
+const { toast } = useToast();
 const handleQuickAction = (action: string) => {
   if (action === 'edit') {
     router.push({ path: '/hr/employees/create', query: { editId: selectedEmployee.value?.id } });
@@ -1038,10 +1040,8 @@ const handleQuickAction = (action: string) => {
     document: 'Document upload repository opened',
     asset: 'Asset checkout & assignment catalog opened'
   };
-  quickActionToast.value = messages[action] || 'Action triggered';
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 2500);
+  const msg = messages[action] || 'Action triggered';
+  toast.info(msg);
 };
 
 // ─── Quick Create Employee Modal ───
@@ -1155,15 +1155,15 @@ const handleFloatingDeactivateEmployees = () => {
   selectedRowIds.value = [];
 };
 
-const getStatusPillClass = (status: EmploymentStatus) => {
+const getStatusBadgeColor = (status: string): BadgeColor => {
   switch (status) {
-    case 'active': return 'status-inservice';
-    case 'probation': return 'status-probation';
-    case 'suspended': return 'status-suspended';
-    case 'on_leave': return 'status-leave';
+    case 'active': return 'success';
+    case 'probation': return 'warning';
+    case 'suspended': return 'error';
+    case 'on_leave': return 'blue';
     case 'separated':
-    case 'deactivated': return 'status-separated';
-    case 'draft': default: return 'status-draft';
+    case 'deactivated': return 'gray';
+    case 'draft': default: return 'indigo';
   }
 };
 
@@ -1194,12 +1194,6 @@ onUnmounted(() => {
     <!-- Breadcrumb Bar (Clean & Standard) -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Quick Action Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- VIEW 1: CANONICAL EMPLOYEE DIRECTORY (APPDATATABLE) -->
@@ -1413,16 +1407,21 @@ onUnmounted(() => {
               </td>
 
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span :class="['status-pill', getStatusPillClass(item.employment_status)]">
-                  <span class="status-dot"></span>
+                <BaseBadge 
+                  :color="getStatusBadgeColor(item.employment_status)"
+                  size="sm"
+                >
                   {{ formatStatus(item.employment_status) }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span :class="['status-pill', item.state === 'active' ? 'state-active' : 'state-inactive']">
+                <BaseBadge 
+                  :color="item.state === 'active' ? 'success' : 'gray'"
+                  size="sm"
+                >
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td class="col-actions" @click.stop>
@@ -1824,7 +1823,7 @@ onUnmounted(() => {
                       <span v-else class="text-slate-400 font-mono">—</span>
                     </td>
                     <td class="text-center">
-                      <span v-if="addr.is_primary" class="status-pill status-pill-active">Primary</span>
+                      <BaseBadge v-if="addr.is_primary" color="primary" size="sm">Primary</BaseBadge>
                       <span v-else class="text-slate-400 text-xs">—</span>
                     </td>
                     <td class="font-mono text-xs text-slate-500">
@@ -1976,9 +1975,9 @@ onUnmounted(() => {
                 <tbody>
                   <tr v-for="sh in statusHistory" :key="sh.id">
                     <td>
-                      <span :class="['status-pill', getStatusPillClass(sh.status_lookup_value_id)]">
+                      <BaseBadge :color="getStatusBadgeColor(sh.status_lookup_value_id)" size="sm">
                         {{ formatStatus(sh.status_lookup_value_id) }}
-                      </span>
+                      </BaseBadge>
                     </td>
                     <td class="font-mono text-xs">{{ formatDate(sh.effective_date) }}</td>
                     <td class="text-xs">{{ sh.reason }}</td>
@@ -2362,7 +2361,7 @@ onUnmounted(() => {
                     <div>
                       <div class="flex items-center gap-2">
                         <span class="guarantor-name">{{ g.guarantor_name }}</span>
-                        <span class="status-pill status-active">Active Surety</span>
+                        <BaseBadge color="success" size="sm">Active Surety</BaseBadge>
                         <span class="guarantor-relation-tag capitalize">{{ g.relation_lookup_value_id }}</span>
                       </div>
                       <div class="guarantor-meta-subline">
@@ -2592,20 +2591,6 @@ onUnmounted(() => {
   }
 }
 
-/* Quick Action Toast */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  margin-bottom: 12px;
-}
-
 /* Custom Checkbox (Standard Squircle Design) */
 .custom-checkbox {
   appearance: none;
@@ -2683,39 +2668,10 @@ onUnmounted(() => {
   padding: 2px 6px;
   border-radius: 4px;
   background: #f1f5f9;
-  color: #475569;
+  color: #737373;
   font-size: 11px;
   font-weight: 500;
 }
-
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7.5px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: currentColor;
-}
-
-.status-inservice, .status-active { background-color: #ecfdf5; color: #059669; }
-.status-probation { background-color: #eff6ff; color: #0284c7; }
-.status-suspended { background-color: #fef2f2; color: #dc2626; }
-.status-leave { background-color: #fefce8; color: #ca8a04; }
-.status-separated { background-color: #f1f5f9; color: #64748b; }
-.status-draft { background-color: #f8fafc; color: #94a3b8; }
-
-.state-active { background-color: #ecfdf5; color: #059669; }
-.state-inactive { background-color: #f1f5f9; color: #64748b; }
 
 .btn-primary-create {
   display: inline-flex;
@@ -2748,7 +2704,7 @@ onUnmounted(() => {
 }
 .btn-action-dots:hover {
   background: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .action-cell-wrapper {
@@ -2898,7 +2854,7 @@ onUnmounted(() => {
 .hero-job-pill {
   font-size: 12px;
   font-weight: 500;
-  color: #475569;
+  color: #737373;
   background-color: #f1f5f9;
   padding: 2px 8px;
   border-radius: 5px;
@@ -2923,7 +2879,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  color: #334155;
+  color: #404040;
 }
 
 .hero-contact-item {
@@ -2949,14 +2905,14 @@ onUnmounted(() => {
 
 .contact-text {
   font-size: 13px;
-  color: #334155;
+  color: #404040;
 }
 
 .reports-to-text {
   font-size: 13px;
 }
 .manager-label { color: #64748b; }
-.manager-name { font-weight: 500; color: #334155; }
+.manager-name { font-weight: 500; color: #404040; }
 
 /* UNIFIED MASTER WORKSPACE CARD */
 .master-workspace-card {
@@ -3155,7 +3111,7 @@ onUnmounted(() => {
   padding: 2px 6px;
   border-radius: 4px;
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
 }
 .badge-confidential {
   background-color: #fef2f2;
@@ -3255,7 +3211,7 @@ onUnmounted(() => {
   font-size: 10.5px;
   font-weight: 600;
   background: #f1f5f9;
-  color: #334155;
+  color: #404040;
 }
 
 /* Bank Accounts Grid */
@@ -3335,7 +3291,7 @@ onUnmounted(() => {
 
 .acc-val-masked {
   font-size: 13px;
-  color: #0f172a;
+  color: #404040;
   letter-spacing: 0.02em;
 }
 
@@ -3406,7 +3362,7 @@ onUnmounted(() => {
 .guarantor-relation-tag {
   font-size: 11px;
   font-weight: 500;
-  color: #475569;
+  color: #737373;
   background-color: #f1f5f9;
   padding: 1.5px 7px;
   border-radius: 4px;

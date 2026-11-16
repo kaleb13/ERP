@@ -13,6 +13,8 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   leaveTypesData, 
   createLeaveType, 
@@ -30,11 +32,10 @@ const leaveTypes = leaveTypesData;
 const searchQuery = ref('');
 const isQuickCreateOpen = ref(false);
 const activeActionMenuId = ref<number | null>(null);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Quick Create Form State (<= 5 Required Fields per Rule 4) ───
@@ -65,7 +66,7 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'requires_attachment', label: 'Document Evidence', sortable: true },
   { key: 'affects_attendance', label: 'Affects Attendance', sortable: true },
   { key: 'state', label: 'State', sortable: true },
-  { key: 'actions', label: '', width: '48px', align: 'center' }
+  { key: 'actions', label: 'Actions', width: '48px', align: 'center' }
 ]);
 
 const filteredTypes = computed(() => {
@@ -146,14 +147,6 @@ const handleDeleteType = (id: number) => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- ─── Unified Data Table Card (AGENTS.md Rule 10) ─── -->
     <AppDataTable
       title="Leave Types"
@@ -230,9 +223,9 @@ const handleDeleteType = (id: number) => {
 
                 <!-- State Column (Rule 9: Status pill reserved for State) -->
                 <td>
-                  <span class="status-pill" :class="item.state === 'active' ? 'state-active' : 'state-inactive'">
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Row Action (⋮ 3-dots button) -->
@@ -460,24 +453,6 @@ const handleDeleteType = (id: number) => {
   font-size: 13px;
 }
 
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
 /* Actions Menu */
 .td-actions {
   text-align: center;
@@ -576,22 +551,6 @@ const handleDeleteType = (id: number) => {
   padding-top: 2px;
 }
 
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.25s, transform 0.25s; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(-8px); }
 .dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 

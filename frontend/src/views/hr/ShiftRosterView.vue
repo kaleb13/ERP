@@ -5,18 +5,20 @@ import {
   CalendarRange, List, ChevronLeft, ChevronRight,
   Plus, Search, Filter, CheckCircle2,
   ArrowLeftRight, Send, Wand2, Trash2,
-  Coffee, Edit2, Calendar
+  Coffee, Edit2, Calendar, MoreVertical
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -211,7 +213,18 @@ const entityFilter = ref('all');
 const orgUnitFilter = ref('all');
 const stateFilter = ref('all');
 const shiftTypeFilter = ref('all');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+const activeActionMenuId = ref<number | null>(null);
+
+const getAssignmentStateColor = (state?: string): 'success' | 'warning' | 'purple' | 'error' | 'blue' => {
+  switch (state) {
+    case 'published': return 'success';
+    case 'planned': return 'warning';
+    case 'swapped': return 'purple';
+    case 'cancelled': return 'error';
+    default: return 'blue';
+  }
+};
 
 // Table selection
 const selectedRowIds = ref<number[]>([]);
@@ -388,8 +401,7 @@ const handleSaveShift = () => {
   }
 
   showShiftModal.value = false;
-  toastMessage.value = `Shift assignment saved for ${emp.name}.`;
-  setTimeout(() => { toastMessage.value = null; }, 3000);
+  toast.success(`Shift assignment saved for ${emp.name}.`);
 };
 
 const handleDeleteAssignment = (id?: number) => {
@@ -397,8 +409,8 @@ const handleDeleteAssignment = (id?: number) => {
   if (!targetId) return;
   assignments.value = assignments.value.filter(a => a.id !== targetId);
   showShiftModal.value = false;
-  toastMessage.value = 'Shift assignment deleted.';
-  setTimeout(() => { toastMessage.value = null; }, 3000);
+  activeActionMenuId.value = null;
+  toast.success('Shift assignment deleted.');
 };
 
 // ─── Pattern Generator Modal ───
@@ -468,8 +480,7 @@ const handleGenerateFromPattern = () => {
   }
 
   showPatternModal.value = false;
-  toastMessage.value = `Generated ${generatedCount} shift slots from ${chosenPattern.code} for ${targetEmps.length} employee(s).`;
-  setTimeout(() => { toastMessage.value = null; }, 3500);
+  toast.success(`Generated ${generatedCount} shift slots from ${chosenPattern.code} for ${targetEmps.length} employee(s).`);
 };
 
 // ─── Batch Floating Bar Actions ───
@@ -480,16 +491,14 @@ const handleBatchStatus = (newStatus: string) => {
       a.assignment_state = validState;
     }
   });
-  toastMessage.value = `Updated ${selectedRowIds.value.length} shifts to "${newStatus}".`;
+  toast.success(`Updated ${selectedRowIds.value.length} shifts to "${newStatus}".`);
   selectedRowIds.value = [];
-  setTimeout(() => { toastMessage.value = null; }, 3000);
 };
 
 const handleBatchDelete = () => {
   assignments.value = assignments.value.filter(a => !selectedRowIds.value.includes(a.id));
-  toastMessage.value = `Deleted ${selectedRowIds.value.length} shift assignments.`;
+  toast.success(`Deleted ${selectedRowIds.value.length} shift assignments.`);
   selectedRowIds.value = [];
-  setTimeout(() => { toastMessage.value = null; }, 3000);
 };
 
 const handlePublishAllPlanned = () => {
@@ -500,10 +509,11 @@ const handlePublishAllPlanned = () => {
       count++;
     }
   });
-  toastMessage.value = count > 0 
-    ? `Published ${count} planned shifts. Notifications dispatched.` 
-    : 'All shifts are already published.';
-  setTimeout(() => { toastMessage.value = null; }, 3500);
+  if (count > 0) {
+    toast.success(`Published ${count} planned shifts. Notifications dispatched.`);
+  } else {
+    toast.info('All shifts are already published.');
+  }
 };
 
 // Counterparty options
@@ -519,12 +529,6 @@ const counterpartOptions = computed(() => {
     <!-- Breadcrumb Standard -->
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Notification Toast -->
-    <div v-if="toastMessage" class="action-toast">
-      <CheckCircle2 :size="16" class="text-emerald-600 flex-shrink-0" />
-      <span>{{ toastMessage }}</span>
     </div>
 
     <!-- Unified Table Card Standard (Rule 10 Layout) -->
@@ -730,12 +734,12 @@ const counterpartOptions = computed(() => {
                   <span>{{ item.entity_name }} ({{ item.org_unit_name }})</span>
                 </td>
 
-                <!-- 6. State (Strict Status Pill) -->
+                <!-- 6. State (BaseBadge Standard) -->
                 <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                  <span class="status-pill" :class="`pill-${item.assignment_state}`">
+                  <BaseBadge :color="getAssignmentStateColor(item.assignment_state)">
                     <ArrowLeftRight v-if="item.assignment_state === 'swapped'" :size="10" />
                     <span class="capitalize">{{ item.assignment_state }}</span>
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- 7. Counterparty -->
@@ -748,24 +752,29 @@ const counterpartOptions = computed(() => {
                   <span>{{ item.notes || '—' }}</span>
                 </td>
 
-                <!-- Actions -->
-                <td class="td-actions">
-                  <button 
-                    type="button" 
-                    class="btn-row-action" 
-                    @click="openEditModal(item)"
-                    title="Manage Shift"
-                  >
-                    <Edit2 :size="14" />
-                  </button>
-                  <button 
-                    type="button" 
-                    class="btn-row-action text-red-500 hover:text-red-700" 
-                    @click="handleDeleteAssignment(item.id)"
-                    title="Delete Shift"
-                  >
-                    <Trash2 :size="14" />
-                  </button>
+                <!-- Actions (⋮ 3-dots popup) -->
+                <td class="td-actions" @click.stop>
+                  <div class="action-dropdown-wrapper">
+                    <button
+                      type="button"
+                      class="btn-action-dots"
+                      title="Actions"
+                      @click="activeActionMenuId = activeActionMenuId === item.id ? null : item.id"
+                    >
+                      <MoreVertical :size="15" />
+                    </button>
+
+                    <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
+                      <button type="button" class="popup-item" @click="openEditModal(item); activeActionMenuId = null;">
+                        <Edit2 :size="13" />
+                        <span>Manage Shift</span>
+                      </button>
+                      <button type="button" class="popup-item item-delete" @click="handleDeleteAssignment(item.id); activeActionMenuId = null;">
+                        <Trash2 :size="13" />
+                        <span>Delete Shift</span>
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
 
@@ -912,10 +921,10 @@ const counterpartOptions = computed(() => {
                         {{ getAssignment(emp.id, day.iso)?.start_time }} – {{ getAssignment(emp.id, day.iso)?.end_time }}
                       </div>
                       <div class="tile-footer-state">
-                        <span class="status-pill-mini" :class="`pill-${getAssignment(emp.id, day.iso)?.assignment_state}`">
+                        <BaseBadge size="sm" :color="getAssignmentStateColor(getAssignment(emp.id, day.iso)?.assignment_state)">
                           <ArrowLeftRight v-if="getAssignment(emp.id, day.iso)?.assignment_state === 'swapped'" :size="9" />
                           <span class="capitalize">{{ getAssignment(emp.id, day.iso)?.assignment_state }}</span>
-                        </span>
+                        </BaseBadge>
                       </div>
                     </div>
 
@@ -975,10 +984,10 @@ const counterpartOptions = computed(() => {
             <div class="legend-cluster">
               <span class="legend-heading">State Badges:</span>
               <div class="legend-items">
-                <span class="status-pill pill-planned">Planned</span>
-                <span class="status-pill pill-published">Published</span>
-                <span class="status-pill pill-swapped"><ArrowLeftRight :size="10" /> Swapped</span>
-                <span class="status-pill pill-cancelled">Cancelled</span>
+                <BaseBadge color="warning">Planned</BaseBadge>
+                <BaseBadge color="success">Published</BaseBadge>
+                <BaseBadge color="purple"><ArrowLeftRight :size="10" /> Swapped</BaseBadge>
+                <BaseBadge color="error">Cancelled</BaseBadge>
               </div>
             </div>
           </div>
@@ -1147,24 +1156,6 @@ const counterpartOptions = computed(() => {
 .breadcrumb-container {
   display: flex;
   align-items: center;
-}
-
-.action-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #ffffff;
-  color: #404040;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
 }
 
 /* Toolbar Actions Cluster */
@@ -1398,51 +1389,76 @@ const counterpartOptions = computed(() => {
   border-radius: 3px;
 }
 
-/* Status Pills (Rule 9 Standard) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-mini {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 9.5px;
-  font-weight: 600;
-}
-
-.pill-planned { background: #eff6ff; color: #2563eb; }
-.pill-published { background: #ecfdf5; color: #059669; }
-.pill-swapped { background: #f5f3ff; color: #7c3aed; }
-.pill-cancelled { background: #fef2f2; color: #dc2626; }
-
+/* Actions */
 .th-actions, .td-actions {
-  width: 90px;
+  width: 50px;
   text-align: right;
   padding-right: 16px !important;
 }
 
-.btn-row-action {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  padding: 4px 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+.action-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-.btn-row-action:hover {
-  background: #f1f5f9;
+.btn-action-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #737373;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-action-dots:hover {
+  background-color: #f1f5f9;
   color: #404040;
+}
+
+.action-popup-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 140px;
+  padding: 4px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #404040;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.12s;
+  text-align: left;
+}
+
+.popup-item:hover {
+  background-color: #f5f5f5;
+}
+
+.popup-item.item-delete {
+  color: #E7000B;
 }
 
 .td-empty {
@@ -1899,7 +1915,7 @@ const counterpartOptions = computed(() => {
 .tag-blue { background: #e0f2fe; color: #0369a1; }
 .tag-amber { background: #fef3c7; color: #b45309; }
 .tag-purple { background: #f3e8ff; color: #7e22ce; }
-.tag-slate { background: #f1f5f9; color: #475569; }
+.tag-slate { background: #f1f5f9; color: #737373; }
 
 /* Modals */
 .assign-form-stack, .pattern-generate-stack {

@@ -9,6 +9,7 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 
 import {
   serviceRequestsData,
@@ -38,14 +39,11 @@ const breadcrumbItems = computed(() => [
 ]);
 
 // ─── SAVE STATE (Rule 30) ─────────────────────────────────────────────────
+const { toast } = useToast();
 const isSaved = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => {
-    toastMessage.value = null;
-  }, 3200);
+  toast.success(msg);
 };
 
 // ─── FORM DATA MODEL (Strict 1:1 Schema Mapping - Intake Facts Only) ─────
@@ -188,11 +186,6 @@ const handleSubmitRequest = () => {
 
 <template>
   <div class="service-request-create-page">
-    <!-- Toast message -->
-    <div v-if="toastMessage" class="toast-alert">
-      {{ toastMessage }}
-    </div>
-
     <!-- ─── TOP ACTION BAR (Rule 4) ────────────────────────────────────── -->
     <!-- ─── TOP ACTION BAR (Rule 4 & 29: Zero-background, transparent) ──── -->
     <div class="creation-top-bar">
@@ -287,21 +280,6 @@ const handleSubmitRequest = () => {
   display: flex;
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
-}
-
-/* Toast alert */
-.toast-alert {
-  position: fixed;
-  top: 24px;
-  right: 32px;
-  background-color: #0f172a;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
 }
 
 /* Top bar (AGENTS.md Rule 4 & 29: Zero-background, transparent) */
@@ -422,7 +400,7 @@ const handleSubmitRequest = () => {
 
 .tb-icon-btn:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .tb-spacer {

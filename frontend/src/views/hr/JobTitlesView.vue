@@ -10,11 +10,13 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -54,10 +56,10 @@ const filterStatus = ref('All');
 const filterState = ref('All');
 const currentSort = ref('name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
+const { toast } = useToast();
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
-const quickActionToast = ref<string | null>(null);
 
 // ─── Table Columns (Strict Single-Information & Name-First Hierarchy) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -258,10 +260,7 @@ const closeActionMenu = () => {
 };
 
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success(msg);
 };
 
 // ─── Quick Create Handlers ───
@@ -367,12 +366,6 @@ onUnmounted(() => {
     <!-- Breadcrumb Bar -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- MAIN DATA TABLE -->
@@ -501,17 +494,12 @@ onUnmounted(() => {
               </td>
 
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span 
-                  class="status-pill"
-                  :class="{
-                    'status-pill-approved': item.status === 'acceptForAll',
-                    'status-pill-entity': item.status === 'acceptForThis',
-                    'status-pill-pending': item.status === 'pending',
-                    'status-pill-rejected': item.status === 'rejected'
-                  }"
+                <BaseBadge 
+                  :color="item.status === 'acceptForAll' ? 'indigo' : item.status === 'acceptForThis' ? 'blue' : item.status === 'pending' ? 'warning' : 'error'"
+                  size="sm"
                 >
                   {{ item.status_label }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td v-if="isColumnVisible('positions_count')" class="col-count">
@@ -520,9 +508,12 @@ onUnmounted(() => {
 
               <!-- Badges reserved strictly for lifecycle state -->
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                <BaseBadge 
+                  :color="item.state === 'active' ? 'success' : 'gray'"
+                  size="sm"
+                >
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Action 3-dots -->
@@ -641,21 +632,6 @@ onUnmounted(() => {
 
 .page-breadcrumb-bar {
   margin-bottom: 16px;
-}
-
-/* Toast Banner */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  font-size: 13.5px;
-  color: #065f46;
-  animation: fadeIn 0.2s ease-in-out;
 }
 
 .directory-view-wrapper {
@@ -789,42 +765,6 @@ onUnmounted(() => {
 .text-tertiary {
   color: #737373;
   font-size: 13px;
-}
-
-/* Lifecycle Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active,
-.status-pill-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-entity {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.status-pill-pending {
-  background-color: #fefce8;
-  color: #a16207;
-}
-
-.status-pill-rejected {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action 3-dots Menu */

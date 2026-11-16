@@ -15,6 +15,19 @@
 - **Dark Color & Hierarchy Rules**:
   - **Secondary (`#404040`) is the Darkest Color**: The darkest color for text and icons across the system is **Secondary** (`#404040` / `icon-secondary`). Do NOT use primary text color or primary icon color (`#262626`) anywhere unless explicitly instructed for a specific section.
   - **Breadcrumbs**: Inactive / previous breadcrumbs and dividers use **Tertiary** (`#737373`). Active / current breadcrumb uses **Secondary** (`#404040`). On top-level directory/listing pages, the breadcrumb MUST contain **only the exact page name** (`[{ label: 'Exact Page Name' }]`), NEVER prefixed with the parent module name (`Procurement`) or sibling pages. It expands to `[{ label: 'Page Name', onClick: ... }, { label: 'Item Name' }]` only when drilling into a detail or inspection drawer.
+  - **Zero Background / Zero Card Container for Breadcrumbs (Strict Canvas Standard)**:
+    - The breadcrumb bar and top navigation row (`.create-header-bar`, `.top-nav-bar`, `.top-header-action-bar`, `.breadcrumb-bar`) **MUST ALWAYS sit directly on the transparent canvas background** (`background: transparent; border: none; box-shadow: none; padding: 0;`).
+    - **NEVER** wrap the breadcrumb or top action row in a white card box (`background-color: #ffffff`), card container, rounded box, or bordered frame (`border: 1px solid #e5e5e5; border-radius: 12px; padding: 14px 24px;`).
+    - Breadcrumb navigation sits cleanly on the canvas on the left, with top action buttons (e.g. `Save`, `Clear Form`, or `MoreVertical`) aligned on the right in a transparent flex row directly above the form cards.
+  - **Zero Back Buttons (Strict Breadcrumb-Only Navigation Rule)**:
+    - **NEVER** place a "Back" button, back arrow button, or "Back to [List]" link anywhere in the system (`← Back to ...`, `btn-back`, `router-link` back buttons).
+    - The **ONLY** way users navigate back or traverse the hierarchy is through the **Breadcrumb** (`AppBreadcrumb`).
+    - When drilling down into details, inspect views, or child forms, the parent page link in the breadcrumb is clickable (`onClick: () => ...` or `to: '...'`). Redundant back buttons clutter the UI and violate Haleta ERP minimalist architecture.
+  - **Zero In-Page Toast Banners (Strict Centralized Toast Standard)**:
+    - **NEVER** create inline `.toast-bar`, in-page alert banners, or `<Transition><div v-if="toastMessage">...</div></Transition>` inside views or components.
+    - Notifications, success messages, errors, copy-to-clipboard alerts, and mode changes (e.g. Focus mode toggle) MUST ALWAYS be dispatched exclusively through the centralized `useToast()` composable (`import { useToast } from '../../composables/useToast'; const { toast } = useToast();`).
+    - Toasts render globally via `<BaseToaster />` / `<BaseToast />` (`toast.success()`, `toast.info()`, `toast.warning()`, `toast.error()`).
+    - Never distort or push page layouts with temporary in-page feedback pills.
   - **Breadcrumb Badges Sealing**: Status badges in the breadcrumb bar (e.g. `SaveStateBadge`) MUST ALWAYS be placed strictly inside `<AppBreadcrumb><template #badge><SaveStateBadge ... /></template></AppBreadcrumb>`. Never place them outside as an unsealed flex sibling.
   - **Badge System & Component API Contract**: Never construct raw `<span class="status-pill">` or `<span class="status-dot">` tags. Always reuse `BaseBadge` (Figma `3345:21147`).
     - **Mandatory Prop**: ALWAYS bind via `:color="..."` (NEVER `:variant="..."`, which causes component fallback to identical monochrome gray).
@@ -47,6 +60,13 @@
 - Integrate row selection into the first identity column: the header cell has text and checkbox enabled, and body cells use the **Lead checkbox** variant. Do not add a checkbox-only column.
 - Keep the identity column visible when it hosts selection controls. In Vue, use `AppDataTable`/`BaseTable`, `FormCheckbox`, and the shared pagination.
 - **Table Sort Button & Secondary Button Standard**: The Sort button in the Table Top Filter Section MUST ALWAYS be styled as our **Secondary Button** (`secondary-gray`: white background `#ffffff`, subtle border `#e5e5e5`, secondary text `#404040`), identical to the Filter button. It must NEVER be styled as a colored/brand-blue button. Both Filter (`Filter`) and Sort (`ArrowUpDown`) button icons MUST use `stroke-width="2.5"` (`class="icon-bold"`).
+- **No Scrollable Tables (Full-Bleed 100% Fit Standard)**:
+  - Tables across all standard ERP directory and listing views MUST fit 100% of the container width naturally without horizontal scrollbars (`overflow-x: auto;` or horizontal scroll containers).
+  - Never overload directory tables with excessive columns (maintain 5 to 8 high-signal scanning columns). Never wrap tables in artificial horizontal scroll wrappers on standard desktop displays.
+- **Mandatory Action Column Header Label**:
+  - The Actions column header MUST ALWAYS display an explicit column title (`Action` or `Actions`), matching Figma specifications. Never leave the Action column header empty (`label: ''` or empty `<th>`).
+- **Zero Focus Outline on Action Buttons (`MoreVertical` / `.btn-action-dots`)**:
+  - Clicking the 3-dot action menu button must NEVER display a browser focus outline or halo ring (`outline: none !important; box-shadow: none !important; -webkit-tap-highlight-color: transparent !important;`).
 - **Mandatory 3-Dot Actions Column Standard (`MoreVertical`)**:
   - In all directory tables, data tables, and sub-tables across the entire ERP, the **Actions** column MUST ALWAYS be represented as a **3-dot kebab menu button** (`MoreVertical` icon from `lucide-vue-next` with `.btn-action-dots`).
   - **NEVER** render loose, bare, or inline action buttons (such as View/Eye, Edit, and Trash side-by-side in the table cell).
@@ -78,6 +98,36 @@
 - **Dynamic Table Default Non-Empty Initial State (1 Row Minimum)**:
   - When creating or designing dynamic tables (`DynamicSubTable.vue` and parent create models), the default design MUST NEVER be an empty state (`[]`).
   - There MUST ALWAYS be at least **one default row** pre-populated in the initial state (`defaultInitialRow: true`). This ensures column structures, cell controls, inputs, and layout behavior are immediately visible, testable, and directly reproducible in Figma without requiring manual add-row clicks.
+- **Unified DynamicSubTable Component Standard (Zero Bespoke Modals)**:
+  - Across all modules (HR, Procurement, Inventory, Sales), ALL dynamic lines, child schemas, rosters, and 1:N relations MUST use the single authoritative `<DynamicSubTable />` component (`frontend/src/components/DynamicSubTable.vue`).
+  - **Zero Bespoke Modals or Ad-Hoc Overlays**: NEVER write custom row modal overlays or bypass `<DynamicSubTable />` with ad-hoc `:use-custom-modal="true"`. Always use the native `<DynamicTableModal />` row expansion engine built into `<DynamicSubTable />`.
+  - **Full Column Typing**: Columns must use explicit QMT types (`type: 'select'` with searchable option arrays, `type: 'date'`, `type: 'switch'`, `type: 'text'`, `type: 'number'`, `type: 'checkbox'`). Do not use ad-hoc HTML `<datalist>` or unstyled `<input>` wrappers inside custom template slots.
+- **Dynamic Table Lead Column & Expand Row Detail Modal Standard (Figma `6095:96369` & `6095:96370`)**:
+  - **Lead Column Integration & Alignment Standard (Figma `7009:114120`)**:
+    - In dynamic sub-tables (`<DynamicSubTable />`), the first column combines the checkbox and sequence number into a single lead column (`th-lead` / `td-lead`, exactly 68px wide: `width: 68px; min-width: 68px; max-width: 68px;`). Never duplicate the sequence number as a separate user-defined column in the `columns` prop.
+    - **Pixel-Perfect Alignment Guarantee**:
+      - Both header (`.dynamic-table th.th-lead`) and body (`.dynamic-table td.td-lead`) cells MUST share identical horizontal padding (`padding: 0 11px !important;`) and height (`44px`).
+      - `.td-cell { padding: 0 }` must NEVER override `.td-lead` (enforce via `.dynamic-table td.td-lead`).
+      - Both flex containers (`.lead-th-content` and `.lead-td-content`) MUST use `display: flex; align-items: center; gap: 12px;`.
+      - Checkboxes inside lead cells MUST have wrapper padding/margins neutralized (`padding: 0 !important; margin: 0 !important; width: 16px; height: 16px;`).
+      - This guarantees both the header checkbox and row checkboxes start at the exact same horizontal coordinate (`x = 11px`), and the header text (`No.`) and sequence numbers (`1`, `2`) start on the exact same vertical guide (`x = 40px`), perfectly matching Figma `7009:114120`.
+    - Table header row background is always `#FAFAFA` (`var(--color-background-primary, #fafafa)`).
+  - **Authoritative Expand Row Detail Modal Standard (`<DynamicTableModal />`)**: When a row is expanded via the `↗` icon (`Maximize2`), the modal MUST strictly adhere to Figma frame `6095:96370`:
+    1. **Header**: Contains the entity title (e.g. `Create Item`, `Edit Schedule Day`) with `(Row X)` in tertiary text (`#737373`), and a circular top-right close `X` button.
+    2. **Body**: Clean white background (`#ffffff`), 24px padding, 2-column input grid (`gap: 20px`). `type: 'readonly'` fields render as formatted text blocks (`#FAFAFA` background, 44px height, 12px border radius). Supports custom slot `#expand-modal="{ row, index }"`.
+    3. **Footer**: Height 74px, canvas background (`#FAFAFA` / `var(--color/background/primary)`), subtle border-top (`#E5E5E5`).
+       - **Bottom-Left**: Red error/destructive button **`Delete`** (`bg-[#fb2c36]`, rounded 8px, semi-bold white text).
+       - **Bottom-Right**: Group of standardized secondary buttons (`bg-white`, border `#D9D9D9`, rounded 8px, secondary text `#404040`):
+         - `ArrowDown` icon button: Navigates down to the next row.
+         - `ArrowUp` icon button: Navigates up to the previous row.
+         - `Duplicate Row` button: `Copy` icon + "Duplicate Row". Duplicates current row.
+         - `Insert Above` button: `Plus` icon + "Insert Above". Inserts a blank row above current row.
+         - `Insert Below` button: `Plus` icon + "Insert Below". Inserts a blank row below current row.
+    4. **Zero Ad-Hoc Modals**: NEVER use `QuickCreateModal` for dynamic table rows. Always use the authoritative `<DynamicTableModal />` via `<DynamicSubTable />`.
+- **No Verbose Section Headers or "Solutionary Explanations" in Forms**:
+  - Configuration blueprint cards and form sections must NEVER contain oversized, redundant section title/subtitle headers (e.g. `.config-header`) or multi-sentence "solutionary explanations". Keep section cards clean and focused purely on form inputs.
+  - Operational rules, policy context, and narrative descriptions MUST be placed in their own separate card/section using `<FormRichText />` (`FormRichText.vue`).
+  - When explanation is necessary, provide only a small, concise 1-line hint or metadata label (`hint="..."` or `.card-plain-desc`), never large explanatory banners.
 
 ## Dropdown & Popover Standard: Zero Raw Browser Selects
 
@@ -103,12 +153,35 @@
 - **Tabs Separation**: Tabs must NEVER house or share their row with the primary page creation CTA. Tabs reside in their own standalone row beneath the title and action header block.
 - **Visual Consistency Across Screens**: Mirror the canonical layout established in Organization Structures (`OrgStructuresView.vue`), Shift Patterns (`ShiftPatternsView.vue`), and Shift Swaps (`ShiftSwapsView.vue`) — the top card encapsulates the title, subtitle, and primary CTA on row 1, followed cleanly by primary tabs, sub-views, or metric rows below.
 
+## Standard Detail & Inspection Pages (The Three Archetypes)
+
+- Follow `.github/instructions/detail-pages.instructions.md` for all entity detail, inspection, and approval interfaces.
+- **Archetype 1: Two-Column Split Workflow Detail** (`LeaveRequestDetail`, `EmployeeMovementDetail`):
+  - Used for approval/review workflows. Left column (`minmax(0, 1fr)`) holds the dossier (Hero identity card, operational blueprints, narrative/delta callouts, and sub-tables).
+  - Right column (`360px`, collapsible to `68px`) holds the approval rail with the top **Focus** button (`PanelRightClose` / `PanelRightOpen`), Approver Decision form, and living multi-stage stepper with **authoritative dual linear gradient connector lines** (`#0b529c` -> `#fe9a00` -> `#d4d4d4`).
+  - The approval rail MUST always reside on the right, NEVER on the left.
+- **Archetype 2: 360° Master Record Dossier** (`EmployeeProfile` / Employee Directory Detail):
+  - Used for master entity records with wide relational breadth across domains.
+  - Structure: Hero identity card -> Master workspace card (4 metric cards + narrative with inline `[Edit Record]` link + Secondary underline tabs) -> 2x2 modular section cards in Overview (`Identity & Location`, `Employment & Placement`, `Compensation & Bank Accounts`, `Compliance & Statutory`).
+  - **Strict White Card Container Law**: The ONLY element that sits directly on the transparent `#fafafa` canvas is the breadcrumb row (and bottom audit logs / stock ledger). Hero identity, metadata pillars, workspaces, metric boxes, narrative directives, tabs, tables, and simulators MUST reside in solid white card containers (`background: #ffffff; border: 1px solid #e5e5e5; border-radius: 16px;`). NEVER allow metadata rows or section titles to float nakedly on the canvas.
+  - **Authoritative Figma Spacing Law (24px, 20px, 16px)**:
+    - **24px**: Outer padding on major white cards (`padding: 24px`), horizontal padding on table header bars (`padding: 20px 24px`).
+    - **20px**: Vertical stack gap between major page cards (`gap: 20px`), internal padding inside each of the 4 KPI metric cards (`padding: 20px`), grid gap between metric cards (`gap: 20px`), and gap between multi-column child cards.
+    - **16px**: Border radius on all card containers and metric items (`border-radius: 16px`), table cell horizontal padding (`padding: 0 16px`).
+  - **Zero Action Buttons in Top Navbar**: The top breadcrumb row has ZERO buttons (`Edit`, `Mark Inactive`). `Mark Inactive` is strictly on the edit/create form. The ONLY way to trigger edit is the inline semi-bold brand-blue link `[Edit Policy]` inside the workspace narrative text.
+  - **Zero-Gap Secondary Tabs**: `UnderlineTabs` sit directly inside the Master Workspace Card at the bottom with NO extra wrapper box or borders.
+  - **Persistent Workspace Across Tabs**: The Hero Card and Master Workspace Card (with 4 KPIs, narrative, and tabs) remain permanently visible at the top across all tab switches. Tab switching toggles only the child content below with a clean 20px gap.
+- **Archetype 3: In-Place Sanction & Progressive Plan** (`ApproveHeadcountPlan`):
+  - Used for structural or budgetary master plans reviewed by authorized directors.
+  - Structure: Breadcrumb with embedded status badge + top header action buttons (`Cancel` outline & `Approve` brand blue) -> Submitter context banner with derived metrics capsule and justification quote box -> Approver-editable 3-column input grid -> Vertical progressive bullet audit trail.
+
 ## Detailed UI policies
 
 The applicable files in `.github/instructions/` load by file pattern or task:
 
 - [Frontend components](.github/instructions/frontend-components.instructions.md)
 - [Creation UX](.github/instructions/creation-ux.instructions.md)
+- [Detail & Inspection pages](.github/instructions/detail-pages.instructions.md)
 - [Table architecture](.github/instructions/table-architecture.instructions.md)
 - [Dynamic relations](.github/instructions/dynamic-relations.instructions.md)
 - [Status and metrics](.github/instructions/status-metrics.instructions.md)

@@ -108,6 +108,7 @@ When the user clicks **"Expand Full Form"** from `<QuickCreateModal />` (or navi
 
 ### **B. Page Layout Structure**
 1. **Top Bar & Action Strip**:
+   - **Strict Canvas Background**: The top bar (`.create-header-bar`, `.top-nav-bar`) MUST ALWAYS be transparent on the page canvas (`background: transparent; border: none; box-shadow: none; padding: 0;`). **NEVER** wrap the breadcrumbs and top actions in a white card box (`background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 14px 24px;`).
    - Breadcrumbs: `[Monitor Root Icon] > [Module / Directory Link] > Create [Entity]`.
    - Save state: use `<SaveStateBadge />` and let the shared `SaveStateBadge` / `BaseBadge` components control status text and colors. Do not recreate the badge with ad-hoc markup or hardcoded colors.
    - Right Actions:
@@ -145,3 +146,11 @@ When the user clicks **"Expand Full Form"** from `<QuickCreateModal />` (or navi
    - **Validation Route-Back**: If the user clicks "Save" while on a sub-record tab and master fields in Tab 1 fail validation, the system MUST automatically switch `activeTab` back to Tab 1 and display the validation toasts/errors.
    - **Mandatory Default 1-Row Initial State**: In every dynamic child table tab (`<DynamicSubTable />`), the initial design state MUST NEVER be blank or empty (`[]`). Always provide at least **one pre-populated default row** (`defaultInitialRow: true`) so that column definitions, interactive cell inputs, action buttons, and table alignments are immediately visible and testable, directly mirroring the Figma design representation.
    - **Zero Raw Browser Selects**: All dropdowns, options, and filter pickers across master cards, modal dialogs, and dynamic tables MUST use `<FormSelect>` or teleported QMT dropdown popovers. Never use raw HTML `<select>` elements.
+
+---
+
+## 5. Concise Form Headers & Dedicated Rich Text Description Sections
+
+- **Zero "Solutionary Explanations" in Form Sections**: Creation form cards and blueprint specification sections must NEVER include verbose, multi-sentence narrative banners or redundant section headers (e.g. `.config-header`). Form cards must remain clean, focused, and immediately actionable.
+- **Separate Rich Text Description Card**: Operational narratives, handover notes, statutory policy summaries, and descriptions MUST be placed in their own separate card/accordion section beneath the form card, rendered with `<FormRichText />` (`min-height="160px"` to `min-height="220px"`).
+- **Subtle Hints Only**: Where a field or subsection genuinely requires explanation, use a concise, single-line explanation (e.g. `hint="..."` or `.card-plain-desc`), never multi-sentence instructional paragraphs.

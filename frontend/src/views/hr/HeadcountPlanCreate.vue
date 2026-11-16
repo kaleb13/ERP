@@ -10,6 +10,7 @@ import FormRichText from '../../components/FormRichText.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
@@ -24,8 +25,8 @@ const breadcrumbItems = computed(() => [
 ]);
 
 // ─── Lifecycle & Save State ───
+const { toast } = useToast();
 const isSaved = ref(false);
-const quickActionToast = ref('');
 const planId = ref<number | null>(null);
 
 // ─── Master Form State (Direct 1:1 Mapping to hr_headcount_budgets Schema) ───
@@ -87,8 +88,7 @@ const currencyOptions = [
 
 // Toast
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => { quickActionToast.value = ''; }, 3500);
+  toast.success(msg);
 };
 
 // Actions
@@ -224,14 +224,6 @@ onMounted(() => {
         </template>
       </div>
     </div>
-
-    <!-- Quick Toast Notification -->
-    <transition name="fade-slide">
-      <div v-if="quickActionToast" class="quick-toast-banner">
-        <CheckCircle2 :size="15" class="toast-icon" />
-        <span>{{ quickActionToast }}</span>
-      </div>
-    </transition>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- MODE A: CREATOR FORM (Exact to Image 3: "Create Headcount Budgets") -->
@@ -601,31 +593,6 @@ onMounted(() => {
   color: #404040;
 }
 
-/* Status Pills next to breadcrumbs */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 100px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-not-saved {
-  background-color: #FEF3C7;
-  color: #B45309;
-}
-
-.status-pill-draft {
-  background-color: #FEF3C7;
-  color: #D97706;
-}
-
-.status-pill-approved {
-  background-color: #DCFCE7;
-  color: #16A34A;
-}
-
 /* Right Actions Cluster */
 .top-actions-cluster {
   display: flex;
@@ -657,7 +624,7 @@ onMounted(() => {
 
 .role-pill-btn.role-active {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #404040;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
@@ -890,7 +857,7 @@ onMounted(() => {
 
 .toolbar-btn:hover {
   background-color: #e2e8f0;
-  color: #0f172a;
+  color: #404040;
 }
 
 .wysiwyg-content {
@@ -982,12 +949,12 @@ onMounted(() => {
 .submitter-display-name {
   font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: #404040;
 }
 
 .tag-title-gray {
   font-size: 11.5px;
-  color: #475569;
+  color: #737373;
   background-color: #f1f5f9;
   padding: 2px 8px;
   border-radius: 6px;
@@ -1046,11 +1013,11 @@ onMounted(() => {
 
 .stat-capsule-item {
   font-size: 12px;
-  color: #475569;
+  color: #737373;
 }
 
 .stat-capsule-text strong {
-  color: #0f172a;
+  color: #404040;
 }
 
 /* Capacity Justification Callout Panel (Image 5) */
@@ -1073,7 +1040,7 @@ onMounted(() => {
 .callout-header-title {
   font-size: 12.5px;
   font-weight: 600;
-  color: #334155;
+  color: #404040;
 }
 
 .callout-body-paragraph {
@@ -1138,7 +1105,7 @@ onMounted(() => {
 .bullet-dot-black {
   width: 7px;
   height: 7px;
-  background-color: #0f172a;
+  background-color: #404040;
   border-radius: 100px;
   margin-top: 5px;
   flex-shrink: 0;
@@ -1166,25 +1133,5 @@ onMounted(() => {
 .timeline-sub-detail {
   font-size: 12px;
   color: #64748b;
-}
-
-.toast-icon {
-  color: #10b981;
-}
-
-.quick-toast-banner {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #0f172a;
-  color: #ffffff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
-  z-index: 100;
 }
 </style>

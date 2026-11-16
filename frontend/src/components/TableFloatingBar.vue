@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { 
   Copy, Pencil, Trash2, RotateCw, MoreVertical, 
   CheckCircle2, XCircle, Clock, Lock, History, 
@@ -8,8 +8,10 @@ import {
 
 interface Props {
   show?: boolean;
-  selectedCount: number;
+  selectedCount?: number;
+  count?: number;
   totalCount?: number;
+  total?: number;
   showChangeStatus?: boolean;
   showDuplicate?: boolean;
   showEdit?: boolean;
@@ -18,9 +20,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  show: false,
+  show: undefined,
   selectedCount: 0,
+  count: 0,
   totalCount: 0,
+  total: 0,
   showChangeStatus: true,
   showDuplicate: true,
   showEdit: true,
@@ -37,7 +41,23 @@ const emit = defineEmits<{
   (e: 'export'): void;
   (e: 'deactivate'): void;
   (e: 'close'): void;
+  (e: 'clear'): void;
 }>();
+
+const effectiveSelectedCount = computed<number>(() => {
+  return Number(props.selectedCount || props.count || 0);
+});
+
+const effectiveTotalCount = computed<number>(() => {
+  return Number(props.totalCount || props.total || 0);
+});
+
+const isVisible = computed<boolean>(() => {
+  if (props.show !== undefined) {
+    return props.show && effectiveSelectedCount.value > 0;
+  }
+  return effectiveSelectedCount.value > 0;
+});
 
 // Popover states
 const showStatusPopover = ref(false);
@@ -71,6 +91,11 @@ const handleDeactivate = () => {
   showMorePopover.value = false;
 };
 
+const handleClose = () => {
+  emit('close');
+  emit('clear');
+};
+
 const closePopovers = () => {
   showStatusPopover.value = false;
   showMorePopover.value = false;
@@ -87,7 +112,7 @@ onUnmounted(() => {
 
 <template>
   <Transition name="floating-slide">
-    <div v-if="props.show && props.selectedCount > 0" class="floating-action-bar-wrap">
+    <div v-if="isVisible" class="floating-action-bar-wrap">
       <div class="floating-action-bar" @click.stop>
         <!-- Drag Handle (6 dots) -->
         <div class="floating-grip" title="Bulk Action Bar">
@@ -98,15 +123,15 @@ onUnmounted(() => {
 
         <!-- Count & Select All Option -->
         <div class="floating-count-info">
-          <span class="count-bold">{{ props.selectedCount }} Selected</span>
-          <span v-if="props.totalCount && props.totalCount > props.selectedCount" class="count-divider">•</span>
+          <span class="count-bold">{{ effectiveSelectedCount }} Selected</span>
+          <span v-if="effectiveTotalCount && effectiveTotalCount > effectiveSelectedCount" class="count-divider">•</span>
           <button 
-            v-if="props.totalCount && props.totalCount > props.selectedCount" 
+            v-if="effectiveTotalCount && effectiveTotalCount > effectiveSelectedCount" 
             type="button" 
             class="count-select-all" 
             @click="$emit('selectAll')"
           >
-            Select all {{ props.totalCount }}
+            Select all {{ effectiveTotalCount }}
           </button>
         </div>
 
@@ -228,7 +253,7 @@ onUnmounted(() => {
         <button 
           type="button" 
           class="floating-close-btn" 
-          @click="$emit('close')" 
+          @click="handleClose" 
           title="Clear Selection"
         >
           <X :size="13" />

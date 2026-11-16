@@ -9,14 +9,17 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Lookups & Types (HR Schema Designer 1.sql lines 460–507) ───
 export type RowState = 'active' | 'inactive';
@@ -70,7 +73,6 @@ const activeActionMenuId = ref<number | null>(null);
 // Committee Create/Edit Modal State
 const showQuickCreate = ref(false);
 const editingCommitteeId = ref<number | null>(null);
-const quickActionToast = ref<string | null>(null);
 
 // Committee Inspection & Member Management Modal State
 const activeCommitteeForMembers = ref<CommitteeRecord | null>(null);
@@ -452,9 +454,9 @@ const handleToggleColumn = (key: string) => {
   if (col) col.visible = !col.visible;
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (message: string) => {
-  quickActionToast.value = message;
-  setTimeout(() => { quickActionToast.value = null; }, 3500);
+  toast.success('Committees', message);
 };
 
 // ─── Quick Create / Edit Committee Form State (<= 5 Required Fields Flow: Rule 4) ───
@@ -727,12 +729,6 @@ onUnmounted(() => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- ═══ TOAST BANNER NOTIFICATION ═══ -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ quickActionToast }}</span>
-    </div>
-
     <!-- ═══ UNIFIED TABLE CARD: <AppDataTable /> (Rule 10.1 & Rule 9) ═══ -->
     <AppDataTable
       title="Committees &amp; Panels"
@@ -905,12 +901,9 @@ onUnmounted(() => {
 
               <!-- Lifecycle State (Rule 9.9: Rounded State Pills solely for Active/Inactive) -->
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span 
-                  class="status-pill" 
-                  :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'"
-                >
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Actions Dropdown -->
@@ -1117,12 +1110,9 @@ onUnmounted(() => {
                   </span>
                 </td>
                 <td class="child-td-state">
-                  <span 
-                    class="status-pill" 
-                    :class="m.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'"
-                  >
+                  <BaseBadge :color="m.state === 'active' ? 'success' : 'gray'">
                     {{ m.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
                 <td class="child-td-actions">
                   <div class="child-actions-group">
@@ -1297,25 +1287,6 @@ onUnmounted(() => {
   margin: 4px 0 0;
 }
 
-/* Toast Banner */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  font-weight: 500;
-  animation: fadeIn 0.2s ease;
-}
-
-.toast-icon {
-  color: #059669;
-}
-
 /* Filters */
 .filter-search-box {
   position: relative;
@@ -1363,7 +1334,7 @@ onUnmounted(() => {
 }
 
 .search-clear-btn:hover {
-  color: #475569;
+  color: #737373;
 }
 
 .filter-select-box {
@@ -1523,26 +1494,6 @@ onUnmounted(() => {
 }
 
 .inline-icon {
-  color: #64748b;
-}
-
-/* Status Pills (Rule 9.9) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
   color: #64748b;
 }
 

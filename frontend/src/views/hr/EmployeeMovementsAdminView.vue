@@ -4,21 +4,24 @@ import { useRouter } from 'vue-router';
 import {
   Search, ShieldCheck, CheckCircle2, Eye,
   Check, X, ArrowUpRight, Briefcase,
-  Filter, ArrowLeft, Clock, GitPullRequest,
-  ShieldAlert
-} from 'lucide-vue-next';;
+  Filter, Clock, GitPullRequest,
+  ShieldAlert, MoreVertical
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
-// Breadcrumb (Rule 3: Exact Sidebar Page Name)
+// Breadcrumbs (Strict Breadcrumb-Only Navigation)
 const breadcrumbItems = [
+  { label: 'General Movements', to: '/hr/movements' },
   { label: 'Movement Admin' }
 ];
 
@@ -212,7 +215,7 @@ const stats = computed(() => {
   };
 });
 
-const subTabs = computed<UnderlineTabItem<AdminTabKey>[]>(() => [
+const subTabs = computed<BaseTabItem<AdminTabKey>[]>(() => [
   {
     id: 'pending_my_action',
     label: 'Awaiting My Action',
@@ -254,11 +257,25 @@ const handleToggleColumn = (colKey: string) => {
 // Filter & Selection State
 const searchQuery = ref('');
 const selectedRowIds = ref<number[]>([]);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+const activeActionMenuId = ref<number | null>(null);
+
+const toggleActionMenu = (id: number) => {
+  activeActionMenuId.value = activeActionMenuId.value === id ? null : id;
+};
+
+const getStatusColor = (status: string): 'success' | 'indigo' | 'error' | 'warning' | 'blue' => {
+  switch (status) {
+    case 'approved': return 'success';
+    case 'effected': return 'indigo';
+    case 'rejected': return 'error';
+    case 'pending': return 'warning';
+    default: return 'blue';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const filteredRecords = computed(() => {
@@ -384,14 +401,6 @@ const formatMovementType = (type: string) => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- Top KPI / Metrics Cards Grid (Rule 2 Standard) -->
     <div class="metrics-grid">
       <MetricCard
@@ -444,23 +453,16 @@ const formatMovementType = (type: string) => {
       :show-view-action="false"
       @toggleColumn="handleToggleColumn"
     >
-      <!-- Sub-view Underline Tabs (Rule 1) -->
+      <!-- Sub-view Primary Tabs (Single Tab Rule) -->
       <template #header-extra>
         <div class="tabs-subview-wrapper">
-          <UnderlineTabs
+          <BaseTabs
             v-model="activeTab"
             :tabs="subTabs"
+            type="rounded"
             size="sm"
           />
         </div>
-      </template>
-
-      <!-- Top Right Toolbar Actions -->
-      <template #actions>
-        <AppButton variant="outline" size="sm" @click="router.push('/hr/movements')">
-          <template #icon-left><ArrowLeft :size="15" /></template>
-          General Movements Directory
-        </AppButton>
       </template>
 
       <!-- Filter Strip -->
@@ -560,52 +562,56 @@ const formatMovementType = (type: string) => {
 
               <!-- Status (Rule 9: Status Column) -->
               <td>
-                <span class="status-pill" :class="`status-${item.status}`">
+                <BaseBadge :color="getStatusColor(item.status)">
                   {{ item.status }}
-                </span>
+                </BaseBadge>
               </td>
 
-              <!-- Actions (Rule 8) -->
+              <!-- Actions (⋮ 3-dots popup) -->
               <td class="td-actions" @click.stop>
-                <div class="row-actions-group">
+                <div class="action-dropdown-wrapper">
                   <button
                     type="button"
-                    class="btn-action-icon"
-                    title="View Full Movement Dossier"
-                    @click="handleInspectDossier(item.id)"
+                    class="btn-action-dots"
+                    title="Actions"
+                    @click="toggleActionMenu(item.id)"
                   >
-                    <Eye :size="14" />
+                    <MoreVertical :size="15" />
                   </button>
 
-                  <button
-                    v-if="item.status === 'pending'"
-                    type="button"
-                    class="btn-action-approve"
-                    title="Approve Step"
-                    @click="handleApproveSingle(item)"
-                  >
-                    <Check :size="13" />
-                  </button>
-
-                  <button
-                    v-if="item.status === 'pending'"
-                    type="button"
-                    class="btn-action-reject"
-                    title="Reject Step"
-                    @click="handleRejectSingle(item)"
-                  >
-                    <X :size="13" />
-                  </button>
-
-                  <button
-                    v-if="item.status === 'approved'"
-                    type="button"
-                    class="btn-action-effect"
-                    title="Effect Movement into Live Records"
-                    @click="handleEffectSingle(item)"
-                  >
-                    <ArrowUpRight :size="13" />
-                  </button>
+                  <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
+                    <button type="button" class="popup-item" @click="handleInspectDossier(item.id); activeActionMenuId = null;">
+                      <Eye :size="13" />
+                      <span>View Dossier</span>
+                    </button>
+                    <button
+                      v-if="item.status === 'pending'"
+                      type="button"
+                      class="popup-item item-approve"
+                      @click="handleApproveSingle(item); activeActionMenuId = null;"
+                    >
+                      <Check :size="13" />
+                      <span>Approve Step</span>
+                    </button>
+                    <button
+                      v-if="item.status === 'pending'"
+                      type="button"
+                      class="popup-item item-reject"
+                      @click="handleRejectSingle(item); activeActionMenuId = null;"
+                    >
+                      <X :size="13" />
+                      <span>Reject Step</span>
+                    </button>
+                    <button
+                      v-if="item.status === 'approved'"
+                      type="button"
+                      class="popup-item item-effect"
+                      @click="handleEffectSingle(item); activeActionMenuId = null;"
+                    >
+                      <ArrowUpRight :size="13" />
+                      <span>Effect Movement</span>
+                    </button>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -866,129 +872,96 @@ const formatMovementType = (type: string) => {
 
 .workflow-stage-pill {
   font-size: 11.5px;
-  color: #475569;
+  color: #737373;
   background-color: #f1f5f9;
   padding: 2px 8px;
   border-radius: 4px;
 }
 
-/* Status Pills */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  text-transform: capitalize;
-}
 
-.status-pending {
-  background-color: #eff6ff;
-  color: #0B529C;
-}
-
-.status-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-effected {
-  background-color: #f0fdf4;
-  color: #15803d;
-}
-
-.status-rejected {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
 
 /* Actions */
 .th-actions {
   text-align: right;
-  width: 130px;
+  width: 60px;
 }
 
 .td-actions {
   text-align: right;
+  width: 60px;
 }
 
-.row-actions-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.action-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-.btn-action-icon {
-  width: 28px;
-  height: 28px;
+.btn-action-dots {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e2e8f0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
   border-radius: 6px;
-  background-color: #ffffff;
   color: #64748b;
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.btn-action-icon:hover {
+.btn-action-dots:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
-.btn-action-approve {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
+.action-popup-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 150px;
+  padding: 4px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  border: 1px solid #bbf7d0;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #404040;
+  border: none;
+  background: transparent;
   border-radius: 6px;
-  background-color: #f0fdf4;
-  color: #15803d;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.12s;
+  text-align: left;
 }
 
-.btn-action-approve:hover {
-  background-color: #dcfce7;
+.popup-item:hover {
+  background-color: #f5f5f5;
 }
 
-.btn-action-reject {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #fecdd3;
-  border-radius: 6px;
-  background-color: #fff1f2;
-  color: #be123c;
-  cursor: pointer;
-  transition: all 0.15s;
+.popup-item.item-approve {
+  color: #009966;
 }
 
-.btn-action-reject:hover {
-  background-color: #ffe4e6;
+.popup-item.item-reject {
+  color: #E7000B;
 }
 
-.btn-action-effect {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background-color: #f8fafc;
+.popup-item.item-effect {
   color: #0B529C;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-action-effect:hover {
-  background-color: #eff6ff;
 }
 
 /* Empty State */
@@ -1038,33 +1011,5 @@ const formatMovementType = (type: string) => {
 
 .btn-floating-action:hover {
   background-color: rgba(255, 255, 255, 0.25);
-}
-
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #064e3b;
-  color: #ffffff;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 100;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 </style>

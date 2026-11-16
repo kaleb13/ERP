@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  CheckCircle2, XCircle, ShieldCheck, Calendar,
-  Check, X, Printer, Edit3
-} from 'lucide-vue-next';;
+  Check, Clock, X, ShieldCheck, Printer, FileText,
+  AlertCircle, Calendar, Wallet, DollarSign,
+  PanelRightClose, PanelRightOpen
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import FormInput from '../../components/FormInput.vue';
-import FormTextarea from '../../components/FormTextarea.vue';
+import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   encashmentsData, 
   getEncashmentById, 
@@ -19,6 +22,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Record ID from Route ───
 const encashmentId = computed(() => Number(route.params.id) || 2);
@@ -26,22 +30,39 @@ const encashmentId = computed(() => Number(route.params.id) || 2);
 const currentItem = computed<LeaveEncashmentRecord>(() => {
   const item = getEncashmentById(encashmentId.value);
   if (item) return item;
-  return encashmentsData.value[1] || encashmentsData.value[0];
+  return encashmentsData.value.find(e => e.id === 2) || encashmentsData.value[0];
 });
 
-// ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3 & 4) ───
-// Breadcrumb IS the navigation (ZERO separate back buttons permitted)
+// ─── Breadcrumb Navigation Standard (AGENTS.md Canvas Standard) ───
 const breadcrumbItems = computed(() => [
   { label: 'Leave Encashments', to: '/hr/leave-encashments' },
   { label: currentItem.value.code }
 ]);
 
-// ─── Approver Decision Form State (Specific to Approval Stage) ───
-// Fields that exist ONLY during approval:
-// - resolution (approve | modify | reject)
-// - approved_days (numeric 6,2 nullable - schema line 1796)
-// - decisionRemarks (stored in approval audit / remarks)
+// ─── Focus Mode State (Sidebar Minimization per Figma 9066:90379) ───
+const isFocusMode = ref(false);
+const remarkTextareaRef = ref<HTMLTextAreaElement | null>(null);
+
+const toggleFocusMode = () => {
+  isFocusMode.value = !isFocusMode.value;
+  if (isFocusMode.value) {
+    toast.info('Focus Mode Enabled', 'Approval sidebar minimized for full-width dossier review.');
+  } else {
+    toast.info('Approval Sidebar Restored', 'Dossier and approval action panel returned to standard layout.');
+    nextTick(() => {
+      remarkTextareaRef.value?.focus();
+    });
+  }
+};
+
+// ─── Approver Decision Form State (Resolution Dropdown Format) ───
 const resolution = ref<'approve' | 'modify' | 'reject'>('approve');
+const resolutionOptions: SelectOption[] = [
+  { value: 'approve', label: 'Approve Full Request' },
+  { value: 'modify', label: 'Approve with Adjusted Days' },
+  { value: 'reject', label: 'Reject Encashment Request' }
+];
+
 const adjustedDaysInput = ref<number>(currentItem.value.requested_days);
 const decisionRemarks = ref('');
 const isSubmittingDecision = ref(false);
@@ -65,34 +86,24 @@ const remainingAfterApproval = computed(() => {
   return Number(Math.max(0, currentItem.value.available_balance_before - days).toFixed(1));
 });
 
-// ─── Toast Feedback ───
-const toastMessage = ref<string | null>(null);
-const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
-};
-
 // ─── Top Bar Actions ───
 const handlePrintSlip = () => {
   window.print();
 };
 
-const handleCancelRequest = () => {
-  if (confirm(`Are you sure you want to cancel encashment request ${currentItem.value.code}?`)) {
-    cancelEncashment(currentItem.value.id);
-    showToast(`Encashment request ${currentItem.value.code} has been cancelled.`);
-  }
+const handleDownloadVoucher = () => {
+  toast.info('Voucher Generated', `Payroll payment voucher for ${currentItem.value.code} downloaded.`);
 };
 
 // ─── Submit Approver Decision Handler ───
 const handleSubmitDecision = () => {
   if (resolution.value === 'modify') {
     if (!adjustedDaysInput.value || adjustedDaysInput.value <= 0) {
-      alert('Please enter a valid number of adjusted days.');
+      toast.warning('Invalid Days', 'Please enter a valid number of adjusted days.');
       return;
     }
     if (adjustedDaysInput.value > currentItem.value.available_balance_before) {
-      alert(`Adjusted days (${adjustedDaysInput.value}) cannot exceed available quota balance (${currentItem.value.available_balance_before} days).`);
+      toast.warning('Quota Exceeded', `Adjusted days (${adjustedDaysInput.value}) cannot exceed available quota balance (${currentItem.value.available_balance_before} days).`);
       return;
     }
   }
@@ -111,13 +122,34 @@ const handleSubmitDecision = () => {
 
     if (success) {
       if (resolution.value === 'reject') {
-        showToast(`Encashment ${currentItem.value.code} has been rejected.`);
+        toast.error('Encashment Rejected', `Encashment request ${currentItem.value.code} has been rejected.`);
       } else {
-        showToast(`Encashment ${currentItem.value.code} approved! Quota debited and frozen daily rate locked.`);
+        toast.success('Encashment Approved', `Encashment ${currentItem.value.code} certified! Quota debited and frozen daily rate locked.`);
       }
       decisionRemarks.value = '';
     }
   }, 350);
+};
+
+// ─── Stepper States & Reactive Connector Line Calculation ───
+const step1State = computed(() => {
+  return currentItem.value.approvals[0]?.approval_state || 'approved';
+});
+const step2State = computed(() => {
+  return currentItem.value.approvals[1]?.approval_state || 'approved';
+});
+const step3State = computed(() => {
+  return currentItem.value.approvals[2]?.approval_state || 'pending';
+});
+
+const getConnectorLineClass = (fromState: string, toState: string): string => {
+  if (fromState === 'approved' && toState === 'approved') return 'step-line-solid-blue';
+  if (fromState === 'approved' && toState === 'pending') return 'step-line-gradient-blue-to-orange';
+  if (fromState === 'approved' && toState === 'rejected') return 'step-line-gradient-blue-to-red';
+  if (fromState === 'pending' && toState === 'queued') return 'step-line-gradient-orange-to-gray';
+  if (fromState === 'pending' && toState === 'approved') return 'step-line-solid-blue';
+  if (fromState === 'queued' && toState === 'queued') return 'step-line-solid-gray';
+  return 'step-line-solid-blue';
 };
 
 const formatCurrency = (val: number) => {
@@ -133,763 +165,1332 @@ const formatDate = (dateStr?: string | null) => {
 </script>
 
 <template>
-  <div class="encashment-approval-page">
-    <!-- ─── TOP BAR (AGENTS.md Rule 3: AppBreadcrumb IS the navigation, ZERO back buttons) ─── -->
-    <div class="top-nav-bar no-print">
-      <div class="top-nav-left">
-        <AppBreadcrumb :items="breadcrumbItems" no-margin />
-      </div>
-
-      <div class="top-nav-actions">
-        <AppButton
-          variant="outline"
-          size="sm"
-          @click="handlePrintSlip"
-        >
-          <template #icon-left><Printer :size="14" /></template>
-          Print Slip
-        </AppButton>
-
-        <AppButton
-          v-if="currentItem.request_state === 'pending' || currentItem.request_state === 'draft'"
-          variant="destructive"
-          size="sm"
-          @click="handleCancelRequest"
-        >
-          <template #icon-left><XCircle :size="14" /></template>
-          Cancel Request
-        </AppButton>
-      </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar no-print">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
-    <!-- ─── 1. DOCUMENT & REQUESTER HEADER CARD ─── -->
-    <div class="approval-header-card">
-      <div class="header-left">
-        <img
-          :src="currentItem.employee_avatar"
-          :alt="currentItem.employee_name"
-          class="requester-avatar"
-        />
-        <div class="header-details">
-          <div class="title-row">
-            <h1 class="requester-name">{{ currentItem.employee_name }}</h1>
-            <span class="doc-code-pill font-mono">{{ currentItem.code }}</span>
-            <span class="status-badge" :class="`status-${currentItem.request_state}`">
-              {{ currentItem.request_state === 'approved' ? 'Approved' : currentItem.request_state === 'rejected' ? 'Rejected' : 'Pending Review' }}
-            </span>
-          </div>
-          <p class="requester-meta">
-            {{ currentItem.employee_code }} &bull; {{ currentItem.job_position }} &bull; {{ currentItem.department }}
-          </p>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <div class="bucket-pill" title="Debited LeaveAllocation Bucket">
-          <Calendar :size="12" />
-          <span>Bucket: {{ currentItem.allocation_code }}</span>
-        </div>
-        <div class="policy-pill">
-          <ShieldCheck :size="12" />
-          <span>{{ currentItem.leave_type_name }} &bull; Statutory Encashable</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ─── 2. ENCASED SNAPSHOT & STATUTORY RATE METRICS ─── -->
-    <div class="metrics-summary-card">
-      <div class="metric-block">
-        <span class="m-label">Available Balance</span>
-        <span class="m-value">{{ currentItem.available_balance_before.toFixed(1) }} Days</span>
-        <span class="m-sub">{{ currentItem.total_entitled_days }}d entitled &bull; {{ currentItem.taken_days }}d taken</span>
-      </div>
-
-      <div class="m-divider"></div>
-
-      <div class="metric-block">
-        <span class="m-label">Requested Units</span>
-        <span class="m-value font-semibold">{{ currentItem.requested_days.toFixed(1) }} Days</span>
-        <span class="m-sub">Provisional quota deduction</span>
-      </div>
-
-      <div class="m-divider"></div>
-
-      <div class="metric-block">
-        <span class="m-label">Frozen Daily Rate</span>
-        <span class="m-value font-semibold text-brand">ETB {{ formatCurrency(currentItem.daily_rate) }}</span>
-        <span class="m-sub">Basic salary &divide; {{ currentItem.payroll_days_basis }} days basis</span>
-      </div>
-
-      <div class="m-divider"></div>
-
-      <div class="metric-block highlight-payout">
-        <span class="m-label">{{ currentItem.approved_days !== null ? 'Final Approved Payout' : 'Estimated Gross Payout' }}</span>
-        <span class="m-value-big font-bold text-green">
-          ETB {{ formatCurrency(currentItem.approved_days !== null ? currentItem.amount : computedAdjustedPayout) }}
-        </span>
-        <span class="m-sub">
-          {{ (currentItem.approved_days ?? computedEffectiveDays).toFixed(1) }} Days &times; ETB {{ formatCurrency(currentItem.daily_rate) }}
-        </span>
-      </div>
-    </div>
-
-    <!-- ─── 3. EMPLOYEE JUSTIFICATION (SUBMITTED REASON) ─── -->
-    <div class="justification-card">
-      <h3 class="section-title">Encashment Justification &amp; Purpose</h3>
-      <p class="justification-text">&ldquo;{{ currentItem.reason }}&rdquo;</p>
-      <div class="justification-footer">
-        <span>Submitted by employee on {{ formatDate(currentItem.created_at) }}</span>
-        <span class="currency-tag">Currency: {{ currentItem.currency }}</span>
-      </div>
-    </div>
-
-    <!-- ─── 4. APPROVAL-STAGE ONLY CONTROLS & LEDGER AUDIT ─── -->
-    <!-- This section contains the controls and outputs that exist SOLELY during approval -->
-    <div class="approval-action-card">
-      <div class="action-card-header">
-        <h3 class="section-title">Approver Authorization &amp; Ledger Sign-off</h3>
-        <span class="stage-tag">Approval Stage Only</span>
-      </div>
-
-      <!-- STATE A: PENDING APPROVAL (Active interactive approver form) -->
-      <div v-if="currentItem.request_state === 'pending'" class="pending-decision-form">
-        <!-- 1. Resolution Mode Selector -->
-        <div class="resolution-pills-row">
-          <label class="form-label-top">Decision Verdict:</label>
-          <div class="pills-container">
-            <button
-              type="button"
-              class="btn-decision-pill"
-              :class="{ 'is-selected approve': resolution === 'approve' }"
-              @click="resolution = 'approve'"
-            >
-              <Check :size="14" />
-              <span>Approve Full Request ({{ currentItem.requested_days.toFixed(1) }} Days)</span>
-            </button>
-
-            <button
-              type="button"
-              class="btn-decision-pill"
-              :class="{ 'is-selected modify': resolution === 'modify' }"
-              @click="resolution = 'modify'"
-            >
-              <Edit3 :size="14" />
-              <span>Approve with Adjusted Days</span>
-            </button>
-
-            <button
-              type="button"
-              class="btn-decision-pill"
-              :class="{ 'is-selected reject': resolution === 'reject' }"
-              @click="resolution = 'reject'"
-            >
-              <X :size="14" />
-              <span>Reject Request</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. Schema approved_days: appears ONLY when "modify" is selected -->
-        <Transition name="fade">
-          <div v-if="resolution === 'modify'" class="modify-days-panel">
-            <div class="modify-input-group">
-              <label class="form-label">Approved Days (numeric 6,2 per Schema line 1796):</label>
-              <FormInput
-                v-model="adjustedDaysInput"
-                type="number"
-                min="0.5"
-                :max="currentItem.available_balance_before"
-                step="0.5"
-              />
-            </div>
-            <div class="modify-calc-feedback">
-              <span>Recalculated Payout:</span>
-              <strong class="text-green font-bold">ETB {{ formatCurrency(computedAdjustedPayout) }}</strong>
-              <span class="text-sub">({{ adjustedDaysInput || 0 }}d &times; ETB {{ formatCurrency(currentItem.daily_rate) }} / day)</span>
-            </div>
-          </div>
-        </Transition>
-
-        <!-- 3. Approver Remarks -->
-        <div class="form-group-remarks">
-          <label class="form-label">
-            {{ resolution === 'reject' ? 'Rejection Reason (Required for audit):' : 'Approver Authorization Remarks (Optional):' }}
-          </label>
-          <FormTextarea
-            v-model="decisionRemarks"
-            rows="2"
-            :placeholder="resolution === 'reject' ? 'State operational workload or policy ceiling justification for rejection...' : 'Add any sign-off or payroll instructions...'"
-          />
-        </div>
-
-        <!-- 4. Post-Approval Projection Summary -->
-        <div class="pre-approval-impact">
-          <Info :size="14" class="text-slate-500" />
-          <span v-if="resolution !== 'reject'">
-            Confirming will stamp <strong>frozen daily rate ETB {{ formatCurrency(currentItem.daily_rate) }}</strong>, 
-            debit <strong>{{ computedEffectiveDays }} days</strong> from allocation <code>{{ currentItem.allocation_code }}</code> 
-            (leaving <strong>{{ remainingAfterApproval }}d</strong>), and queue the cash payout for payroll.
-          </span>
-          <span v-else class="text-rose-600">
-            Rejecting will close this request without any deductions to the employee's leave quota balance.
-          </span>
-        </div>
-
-        <!-- 5. Decision Action Button -->
-        <div class="decision-footer">
-          <AppButton
-            :variant="resolution === 'reject' ? 'destructive' : 'primary'"
-            size="md"
-            :disabled="isSubmittingDecision"
-            :loading="isSubmittingDecision"
-            @click="handleSubmitDecision"
+  <div class="encashment-detail-page">
+    <!-- Breadcrumb Bar (Strict Canvas Standard: Transparent, no card box) -->
+    <div class="breadcrumb-strip">
+      <AppBreadcrumb :items="breadcrumbItems" noMargin>
+        <template #badge>
+          <BaseBadge 
+            :color="currentItem.request_state === 'approved' ? 'success' : (currentItem.request_state === 'rejected' ? 'error' : 'warning')" 
+            size="sm"
           >
-            <span v-if="resolution === 'approve'">Confirm Approval &amp; Lock Rate</span>
-            <span v-else-if="resolution === 'modify'">Confirm Adjusted Approval ({{ adjustedDaysInput }}d)</span>
-            <span v-else>Confirm Rejection</span>
-          </AppButton>
+            {{ currentItem.request_state === 'approved' ? 'Approved & Locked' : (currentItem.request_state === 'rejected' ? 'Rejected' : 'Pending Authorization') }}
+          </BaseBadge>
+        </template>
+      </AppBreadcrumb>
+    </div>
+
+    <!-- Master Two-Column Layout (Responsive Split: 1fr Left, 360px Right) -->
+    <div class="detail-split-layout" :class="{ 'is-focus-mode': isFocusMode }">
+      <!-- ═════════════════════════════════════════════════════════════
+           LEFT COLUMN: Encashment Dossier Stack
+           ═════════════════════════════════════════════════════════════ -->
+      <div class="dossier-column">
+        <!-- 1. Employee Hero Card (Figma Node 8841:36806 Style) -->
+        <div class="dossier-card hero-card">
+          <div class="hero-card-main">
+            <!-- Left Profile Section -->
+            <div class="hero-left">
+              <div class="hero-avatar-wrap">
+                <img 
+                  :src="currentItem.employee_avatar" 
+                  :alt="currentItem.employee_name" 
+                  class="hero-avatar-img" 
+                />
+              </div>
+              <div class="hero-info">
+                <div class="hero-name-row">
+                  <h1 class="hero-name">{{ currentItem.employee_name }}</h1>
+                </div>
+                <div class="hero-id-row">
+                  <span class="hero-code">{{ currentItem.employee_code }} -</span>
+                  <BaseBadge color="gray" size="sm">
+                    {{ currentItem.job_position }}
+                  </BaseBadge>
+                </div>
+                <p class="hero-dept">Works at {{ currentItem.entity_name }} &bull; {{ currentItem.department }}</p>
+              </div>
+            </div>
+
+            <!-- Right Meta Section (2 Lines Symmetry) -->
+            <div class="hero-right">
+              <p class="meta-line">
+                <span class="meta-label">Requested Units: </span>
+                <span class="meta-value-bold">{{ currentItem.requested_days.toFixed(1) }} Working Days</span>
+              </p>
+              <p class="meta-line">
+                <span class="meta-label">Encashment ID: </span>
+                <span class="meta-value font-mono">{{ currentItem.code }}</span>
+              </p>
+              <div class="meta-leave-type-row">
+                <span class="meta-label">Leave Type: </span>
+                <BaseBadge color="primary" size="sm">
+                  {{ currentItem.leave_type_name }}
+                </BaseBadge>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Quota & Bank Details Strip -->
+          <div class="quota-pool-bar">
+            <div class="pool-left">
+              <Wallet :size="16" class="pool-icon-award" />
+              <span class="pool-title">Disbursement Account:</span>
+              <strong class="pool-number">{{ currentItem.bank_name }}</strong>
+              <span class="pool-formula font-mono">({{ currentItem.bank_account }})</span>
+            </div>
+            <div class="pool-right">
+              <span class="period-window-badge">
+                Debited Quota: {{ currentItem.allocation_code }} ({{ formatDate(currentItem.period_start) }} – {{ formatDate(currentItem.period_end) }})
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Encashment Snapshot & Statutory Rate Metrics (Standard 4-KPI Grid) -->
+        <div class="dossier-card">
+          <div class="card-title-block">
+            <h2 class="card-title">Encashment Snapshot &amp; Statutory Rate Metrics</h2>
+            <p class="card-desc">Quota availability, locked daily wage conversion basis, and computed cash disbursement value.</p>
+          </div>
+
+          <div class="kpi-grid">
+            <!-- 1. Available Balance -->
+            <div class="kpi-card">
+              <span class="kpi-label">AVAILABLE BALANCE</span>
+              <span class="kpi-value">{{ currentItem.available_balance_before.toFixed(1) }} Days</span>
+              <span class="kpi-sub">{{ currentItem.total_entitled_days }}d entitled &bull; {{ currentItem.taken_days }}d taken</span>
+            </div>
+
+            <!-- 2. Requested Units -->
+            <div class="kpi-card">
+              <span class="kpi-label">REQUESTED ENCASHMENT</span>
+              <span class="kpi-value">{{ currentItem.requested_days.toFixed(1) }} Days</span>
+              <span class="kpi-sub">Provisional quota deduction</span>
+            </div>
+
+            <!-- 3. Frozen Daily Rate -->
+            <div class="kpi-card">
+              <span class="kpi-label">FROZEN DAILY RATE</span>
+              <span class="kpi-value">ETB {{ formatCurrency(currentItem.daily_rate) }}</span>
+              <span class="kpi-sub">Basic salary &divide; {{ currentItem.payroll_days_basis }}d basis</span>
+            </div>
+
+            <!-- 4. Payout Amount (Brand Blue Highlight Card) -->
+            <div class="kpi-card kpi-card-brand">
+              <span class="kpi-label">{{ currentItem.approved_days !== null ? 'FINAL APPROVED PAYOUT' : 'ESTIMATED GROSS PAYOUT' }}</span>
+              <span class="kpi-value kpi-value-brand">
+                ETB {{ formatCurrency(currentItem.approved_days !== null ? currentItem.amount : computedAdjustedPayout) }}
+              </span>
+              <span class="kpi-sub">
+                {{ (currentItem.approved_days ?? computedEffectiveDays).toFixed(1) }}d &times; ETB {{ formatCurrency(currentItem.daily_rate) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Employee Justification (Submitted Reason) -->
+        <div class="dossier-card">
+          <div class="card-title-block">
+            <h2 class="card-title">Encashment Justification &amp; Purpose</h2>
+            <p class="card-desc">Employee formal motivation and statutory declaration for leave cash conversion.</p>
+          </div>
+
+          <!-- Quoted Reason Box -->
+          <div class="statement-box">
+            <p class="statement-text">&ldquo;{{ currentItem.reason }}&rdquo;</p>
+          </div>
+
+          <div class="justification-meta-strip">
+            <span class="meta-submitted">Submitted by employee on {{ formatDate(currentItem.created_at) }}</span>
+            <span class="meta-currency font-mono">Disbursement Currency: {{ currentItem.currency }}</span>
+          </div>
+        </div>
+
+        <!-- 4. Statutory Policy & Payroll Feeder Parameters -->
+        <div class="dossier-card">
+          <div class="card-title-block">
+            <h2 class="card-title">Statutory Policy &amp; Payroll Feeder Parameters</h2>
+            <p class="card-desc">Compliance rules under Ethiopian Labor Proclamation No. 1156/2019 and organizational payroll feeder.</p>
+          </div>
+
+          <div class="params-four-grid">
+            <div class="param-item">
+              <span class="param-label">Payroll Settlement</span>
+              <span class="param-val">{{ currentItem.payroll_settlement_month }}</span>
+              <span class="param-sub">Automated PayrollInput feeder</span>
+            </div>
+
+            <div class="param-item">
+              <span class="param-label">Ledger Transaction</span>
+              <span class="param-val font-mono">{{ currentItem.leave_transaction_id || 'Pending Ledger Commit' }}</span>
+              <span class="param-sub">Signed quota audit debit row</span>
+            </div>
+
+            <div class="param-item">
+              <span class="param-label">Payroll Synchronization</span>
+              <div class="param-badge-row">
+                <BaseBadge :color="currentItem.is_synced_to_payroll ? 'success' : 'blue'" size="sm">
+                  {{ currentItem.is_synced_to_payroll ? 'Committed & Synced' : 'Queued for Payroll' }}
+                </BaseBadge>
+              </div>
+              <span class="param-sub">Billed to monthly compensation</span>
+            </div>
+
+            <div class="param-item">
+              <span class="param-label">Seniority Tier</span>
+              <span class="param-val">{{ currentItem.service_years }} Years of Service</span>
+              <span class="param-sub">Hired on {{ formatDate(currentItem.hire_date) }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- STATE B: ALREADY APPROVED (Immutable Ledger Stamping & Payroll Feeder) -->
-      <div v-else-if="currentItem.request_state === 'approved'" class="approved-summary-box">
-        <div class="status-summary-row">
-          <div class="check-icon-wrap">
-            <CheckCircle2 :size="20" class="text-emerald" />
-          </div>
-          <div class="summary-text-block">
-            <h4 class="summary-title">Encashment Approved &amp; Rate Frozen</h4>
-            <p class="summary-desc">
-              Approved <strong>{{ currentItem.approved_days?.toFixed(1) }} Days</strong> at frozen daily rate 
-              <strong>ETB {{ formatCurrency(currentItem.daily_rate) }}</strong> for a gross payout of 
-              <strong class="text-emerald font-bold">ETB {{ formatCurrency(currentItem.amount) }}</strong>.
-            </p>
-          </div>
+      <!-- ═════════════════════════════════════════════════════════════
+           RIGHT COLUMN: Approval Workflow Rail & Contextual Actions (360px)
+           (Figma Node 7009:114669 & 9066:90379)
+           ═════════════════════════════════════════════════════════════ -->
+      <aside class="approval-rail" :class="{ 'is-collapsed': isFocusMode }">
+        <!-- Collapsed Rail State (Figma Node 9066:90727) -->
+        <div v-if="isFocusMode" class="rail-card rail-card-collapsed">
+          <button 
+            type="button"
+            class="btn-sidebar-collapsed"
+            @click="toggleFocusMode"
+            title="Expand authorization sidebar"
+            aria-label="Expand authorization sidebar"
+          >
+            <PanelRightOpen :size="20" />
+          </button>
         </div>
 
-        <!-- Schema Fields Generated Specifically on Approval -->
-        <div class="ledger-fields-grid">
-          <div class="lf-item">
-            <span class="lf-lbl">Signed Ledger Transaction (line 1803):</span>
-            <span class="lf-val font-mono text-brand">{{ currentItem.leave_transaction_id || 'LTR-2026-88124' }}</span>
+        <!-- Expanded Full Rail State -->
+        <div v-else class="rail-card">
+          <!-- Top Focus Button (Figma Node 7009:114670) -->
+          <div class="focus-btn-row">
+            <button 
+              type="button"
+              class="btn-focus"
+              @click="toggleFocusMode"
+              title="Minimize sidebar to focus on dossier"
+              aria-label="Minimize sidebar to focus on dossier"
+            >
+              <PanelRightClose :size="18" class="btn-focus-icon" />
+              <span>Focus</span>
+            </button>
           </div>
 
-          <div class="lf-item">
-            <span class="lf-lbl">Authorized By (line 1801):</span>
-            <span class="lf-val">{{ currentItem.approver_name }} ({{ currentItem.approver_role }})</span>
+          <!-- ──────────────────────────────────────────────────────────
+               SECTION 1: APPROVER DECISION OR CERTIFIED SIGNOFF BY STATUS
+               ────────────────────────────────────────────────────────── -->
+
+          <!-- STATE A: PENDING / DRAFT (Interactive Approver Form) -->
+          <div v-if="currentItem.request_state === 'pending' || currentItem.request_state === 'draft'" class="rail-section">
+            <div class="section-title-block">
+              <h3 class="section-heading">Approver Decision</h3>
+              <p class="section-desc">You are authorized to review and certify this leave encashment request. Please enter optional remarks before submitting your decision.</p>
+            </div>
+
+            <div class="decision-form">
+              <div class="form-group">
+                <label class="form-label required">Resolution</label>
+                <FormSelect
+                  v-model="resolution"
+                  :options="resolutionOptions"
+                  placeholder="Select resolution"
+                />
+              </div>
+
+              <!-- Adjusted Days Input: appears ONLY when "modify" is selected -->
+              <div v-if="resolution === 'modify'" class="modify-days-panel">
+                <div class="form-group">
+                  <label class="form-label required">Approved Days (Quota Debit)</label>
+                  <FormInput
+                    v-model="adjustedDaysInput"
+                    type="number"
+                    min="0.5"
+                    :max="currentItem.available_balance_before"
+                    step="0.5"
+                    placeholder="Enter approved days"
+                  />
+                </div>
+                <div class="modify-calc-feedback">
+                  <span class="calc-label">Recalculated Payout:</span>
+                  <strong class="calc-value font-mono">ETB {{ formatCurrency(computedAdjustedPayout) }}</strong>
+                  <span class="calc-sub">({{ adjustedDaysInput || 0 }}d &times; ETB {{ formatCurrency(currentItem.daily_rate) }})</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Remark</label>
+                <textarea
+                  ref="remarkTextareaRef"
+                  v-model="decisionRemarks"
+                  class="remark-textarea"
+                  :placeholder="resolution === 'reject' ? 'State operational workload or policy ceiling justification for rejection...' : 'Enter your decision reason or sign-off notes...'"
+                  rows="3"
+                />
+              </div>
+
+              <!-- Pre-Approval Impact Notice -->
+              <div class="pre-approval-impact">
+                <span v-if="resolution !== 'reject'">
+                  Confirming will lock <strong>frozen rate ETB {{ formatCurrency(currentItem.daily_rate) }}</strong>, 
+                  debit <strong>{{ computedEffectiveDays }} days</strong> from <code>{{ currentItem.allocation_code }}</code> 
+                  (leaving <strong>{{ remainingAfterApproval }}d</strong>), and queue payout.
+                </span>
+                <span v-else class="text-danger">
+                  Rejecting will close this request without deducting employee leave quota.
+                </span>
+              </div>
+
+              <AppButton
+                :variant="resolution === 'reject' ? 'destructive' : 'primary'"
+                size="md"
+                class="btn-submit-decision"
+                :loading="isSubmittingDecision"
+                :disabled="isSubmittingDecision"
+                @click="handleSubmitDecision"
+              >
+                Submit Decision
+              </AppButton>
+            </div>
           </div>
 
-          <div class="lf-item">
-            <span class="lf-lbl">Approved At (line 1802):</span>
-            <span class="lf-val">{{ formatDate(currentItem.approved_at) }}</span>
+          <!-- STATE B: APPROVED (Official Certified Seal & Management Actions) -->
+          <div v-else-if="currentItem.request_state === 'approved'" class="rail-section">
+            <div class="section-title-block">
+              <h3 class="section-heading">Certified Authorization</h3>
+              <p class="section-desc">Statutorily certified, rate frozen, and committed to the payroll settlement feeder.</p>
+            </div>
+
+            <!-- Certified Seal Card -->
+            <div class="certified-signoff-card">
+              <div class="seal-header">
+                <div class="seal-icon-wrap">
+                  <ShieldCheck :size="20" class="seal-icon" />
+                </div>
+                <div class="seal-titles">
+                  <span class="seal-heading">Approved &amp; Rate Locked</span>
+                  <span class="seal-meta-date">Certified: {{ formatDate(currentItem.approved_at) }}</span>
+                </div>
+              </div>
+
+              <!-- Signatory Info -->
+              <div class="signatory-row">
+                <img 
+                  src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&h=120&q=80" 
+                  alt="Marta Tadesse" 
+                  class="signatory-avatar" 
+                />
+                <div class="signatory-meta">
+                  <span class="signatory-name">{{ currentItem.approver_name || 'Marta Tadesse' }}</span>
+                  <span class="signatory-role">{{ currentItem.approver_role || 'Financial Controller' }}</span>
+                </div>
+              </div>
+
+              <!-- Approver Endorsement Quote -->
+              <div v-if="currentItem.approval_remarks" class="approval-quote-box">
+                <p class="approval-quote-text">&ldquo;{{ currentItem.approval_remarks }}&rdquo;</p>
+              </div>
+            </div>
+
+            <!-- Contextual Actions -->
+            <div class="context-actions-stack">
+              <AppButton
+                variant="outline"
+                size="sm"
+                class="w-full"
+                @click="handlePrintSlip"
+              >
+                <template #icon-left><Printer :size="14" /></template>
+                Print Encashment Slip
+              </AppButton>
+
+              <AppButton
+                variant="outline"
+                size="sm"
+                class="w-full"
+                @click="handleDownloadVoucher"
+              >
+                <template #icon-left><FileText :size="14" /></template>
+                Download Payroll Voucher
+              </AppButton>
+            </div>
           </div>
 
-          <div class="lf-item">
-            <span class="lf-lbl">PayrollInput Feeder (line 1806):</span>
-            <span class="lf-val text-emerald font-medium">Billed to {{ currentItem.payroll_settlement_month }}</span>
+          <!-- STATE C: REJECTED -->
+          <div v-else-if="currentItem.request_state === 'rejected'" class="rail-section">
+            <div class="section-title-block">
+              <h3 class="section-heading">Request Rejected</h3>
+              <p class="section-desc">Encashment authorization has been denied per departmental exigency.</p>
+            </div>
+
+            <div class="rejected-signoff-card">
+              <div class="seal-header">
+                <div class="seal-icon-wrap seal-icon-wrap-rejected">
+                  <X :size="20" class="seal-icon-rejected" />
+                </div>
+                <div class="seal-titles">
+                  <span class="seal-heading text-danger">Encashment Request Denied</span>
+                  <span class="seal-meta-date">Rejected: {{ formatDate(currentItem.approved_at) }}</span>
+                </div>
+              </div>
+              <div v-if="currentItem.approval_remarks" class="approval-quote-box">
+                <p class="approval-quote-text">&ldquo;{{ currentItem.approval_remarks }}&rdquo;</p>
+              </div>
+            </div>
+
+            <AppButton
+              variant="outline"
+              size="sm"
+              class="w-full"
+              @click="handlePrintSlip"
+            >
+              <template #icon-left><Printer :size="14" /></template>
+              Print Rejection Memo
+            </AppButton>
+          </div>
+
+          <hr class="rail-divider" />
+
+          <!-- Section 2: Approval Steps (Living Multi-Stage Stepper) -->
+          <div class="rail-section">
+            <div class="section-title-block">
+              <h3 class="section-heading">Authorization Steps</h3>
+              <p class="section-desc">Sequential multi-stage authorization workflow.</p>
+            </div>
+
+            <!-- Stepper Container (Figma Node 7009:114683 & 7009:114684 Standard) -->
+            <div class="stepper-wrap">
+              <!-- Left Track with Circles and Reactive Connector Lines -->
+              <div class="stepper-track">
+                <!-- Step 1 Icon -->
+                <div class="step-circle" :class="'step-circle-' + step1State" :title="step1State">
+                  <Check v-if="step1State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else-if="step1State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
+                  <X v-else-if="step1State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
+                </div>
+                
+                <!-- Connector Line 1: Step 1 -> Step 2 (Solid Blue if both approved; Gradient if opposite) -->
+                <div class="step-line-1" :class="getConnectorLineClass(step1State, step2State)"></div>
+
+                <!-- Step 2 Icon -->
+                <div class="step-circle" :class="'step-circle-' + step2State" :title="step2State">
+                  <Check v-if="step2State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else-if="step2State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
+                  <X v-else-if="step2State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
+                </div>
+                
+                <!-- Connector Line 2: Step 2 -> Step 3 (Solid Blue if both approved; Gradient if opposite) -->
+                <div class="step-line-2" :class="getConnectorLineClass(step2State, step3State)"></div>
+
+                <!-- Step 3 Icon -->
+                <div class="step-circle" :class="'step-circle-' + step3State" :title="step3State">
+                  <Check v-if="step3State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else-if="step3State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
+                  <X v-else-if="step3State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
+                </div>
+              </div>
+
+              <!-- Right Content Cards Stack -->
+              <div class="stepper-content">
+                <!-- Step 1 Card: Encashment Request Submission -->
+                <div class="step-card">
+                  <div class="step-meta">
+                    <span class="step-title">Encashment Request Submission</span>
+                    <span class="step-actor">{{ currentItem.employee_name }} (Requester)</span>
+                    <span class="step-time">{{ formatDate(currentItem.created_at) }}, 08:45 AM</span>
+                  </div>
+                  <div class="step-quote-box">
+                    <p class="step-quote-text">&ldquo;Submitted request for {{ currentItem.requested_days.toFixed(1) }} days encashment.&rdquo;</p>
+                  </div>
+                </div>
+
+                <!-- Step 2 Card: Line Manager Endorsement -->
+                <div class="step-card">
+                  <div class="step-meta" :class="{ 'step-meta-queued': step2State === 'queued' }">
+                    <span class="step-title" :class="{ 'text-muted': step2State === 'queued' }">Line Manager Endorsement</span>
+                    <span class="step-actor" :class="{ 'text-muted': step2State === 'queued' }">Sara Tefera &bull; Shift Supervisor</span>
+                    <span v-if="step2State === 'approved'" class="step-time">{{ formatDate(currentItem.created_at) }}, 02:30 PM</span>
+                  </div>
+                  <div v-if="step2State === 'approved'" class="step-quote-box">
+                    <p class="step-quote-text">&ldquo;Cashier staffing capacity verified. Endorsed for cash conversion.&rdquo;</p>
+                  </div>
+                </div>
+
+                <!-- Step 3 Card: Finance & Payroll Authorization -->
+                <div class="step-card">
+                  <div class="step-meta" :class="{ 'step-meta-queued': step3State === 'queued' }">
+                    <span class="step-title" :class="{ 'text-muted': step3State === 'queued' }">Finance &amp; Payroll Authorization</span>
+                    <span class="step-actor" :class="{ 'text-muted': step3State === 'queued' }">{{ currentItem.approver_name || 'Marta Tadesse' }} ({{ currentItem.approver_role || 'Financial Controller' }})</span>
+                    <span v-if="step3State === 'approved'" class="step-time">{{ formatDate(currentItem.approved_at) }}</span>
+                  </div>
+                  <div v-if="step3State === 'approved'" class="step-quote-box">
+                    <p class="step-quote-text">&ldquo;{{ currentItem.approval_remarks || 'Daily rate frozen. Quota debited from allocation.' }}&rdquo;</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div v-if="currentItem.approval_remarks" class="approval-remark-note">
-          <span class="remark-lbl">Approver Note:</span>
-          <p class="remark-content">&ldquo;{{ currentItem.approval_remarks }}&rdquo;</p>
-        </div>
-      </div>
-
-      <!-- STATE C: REJECTED -->
-      <div v-else-if="currentItem.request_state === 'rejected'" class="rejected-summary-box">
-        <div class="status-summary-row">
-          <XCircle :size="20" class="text-rose" />
-          <div>
-            <h4 class="summary-title text-rose">Encashment Request Rejected</h4>
-            <p class="summary-desc">Request was reviewed and rejected. No quota was debited from allocation.</p>
-          </div>
-        </div>
-        <div v-if="currentItem.approval_remarks" class="approval-remark-note">
-          <span class="remark-lbl">Rejection Rationale:</span>
-          <p class="remark-content">&ldquo;{{ currentItem.approval_remarks }}&rdquo;</p>
-        </div>
-      </div>
+      </aside>
     </div>
   </div>
 </template>
 
 <style scoped>
-.encashment-approval-page {
+.encashment-detail-page {
   display: flex;
   flex-direction: column;
-  gap: var(--alias-spacing-3xl, 24px);
+  gap: 24px;
+  padding: 0;
+  background-color: var(--color-background-primary, #fafafa);
+  min-height: 100vh;
+}
+
+/* ─── Top Breadcrumb Navigation (Strict Canvas Standard) ─── */
+.breadcrumb-strip {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
   width: 100%;
 }
 
-/* ─── Top Nav Bar (AppBreadcrumb IS navigation, ZERO back button) ─── */
-.top-nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0;
-  background: transparent;
-}
-.top-nav-left {
-  display: flex;
-  align-items: center;
-}
-.top-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ─── Two-Column Split Layout (1fr Left, 360px Right) ─── */
+.detail-split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  transition: grid-template-columns 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-secondary-action {
-  height: 38px;
-  padding: 0 16px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #404040;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+.detail-split-layout.is-focus-mode {
+  grid-template-columns: minmax(0, 1fr) 68px;
 }
-.btn-secondary-action:hover { background-color: #f8fafc; }
 
-.btn-danger-action {
-  height: 38px;
-  padding: 0 16px;
-  background-color: #ffffff;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-danger-action:hover { background-color: #fef2f2; }
-
-/* ─── 1. Document & Requester Header Card ─── */
-.approval-header-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.requester-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid #e2e8f0;
-}
-.header-details {
+.dossier-column {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.requester-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
-}
-.doc-code-pill {
-  font-size: 11.5px;
-  color: #64748b;
-  background-color: #f1f5f9;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-.status-badge {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 9999px;
-}
-.status-pending { background-color: #fef3c7; color: #b45309; }
-.status-approved { background-color: #ecfdf5; color: #047857; }
-.status-rejected { background-color: #fef2f2; color: #b91c1c; }
-
-.requester-meta {
-  font-size: 12px;
-  color: #737373;
-  margin: 0;
+  gap: 24px;
+  width: 100%;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.bucket-pill, .policy-pill {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  color: #64748b;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-.policy-pill {
-  color: #047857;
-  background-color: #ecfdf5;
-  border-color: #a7f3d0;
+.approval-rail {
+  width: 100%;
+  max-width: 360px;
+  transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ─── 2. Metrics Summary Card ─── */
-.metrics-summary-card {
+.approval-rail.is-collapsed {
+  max-width: 68px;
+  width: 68px;
+}
+
+@media (max-width: 1100px) {
+  .detail-split-layout {
+    grid-template-columns: 1fr;
+  }
+  .detail-split-layout.is-focus-mode {
+    grid-template-columns: 1fr;
+  }
+  .approval-rail {
+    max-width: 100%;
+  }
+  .approval-rail.is-collapsed {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* ─── Dossier Card Standard (Figma: rounded-16px, border #e5e5e5, white) ─── */
+.dossier-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px 24px;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 20px;
 }
-.metric-block {
+
+.card-title-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-.m-label {
-  font-size: 11.5px;
-  color: #737373;
-  font-weight: 500;
-}
-.m-value {
-  font-size: 17px;
-  font-weight: 600;
-  color: #404040;
-}
-.m-value-big {
-  font-size: 20px;
-}
-.m-sub {
-  font-size: 11px;
-  color: #94a3b8;
-}
-.m-divider {
-  width: 1px;
-  height: 42px;
-  background-color: #e2e8f0;
+  gap: 4px;
 }
 
-/* ─── 3. Justification Card ─── */
-.justification-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 18px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.section-title {
-  font-size: 13.5px;
+.card-title {
+  font-size: 16px;
   font-weight: 600;
-  color: #404040;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 24px;
   margin: 0;
-}
-.justification-text {
-  font-size: 13.5px;
-  color: #404040;
-  line-height: 1.5;
-  margin: 0;
-  background-color: #fafbfc;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 3px solid #0B529C;
-}
-.justification-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11.5px;
-  color: #737373;
-}
-.currency-tag {
-  font-weight: 600;
-  color: #64748b;
 }
 
-/* ─── 4. Approver Action Card (Approval Stage Only) ─── */
-.approval-action-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+.card-desc {
+  font-size: 13px;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 18px;
+  margin: 0;
+}
+
+/* ─── 1. Employee Hero Card (Figma Node 8841:36806) ─── */
+.hero-card {
   padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
   gap: 16px;
 }
-.action-card-header {
+
+.hero-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.hero-left {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.hero-avatar-wrap {
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  border: 2.26px solid #ffffff;
+  box-shadow: 0 6.78px 9.04px -2.26px rgba(10, 13, 18, 0.08), 0 2.26px 3.39px -1.13px rgba(10, 13, 18, 0.03);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-name-row {
+  display: flex;
+  align-items: center;
+}
+
+.hero-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 28px;
+  margin: 0;
+}
+
+.hero-id-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-code {
+  font-size: 14px;
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.hero-dept {
+  font-size: 13px;
+  color: var(--alias-color-text-tertiary, #737373);
+  margin: 0;
+}
+
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.meta-line {
+  font-size: 13px;
+  margin: 0;
+  line-height: 18px;
+}
+
+.meta-label {
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.meta-value {
+  color: var(--alias-color-text-secondary, #404040);
+}
+
+.meta-value-bold {
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+}
+
+.meta-leave-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quota-pool-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 10px;
-}
-.stage-tag {
-  font-size: 11px;
-  font-weight: 600;
-  color: #0B529C;
-  background-color: #eff6ff;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 10px 14px;
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Pending Form */
-.pending-decision-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.resolution-pills-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.form-label-top {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #404040;
-}
-.pills-container {
+.pool-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12.5px;
 }
-.btn-decision-pill {
+
+.pool-icon-award {
+  color: #0b529c;
+}
+
+.pool-title {
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.pool-number {
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 600;
+}
+
+.pool-formula {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.period-window-badge {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #0b529c;
+  background-color: #f1f7fe;
+  border: 1px solid #c8e1fd;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+/* ─── 2. Metric Cards (Standard 4-KPI Grid) ─── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpi-card {
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid #e9eaeb;
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--alias-color-text-tertiary, #737373);
+  text-transform: uppercase;
+  line-height: 18px;
+}
+
+.kpi-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 28px;
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 18px;
+}
+
+/* Brand blue highlight card */
+.kpi-card-brand {
+  background-color: #f1f7fe;
+  border-color: #83bff6;
+}
+
+.kpi-value-brand {
+  color: #0b529c;
+}
+
+/* ─── 3. Justification Statement Box ─── */
+.statement-box {
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.statement-text {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--alias-color-text-secondary, #404040);
+  margin: 0;
+  font-style: italic;
+}
+
+.justification-meta-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--alias-color-text-tertiary, #737373);
+  padding: 0 4px;
+}
+
+/* ─── 4. Statutory Compliance 4-Grid ─── */
+.params-four-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .params-four-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-label {
+  font-size: 12.5px;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 18px;
+}
+
+.param-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 20px;
+}
+
+.param-sub {
+  font-size: 11.5px;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 16px;
+}
+
+.param-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* ─── Right Column: Approval Timeline (360px / Collapsed 68px) ─── */
+.rail-card {
+  background-color: #ffffff;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Collapsed Rail Card & Toggle Button (Figma Node 9066:90727 & 9066:90728) */
+.rail-card-collapsed {
+  background-color: #ffffff;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 16px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 800px;
+  box-sizing: border-box;
+}
+
+.btn-sidebar-collapsed {
+  width: 36px;
   height: 36px;
-  padding: 0 14px;
+  background-color: #ffffff;
+  border: 1px solid #d5d7da;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-  color: #404040;
-  font-size: 12.5px;
-  font-weight: 500;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  padding: 8px;
+  cursor: pointer;
+  color: #414651;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-collapsed:hover {
+  background-color: #f9fafb;
+  border-color: #d0d5dd;
+  color: #1f242f;
+}
+
+/* Focus Button in Expanded Rail (Figma Node 7009:114670) */
+.focus-btn-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-focus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #d5d7da;
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #414651;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-decision-pill:hover { background-color: #f1f5f9; }
-.btn-decision-pill.is-selected.approve {
-  background-color: #ecfdf5;
-  border-color: #10b981;
-  color: #047857;
+
+.btn-focus:hover {
+  background-color: #f9fafb;
+  border-color: #d0d5dd;
+  color: #1f242f;
 }
-.btn-decision-pill.is-selected.modify {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+
+.btn-focus-icon {
+  color: #414651;
+  flex-shrink: 0;
 }
-.btn-decision-pill.is-selected.reject {
-  background-color: #fef2f2;
-  border-color: #ef4444;
-  color: #b91c1c;
+
+.rail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 30px;
+  margin: 0;
+}
+
+.section-desc {
+  font-size: 14px;
+  color: var(--alias-color-text-tertiary, #737373);
+  line-height: 20px;
+  margin: 0;
+}
+
+/* Decision Form */
+.decision-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 20px;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #e53333;
 }
 
 .modify-days-panel {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 12px 16px;
-}
-.modify-input-group {
-  width: 240px;
-  display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-.modify-calc-feedback {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #404040;
+  gap: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
-.form-group-remarks {
+.modify-calc-feedback {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  font-size: 12px;
 }
-.form-label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: #404040;
+
+.calc-label {
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.calc-value {
+  font-size: 15px;
+  color: #009966;
+}
+
+.calc-sub {
+  color: #64748b;
+  font-size: 11.5px;
+}
+
+.remark-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
+  font-size: 14px;
+  color: var(--alias-color-text-secondary, #404040);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.remark-textarea:focus {
+  border-color: #0b529c;
 }
 
 .pre-approval-impact {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 12px;
-  color: #64748b;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 8px 14px;
-  border-radius: 6px;
-}
-.pre-approval-impact code {
-  font-family: monospace;
-  background-color: #e2e8f0;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.decision-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-.btn-submit-verdict {
-  height: 38px;
-  padding: 0 20px;
-  border: none;
+  line-height: 18px;
+  color: var(--alias-color-text-tertiary, #737373);
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 500;
-  cursor: pointer;
-  color: #ffffff;
-  transition: opacity 0.15s ease;
+  padding: 10px 12px;
 }
-.btn-submit-verdict.approve { background-color: #0B529C; }
-.btn-submit-verdict.modify { background-color: #0B529C; }
-.btn-submit-verdict.reject { background-color: #dc2626; }
-.btn-submit-verdict:hover { opacity: 0.9; }
 
-/* Approved Summary Box */
-.approved-summary-box {
+.btn-submit-decision {
+  width: 100%;
+}
+
+.rail-divider {
+  border: none;
+  border-top: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  margin: 4px 0;
+  width: 100%;
+}
+
+/* Certified Sign-off Card (Approved State) */
+.certified-signoff-card {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-.status-summary-row {
-  display: flex;
-  align-items: flex-start;
   gap: 12px;
 }
-.summary-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #047857;
-  margin: 0;
-}
-.summary-desc {
-  font-size: 13px;
-  color: #404040;
-  margin: 2px 0 0 0;
-}
 
-.ledger-fields-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 24px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 16px;
-}
-.lf-item {
+.seal-header {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.lf-lbl {
-  font-size: 11px;
-  color: #737373;
-}
-.lf-val {
-  font-size: 13px;
-  color: #404040;
-  font-weight: 500;
-}
-
-.approval-remark-note {
-  background-color: #fafbfc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 12.5px;
-}
-.remark-lbl {
-  font-weight: 600;
-  color: #64748b;
-  font-size: 11px;
-}
-.remark-content {
-  margin: 2px 0 0 0;
-  color: #404040;
-}
-
-/* Rejected Summary Box */
-.rejected-summary-box {
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
-/* Utilities */
-.text-brand { color: #0B529C; }
-.text-green { color: #059669; }
-.text-emerald { color: #047857; }
-.text-rose { color: #dc2626; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-.font-mono { font-family: monospace; }
-
-/* Toast */
-.toast-bar {
-  position: fixed;
-  top: 24px;
-  right: 28px;
-  background-color: #047857;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+.seal-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #86efac;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.seal-icon {
+  color: #059669;
+}
+
+.seal-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.seal-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.seal-meta-date {
+  font-size: 11px;
+  color: #047857;
+}
+
+.signatory-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #ffffff;
+  border: 1px solid #dcfce7;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.signatory-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.signatory-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.signatory-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.signatory-role {
+  font-size: 11px;
+  color: #737373;
+}
+
+.approval-quote-box {
+  background-color: #ffffff;
+  border-left: 3px solid #059669;
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+}
+
+.approval-quote-text {
+  font-size: 12px;
+  line-height: 18px;
+  color: #404040;
+  margin: 0;
+  font-style: italic;
+}
+
+.context-actions-stack {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.25);
-  z-index: 9999;
+}
+
+/* Rejected Card */
+.rejected-signoff-card {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.seal-icon-wrap-rejected {
+  border-color: #fca5a5;
+}
+
+.seal-icon-rejected {
+  color: #dc2626;
+}
+
+.text-danger {
+  color: #dc2626 !important;
+}
+
+/* ─── Stepper Workflow (Figma Node 7009:114683 & 7009:114684) ─── */
+.stepper-wrap {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.stepper-track {
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 27px;
+  flex-shrink: 0;
+}
+
+.step-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* Step Circles */
+.step-circle-approved {
+  background-color: var(--color-brand-blue-primary, #0b529c);
+  border: none;
+}
+
+.step-circle-pending {
+  background-color: var(--color-warning-500, #fe9a00);
+  border: none;
+}
+
+.step-circle-queued {
+  background-color: var(--color-background-tertiary, #e5e5e5);
+  border: 1px solid var(--color-border-primary, #d4d4d4);
+}
+
+.step-circle-rejected {
+  background-color: var(--color-error-500, #e7000b);
+  border: none;
+}
+
+.step-icon-white {
+  color: #ffffff;
+}
+
+.step-icon-disabled {
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+/* ─── Reactive Connector Lines ─── */
+.step-line-1 {
+  width: 2px;
+  height: 100px;
+  margin: 0 auto;
+}
+
+.step-line-2 {
+  width: 2px;
+  height: 100px;
+  margin: 0 auto;
+}
+
+.step-line-solid-blue {
+  background-color: #0b529c !important;
+}
+
+.step-line-solid-gray {
+  background-color: #d4d4d4 !important;
+}
+
+.step-line-gradient-blue-to-orange {
+  background: linear-gradient(180deg, #0b529c 0%, #fe9a00 100%) !important;
+}
+
+.step-line-gradient-orange-to-gray {
+  background: linear-gradient(180deg, #fe9a00 0%, #d4d4d4 100%) !important;
+}
+
+.step-line-gradient-blue-to-red {
+  background: linear-gradient(180deg, #0b529c 0%, #e7000b 100%) !important;
+}
+
+.stepper-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.step-card {
+  background-color: var(--color-background-primary, #fafafa);
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 18px;
+}
+
+.step-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--alias-color-text-secondary, #404040);
+}
+
+.step-actor {
+  font-size: 10px;
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.step-time {
+  font-size: 10px;
+  color: var(--alias-color-text-tertiary, #737373);
+}
+
+.step-quote-box {
+  background-color: #f5f5f5;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.step-quote-text {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--alias-color-text-secondary, #404040);
+  margin: 0;
+}
+
+.text-muted {
+  color: #a1a1a1 !important;
 }
 </style>

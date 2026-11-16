@@ -16,9 +16,11 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import IconColumnSolid from '../../components/IconColumnSolid.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast: appToast } = useToast();
 
 const isEditMode = computed(() => !!route.params.id);
 const isSaved = ref(false);
@@ -34,11 +36,13 @@ const tabs: BaseTabItem<TabKey>[] = [
   { id: 'matrix',    label: 'Year Matrix',         icon: CalendarRange },
 ];
 
-// ─── Toast ───
-const toast = ref<{ msg: string; type: 'success' | 'error' } | null>(null);
+// ─── Toast (Strict Centralized useToast Standard) ───
 const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
-  toast.value = { msg, type };
-  setTimeout(() => { toast.value = null; }, 3500);
+  if (type === 'error') {
+    appToast.error('Work Calendar', msg);
+  } else {
+    appToast.success('Work Calendar', msg);
+  }
 };
 
 // ──────────────────────────────────────────────
@@ -744,15 +748,6 @@ onMounted(() => {
         </AppButton>
       </div>
     </div>
-
-    <!-- ─── Toast ─── -->
-    <Transition name="toast-fade">
-      <div v-if="toast" class="toast-bar" :class="toast.type === 'error' ? 'toast-error' : 'toast-success'">
-        <CheckCircle2 v-if="toast.type === 'success'" :size="15" />
-        <AlertCircle  v-else :size="15" />
-        <span>{{ toast.msg }}</span>
-      </div>
-    </Transition>
 
     <!-- ─── Top Tabs ─── -->
     <div class="tabs-row">
@@ -1512,26 +1507,6 @@ onMounted(() => {
 }
 .btn-save:hover { background-color: #09437f; }
 
-/* ─── Toast ─── */
-.toast-bar {
-  position: fixed;
-  top: 22px;
-  right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 18px;
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-}
-.toast-success { background: #ffffff; border: 1px solid #d1fae5; color: #059669; }
-.toast-error   { background: #ffffff; border: 1px solid #fee2e2; color: #dc2626; }
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.25s ease; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; }
-
 /* ─── Tabs Row ─── */
 .tabs-row {
   background: transparent;
@@ -1980,15 +1955,7 @@ onMounted(() => {
 }
 
 /* Status pills for custom table */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-  white-space: nowrap;
-}
+
 .pill-holiday { background-color: #f3e8ff; color: #7c3aed; }
 .pill-halfday { background-color: #fef3c7; color: #b45309; }
 .pill-working { background-color: #dcfce7; color: #059669; }
@@ -2138,7 +2105,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-row-expand:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -2230,7 +2197,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 

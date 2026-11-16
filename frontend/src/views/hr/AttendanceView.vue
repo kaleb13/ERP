@@ -23,8 +23,10 @@ import FormTextarea from '../../components/FormTextarea.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Breadcrumb ───
 const breadcrumbItems = [
@@ -41,7 +43,6 @@ const selectedShiftFilter = ref('all');
 const selectedStatusFilter = ref('all');
 const searchQuery = ref('');
 const currentDateIso = ref('2026-07-27'); // Mon, Jul 27, 2026 (Matches Figma Node 7221:140229)
-const toastMessage = ref<string | null>(null);
 const showFiltersDropdown = ref(false);
 const showColumnsModal = ref(false);
 const isFullscreen = ref(false);
@@ -51,9 +52,9 @@ const sortAscending = ref(true);
 const currentPage = ref(1);
 const pageSize = ref(10);
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success('Attendance', msg);
 };
 
 // ─── Date Navigation ───
@@ -1057,14 +1058,6 @@ const handleResolveException = (ex: AttendanceExceptionRecord, state: 'justified
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
-
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- ════════════════════════════════════════════════════════════════════════ -->
     <!-- CARD 1: TOP SUMMARY CARD (Figma Node 7221:140238)                        -->
@@ -2277,73 +2270,16 @@ const handleResolveException = (ex: AttendanceExceptionRecord, state: 'justified
 }
 
 /* Status Pills (Figma QMT System) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
 
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
 
-.status-on_duty {
-  background: #EBF3FC;
-  color: #0B529C;
-}
-.status-on_duty .status-dot {
-  background: #0B529C;
-}
 
-.status-present {
-  background: #EBFDF2;
-  color: #027A48;
-}
-.status-present .status-dot {
-  background: #12B76A;
-}
 
-.status-late {
-  background: #FFF9EB;
-  color: #B54708;
-}
-.status-late .status-dot {
-  background: #F79009;
-}
 
-.status-absent {
-  background: #FEF3F2;
-  color: #B42318;
-}
-.status-absent .status-dot {
-  background: #F04438;
-}
 
-.status-on_leave, .status-scheduled {
-  background: #F5F5F5;
-  color: #737373;
-}
-.status-on_leave .status-dot, .status-scheduled .status-dot {
-  background: #A3A3A3;
-}
 
-/* Lock Status Pills */
-.lock-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
+
+
+
 
 .lock-pill.open {
   background: #EBFDF2;
@@ -2662,34 +2598,6 @@ const handleResolveException = (ex: AttendanceExceptionRecord, state: 'justified
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-}
-
-/* Toast */
-.toast-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #404040;
-  color: #ffffff;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 
 .fade-slide-enter-active,

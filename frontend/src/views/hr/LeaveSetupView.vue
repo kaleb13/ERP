@@ -15,6 +15,8 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   leavePoliciesData, 
   leaveTypesData, 
@@ -69,10 +71,9 @@ const setupTabs = computed<BaseTabItem<SetupTab>[]>(() => [
 ]);
 
 // Toast Notification
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // =========================================================================
@@ -90,7 +91,7 @@ const policyColumns = ref<ColumnDef[]>([
   { key: 'effective_period', label: 'Effective Period', visible: true, sortable: true },
   { key: 'rules_count', label: 'Entitlement Rules', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
-  { key: 'actions', label: '', width: '48px', align: 'center', visible: true }
+  { key: 'actions', label: 'Actions', width: '48px', align: 'center', visible: true }
 ]);
 
 const stateFilterOptions: SelectOption[] = [
@@ -179,7 +180,7 @@ const typeColumns = ref<ColumnDef[]>([
   { key: 'requires_attachment', label: 'Document Evidence', visible: true, sortable: true },
   { key: 'affects_attendance', label: 'Affects Attendance', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
-  { key: 'actions', label: '', width: '48px', align: 'center', visible: true }
+  { key: 'actions', label: 'Actions', width: '48px', align: 'center', visible: true }
 ]);
 
 const filteredTypes = computed(() => {
@@ -273,14 +274,6 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
     <div class="breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- Top Primary Capsule Tabs (AGENTS.md Rule 1: <BaseTabs />) -->
     <div class="tabs-header-wrap">
@@ -399,12 +392,9 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
 
                   <!-- State -->
                   <td>
-                    <span 
-                      class="status-pill"
-                      :class="item.state === 'active' ? 'state-active' : 'state-inactive'"
-                    >
+                    <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                       {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                    </span>
+                    </BaseBadge>
                   </td>
 
                   <!-- Actions Menu -->
@@ -550,12 +540,9 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
 
                   <!-- State -->
                   <td>
-                    <span 
-                      class="status-pill"
-                      :class="item.state === 'active' ? 'state-active' : 'state-inactive'"
-                    >
+                    <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                       {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                    </span>
+                    </BaseBadge>
                   </td>
 
                   <!-- Actions Menu -->
@@ -690,31 +677,6 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
   gap: 16px;
 }
 
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.25s ease;
-}
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
 /* Primary Action Button (Rule 6: 8px to 10px rounded rectangle, NEVER pills) */
 .btn-primary-action {
   display: inline-flex;
@@ -816,24 +778,6 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
 .table-text-tertiary {
   color: #737373;
   font-size: 13px;
-}
-
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action Dropdown Menu */

@@ -15,6 +15,8 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   encashmentsData, 
   staffList, 
@@ -77,13 +79,10 @@ const filteredEncashments = computed(() => {
 const tableColumns = ref<ColumnDef[]>([
   { key: 'name', label: 'Name', visible: true, sortable: true },
   { key: 'leave_type', label: 'Leave Type', visible: true, sortable: true },
-  { key: 'allocation_code', label: 'Quota Bucket', visible: true, sortable: true },
   { key: 'encashed_days', label: 'Days Encashed', visible: true, sortable: true },
   { key: 'daily_rate', label: 'Daily Rate', visible: true, sortable: true },
   { key: 'gross_amount', label: 'Gross Payout', visible: true, sortable: true },
-  { key: 'payroll_sync', label: 'Payroll Settlement', visible: true, sortable: true },
   { key: 'status', label: 'Status', visible: true, sortable: true },
-  { key: 'state', label: 'State', visible: true, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
 ]);
 
@@ -216,10 +215,9 @@ const handleReject = (item: LeaveEncashmentRecord) => {
 };
 
 // ─── Toast Feedback ───
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const formatCurrency = (val: number) => {
@@ -233,14 +231,6 @@ const formatCurrency = (val: number) => {
     <div class="breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- ─── 4 UNIFIED METRIC CARDS (Rule 2: MetricCard Standard) ─── -->
     <div class="metrics-grid">
@@ -353,17 +343,14 @@ const formatCurrency = (val: number) => {
                   />
                 </th>
 
-                <!-- Columns -->
-                <th v-if="tableColumns[0]?.visible" class="th-name">Name</th>
-                <th v-if="tableColumns[1]?.visible">Leave Type</th>
-                <th v-if="tableColumns[2]?.visible">Quota Bucket</th>
-                <th v-if="tableColumns[3]?.visible">Days Encashed</th>
-                <th v-if="tableColumns[4]?.visible">Daily Rate</th>
-                <th v-if="tableColumns[5]?.visible">Gross Payout</th>
-                <th v-if="tableColumns[6]?.visible">Payroll Settlement</th>
-                <th v-if="tableColumns[7]?.visible">Status</th>
-                <th v-if="tableColumns[8]?.visible">State</th>
-                <th v-if="tableColumns[9]?.visible" class="th-actions">Actions</th>
+                <!-- Columns (Figma Node 7009:112878 Standard) -->
+                <th v-if="isColVisible('name')" class="th-name">Name</th>
+                <th v-if="isColVisible('leave_type')">Leave Type</th>
+                <th v-if="isColVisible('encashed_days')">Days Encashed</th>
+                <th v-if="isColVisible('daily_rate')">Daily Rate</th>
+                <th v-if="isColVisible('gross_amount')">Gross Payout</th>
+                <th v-if="isColVisible('status')">Status</th>
+                <th v-if="isColVisible('actions')" class="th-actions">Actions</th>
               </tr>
             </thead>
 
@@ -386,7 +373,7 @@ const formatCurrency = (val: number) => {
                 </td>
 
                 <!-- Rule 4: Name Column First with Code as Sub-text -->
-                <td v-if="tableColumns[0]?.visible" class="td-identity">
+                <td v-if="isColVisible('name')" class="td-identity">
                   <div class="identity-cell">
                     <img :src="item.employee_avatar" :alt="item.employee_name" class="table-avatar" />
                     <div class="identity-info">
@@ -397,54 +384,37 @@ const formatCurrency = (val: number) => {
                 </td>
 
                 <!-- Leave Type: Plain text in #737373 (Rule 5 & 6) -->
-                <td v-if="tableColumns[1]?.visible" class="td-tertiary">
+                <td v-if="isColVisible('leave_type')" class="td-tertiary">
                   {{ item.leave_type_name }}
                 </td>
 
-                <!-- Quota Bucket: Plain text in #737373 -->
-                <td v-if="tableColumns[2]?.visible" class="td-tertiary">
-                  {{ item.allocation_code }}
-                </td>
-
                 <!-- Days Encashed: Plain text in #737373 -->
-                <td v-if="tableColumns[3]?.visible" class="td-tertiary">
-                  {{ (item.approved_days ?? item.requested_days).toFixed(1) }} d
+                <td v-if="isColVisible('encashed_days')" class="td-tertiary">
+                  {{ (item.approved_days ?? item.requested_days).toFixed(1) }} Days
                 </td>
 
                 <!-- Daily Rate: Plain text in #737373 -->
-                <td v-if="tableColumns[4]?.visible" class="td-tertiary">
-                  ETB {{ formatCurrency(item.daily_rate) }} / d
+                <td v-if="isColVisible('daily_rate')" class="td-tertiary">
+                  ETB {{ formatCurrency(item.daily_rate) }} / day
                 </td>
 
                 <!-- Gross Payout: Semi-bold in #404040 -->
-                <td v-if="tableColumns[5]?.visible" class="td-amount-bold">
+                <td v-if="isColVisible('gross_amount')" class="td-amount-bold">
                   ETB {{ formatCurrency(item.amount) }}
                 </td>
 
-                <!-- Payroll Settlement: Plain text in #737373 -->
-                <td v-if="tableColumns[6]?.visible" class="td-tertiary">
-                  <div class="payroll-cell">
-                    <span>{{ item.payroll_settlement_month }}</span>
-                    <span v-if="item.is_synced_to_payroll" class="sync-dot" title="Synced to payroll input"></span>
-                  </div>
-                </td>
-
-                <!-- Status Pill (Rule 9: Lifecycle State) -->
-                <td v-if="tableColumns[7]?.visible">
-                  <span class="status-pill" :class="`status-${item.request_state}`">
+                <!-- Status Badge (BaseBadge Standard) -->
+                <td v-if="isColVisible('status')">
+                  <BaseBadge
+                    :color="item.request_state === 'approved' ? 'success' : item.request_state === 'rejected' ? 'error' : 'warning'"
+                    size="sm"
+                  >
                     {{ item.request_state.charAt(0).toUpperCase() + item.request_state.slice(1) }}
-                  </span>
-                </td>
-
-                <!-- State Column (Rule 9: Active / Inactive solely on State) -->
-                <td v-if="tableColumns[8]?.visible">
-                  <span class="state-pill" :class="`state-${item.state}`">
-                    {{ item.state.charAt(0).toUpperCase() + item.state.slice(1) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions: ⋮ 3-dots button (Rule 8) -->
-                <td v-if="tableColumns[9]?.visible" class="td-actions" @click.stop>
+                <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
                   <div class="action-menu-wrapper">
                     <button
                       type="button"
@@ -560,26 +530,6 @@ const formatCurrency = (val: number) => {
   margin-bottom: 2px;
 }
 
-/* Toast */
-.toast-bar {
-  position: fixed;
-  top: 24px;
-  right: 28px;
-  background-color: #047857;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.25);
-  z-index: 9999;
-}
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.25s, transform 0.25s; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(-8px); }
-
 /* Metrics Grid (Rule 2) */
 .metrics-grid {
   display: grid;
@@ -644,13 +594,14 @@ const formatCurrency = (val: number) => {
 
 /* Table Architecture (Rule 8 & 9) */
 .table-container {
-  overflow-x: auto;
-  border-radius: 8px;
+  width: 100%;
+  overflow: visible;
 }
 .erp-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: auto;
 }
 .erp-table thead tr {
   background-color: #fafafa;
@@ -665,7 +616,7 @@ const formatCurrency = (val: number) => {
   white-space: nowrap;
 }
 .th-checkbox { width: 40px; padding: 0 12px !important; }
-.th-name { min-width: 200px; }
+.th-name { min-width: 180px; }
 .th-actions { width: 50px; text-align: right; }
 
 .erp-table tbody tr {
@@ -748,49 +699,31 @@ const formatCurrency = (val: number) => {
   background-color: #059669;
 }
 
-/* Status Pills (Rule 9) */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-  text-transform: capitalize;
-}
-.status-approved { background-color: #ecfdf5; color: #059669; }
-.status-pending { background-color: #fffbeb; color: #b45309; }
-.status-draft { background-color: #f1f5f9; color: #475569; }
-.status-rejected { background-color: #fef2f2; color: #dc2626; }
-.status-cancelled { background-color: #f1f5f9; color: #94a3b8; }
-
-/* State Pill */
-.state-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
-.state-active { background-color: #ecfdf5; color: #059669; }
-.state-inactive { background-color: #f1f5f9; color: #64748b; }
-
-/* Action Buttons */
+/* Action Buttons (Figma Standard: Zero Border, Transparent Background) */
 .btn-action-dots {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  border: none;
+  background: transparent;
   color: #737373;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
   transition: all 0.15s ease;
 }
 .btn-action-dots:hover {
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   color: #404040;
+}
+.btn-action-dots:focus,
+.btn-action-dots:focus-visible,
+.btn-action-dots:active {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .action-menu-wrapper {

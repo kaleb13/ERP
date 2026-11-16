@@ -8,12 +8,14 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -217,7 +219,7 @@ const stats = computed(() => {
 });
 
 // ─── Sub-Tabs Definition ───
-const approvalTabs = computed<UnderlineTabItem[]>(() => [
+const approvalTabs = computed<BaseTabItem[]>(() => [
   { id: 'pending_my_action', label: 'Pending My Action', count: stats.value.pendingMyAction },
   { id: 'all_pending', label: 'All Pending', count: stats.value.allPending },
   { id: 'approved', label: 'Approved History' },
@@ -228,11 +230,19 @@ const approvalTabs = computed<UnderlineTabItem[]>(() => [
 const searchQuery = ref('');
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getLeaveStatusColor = (state: string): 'warning' | 'success' | 'error' | 'blue' => {
+  switch (state) {
+    case 'approved': return 'success';
+    case 'pending': return 'warning';
+    case 'rejected': return 'error';
+    default: return 'blue';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const filteredRecords = computed(() => {
@@ -367,14 +377,6 @@ const formatDateRange = (start: string, end: string) => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- Top KPI Metrics Cards (Rule 2) -->
     <div class="metrics-grid">
       <MetricCard
@@ -424,12 +426,13 @@ const formatDateRange = (start: string, end: string) => {
       :show-view-action="false"
       @toggleColumn="handleToggleColumn"
     >
-      <!-- Sub-view Underline Tabs (Rule 1) -->
+      <!-- Sub-view Primary Tabs (Single Tab Rule) -->
       <template #header-extra>
         <div class="tabs-subview-wrapper">
-          <UnderlineTabs
+          <BaseTabs
             v-model="activeTab"
             :tabs="approvalTabs"
+            type="rounded"
             size="sm"
           />
         </div>
@@ -516,9 +519,9 @@ const formatDateRange = (start: string, end: string) => {
 
               <!-- Status Pill -->
               <td>
-                <span class="status-pill" :class="`status-${item.request_state}`">
+                <BaseBadge :color="getLeaveStatusColor(item.request_state)">
                   {{ item.request_state.charAt(0).toUpperCase() + item.request_state.slice(1) }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Actions (⋮ 3-dots popup) -->
@@ -665,21 +668,6 @@ const formatDateRange = (start: string, end: string) => {
   align-items: center;
 }
 
-/* Toast */
-.toast-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #0B529C;
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(11, 82, 156, 0.2);
-  align-self: flex-start;
-}
-
 /* Metrics Grid */
 .metrics-grid {
   display: grid;
@@ -752,30 +740,6 @@ const formatDateRange = (start: string, end: string) => {
 .workflow-stage-text {
   color: #737373;
   font-size: 12px;
-}
-
-/* Status Pills */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pending {
-  background-color: #fef3c7;
-  color: #b45309;
-}
-
-.status-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
 }
 
 /* Actions */
@@ -964,7 +928,7 @@ const formatDateRange = (start: string, end: string) => {
 .reason-quote-text {
   margin: 0;
   font-size: 12px;
-  color: #334155;
+  color: #404040;
   font-style: italic;
   line-height: 1.4;
 }

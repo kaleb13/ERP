@@ -10,12 +10,15 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import {
   separationsData,
   SEPARATION_TYPE_MAP,
@@ -44,11 +47,26 @@ const activeTab = ref<SeparationTabKey>('all');
 
 const searchQuery = ref('');
 const selectedTypeFilter = ref<string>('all');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getSeparationStatusColor = (state: string): 'success' | 'warning' | 'error' | 'blue' | 'indigo' => {
+  switch (state) {
+    case 'approved':
+    case 'settled':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'cancelled':
+      return 'error';
+    case 'in_clearance':
+      return 'blue';
+    default:
+      return 'indigo';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Metric Cards Computed (AGENTS.md Rule 2 & Rule 21) ───
@@ -67,7 +85,7 @@ const metrics = computed(() => {
 });
 
 // ─── Tabs Configuration ───
-const underlineTabs = computed<UnderlineTabItem<SeparationTabKey>[]>(() => [
+const underlineTabs = computed<BaseTabItem<SeparationTabKey>[]>(() => [
   { id: 'all', label: 'All Separations', count: separationsData.value.length },
   { id: 'pending', label: 'Pending Approval', count: separationsData.value.filter(s => s.separation_state === 'pending').length, badgeVariant: 'warning' },
   { id: 'approved', label: 'Approved (Ready for Clearance)', count: separationsData.value.filter(s => s.separation_state === 'approved').length, badgeVariant: 'primary' },
@@ -99,6 +117,27 @@ const filteredSeparations = computed(() => {
     return true;
   });
 });
+
+// ─── Row Selection State ───
+const selectedRowIds = ref<number[]>([]);
+const isAllSelected = computed(() => {
+  return filteredSeparations.value.length > 0 && selectedRowIds.value.length === filteredSeparations.value.length;
+});
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedRowIds.value = [];
+  } else {
+    selectedRowIds.value = filteredSeparations.value.map(s => s.id);
+  }
+};
+const toggleSelectRow = (id: number) => {
+  const idx = selectedRowIds.value.indexOf(id);
+  if (idx !== -1) selectedRowIds.value.splice(idx, 1);
+  else selectedRowIds.value.push(id);
+};
+const handleBatchDelete = () => {
+  selectedRowIds.value = [];
+};
 
 // ─── Table Columns (AGENTS.md Rule 9: Atomic Columns) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -328,11 +367,12 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
       </div>
     </div>
 
-    <!-- Admin UnderlineTabs (AGENTS.md Rule 1) -->
+    <!-- Primary Tab Group (AGENTS.md Single Tab Rule) -->
     <div class="tabs-wrapper">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="underlineTabs"
+        type="rounded"
       />
     </div>
 
@@ -358,7 +398,13 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
         <table class="erp-table">
           <thead>
             <tr>
-              <th class="th-checkbox"><input type="checkbox" /></th>
+              <th class="th-checkbox">
+                <FormCheckbox
+                  :model-value="isAllSelected"
+                  :indeterminate="selectedRowIds.length > 0 && !isAllSelected"
+                  @update:model-value="toggleSelectAll"
+                />
+              </th>
               <!-- Rule 4: Name Column First, with Code inside -->
               <th>Employee</th>
               <th v-if="tableColumns.find(c => c.key === 'separation_type')?.visible">Separation Type</th>
@@ -381,9 +427,15 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
               v-for="item in filteredSeparations" 
               :key="item.id"
               class="clickable-row"
+              :class="{ 'row-selected': selectedRowIds.includes(item.id) }"
               @click="handleInspectDetails(item.id)"
             >
-              <td class="td-checkbox" @click.stop><input type="checkbox" /></td>
+              <td class="td-checkbox" @click.stop>
+                <FormCheckbox
+                  :model-value="selectedRowIds.includes(item.id)"
+                  @update:model-value="toggleSelectRow(item.id)"
+                />
+              </td>
               
               <!-- Rule 4 & 5: Name in Secondary Color #404040, Code underneath in Tertiary #737373 -->
               <td class="td-identity">
@@ -423,15 +475,9 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 
               <!-- Status Pills strictly for Lifecycle State (Rule 6 & 9) -->
               <td v-if="tableColumns.find(c => c.key === 'separation_state')?.visible" class="td-state">
-                <span 
-                  class="status-pill"
-                  :style="{ 
-                    backgroundColor: SEPARATION_STATUS_MAP[item.separation_state].bg, 
-                    color: SEPARATION_STATUS_MAP[item.separation_state].color 
-                  }"
-                >
+                <BaseBadge :color="getSeparationStatusColor(item.separation_state)">
                   {{ SEPARATION_STATUS_MAP[item.separation_state].label }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Clearance Column: Badge / Button to go to and create clearance for approved separation -->
@@ -479,9 +525,9 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 
               <!-- State (Rule 9: Active / Inactive reserved for State) -->
               <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-active' : 'status-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Standardized 3-Dots Action Dropdown Menu (AGENTS.md Rule 8) -->
@@ -545,6 +591,16 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
         </table>
       </template>
     </AppDataTable>
+
+    <!-- Floating Batch Bar -->
+    <TableFloatingBar
+      :show="selectedRowIds.length > 0"
+      :count="selectedRowIds.length"
+      :total="filteredSeparations.length"
+      @delete="handleBatchDelete"
+      @close="selectedRowIds = []"
+      @clear="selectedRowIds = []"
+    />
 
     <!-- QuickCreateModal (AGENTS.md Rule 4 & 20 & 24) -->
     <!-- <= 5 Required scanning fields, Header Title ONLY, NO descriptions/notes, Save button plain text -->
@@ -638,9 +694,9 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
               </div>
               <div class="timeline-node">
                 <span class="node-label">Lifecycle Status</span>
-                <span class="status-pill" :style="{ backgroundColor: SEPARATION_STATUS_MAP[selectedCase.separation_state].bg, color: SEPARATION_STATUS_MAP[selectedCase.separation_state].color }">
+                <BaseBadge :color="getSeparationStatusColor(selectedCase.separation_state)">
                   {{ SEPARATION_STATUS_MAP[selectedCase.separation_state].label }}
-                </span>
+                </BaseBadge>
               </div>
             </div>
           </div>
@@ -686,11 +742,6 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
           </router-link>
         </div>
       </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="toast-popup">
-      {{ toastMessage }}
     </div>
   </div>
 </template>
@@ -848,14 +899,6 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 
 .td-tertiary {
   color: #737373;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2.5px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
 }
 
 .metric-clickable-wrapper {
@@ -1189,19 +1232,6 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
-}
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 2000;
 }
 
 /* ─── Clearance Column Badges & Actions (AGENTS.md Rule 6: 8px Radius) ─── */

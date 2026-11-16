@@ -9,6 +9,7 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -17,8 +18,10 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Lookups & Types (HR_Schema_final-v4.sql lines 1044–1109) ───
 export type RowState = 'active' | 'inactive';
@@ -73,7 +76,6 @@ const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
 const showMatrixGridModal = ref(false);
 const selectedMatrixForGrid = ref<SalaryMatrixRecord | null>(null);
-const quickActionToast = ref<string | null>(null);
 
 // ─── Table Columns (Strict Schema Alignment - Zero Phantom Columns) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -332,11 +334,9 @@ const closeActionMenu = () => {
   activeActionMenuId.value = null;
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Salary Matrix', msg);
 };
 
 // ─── Quick Create Handlers ───
@@ -422,12 +422,6 @@ onUnmounted(() => {
     <!-- Breadcrumb Bar -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- MAIN DATA TABLE -->
@@ -568,9 +562,9 @@ onUnmounted(() => {
 
               <!-- Badges reserved strictly for lifecycle state -->
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Action 3-dots -->
@@ -784,13 +778,13 @@ onUnmounted(() => {
               <Award :size="14" />
               <span>Manage Job Grades</span>
             </button>
-            <button 
-              type="button" 
-              class="btn-primary" 
+            <AppButton 
+              variant="primary" 
+              size="sm"
               @click="showMatrixGridModal = false"
             >
               Close
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>
@@ -808,21 +802,6 @@ onUnmounted(() => {
 
 .page-breadcrumb-bar {
   margin-bottom: 16px;
-}
-
-/* Toast Banner */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  font-size: 13.5px;
-  color: #065f46;
-  animation: fadeIn 0.2s ease-in-out;
 }
 
 .directory-view-wrapper {
@@ -957,26 +936,6 @@ onUnmounted(() => {
 .text-tertiary {
   color: #737373;
   font-size: 13px;
-}
-
-/* Lifecycle Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Action 3-dots Menu */
@@ -1231,7 +1190,7 @@ onUnmounted(() => {
   padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #737373;
   border: 1px solid #e2e8f0;
   text-align: left;
 }
@@ -1260,7 +1219,7 @@ onUnmounted(() => {
 
 .guardrail-amount {
   font-weight: 500;
-  color: #475569;
+  color: #737373;
 }
 
 .step-cell-content {

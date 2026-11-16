@@ -12,6 +12,7 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import { useToast } from '../../composables/useToast';
 import { createLeaveType } from './leavePolicyData';
 
 const router = useRouter();
@@ -24,12 +25,11 @@ const breadcrumbItems = [
   { label: 'Create Leave Type' }
 ];
 
+const { toast } = useToast();
 const isSaved = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Entity Scope Options (Schema line 1559: NULL = Platform Seed) ───
@@ -138,11 +138,13 @@ const handleSave = () => {
     <!-- Top Bar (AGENTS.md Rule 4 & Breadcrumb Standard) -->
     <div class="top-nav-bar">
       <!-- STRICTLY NO separate back button! Breadcrumb itself navigates. -->
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems">
+        <template #badge>
+          <SaveStateBadge :isSaved="isSaved" />
+        </template>
+      </AppBreadcrumb>
 
       <div class="top-actions-cluster">
-        <SaveStateBadge :isSaved="isSaved" style="margin-left: 0" />
-
         <!-- Clear Form Secondary Button -->
         <AppButton 
           variant="outline" 
@@ -163,14 +165,6 @@ const handleSave = () => {
         </AppButton>
       </div>
     </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <div class="creation-body-stack">
       <!-- MASTER CARD: LEAVE CATEGORY DEFINITION (Schema Lines 1553–1566) -->
@@ -278,15 +272,16 @@ const handleSave = () => {
   min-height: 100vh;
 }
 
-/* Top Nav Bar */
+/* Top Nav Bar (AGENTS.md: Breadcrumb bar is strictly transparent on canvas, NEVER a white card) */
 .top-nav-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
-  padding: 12px 18px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  width: 100%;
 }
 
 .top-actions-cluster {
@@ -296,12 +291,7 @@ const handleSave = () => {
 }
 
 /* Status Pill */
-.save-status-pill {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 3px 10px;
-  border-radius: 9999px;
-}
+
 .pill-not-saved {
   background-color: #fef3c7;
   color: #92400e;
@@ -309,31 +299,6 @@ const handleSave = () => {
 .pill-saved {
   background-color: #ecfdf5;
   color: #059669;
-}
-
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  width: fit-content;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.25s ease;
-}
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
 }
 
 /* Buttons (Rule 6: 8px to 10px rounded rectangle, NEVER pills) */

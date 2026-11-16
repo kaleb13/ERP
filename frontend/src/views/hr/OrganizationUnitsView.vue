@@ -10,6 +10,7 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
@@ -17,6 +18,7 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -96,7 +98,7 @@ const activeActionMenuId = ref<number | null>(null);
 const activeHeadMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
 const showAppointModal = ref(false);
-const quickActionToast = ref<string | null>(null);
+const { toast } = useToast();
 
 // ─── Table Columns Definition (Single Information & Name-First Rule) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -671,10 +673,7 @@ const handleSaveAppointHead = () => {
 };
 
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success(msg);
 };
 
 // Batch deletions
@@ -708,12 +707,6 @@ onUnmounted(() => {
     <!-- Breadcrumbs -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- VIEW 1: ORGANIZATION UNITS DIRECTORY TABLE -->
@@ -848,9 +841,12 @@ onUnmounted(() => {
               </td>
 
               <td v-if="isColumnVisible('state')" class="col-status">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                <BaseBadge 
+                  :color="item.state === 'active' ? 'success' : 'gray'"
+                  size="sm"
+                >
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td v-if="isColumnVisible('org_structure')" class="col-struct">
@@ -925,21 +921,16 @@ onUnmounted(() => {
 
     <!-- VIEW 2: UNIT MASTER DETAIL & LEADERSHIP SUB-TABLE -->
     <div v-else-if="viewMode === 'detail' && selectedUnit" class="unit-detail-wrapper">
-      <!-- Back Bar -->
+      <!-- Detail Top Actions -->
       <div class="detail-top-bar">
-        <button type="button" class="btn-back" @click="handleBackToList">
-          <ChevronLeft :size="16" />
-          <span>Back to Organization Units</span>
-        </button>
-
-        <button 
-          type="button" 
-          class="btn-primary-action"
+        <AppButton 
+          variant="primary" 
+          size="sm"
           @click="openAppointModal(selectedUnit)"
         >
-          <UserPlus :size="14" />
-          <span>Appoint New Manager / Head</span>
-        </button>
+          <template #icon-left><UserPlus :size="14" /></template>
+          Appoint New Manager / Head
+        </AppButton>
       </div>
 
       <!-- Unit Master Metadata Card -->
@@ -1082,12 +1073,12 @@ onUnmounted(() => {
                 <td class="child-th-tenure text-xs text-slate-700">{{ head.tenure }}</td>
 
                 <td class="child-th-status">
-                  <span 
-                    class="status-pill text-xs"
-                    :class="!head.end_date ? 'status-active' : 'status-inactive'"
+                  <BaseBadge 
+                    :color="!head.end_date ? 'success' : 'gray'"
+                    size="sm"
                   >
                     {{ !head.end_date ? 'Active Head' : 'Past Head' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <td class="child-th-actions" @click.stop>
@@ -1284,20 +1275,6 @@ onUnmounted(() => {
   animation: fadeIn 0.15s ease;
 }
 
-/* Toast */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  margin-bottom: 12px;
-}
-
 /* Custom Checkbox */
 .custom-checkbox {
   appearance: none;
@@ -1484,22 +1461,6 @@ onUnmounted(() => {
   color: #64748b;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-.status-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
 /* Actions */
 .btn-primary-create {
   display: inline-flex;
@@ -1531,7 +1492,7 @@ onUnmounted(() => {
 }
 .btn-action-dots:hover {
   background: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .action-cell-wrapper {
@@ -1597,26 +1558,8 @@ onUnmounted(() => {
 .detail-top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 14px;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  color: #475569;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.btn-back:hover {
-  background-color: #e2e8f0;
-  color: #0f172a;
 }
 
 .btn-primary-action {

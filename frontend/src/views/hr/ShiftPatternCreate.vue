@@ -6,11 +6,14 @@ import {
   Info, CheckCircle2
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
+import FormRichText from '../../components/FormRichText.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
@@ -64,7 +67,7 @@ const shiftDetailsMap: Record<string, ShiftMeta> = {
 const slots = ref<SlotDraft[]>([]);
 const isSaved = ref(false);
 const isSubmitting = ref(false);
-const showSuccessToast = ref(false);
+const { toast } = useToast();
 
 const availableShifts = [
   { value: 'rest', label: 'Select Shift (Rest Day)' },
@@ -166,7 +169,7 @@ const handleSave = () => {
   setTimeout(() => {
     isSubmitting.value = false;
     isSaved.value = true;
-    showSuccessToast.value = true;
+    toast.success('Shift Pattern rota blueprint saved successfully.');
     setTimeout(() => {
       router.push('/hr/shift-patterns');
     }, 900);
@@ -176,12 +179,6 @@ const handleSave = () => {
 
 <template>
   <div class="shift-pattern-create-view">
-    <!-- Success Toast -->
-    <div v-if="showSuccessToast" class="success-toast-banner">
-      <CheckCircle2 :size="16" class="text-emerald-600" />
-      <span>Shift Pattern rota blueprint saved successfully.</span>
-    </div>
-
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- TOP NAVIGATION & ACTION BAR (Figma Node 6328:114182)       -->
     <!-- ══════════════════════════════════════════════════════════ -->
@@ -197,23 +194,21 @@ const handleSave = () => {
 
       <!-- Top Right Actions: Clear Form & Save -->
       <div class="top-action-buttons">
-        <button 
-          type="button" 
-          class="btn-clear-form" 
+        <AppButton 
+          variant="secondary-gray" 
           @click="handleClearForm"
         >
-          <X :size="16" />
-          <span>Clear Form</span>
-        </button>
+          <template #icon-left><X :size="16" /></template>
+          Clear Form
+        </AppButton>
 
-        <button 
-          type="button" 
-          class="btn-save-primary" 
+        <AppButton 
+          variant="primary" 
           :disabled="isSubmitting"
           @click="handleSave"
         >
           {{ isSubmitting ? 'Saving...' : 'Save' }}
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -235,13 +230,6 @@ const handleSave = () => {
     <!-- ══════════════════════════════════════════════════════════ -->
     <div v-show="activeTab === 'config'" class="config-tab-container">
       <div class="config-card">
-        <div class="config-header">
-          <h2 class="config-title">Pattern Blueprint Specification</h2>
-          <p class="config-subtitle">
-            Configure rotation cycle length, statutory calendar mapping, and owning enterprise entities.
-          </p>
-        </div>
-
         <div class="config-form-grid">
           <FormInput
             v-model="form.name"
@@ -284,16 +272,17 @@ const handleSave = () => {
             label="Owning Entity"
             :options="entityOptions"
           />
-
-          <div class="full-width-field">
-            <FormTextarea
-              v-model="form.description"
-              label="Operational Description & Rules"
-              placeholder="Provide context regarding rotation policies, shift handovers, and statutory rest rules..."
-              :rows="3"
-            />
-          </div>
         </div>
+      </div>
+
+      <!-- ─── SEPARATE DESCRIPTION SECTION (Rich Text Standard) ─── -->
+      <div class="config-card description-card">
+        <FormRichText
+          v-model="form.description"
+          label="Pattern Description & Operational Rules"
+          placeholder="Provide context regarding rotation policies, shift handovers, and statutory rest rules..."
+          min-height="180px"
+        />
       </div>
     </div>
 
@@ -412,20 +401,6 @@ const handleSave = () => {
   padding: 0 0 40px 0;
   display: flex;
   flex-direction: column;
-}
-
-/* ─── Toast Banner ─── */
-.success-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  color: #007A55;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  margin-bottom: 16px;
 }
 
 /* ─── Top Header Action Bar (Figma Node 6328:114182) ─── */
@@ -740,6 +715,10 @@ const handleSave = () => {
   border-radius: 16px;
   padding: 24px;
   width: 100%;
+}
+
+.description-card {
+  margin-top: 24px;
 }
 
 .config-header {

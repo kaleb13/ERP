@@ -296,6 +296,7 @@ export interface ProfessionalCertificationRow {
   certificate_number: string;
   issued_date: string;
   expiry_date: string;
+  verification_status: string;
 }
 
 export interface PriorWorkExperienceRow {
@@ -384,11 +385,67 @@ const addressesList = ref<PartyAddressRow[]>([
     admin_unit: 'Addis Ababa > Bole Sub-City > Woreda 03 > Kebele 01'
   }
 ]);
-const academicQualifications = ref<AcademicQualificationRow[]>([]);
-const professionalCertifications = ref<ProfessionalCertificationRow[]>([]);
-const priorWorkExperiences = ref<PriorWorkExperienceRow[]>([]);
-const technicalSkills = ref<TechnicalSkillRow[]>([]);
-const spokenLanguages = ref<SpokenLanguageRow[]>([]);
+const academicQualifications = ref<AcademicQualificationRow[]>([
+  {
+    id: 1,
+    selected: false,
+    degree_level: "Bachelor's Degree",
+    field_of_study: 'Accounting & Finance',
+    awarding_institute: 'Addis Ababa University (AAU)',
+    start_date: '2018-09-15',
+    graduation_date: '2022-07-08',
+    gpa: '3.75'
+  }
+]);
+const professionalCertifications = ref<ProfessionalCertificationRow[]>([
+  {
+    id: 1,
+    selected: false,
+    certification: 'ACCA (Association of Chartered Certified Accountants)',
+    issuing_institution: 'ACCA Global',
+    certificate_number: 'ACCA-1188220',
+    issued_date: '2023-06-15',
+    expiry_date: '',
+    verification_status: 'Valid / Cleared'
+  }
+]);
+const priorWorkExperiences = ref<PriorWorkExperienceRow[]>([
+  {
+    id: 1,
+    selected: false,
+    previous_employer: 'Commercial Bank of Ethiopia',
+    job_title: 'Junior Financial Analyst',
+    employment_type: 'Permanent',
+    start_date: '2022-08-01',
+    end_date: '2024-05-30',
+    reason_for_leaving: 'Career advancement',
+    supervisor_reference: 'Dawit Tadesse (Senior Branch Manager)',
+    responsibilities: 'Reconciled branch balances and audited daily cash flow statements.',
+    is_relevant: true
+  }
+]);
+const technicalSkills = ref<TechnicalSkillRow[]>([
+  {
+    id: 1,
+    selected: false,
+    skill: 'IFRS Reporting & Financial Accounting',
+    proficiency: 'Advanced',
+    years_of_experience: 4
+  }
+]);
+const spokenLanguages = ref<SpokenLanguageRow[]>([
+  {
+    id: 1,
+    selected: false,
+    language: 'Amharic',
+    fluency_level: 'Native',
+    speaking_level: 'Native',
+    listening_level: 'Native',
+    reading_level: 'Native',
+    writing_level: 'Native',
+    is_native: true
+  }
+]);
 const regulatoryClearances = ref<RegulatoryClearanceRow[]>([]);
 const emergencyContactsList = ref<EmergencyContactRow[]>([]);
 const dependentsList = ref<DependentRow[]>([]);
@@ -434,7 +491,7 @@ const createBlankRow = (type: ChildTableType): any => {
       return {
         id,
         selected: false,
-        degree_level: '',
+        degree_level: "Bachelor's Degree",
         field_of_study: '',
         awarding_institute: '',
         graduation_date: '',
@@ -449,7 +506,8 @@ const createBlankRow = (type: ChildTableType): any => {
         issuing_institution: '',
         certificate_number: '',
         issued_date: '',
-        expiry_date: ''
+        expiry_date: '',
+        verification_status: 'Valid / Cleared'
       };
     case 'priorWorkExperiences':
       return {
@@ -1127,13 +1185,7 @@ const handleFloatingDelete = () => {
 };
 
 const handleFloatingEdit = () => {
-  const table = activeSelectedTable.value;
-  if (!table) return;
-  const list = getListByType(table);
-  const idx = list.findIndex(r => r.selected);
-  if (idx !== -1) {
-    openRowModal(table, list[idx], idx);
-  }
+  // Row expansion is handled natively by each DynamicSubTable
 };
 
 const handleFloatingChangeStatus = (status: string) => {
@@ -1203,7 +1255,7 @@ const salaryComponentsColumns: DynamicTableColumn[] = [
       { label: '% of Basic Salary', value: 'Percentage of Basic' }
     ] 
   },
-  { key: 'amount', label: 'Amount / Value', type: 'custom', minWidth: '160px', align: 'right' }
+  { key: 'amount', label: 'Amount / Value', type: 'number', minWidth: '160px', align: 'right' }
 ];
 
 const bankAccountsColumns: DynamicTableColumn[] = [
@@ -1212,7 +1264,114 @@ const bankAccountsColumns: DynamicTableColumn[] = [
   { key: 'account_holder_name', label: 'Account Holder Name', type: 'text', minWidth: '160px' },
   { key: 'branch_name', label: 'Branch Name', type: 'text', minWidth: '140px' },
   { key: 'split_percent', label: 'Split Share (%)', type: 'number', width: '110px', align: 'right' },
-  { key: 'is_primary', label: 'Primary', type: 'custom', width: '80px', align: 'center' }
+  { key: 'is_primary', label: 'Primary', type: 'checkbox', width: '80px', align: 'center' }
+];
+
+const fieldOfStudyOptions = [
+  'Accounting & Finance',
+  'Human Resource Management',
+  'Business Administration',
+  'Computer Science & Software Eng.',
+  'Supply Chain & Logistics Management',
+  'Economics & Development Studies',
+  'Marketing & Sales Management',
+  'Civil / Mechanical Engineering',
+  'Law & Public Policy',
+  'Information Systems & Networking',
+  'Other / General Studies'
+];
+
+const institutionOptions = [
+  'Addis Ababa University (AAU)',
+  'Bahir Dar University (BDU)',
+  'Hawassa University',
+  'Jimma University',
+  'Mekelle University',
+  'Admas University',
+  'Unity University',
+  "St. Mary's University",
+  'Rift Valley University',
+  'Entoto TVET College',
+  'General Wingate TVET College',
+  'Foreign / International University'
+];
+
+const certificationOptions = [
+  'ACCA (Association of Chartered Certified Accountants)',
+  'CPA (Certified Public Accountant)',
+  'PMP (Project Management Professional)',
+  'CIA (Certified Internal Auditor)',
+  'CFA (Chartered Financial Analyst)',
+  'Cisco CCNA / CCNP',
+  'AWS Certified Solutions Architect',
+  'SHRM-CP / SHRM-SCP (HR Professional)',
+  'Certified Supply Chain Professional (CSCP)',
+  'Professional Food Handler Certification',
+  'Certified Procurement Specialist',
+  'Professional Engineering License',
+  'Teaching License',
+  'Driving License (Category B / Commercial)'
+];
+
+const certInstitutionOptions = [
+  'ACCA Global',
+  'AABE (Accounting and Auditing Board of Ethiopia)',
+  'Project Management Institute (PMI)',
+  'Institute of Internal Auditors (IIA)',
+  'Cisco Systems',
+  'Amazon Web Services (AWS)',
+  'Ethiopian Management Institute (EMI)',
+  'Federal Public Procurement Authority (FPPA)',
+  'Addis Ababa Food and Drug Authority',
+  'Transport Authority / Licensing Bureau'
+];
+
+const certificationStatusOptions = [
+  'Valid / Cleared',
+  'Pending Verification',
+  'Statutorily Waived'
+];
+
+const languageCatalogOptions = [
+  'Amharic',
+  'Afaan Oromo',
+  'Tigrinya',
+  'Somali',
+  'Sidama',
+  'Wolaytta',
+  'English',
+  'Arabic',
+  'French',
+  'Mandarin Chinese',
+  'German',
+  'Italian'
+];
+
+const fluencyLevelOptions = ['Basic', 'Conversational', 'Fluent', 'Native'];
+const competenceLevelOptions = ['None', 'Basic', 'Intermediate', 'Advanced', 'Native'];
+
+const skillCatalogOptions = [
+  'IFRS Reporting & Financial Accounting',
+  'Peachtree / Sage 50 Accounting',
+  'Point of Sale (POS) Operation',
+  'Cash Management & Daily Reconciliation',
+  'Cost Accounting & Budgeting',
+  'Tax Compliance & Withholding',
+  'Procurement Negotiation',
+  'Supply Chain & Inventory Management',
+  'Warehouse Management & Stock Auditing',
+  'Forklift Operation & Material Handling',
+  'Food Safety & Hygiene Compliance',
+  'Food Handler Technique & Prep',
+  'Barista & Beverage Crafting',
+  'Customer Service & Front Desk Operations',
+  'Data Entry & Documentation Integrity',
+  'Labour Law & Employee Relations',
+  'Payroll Processing & Statutory Remittance',
+  'Talent Acquisition & Sourcing',
+  'ERP System Administration & SQL',
+  'Full-Stack Software Development',
+  'Network Infrastructure & Security'
 ];
 
 const academicQualificationsColumns: DynamicTableColumn[] = [
@@ -1220,28 +1379,57 @@ const academicQualificationsColumns: DynamicTableColumn[] = [
     key: 'degree_level', 
     label: 'Degree Level', 
     type: 'select', 
-    minWidth: '160px',
-    options: [
-      { label: 'Primary', value: 'Primary School' },
-      { label: 'Secondary', value: 'Secondary School' },
-      { label: 'TVET Certificate', value: 'TVET / Level IV Certificate' },
-      { label: 'Diploma', value: 'Diploma' },
-      { label: "Bachelor's Degree", value: "Bachelor's Degree" },
-      { label: "Master's Degree", value: "Master's Degree" },
-      { label: 'Doctorate (PhD)', value: 'Doctorate (PhD)' }
-    ] 
+    minWidth: '170px',
+    options: degreeLevelOptions 
   },
-  { key: 'field_of_study', label: 'Field of Study', type: 'custom', minWidth: '180px' },
-  { key: 'awarding_institute', label: 'Awarding Institute', type: 'custom', minWidth: '180px' },
-  { key: 'graduation_date', label: 'Graduation Date', type: 'text', minWidth: '140px' }
+  { 
+    key: 'field_of_study', 
+    label: 'Field of Study', 
+    type: 'select', 
+    minWidth: '200px',
+    searchable: true,
+    options: fieldOfStudyOptions
+  },
+  { 
+    key: 'awarding_institute', 
+    label: 'Awarding Institute', 
+    type: 'select', 
+    minWidth: '200px',
+    searchable: true,
+    options: institutionOptions
+  },
+  { key: 'start_date', label: 'Start Date', type: 'date', minWidth: '130px' },
+  { key: 'graduation_date', label: 'Graduation Date', type: 'date', minWidth: '130px' },
+  { key: 'gpa', label: 'GPA', type: 'text', minWidth: '100px' }
 ];
 
 const professionalCertificationsColumns: DynamicTableColumn[] = [
-  { key: 'certification', label: 'Certification / License', type: 'custom', minWidth: '180px' },
-  { key: 'issuing_institution', label: 'Issuing Institution', type: 'custom', minWidth: '170px' },
+  { 
+    key: 'certification', 
+    label: 'Certification / License', 
+    type: 'select', 
+    minWidth: '220px',
+    searchable: true,
+    options: certificationOptions
+  },
+  { 
+    key: 'issuing_institution', 
+    label: 'Issuing Institution', 
+    type: 'select', 
+    minWidth: '200px',
+    searchable: true,
+    options: certInstitutionOptions
+  },
   { key: 'certificate_number', label: 'Certificate / License No.', type: 'text', minWidth: '160px' },
-  { key: 'issued_date', label: 'Issued Date', type: 'text', minWidth: '130px' },
-  { key: 'expiry_date', label: 'Expiry Date', type: 'text', minWidth: '130px' }
+  { key: 'issued_date', label: 'Issued Date', type: 'date', minWidth: '130px' },
+  { key: 'expiry_date', label: 'Expiry Date', type: 'date', minWidth: '130px' },
+  { 
+    key: 'verification_status', 
+    label: 'Verification Status', 
+    type: 'select', 
+    minWidth: '160px',
+    options: certificationStatusOptions
+  }
 ];
 
 const priorWorkExperiencesColumns: DynamicTableColumn[] = [
@@ -1256,12 +1444,20 @@ const priorWorkExperiencesColumns: DynamicTableColumn[] = [
       'Permanent', 'Contract', 'Temporary', 'Probation', 'Part-time', 'Internship', 'Consultancy'
     ] 
   },
-  { key: 'start_date', label: 'Start Date', type: 'text', minWidth: '130px' },
-  { key: 'end_date', label: 'End Date', type: 'text', minWidth: '130px' }
+  { key: 'start_date', label: 'Start Date', type: 'date', minWidth: '130px' },
+  { key: 'end_date', label: 'End Date', type: 'date', minWidth: '130px' },
+  { key: 'is_relevant', label: 'Role Relevant', type: 'switch', width: '130px', align: 'center' }
 ];
 
 const technicalSkillsColumns: DynamicTableColumn[] = [
-  { key: 'skill', label: 'Skill / Competency', type: 'custom', minWidth: '200px' },
+  { 
+    key: 'skill', 
+    label: 'Skill / Competency', 
+    type: 'select', 
+    minWidth: '220px',
+    searchable: true,
+    options: skillCatalogOptions 
+  },
   { 
     key: 'proficiency', 
     label: 'Proficiency', 
@@ -1273,15 +1469,48 @@ const technicalSkillsColumns: DynamicTableColumn[] = [
 ];
 
 const spokenLanguagesColumns: DynamicTableColumn[] = [
-  { key: 'language', label: 'Language', type: 'custom', minWidth: '180px' },
+  { 
+    key: 'language', 
+    label: 'Language', 
+    type: 'select', 
+    minWidth: '160px',
+    options: languageCatalogOptions 
+  },
   { 
     key: 'fluency_level', 
     label: 'Fluency Level', 
     type: 'select', 
-    minWidth: '150px',
-    options: ['Basic', 'Conversational', 'Fluent', 'Native'] 
+    minWidth: '140px',
+    options: fluencyLevelOptions 
   },
-  { key: 'is_native', label: 'Mother Tongue', type: 'custom', width: '120px', align: 'center' }
+  { 
+    key: 'speaking_level', 
+    label: 'Speaking', 
+    type: 'select', 
+    minWidth: '130px',
+    options: competenceLevelOptions 
+  },
+  { 
+    key: 'reading_level', 
+    label: 'Reading', 
+    type: 'select', 
+    minWidth: '130px',
+    options: competenceLevelOptions 
+  },
+  { 
+    key: 'writing_level', 
+    label: 'Writing', 
+    type: 'select', 
+    minWidth: '130px',
+    options: competenceLevelOptions 
+  },
+  { 
+    key: 'is_native', 
+    label: 'Mother Tongue', 
+    type: 'switch', 
+    width: '130px', 
+    align: 'center' 
+  }
 ];
 
 const statutoryExemptionsColumns: DynamicTableColumn[] = [
@@ -1322,7 +1551,7 @@ const regulatoryClearancesColumns: DynamicTableColumn[] = [
     ] 
   },
   { key: 'ref_number', label: 'Reference / Permit No.', type: 'text', minWidth: '180px' },
-  { key: 'expiry_date', label: 'Expiry Date', type: 'text', minWidth: '140px' },
+  { key: 'expiry_date', label: 'Expiry Date', type: 'date', minWidth: '140px' },
   { 
     key: 'verification_status', 
     label: 'Compliance Status', 
@@ -1363,8 +1592,8 @@ const dependentsColumns: DynamicTableColumn[] = [
     minWidth: '150px',
     options: ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'] 
   },
-  { key: 'birth_date', label: 'Date of Birth', type: 'text', minWidth: '140px' },
-  { key: 'is_beneficiary', label: 'Beneficiary', type: 'custom', width: '110px', align: 'center' }
+  { key: 'birth_date', label: 'Date of Birth', type: 'date', minWidth: '140px' },
+  { key: 'is_beneficiary', label: 'Beneficiary', type: 'checkbox', width: '110px', align: 'center' }
 ];
 
 // Computed Gross Monthly Package
@@ -1871,7 +2100,7 @@ const draw = (e: MouseEvent | TouchEvent) => {
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
   ctx.lineTo(clientX - rect.left, clientY - rect.top);
-  ctx.strokeStyle = '#0f172a';
+  ctx.strokeStyle = '#404040';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -2995,8 +3224,7 @@ onUnmounted(() => {
             entity-name-plural="Allowances"
             empty-text="No Recurring Allowances Added (Basic Salary Only)"
             :new-row-factory="() => createBlankRow('salaryComponentsList')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('salaryComponentsList', row, idx)"
+            :default-initial-row="true"
           >
             <template #cell-amount="{ row }">
               <div class="relative flex items-center">
@@ -3028,8 +3256,7 @@ onUnmounted(() => {
             entity-name-plural="Bank Accounts"
             empty-text="No Account Configured (Disbursed in Cash)"
             :new-row-factory="() => createBlankRow('bankAccountsList')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('bankAccountsList', row, idx)"
+            :default-initial-row="true"
           >
             <template #cell-is_primary="{ row, index }">
               <div class="flex items-center justify-center h-full w-full">
@@ -3046,7 +3273,7 @@ onUnmounted(() => {
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════ -->
-    <!-- TAB 4: QUALIFICATIONS                                         -->
+    <!-- TAB 4: QUALIFICATIONS & CREDENTIALS                           -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-show="activeTab === 'credentials'" class="tab-content-container">
       <!-- Card 1: Academic Qualifications -->
@@ -3065,19 +3292,8 @@ onUnmounted(() => {
             entity-name-plural="Academic Qualifications"
             empty-text="No Academic Qualifications Added"
             :new-row-factory="() => createBlankRow('academicQualifications')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('academicQualifications', row, idx)"
-          >
-            <template #cell-field_of_study="{ row }">
-              <input type="text" v-model="row.field_of_study" class="cell-inline-input" list="fieldsOfStudyList" />
-            </template>
-            <template #cell-awarding_institute="{ row }">
-              <input type="text" v-model="row.awarding_institute" class="cell-inline-input" list="institutionsList" />
-            </template>
-            <template #cell-graduation_date="{ row }">
-              <input type="date" v-model="row.graduation_date" class="cell-inline-input" />
-            </template>
-          </DynamicSubTable>
+            :default-initial-row="true"
+          />
         </div>
       </div>
 
@@ -3097,22 +3313,8 @@ onUnmounted(() => {
             entity-name-plural="Professional Certifications"
             empty-text="No Professional Certifications Added"
             :new-row-factory="() => createBlankRow('professionalCertifications')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('professionalCertifications', row, idx)"
-          >
-            <template #cell-certification="{ row }">
-              <input type="text" v-model="row.certification" class="cell-inline-input" list="certificationsList" />
-            </template>
-            <template #cell-issuing_institution="{ row }">
-              <input type="text" v-model="row.issuing_institution" class="cell-inline-input" list="certInstitutionsList" />
-            </template>
-            <template #cell-issued_date="{ row }">
-              <input type="date" v-model="row.issued_date" class="cell-inline-input" />
-            </template>
-            <template #cell-expiry_date="{ row }">
-              <input type="date" v-model="row.expiry_date" class="cell-inline-input" />
-            </template>
-          </DynamicSubTable>
+            :default-initial-row="true"
+          />
         </div>
       </div>
 
@@ -3132,16 +3334,8 @@ onUnmounted(() => {
             entity-name-plural="Work Experiences"
             empty-text="No Prior Work Experiences Added"
             :new-row-factory="() => createBlankRow('priorWorkExperiences')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('priorWorkExperiences', row, idx)"
-          >
-            <template #cell-start_date="{ row }">
-              <input type="date" v-model="row.start_date" class="cell-inline-input" />
-            </template>
-            <template #cell-end_date="{ row }">
-              <input type="date" v-model="row.end_date" class="cell-inline-input" />
-            </template>
-          </DynamicSubTable>
+            :default-initial-row="true"
+          />
         </div>
       </div>
 
@@ -3164,13 +3358,8 @@ onUnmounted(() => {
             entity-name-plural="Technical Skills"
             empty-text="No Technical Skills Added"
             :new-row-factory="() => createBlankRow('technicalSkills')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('technicalSkills', row, idx)"
-          >
-            <template #cell-skill="{ row }">
-              <input type="text" v-model="row.skill" class="cell-inline-input" list="skillsCatalogList" />
-            </template>
-          </DynamicSubTable>
+            :default-initial-row="true"
+          />
 
           <div class="sub-section-title mt-6">Spoken Languages</div>
           <p class="table-section-desc">Multilingual capabilities for client and team operations.</p>
@@ -3182,21 +3371,8 @@ onUnmounted(() => {
             entity-name-plural="Spoken Languages"
             empty-text="No Spoken Languages Added"
             :new-row-factory="() => createBlankRow('spokenLanguages')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('spokenLanguages', row, idx)"
-          >
-            <template #cell-language="{ row }">
-              <input type="text" v-model="row.language" class="cell-inline-input" list="languagesCatalogList" />
-            </template>
-            <template #cell-is_native="{ row }">
-              <div class="flex items-center justify-center h-full w-full">
-                <FormCheckbox 
-                  v-model="row.is_native" 
-                  title="Mother Tongue / Native Language"
-                />
-              </div>
-            </template>
-          </DynamicSubTable>
+            :default-initial-row="true"
+          />
         </div>
       </div>
     </div>
@@ -3238,8 +3414,7 @@ onUnmounted(() => {
               entity-name-plural="Statutory Exemptions"
               empty-text="No Statutory Exemptions Added"
               :new-row-factory="() => createBlankRow('statutoryExemptionsList')"
-              :use-custom-modal="true"
-              @expand-row="(idx, row) => openRowModal('statutoryExemptionsList', row, idx)"
+              :default-initial-row="true"
             />
           </div>
         </div>
@@ -3263,8 +3438,7 @@ onUnmounted(() => {
             entity-name-plural="Clearance Items"
             empty-text="No Clearances or Compliance Records Added"
             :new-row-factory="() => createBlankRow('regulatoryClearances')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('regulatoryClearances', row, idx)"
+            :default-initial-row="true"
           >
             <template #cell-expiry_date="{ row }">
               <input type="date" v-model="row.expiry_date" class="cell-inline-input" />
@@ -3459,8 +3633,7 @@ onUnmounted(() => {
             entity-name-plural="Emergency Contacts"
             empty-text="No Emergency Contacts Added"
             :new-row-factory="() => createBlankRow('emergencyContactsList')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('emergencyContactsList', row, idx)"
+            :default-initial-row="true"
           />
         </div>
       </div>
@@ -3481,8 +3654,7 @@ onUnmounted(() => {
             entity-name-plural="Dependents"
             empty-text="No Dependents or Beneficiaries Added"
             :new-row-factory="() => createBlankRow('dependentsList')"
-            :use-custom-modal="true"
-            @expand-row="(idx, row) => openRowModal('dependentsList', row, idx)"
+            :default-initial-row="true"
           >
             <template #cell-birth_date="{ row }">
               <input type="date" v-model="row.birth_date" class="cell-inline-input" />
@@ -3500,758 +3672,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════ -->
-    <!-- EXPAND ROW MODAL (Matching Reference Screenshots)            -->
-    <!-- ══════════════════════════════════════════════════════════════ -->
-    <Teleport to="body">
-      <div v-if="showRowModal && activeRowData" class="row-modal-overlay" @click="closeRowModal">
-        <div class="row-modal-container" @click.stop>
-          <!-- Header -->
-          <div class="row-modal-header">
-            <h3 class="row-modal-title">{{ modalTitle }}</h3>
-            <button type="button" class="btn-modal-close" @click="closeRowModal" title="Close">
-              <X :size="16" />
-            </button>
-          </div>
-
-          <!-- Body -->
-          <div class="row-modal-body">
-            <!-- 1. Academic Qualification Fields (Aligned with PartyQualification Schema) -->
-            <div v-if="activeModalType === 'academicQualifications'" class="modal-grid-2">
-              <FormSelect
-                v-model="activeRowData.degree_level"
-                label="Degree Level"
-                required
-                placeholder="Select"
-                :options="degreeLevelOptions"
-              />
-              <div class="modal-form-group">
-                <label class="modal-form-label">Field of Study <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.field_of_study" class="modal-form-input" list="fieldsOfStudyList" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Awarding Institute <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.awarding_institute" class="modal-form-input" list="institutionsList" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Cumulative GPA (4.00 Scale)</label>
-                <input type="text" v-model="activeRowData.gpa" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Cumulative grade point average on the 4.00 scale (e.g. 3.75).
-                </p>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Study Start Date</label>
-                <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Graduation Date</label>
-                <input type="date" v-model="activeRowData.graduation_date" class="modal-form-input" />
-              </div>
-            </div>
-
-            <!-- 2. Professional Certification Fields (Aligned with PartyCertification Schema) -->
-            <div v-else-if="activeModalType === 'professionalCertifications'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Certification / License <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.certification" class="modal-form-input" list="certificationsList" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Issuing Institution <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.issuing_institution" class="modal-form-input" list="certInstitutionsList" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Certificate / License Number</label>
-                <input type="text" v-model="activeRowData.certificate_number" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Issued Date <span class="text-rose-500">*</span></label>
-                <input type="date" v-model="activeRowData.issued_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Expiration Date</label>
-                <input type="date" v-model="activeRowData.expiry_date" class="modal-form-input" />
-                <p class="modal-form-hint">Leave blank if lifetime / never expires.</p>
-              </div>
-            </div>
-
-            <!-- 3. Prior Work Experience Fields (Aligned with PartyExperience & EmployeeExperience Schema) -->
-            <div v-else-if="activeModalType === 'priorWorkExperiences'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Previous Employer <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.previous_employer" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Job Title / Position <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.job_title" class="modal-form-input" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.employment_type"
-                label="Employment Type"
-                required
-                placeholder="Select"
-                :options="[
-                  'Permanent',
-                  'Contract',
-                  'Temporary',
-                  'Probation',
-                  'Part-time',
-                  'Internship',
-                  'Consultancy'
-                ]"
-              />
-              <div class="modal-form-group">
-                <label class="modal-form-label">Start Date <span class="text-rose-500">*</span></label>
-                <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">End Date</label>
-                <input type="date" v-model="activeRowData.end_date" class="modal-form-input" />
-                <p class="modal-form-hint">Leave blank if still ongoing.</p>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Reason for Leaving</label>
-                <input type="text" v-model="activeRowData.reason_for_leaving" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Supervisor Reference Contact</label>
-                <input type="text" v-model="activeRowData.supervisor_reference" class="modal-form-input" />
-                <p class="modal-form-hint">Contact person name, job title, and phone number or email.</p>
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Key Responsibilities & Deliverables</label>
-                <textarea v-model="activeRowData.responsibilities" class="modal-form-textarea" rows="3"></textarea>
-              </div>
-              <div class="modal-form-group col-span-2 pt-2">
-                <FormCheckbox 
-                  id="expIsRelevant"
-                  v-model="activeRowData.is_relevant" 
-                  label="Directly Relevant to Current Role"
-                  description="Flag this work experience as relevant to the current position. Used by HR for role-specific staffing, placement grading, and succession analysis."
-                />
-              </div>
-            </div>
-
-            <!-- 4. Key Competencies & Technical Skills Fields (Aligned with PartySkill Schema) -->
-            <div v-else-if="activeModalType === 'technicalSkills'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Skill / Competency <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.skill" class="modal-form-input" list="skillsCatalogList" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.proficiency"
-                label="Proficiency Level"
-                required
-                placeholder="Select"
-                :options="[
-                  'Beginner',
-                  'Intermediate',
-                  'Advanced',
-                  'Expert'
-                ]"
-              />
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Years of Experience</label>
-                <input type="number" step="0.5" v-model="activeRowData.years_of_experience" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Cumulative practical experience applying this skill (e.g. 3.5 years).
-                </p>
-              </div>
-            </div>
-
-            <!-- 5. Spoken Languages Fields -->
-            <div v-else-if="activeModalType === 'spokenLanguages'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Language <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.language" class="modal-form-input" list="languagesCatalogList" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.fluency_level"
-                label="Overall Fluency Level"
-                required
-                placeholder="Select"
-                :options="['Basic', 'Conversational', 'Fluent', 'Native']"
-              />
-              <FormSelect
-                v-model="activeRowData.speaking_level"
-                label="Speaking Competence"
-                placeholder="Select"
-                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
-              />
-              <FormSelect
-                v-model="activeRowData.listening_level"
-                label="Listening Competence"
-                placeholder="Select"
-                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
-              />
-              <FormSelect
-                v-model="activeRowData.reading_level"
-                label="Reading Competence"
-                placeholder="Select"
-                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
-              />
-              <FormSelect
-                v-model="activeRowData.writing_level"
-                label="Writing Competence"
-                placeholder="Select"
-                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
-              />
-              <div class="modal-form-group col-span-2 pt-2">
-                <FormCheckbox 
-                  id="langIsNative"
-                  v-model="activeRowData.is_native" 
-                  label="Mother Tongue (Native Language)"
-                  description="Designates this language as the employee's primary native language acquired from childhood."
-                />
-              </div>
-            </div>
-
-            <!-- 6. Statutory Clearances & Compliance Fields (Aligned with EmployeeCompliance Schema) -->
-            <div v-else-if="activeModalType === 'regulatoryClearances'" class="modal-grid-2">
-              <FormSelect
-                v-model="activeRowData.clearance_type"
-                label="Compliance Item"
-                required
-                placeholder="Select"
-                hint="Statutory compliance item required prior to employee onboarding."
-                :options="[
-                  { value: 'fayda_verification', label: 'Fayda National ID Verification' },
-                  { value: 'pension_registration', label: 'Pension Registration Confirmation' },
-                  { value: 'work_permit', label: 'Work Permit / Visa' },
-                  { value: 'medical_check', label: 'Pre-Employment Medical Check' },
-                  { value: 'police_clearance', label: 'Police Background Clearance' },
-                  { value: 'professional_license', label: 'Professional / Board License' },
-                  { value: 'tax_registration', label: 'Tax Registration / TIN Verification' }
-                ]"
-              />
-              <div class="modal-form-group">
-                <label class="modal-form-label">Reference / Permit No. <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.ref_number" class="modal-form-input" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.verification_status"
-                label="Compliance Status"
-                required
-                placeholder="Select"
-                :options="[
-                  'Valid / Cleared',
-                  'Pending Verification',
-                  'Statutorily Waived'
-                ]"
-              />
-              <FormSelect
-                v-model="activeRowData.verified_by"
-                label="Inspected & Verified By"
-                placeholder="Select"
-                hint="Designated compliance officer who inspected and verified the documentation."
-                :options="[
-                  'Selamawit Bekele (Head of HR)',
-                  'Dawit Alemu (Compliance Officer)',
-                  'Abebe Kebede (Finance Director)'
-                ]"
-              />
-              <div class="modal-form-group">
-                <label class="modal-form-label">Issue Date</label>
-                <input type="date" v-model="activeRowData.issue_date" class="modal-form-input" />
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Expiry / Renewal Date</label>
-                <input type="date" v-model="activeRowData.expiry_date" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Leave blank if document does not expire.
-                </p>
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Verification Notes & Institutional Reference</label>
-                <textarea v-model="activeRowData.notes" class="modal-form-textarea" rows="2"></textarea>
-              </div>
-            </div>
-
-            <!-- 7. Emergency Contacts Fields (Aligned with EmployeeEmergencyContact Schema) -->
-            <div v-else-if="activeModalType === 'emergencyContactsList'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Contact Full Name <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.full_name" class="modal-form-input" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.relationship"
-                label="Relationship to Employee"
-                required
-                placeholder="Select"
-                :options="['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Colleague', 'Friend']"
-              />
-              <div class="modal-form-group">
-                <label class="modal-form-label">Primary Telephone <span class="text-rose-500">*</span></label>
-                <input type="tel" v-model="activeRowData.phone" class="modal-form-input" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.priority"
-                label="Call Priority"
-                required
-                placeholder="Select"
-                hint="Emergency response dialing sequence."
-                :options="[
-                  { value: 1, label: '1 - Primary / First Call' },
-                  { value: 2, label: '2 - Secondary / Backup Call' }
-                ]"
-              />
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">City / Residential Location</label>
-                <input type="text" v-model="activeRowData.city_location" class="modal-form-input" />
-                <p class="modal-form-hint">Physical residence or kebele location for emergency dispatch.</p>
-              </div>
-            </div>
-
-            <!-- 8. Dependents Fields (Aligned with PartyDependent Schema) -->
-            <div v-else-if="activeModalType === 'dependentsList'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Dependent Full Name <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.dependent_name" class="modal-form-input" />
-              </div>
-              <FormSelect
-                v-model="activeRowData.relationship"
-                label="Relationship"
-                required
-                placeholder="Select"
-                :options="['Spouse', 'Child', 'Parent', 'Sibling', 'Other']"
-              />
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Date of Birth</label>
-                <input type="date" v-model="activeRowData.birth_date" class="modal-form-input" />
-                <p class="modal-form-hint">Required for statutory age-dependent health cover and benefit limits.</p>
-              </div>
-              <div class="modal-form-group col-span-2">
-                <FormCheckbox 
-                  v-model="activeRowData.is_beneficiary" 
-                  label="Healthcare & Pension Survivor Beneficiary"
-                  description="Designates whether this dependent is included in corporate health insurance coverage and statutory pension survivor benefits."
-                />
-              </div>
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Benefit Remarks & Healthcare Card Details</label>
-                <textarea v-model="activeRowData.benefit_notes" class="modal-form-textarea" rows="2"></textarea>
-                <p class="modal-form-hint">
-                  Coverage remarks, insurance policy card number, or specific healthcare exclusions.
-                </p>
-              </div>
-            </div>
-
-            <!-- 9. Statutory Rule Exemption Fields (with WYSIWYG Reason Editor) -->
-            <div v-else-if="activeModalType === 'statutoryExemptionsList'" class="modal-grid-2">
-              <FormSelect
-                v-model="activeRowData.rule_type"
-                label="Rule Type"
-                required
-                placeholder="Select"
-                hint="Statutory tax or labor policy being waived under authorized exemption."
-                :options="[
-                  { value: 'pension_employee', label: 'Pension (Employee Contribution)' },
-                  { value: 'pension_employer', label: 'Pension (Employer Contribution)' },
-                  { value: 'income_tax', label: 'Employment Income Tax' },
-                  { value: 'overtime_rate', label: 'Overtime Rate' },
-                  { value: 'working_hours_weekly', label: 'Weekly Working Hours Limit' },
-                  { value: 'severance', label: 'Severance Pay' },
-                  { value: 'notice_period', label: 'Notice Period' },
-                  { value: 'annual_leave_minimum', label: 'Annual Leave Minimum' },
-                  { value: 'probation_maximum', label: 'Probation Maximum' }
-                ]"
-              />
-
-              <FormSelect
-                v-model="activeRowData.approved_by"
-                label="Exemption Authorized By"
-                required
-                placeholder="Select"
-                hint="Designated officer who validated the legal basis for the waiver."
-                :options="[
-                  'Selamawit Bekele (Head of HR)',
-                  'Abebe Kebede (Finance Director)',
-                  'Dawit Alemu (Operations Manager)'
-                ]"
-              />
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective From</label>
-                <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Defaults to employment start date if left blank.
-                </p>
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective Until (Optional)</label>
-                <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Leave blank if waiver is indefinite or valid until revoked.
-                </p>
-              </div>
-
-              <!-- Reason in Standard Rich Text Component -->
-              <div class="modal-form-group col-span-2">
-                <FormRichText
-                  v-model="activeRowData.reason"
-                  label="Exemption Reason & Legal Justification"
-                  placeholder="Detail the legal justification and reasons for this statutory exemption..."
-                  :max-length="5000"
-                />
-              </div>
-            </div>
-
-            <!-- 10. Salary Disbursement Account Fields -->
-            <div v-else-if="activeModalType === 'bankAccountsList'" class="modal-grid-2">
-              <FormSelect
-                v-model="activeRowData.payment_provider"
-                label="Payment Provider / Bank"
-                required
-                placeholder="Select Provider"
-                :options="paymentProviders"
-              />
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Branch Name</label>
-                <input type="text" v-model="activeRowData.branch_name" class="modal-form-input" />
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Account Number / Wallet ID <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.account_number" class="modal-form-input" />
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Account Holder Name <span class="text-rose-500">*</span></label>
-                <input type="text" v-model="activeRowData.account_holder_name" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Must match the official registered name on the bank account.
-                </p>
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Split Share (%) <span class="text-rose-500">*</span></label>
-                <input type="number" v-model="activeRowData.split_percent" class="modal-form-input" min="1" max="100" />
-                <p class="modal-form-hint">
-                  Percentage of net salary routed to this account (total must equal 100%).
-                </p>
-              </div>
-
-              <div class="modal-form-group col-span-2 pt-2">
-                <FormCheckbox 
-                  id="modalBankAccountIsPrimary"
-                  v-model="activeRowData.is_primary" 
-                  label="Primary Disbursement Account"
-                  description="Designates this bank account as the primary destination for automated monthly net salary electronic fund transfers."
-                  @change="setPrimaryAccount(activeRowIndex)"
-                />
-              </div>
-            </div>
-
-            <!-- 11. Salary Component & Allowance Fields -->
-            <div v-else-if="activeModalType === 'salaryComponentsList'" class="modal-grid-2">
-              <FormSelect
-                v-model="activeRowData.component_name"
-                label="Payroll Component"
-                required
-                placeholder="Select"
-                hint="Select the recurring allowance or earning component to add to monthly compensation."
-                :options="[
-                  'Transport Allowance',
-                  'Housing Allowance',
-                  'Representation Allowance',
-                  'Hardship Allowance',
-                  'Fuel & Mileage Allowance',
-                  { value: 'Mobile & Communication', label: 'Mobile & Communication Allowance' },
-                  { value: 'Food & Subsistence', label: 'Food Allowance' },
-                  'Other Special Allowance'
-                ]"
-              />
-
-              <FormSelect
-                v-model="activeRowData.calc_type"
-                label="Calculation Type"
-                required
-                placeholder="Select"
-                hint="Choose whether this allowance is a fixed ETB amount or calculated as a percentage of basic salary."
-                :options="[
-                  { value: 'Fixed Amount', label: 'Fixed Amount (ETB)' },
-                  { value: 'Percentage of Basic', label: '% of Monthly Basic Salary' }
-                ]"
-              />
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Amount / Value <span class="text-rose-500">*</span></label>
-                <input type="number" v-model="activeRowData.amount" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Enter the fixed amount in ETB or percentage rate (e.g. 15 for 15%).
-                </p>
-              </div>
-
-              <FormSelect
-                v-model="activeRowData.payroll_formula"
-                label="Calculation Formula (Optional)"
-                placeholder="Select"
-                hint="Optional automated calculation rule for statutory caps or tiered formulas."
-                :options="[
-                  'Default Component Formula',
-                  { value: 'min(basic * 0.25, 2200)', label: 'Statutory Cap: min(basic * 0.25, 2200)' },
-                  { value: 'Direct Value (No Formula)', label: 'Direct Value (No Formula Pin)' }
-                ]"
-              />
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective From (Optional)</label>
-                <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Optional line start date; defaults to package effective date if left blank.
-                </p>
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective To (Optional)</label>
-                <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  Optional expiration date; leave blank if ongoing throughout employment.
-                </p>
-              </div>
-            </div>
-
-            <!-- 12. Address & Physical Domicile Fields -->
-            <div v-else-if="activeModalType === 'addressesList'" class="modal-grid-2">
-              <FormSelect
-                class="col-span-2"
-                v-model="activeRowData.address_type"
-                label="Address Type"
-                required
-                placeholder="Select"
-                hint="Classification of this address record for official Party identity."
-                :options="[
-                  { value: 'residence', label: 'Residence / Primary Home' },
-                  { value: 'postal', label: 'Postal Address' },
-                  { value: 'work', label: 'Work Location' },
-                  { value: 'emergency', label: 'Emergency Domicile' },
-                  { value: 'birth_place', label: 'Place of Birth' },
-                  { value: 'other', label: 'Other Domicile' }
-                ]"
-              />
-
-              <!-- Exact Geographic Location Hierarchy (Spine) -->
-              <div class="modal-form-group col-span-2">
-                <div class="location-picker-card">
-                  <div class="location-picker-header">
-                    <div class="location-header-title">
-                      <MapPin :size="15" class="location-pin-icon" />
-                      <span>Exact Geographic Location</span>
-                    </div>
-                    <!-- Visual Dynamic Breadcrumb / Badge -->
-                    <div class="location-breadcrumb-badge" :title="activeRowData.admin_unit || 'No location configured'">
-                      <span class="breadcrumb-dot"></span>
-                      <span class="breadcrumb-text">{{ activeRowData.admin_unit || 'Select Location Hierarchy' }}</span>
-                    </div>
-                  </div>
-
-                  <div class="location-picker-body">
-                    <!-- Level 1: Country -->
-                    <FormSelect
-                      v-model="activeRowData.country"
-                      label="Country"
-                      required
-                      placeholder="Select"
-                      hint="Primary sovereign jurisdiction."
-                      :options="[
-                        { value: 'Ethiopia', label: 'Ethiopia [ET]' },
-                        { value: 'Kenya', label: 'Kenya [KE]' },
-                        { value: 'Djibouti', label: 'Djibouti [DJ]' },
-                        { value: 'United States', label: 'United States [US]' },
-                        { value: 'United Kingdom', label: 'United Kingdom [GB]' }
-                      ]"
-                      @change="onCountryChange"
-                    />
-
-                    <!-- Level 2: Region / City Administration -->
-                    <FormSelect
-                      v-model="activeRowData.region"
-                      label="Region / City Administration"
-                      required
-                      placeholder="Select"
-                      hint="Administrative state or chartered city."
-                      :options="currentRegionOptions"
-                      @change="onRegionChange"
-                    />
-
-                    <!-- Level 3: Zone / Sub-City -->
-                    <div class="modal-form-group">
-                      <div v-if="currentSubcityOptions.length > 0" class="flex flex-col gap-1.5">
-                        <FormSelect
-                          v-model="activeRowData.subcity_zone"
-                          label="Zone / Sub-City"
-                          placeholder="Select"
-                          :options="[...currentSubcityOptions, { value: '__custom__', label: 'Other / Custom Zone...' }]"
-                          @change="onSubcityChange"
-                        />
-                        <input 
-                          v-if="activeRowData.subcity_zone === '__custom__' || isCustomSubcity" 
-                          type="text" 
-                          v-model="customSubcityText" 
-                          class="modal-form-input mt-1" 
-                          @input="onCustomSubcityInput" 
-                          placeholder="Specify custom zone or subcity..."
-                        />
-                      </div>
-                      <div v-else>
-                        <label class="modal-form-label">Zone / Sub-City</label>
-                        <input 
-                          type="text" 
-                          v-model="activeRowData.subcity_zone" 
-                          class="modal-form-input" 
-                          @input="updateAdminUnitSummary" 
-                        />
-                      </div>
-                      <p class="modal-form-hint">{{ activeRowData.region === 'Addis Ababa' ? 'Chartered municipal sub-city.' : 'Provincial zone or municipal district.' }}</p>
-                    </div>
-
-                    <!-- Level 4: Woreda / District -->
-                    <div class="modal-form-group">
-                      <div v-if="currentWoredaOptions.length > 0" class="flex flex-col gap-1.5">
-                        <FormSelect
-                          v-model="activeRowData.woreda"
-                          label="Woreda / District"
-                          placeholder="Select"
-                          :options="[...currentWoredaOptions, { value: '__custom__', label: 'Other / Custom Woreda...' }]"
-                          @change="onWoredaChange"
-                        />
-                        <input 
-                          v-if="activeRowData.woreda === '__custom__' || isCustomWoreda" 
-                          type="text" 
-                          v-model="customWoredaText" 
-                          class="modal-form-input mt-1" 
-                          @input="onCustomWoredaInput" 
-                          placeholder="Specify custom woreda..."
-                        />
-                      </div>
-                      <div v-else>
-                        <label class="modal-form-label">Woreda / District</label>
-                        <input 
-                          type="text" 
-                          v-model="activeRowData.woreda" 
-                          class="modal-form-input" 
-                          @input="updateAdminUnitSummary" 
-                        />
-                      </div>
-                      <p class="modal-form-hint">{{ activeRowData.region === 'Addis Ababa' ? 'e.g. Woreda 03, Woreda 08.' : 'Local district / woreda administration.' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">
-                  {{ activeRowData.address_type === 'postal' ? 'P.O. Box & Branch Line' : 'Street / Locality Line' }}
-                  <span class="text-rose-500">*</span>
-                </label>
-                <input type="text" v-model="activeRowData.line" class="modal-form-input" />
-                <p class="modal-form-hint">
-                  {{ activeRowData.address_type === 'postal' ? 'e.g. P.O. Box 1176, Central Post Office' : 'e.g. Cameroon St., near Edna Mall' }}
-                </p>
-              </div>
-
-              <!-- House Number: physical addresses only -->
-              <div v-if="activeRowData.address_type !== 'postal'" class="modal-form-group">
-                <label class="modal-form-label">House Number</label>
-                <input type="text" v-model="activeRowData.house_number" class="modal-form-input" />
-                <p class="modal-form-hint">House number as printed on Fayda ID registration or door plaque.</p>
-              </div>
-
-              <!-- Postal Code: prominent for postal -->
-              <div :class="activeRowData.address_type === 'postal' ? 'modal-form-group col-span-2' : 'modal-form-group'">
-                <label class="modal-form-label">
-                  Postal Code / Zip
-                  <span v-if="activeRowData.address_type === 'postal'" class="text-rose-500">*</span>
-                </label>
-                <input type="text" v-model="activeRowData.postal_code" class="modal-form-input font-mono" />
-                <p class="modal-form-hint">Official postal dispatch zip code (e.g. 1000, 1176).</p>
-              </div>
-
-              <!-- Temporal Effectivity (Audit) -->
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective From</label>
-                <input type="date" v-model="activeRowData.effective_from" class="modal-form-input" />
-                <p class="modal-form-hint">Defaults to current hire date or intake date.</p>
-              </div>
-
-              <div class="modal-form-group">
-                <label class="modal-form-label">Effective To</label>
-                <input type="date" v-model="activeRowData.effective_to" class="modal-form-input" />
-                <p class="modal-form-hint">Leave empty if this is an active current domicile.</p>
-              </div>
-
-              <div class="modal-form-group col-span-2 pt-2">
-                <FormCheckbox 
-                  id="modalAddressIsPrimary"
-                  v-model="activeRowData.is_primary" 
-                  label="Primary Address (Official Domicile)"
-                  description="Designates this record as the employee's official primary residence for statutory tax remittance, administrative notices, and emergency routing."
-                  @change="setPrimaryAddress(activeRowIndex)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Footer (Matching Screenshot 2) -->
-          <div class="row-modal-footer">
-            <BaseButton type="button" variant="tertiary-gray" size="sm" destructive @click="deleteModalRow">
-              Delete
-            </BaseButton>
-            <div class="row-modal-actions-right flex items-center gap-2">
-              <BaseButton 
-                type="button" 
-                variant="secondary-gray" 
-                size="sm" 
-                :disabled="isLastRow" 
-                @click="moveRowDown" 
-                title="Move Down"
-              >
-                <ArrowDown :size="15" />
-              </BaseButton>
-              <BaseButton 
-                type="button" 
-                variant="secondary-gray" 
-                size="sm" 
-                :disabled="isFirstRow" 
-                @click="moveRowUp" 
-                title="Move Up"
-              >
-                <ArrowUp :size="15" />
-              </BaseButton>
-              <BaseButton 
-                type="button" 
-                variant="secondary-gray" 
-                size="sm" 
-                :icon="Copy" 
-                @click="duplicateModalRow"
-              >
-                Duplicate Row
-              </BaseButton>
-              <BaseButton 
-                type="button" 
-                variant="secondary-gray" 
-                size="sm" 
-                :icon="Plus" 
-                @click="insertRowAbove"
-              >
-                Insert Above
-              </BaseButton>
-              <BaseButton 
-                type="button" 
-                variant="secondary-gray" 
-                size="sm" 
-                :icon="Plus" 
-                @click="insertRowBelow"
-              >
-                Insert Below
-              </BaseButton>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
 
     <!-- Floating Bulk Action Bar (Matching Images 1 & 2) -->
     <TableFloatingBar 
@@ -5004,7 +4424,7 @@ onUnmounted(() => {
 }
 
 .sig-tab-btn:hover {
-  color: #0f172a;
+  color: #404040;
 }
 
 .sig-tab-btn.active {
@@ -5059,7 +4479,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 4px;
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
   font-size: 12px;
   font-weight: 500;
   padding: 6px 12px;
@@ -5203,7 +4623,7 @@ onUnmounted(() => {
 }
 .tb-btn:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .toolbar-spacer {
@@ -5526,7 +4946,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-row-expand:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -6018,7 +5438,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -6226,7 +5646,7 @@ onUnmounted(() => {
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
   opacity: 0.4;
@@ -6250,7 +5670,7 @@ onUnmounted(() => {
 }
 .btn-modal-ctrl-action:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
   border-color: #cbd5e1;
 }
 

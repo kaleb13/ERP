@@ -294,7 +294,7 @@ watch(
 .qmt-underline-tabs {
   display: flex;
   align-items: center;
-  gap: var(--qmt-tab-gap, 8px);
+  gap: var(--qmt-tab-gap, 0px);
   overflow-x: auto;
   user-select: none;
   scrollbar-width: none;
@@ -322,7 +322,7 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--qmt-tab-gap, 8px);
+  gap: 6px;
   border: none;
   background: transparent;
   color: var(--qmt-tab-fg, #737373);

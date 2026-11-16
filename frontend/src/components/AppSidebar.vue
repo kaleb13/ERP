@@ -316,7 +316,20 @@ const activeModule = computed(() => {
         { to: '/hr/calendar', label: 'Calendar', icon: 'CalendarDays' },
         { to: '/hr/shift-patterns', label: 'Shift Patterns', icon: 'Repeat' },
         { to: '/hr/attendance', label: 'Daily Attendance', icon: 'Clock' },
-        { to: '/hr/shift-swaps', label: 'Shift Swaps', icon: 'ArrowLeftRight' }
+        { to: '/hr/shift-swaps', label: 'Shift Swaps', icon: 'ArrowLeftRight' },
+        { isHeader: true, label: 'LEAVE & ABSENCE' },
+        {
+          isGroup: true,
+          label: 'Leave',
+          icon: 'Calendar',
+          children: [
+            { to: '/hr/leave-requests', label: 'Leave Requests', icon: 'FileText' },
+            { to: '/hr/leave-allocations', label: 'Leave Allocations', icon: 'Layers' },
+            { to: '/hr/leave-balances', label: 'Leave Balances', icon: 'Scale' },
+            { to: '/hr/leave-encashments', label: 'Leave Encashments', icon: 'Receipt' },
+            { to: '/hr/leave-policies', label: 'Leave Policies', icon: 'ShieldCheck' }
+          ]
+        }
       ]
     };
   } else {
@@ -379,6 +392,9 @@ onUnmounted(() => {
             type="collapsed"
             :icon="iconsMap[activeModule.icon] || Box"
             :label="activeModule.name"
+            :tile-bg="activeModule.iconBg"
+            :tile-color="activeModule.iconColor"
+            :expanded="isDropdownOpen"
             @click="toggleDropdown"
           />
         </div>
@@ -632,6 +648,7 @@ onUnmounted(() => {
 
 .collapsed-item-container {
   display: flex;
+  justify-content: center;
   align-items: center;
   justify-content: center;
   width: 100%;

@@ -10,9 +10,11 @@ import FormCheckbox from '../../components/FormCheckbox.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 // ─── Mode: Interactive Editor vs Official Document View ───
 type ViewMode = 'edit' | 'preview';
@@ -26,7 +28,6 @@ const breadcrumbItems = computed(() => [
 
 // ─── Document State ───
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 const showAdjustmentModal = ref(false);
 const adjustmentPercent = ref(10);
 
@@ -354,11 +355,9 @@ const clearForm = () => {
   showToast('Salary matrix grid reset.');
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Salary Matrix', msg);
 };
 
 onMounted(() => {
@@ -408,11 +407,6 @@ onMounted(() => {
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Quick Toast Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════ -->
@@ -741,23 +735,11 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.state-pill {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  margin-left: 6px;
-}
 
-.state-unsaved {
-  background-color: #fff1f2;
-  color: #e11d48;
-}
 
-.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
+
+
+
 
 .header-actions {
   display: flex;
@@ -833,20 +815,6 @@ onMounted(() => {
 
 .btn-save-action:hover {
   background-color: #09427d;
-}
-
-/* Toast */
-.quick-toast-banner {
-  position: fixed;
-  top: 24px;
-  right: 32px;
-  z-index: 1000;
-  padding: 10px 18px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  font-size: 13px;
-  color: #404040;
 }
 
 /* Parameters Card */
@@ -1048,7 +1016,7 @@ onMounted(() => {
   padding: 8px 10px;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #737373;
   text-align: left;
   white-space: nowrap;
 }
@@ -1193,21 +1161,21 @@ onMounted(() => {
 .doc-official-header {
   text-align: center;
   margin-bottom: 24px;
-  border-bottom: 2px solid #0f172a;
+  border-bottom: 2px solid #404040;
   padding-bottom: 16px;
 }
 
 .doc-main-title {
   font-size: 19px;
   font-weight: 700;
-  color: #0f172a;
+  color: #404040;
   letter-spacing: 0.5px;
 }
 
 .doc-sub-title {
   font-size: 13.5px;
   font-weight: 600;
-  color: #334155;
+  color: #404040;
   margin-top: 4px;
 }
 
@@ -1221,19 +1189,19 @@ onMounted(() => {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
-  border: 2px solid #0f172a;
+  border: 2px solid #404040;
 }
 
 .official-scale-table th,
 .official-scale-table td {
-  border: 1px solid #334155;
+  border: 1px solid #404040;
   padding: 6px 8px;
 }
 
 .official-th-row-main th {
   background-color: #f1f5f9;
   font-weight: 700;
-  color: #0f172a;
+  color: #404040;
   text-align: center;
   vertical-align: middle;
 }
@@ -1249,7 +1217,7 @@ onMounted(() => {
 .doc-td-grade {
   text-align: center;
   background-color: #f8fafc;
-  color: #0f172a;
+  color: #404040;
 }
 
 .doc-td-desc {
@@ -1258,7 +1226,7 @@ onMounted(() => {
 
 .doc-td-num {
   text-align: right;
-  color: #0f172a;
+  color: #404040;
 }
 
 .doc-body-row:nth-child(even) {
@@ -1282,14 +1250,14 @@ onMounted(() => {
 .sign-line {
   width: 100%;
   height: 1px;
-  background-color: #0f172a;
+  background-color: #404040;
   margin-bottom: 6px;
 }
 
 .sign-label {
   font-size: 11px;
   font-weight: 500;
-  color: #475569;
+  color: #737373;
 }
 
 /* Adjustment Modal */

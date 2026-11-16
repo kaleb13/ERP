@@ -10,7 +10,8 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 
 import {
@@ -45,11 +46,23 @@ const clientFundedCount = computed(() =>
   serviceAgreementsData.value.filter(a => a.payroll_responsibility_lookup_value_id === 'client_funds_employer_pays').length
 );
 
-// ─── SECONDARY TABS (Rule 1: UnderlineTabs for Sub-views) ─────────────────
+// ─── PRIMARY TABS (Single Tab Rule) ─────────────────
 type TabId = 'all' | 'active' | 'pending_approval' | 'draft' | 'expired_suspended';
 const activeTab = ref<TabId>('all');
 
-const statusTabs = computed<UnderlineTabItem<TabId>[]>(() => [
+const getAgreementStatusColor = (state: string): 'success' | 'warning' | 'indigo' | 'gray' | 'error' | 'blue' => {
+  switch (state) {
+    case 'active': return 'success';
+    case 'pending_approval': return 'warning';
+    case 'draft': return 'indigo';
+    case 'expired': return 'gray';
+    case 'terminated': return 'error';
+    case 'suspended': return 'warning';
+    default: return 'blue';
+  }
+};
+
+const statusTabs = computed<BaseTabItem<TabId>[]>(() => [
   { id: 'all', label: 'All Agreements', count: serviceAgreementsData.value.length },
   { id: 'active', label: 'Active & In Effect', count: activeContracts.value, badgeVariant: 'success' },
   { id: 'pending_approval', label: 'Pending Approval', count: serviceAgreementsData.value.filter(a => a.agreement_state_lookup_value_id === 'pending_approval').length, badgeVariant: 'warning' },
@@ -269,11 +282,12 @@ const handleStateChange = (id: number, newState: AgreementState) => {
       />
     </div>
 
-    <!-- Secondary UnderlineTabs (Rule 1) -->
+    <!-- Primary Tab Group (AGENTS.md Single Tab Rule) -->
     <div class="tabs-container">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="statusTabs"
+        type="rounded"
       />
     </div>
 
@@ -392,22 +406,16 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 
                 <!-- Status (Lifecycle state) -->
                 <td v-if="isColumnVisible('status')">
-                  <span
-                    class="status-pill"
-                    :class="`status-${item.agreement_state_lookup_value_id}`"
-                  >
+                  <BaseBadge :color="getAgreementStatusColor(item.agreement_state_lookup_value_id)">
                     {{ item.agreement_state_lookup_value_id.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- State (Rule 9: Active / Inactive) -->
                 <td v-if="isColumnVisible('state')">
-                  <span
-                    class="state-pill"
-                    :class="`state-${item.state}`"
-                  >
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state.charAt(0).toUpperCase() + item.state.slice(1) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions Menu -->
@@ -513,9 +521,9 @@ const handleStateChange = (id: number, newState: AgreementState) => {
           <div>
             <div class="ticket-badge-row">
               <span class="ticket-code-pill">{{ selectedAgreement.code }}</span>
-              <span class="status-pill" :class="`status-${selectedAgreement.agreement_state_lookup_value_id}`">
+              <BaseBadge :color="getAgreementStatusColor(selectedAgreement.agreement_state_lookup_value_id)">
                 {{ selectedAgreement.agreement_state_lookup_value_id.replace('_', ' ').toUpperCase() }}
-              </span>
+              </BaseBadge>
             </div>
             <h3 class="detail-subject-title">{{ selectedAgreement.client_party_name }}</h3>
           </div>
@@ -798,65 +806,6 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 .tertiary-text {
   font-size: 12.5px;
   color: #737373;
-}
-
-/* Status & State Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pending_approval {
-  background-color: #fffbeb;
-  color: #d97706;
-}
-
-.status-draft {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.status-expired {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-suspended {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-terminated {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.state-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Actions Menu */

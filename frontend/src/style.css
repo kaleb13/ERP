@@ -1965,6 +1965,36 @@ span.badge-external[class] {
   color: #F5F5F5 !important;
 }
 
+/* ─── QMT Action Buttons Standardization (Zero Border, Transparent Background, Zero Focus/Active Outline) ─── */
+.btn-action-dots,
+button.btn-action-dots {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.btn-action-dots:focus,
+.btn-action-dots:focus-visible,
+.btn-action-dots:active,
+button.btn-action-dots:focus,
+button.btn-action-dots:focus-visible,
+button.btn-action-dots:active {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.btn-action-dots:hover,
+button.btn-action-dots:hover {
+  background-color: #f1f5f9 !important;
+  color: #404040;
+}
+
+
 
 
 

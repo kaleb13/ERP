@@ -15,7 +15,9 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -56,7 +58,7 @@ const searchQuery = ref('');
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
 const showQuickCreate = ref(false);
-const quickActionToast = ref<string | null>(null);
+const { toast } = useToast();
 
 // ─── Table Columns (Strict Single-Information & Name-First Hierarchy) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -284,8 +286,7 @@ const handleSaveQuickShift = () => {
     });
     isQuickSubmitting.value = false;
     showQuickCreate.value = false;
-    quickActionToast.value = `Work Shift "${quickForm.value.name}" created successfully.`;
-    setTimeout(() => { quickActionToast.value = null; }, 3500);
+    toast.success(`Work Shift "${quickForm.value.name}" created successfully.`);
   }, 400);
 };
 
@@ -317,9 +318,8 @@ const handleToggleRow = (id: number) => {
 
 const handleBatchDelete = () => {
   shifts.value = shifts.value.filter(s => !selectedRowIds.value.includes(s.id));
-  quickActionToast.value = `${selectedRowIds.value.length} shifts deleted.`;
+  toast.success(`${selectedRowIds.value.length} shifts deleted.`);
   selectedRowIds.value = [];
-  setTimeout(() => { quickActionToast.value = null; }, 3000);
 };
 </script>
 
@@ -328,12 +328,6 @@ const handleBatchDelete = () => {
     <!-- Breadcrumb Standard (Exact Page Name Only) -->
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Notification Toast -->
-    <div v-if="quickActionToast" class="action-toast">
-      <CheckCircle2 :size="16" class="toast-icon text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- Unified Table Card Layout -->
@@ -381,9 +375,10 @@ const handleBatchDelete = () => {
       <!-- Category Filter Tabs inside Table Card -->
       <template #pre-table>
         <div class="table-subnav">
-          <UnderlineTabs 
+          <BaseTabs 
             v-model="activeTab" 
             :tabs="categoryTabs"
+            type="rounded"
           />
         </div>
       </template>
@@ -480,9 +475,12 @@ const handleBatchDelete = () => {
 
                 <!-- State -->
                 <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                  <span class="status-pill" :class="shift.state === 'active' ? 'status-active' : 'status-inactive'">
+                  <BaseBadge 
+                    :color="shift.state === 'active' ? 'success' : 'gray'"
+                    size="sm"
+                  >
                     {{ shift.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions Menu -->
@@ -690,24 +688,6 @@ const handleBatchDelete = () => {
   align-items: center;
 }
 
-.action-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #ffffff;
-  color: #404040;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
-}
-
 /* Toolbar Actions */
 .toolbar-actions {
   display: flex;
@@ -879,25 +859,6 @@ const handleBatchDelete = () => {
   color: #4f46e5;
 }
 
-/* Status Pills */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 500;
-  border-radius: 9999px;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
 /* Actions Menu */
 .th-actions, .td-actions {
   width: 56px;
@@ -1015,7 +976,7 @@ const handleBatchDelete = () => {
   font-weight: 600;
   padding: 2px 8px;
   background: #f1f5f9;
-  color: #475569;
+  color: #737373;
   border-radius: 6px;
 }
 

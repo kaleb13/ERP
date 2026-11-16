@@ -17,8 +17,10 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3: Exact Sidebar Page Name Only) ───
 const breadcrumbItems = [
@@ -33,11 +35,10 @@ const activeTab = ref<TabKey>('terminals');
 const searchQuery = ref('');
 const selectedEntityFilter = ref('all');
 const selectedTypeFilter = ref('all');
-const toastMessage = ref<string | null>(null);
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success('Biometric Devices', msg);
 };
 
 // ─── Catalogues ───
@@ -501,14 +502,6 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- Top KPI / Metrics Cards Grid (AGENTS.md Rule 2 Standard) -->
     <div class="metrics-grid">
       <MetricCard
@@ -705,14 +698,14 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
         >
           <!-- Table Toolbar Primary Action -->
           <template #actions>
-            <button
-              type="button"
-              class="btn-primary-action"
+            <AppButton
+              variant="primary"
+              size="sm"
               @click="handleOpenEnrollCredential"
             >
-              <Plus :size="15" />
-              <span>Enroll Credential</span>
-            </button>
+              <template #icon-left><Plus :size="15" /></template>
+              Enroll Credential
+            </AppButton>
           </template>
 
           <!-- Table Filters Strip -->
@@ -1181,17 +1174,10 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 }
 
 /* ─── Status Pills ─── */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 9999px;
-  letter-spacing: 0.02em;
-}
 
-.status-present { background-color: #ecfdf5; color: #059669; }
-.status-absent { background-color: #fef2f2; color: #dc2626; }
+
+
+
 
 /* ─── Action Buttons (Rule 6: 8-10px radius) ─── */
 .btn-primary-action {
@@ -1259,33 +1245,5 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-}
-
-/* ─── Toast ─── */
-.toast-bar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #0f172a;
-  color: #ffffff;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 </style>

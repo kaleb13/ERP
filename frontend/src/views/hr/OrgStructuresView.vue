@@ -11,6 +11,7 @@ import {
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
@@ -19,8 +20,10 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Lookups & Types (HR_Schema_final-v4.sql lines 968–1043) ───
 export type OrgStructureState = 'draft' | 'active' | 'superseded';
@@ -302,7 +305,6 @@ const filterLifecycle = ref('All');
 const currentSort = ref('name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
 const selectedRowIds = ref<number[]>([]);
-const quickActionToast = ref<string | null>(null);
 
 const filteredTreeStructures = computed(() => {
   if (!treeSearchQuery.value.trim()) return structures.value;
@@ -356,6 +358,15 @@ const tableColumns = ref<ColumnDef[]>([
 const isColumnVisible = (key: string) => {
   const col = tableColumns.value.find(c => c.key === key);
   return col ? col.visible !== false : true;
+};
+
+const getStructureStateColor = (stateId: string): 'success' | 'warning' | 'gray' => {
+  switch (stateId) {
+    case 'active': return 'success';
+    case 'draft': return 'warning';
+    case 'superseded': return 'gray';
+    default: return 'gray';
+  }
 };
 
 const handleToggleColumn = (colKey: string) => {
@@ -815,11 +826,9 @@ const handleZoomIn = () => { if (zoomLevel.value < 1.4) zoomLevel.value = +(zoom
 const handleZoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value = +(zoomLevel.value - 0.1).toFixed(1); };
 const handleResetZoom = () => { zoomLevel.value = 0.8; };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Org Structures', msg);
 };
 
 onMounted(() => {
@@ -838,12 +847,6 @@ onUnmounted(() => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
-    </div>
-
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- MASTER PAGE HEADER & SECONDARY TABS (Figma 5520:79074)     -->
     <!-- ══════════════════════════════════════════════════════════ -->
@@ -856,14 +859,13 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <button 
-          type="button" 
-          class="btn-primary-create-struct" 
+        <AppButton 
+          variant="primary" 
           @click="handleOpenCreateStructure"
         >
-          <Plus :size="18" />
-          <span>Create Structure</span>
-        </button>
+          <template #icon-left><Plus :size="16" /></template>
+          Create Structure
+        </AppButton>
       </div>
 
       <div class="header-tabs-row">
@@ -1006,22 +1008,15 @@ onUnmounted(() => {
               </td>
 
               <td v-if="isColumnVisible('status')" class="col-status">
-                <span 
-                  class="status-pill"
-                  :class="{
-                    'pill-published': item.structure_state_lookup_value_id === 'active',
-                    'pill-draft': item.structure_state_lookup_value_id === 'draft',
-                    'pill-superseded': item.structure_state_lookup_value_id === 'superseded'
-                  }"
-                >
+                <BaseBadge :color="getStructureStateColor(item.structure_state_lookup_value_id)">
                   {{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td v-if="isColumnVisible('state')" class="col-state">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <td v-if="isColumnVisible('actions')" class="col-actions" @click.stop>
@@ -1109,16 +1104,9 @@ onUnmounted(() => {
             <div class="item-card-top-row">
               <div class="item-title-cluster">
                 <span class="structure-card-title">{{ item.name }}</span>
-                <span 
-                  class="status-pill-subtle"
-                  :class="{
-                    'pill-published': item.structure_state_lookup_value_id === 'active',
-                    'pill-draft': item.structure_state_lookup_value_id === 'draft',
-                    'pill-superseded': item.structure_state_lookup_value_id === 'superseded'
-                  }"
-                >
+                <BaseBadge :color="getStructureStateColor(item.structure_state_lookup_value_id)">
                   {{ item.structure_state_lookup_value_id === 'active' ? 'Published' : (item.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
-                </span>
+                </BaseBadge>
               </div>
 
               <!-- 3-Dot Menu Button on Structure Card (Screenshot 3) -->
@@ -1173,16 +1161,9 @@ onUnmounted(() => {
           <div class="right-header-left">
             <div class="active-struct-title-row">
               <span class="active-struct-name">{{ selectedStructure.name }}</span>
-              <span 
-                class="status-pill-subtle"
-                :class="{
-                  'pill-published': selectedStructure.structure_state_lookup_value_id === 'active',
-                  'pill-draft': selectedStructure.structure_state_lookup_value_id === 'draft',
-                  'pill-superseded': selectedStructure.structure_state_lookup_value_id === 'superseded'
-                }"
-              >
+              <BaseBadge :color="getStructureStateColor(selectedStructure.structure_state_lookup_value_id)">
                 {{ selectedStructure.structure_state_lookup_value_id === 'active' ? 'Published' : (selectedStructure.structure_state_lookup_value_id === 'draft' ? 'Draft' : 'Superseded') }}
-              </span>
+              </BaseBadge>
             </div>
             <p class="active-struct-subtext">
               {{ selectedStructure.entity_name }} - Effective: {{ selectedStructure.effective_from }} - {{ selectedStructure.effective_to || 'Current' }} - {{ activeUnitsMappedCount }} Units Mapped
@@ -1787,19 +1768,6 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* Toast */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #EBFDF2;
-  border: 1px solid #a7f3d0;
-  color: #009966;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
 /* ─── Table Section ─── */
 .table-view-section {
   display: flex;
@@ -1860,24 +1828,6 @@ onUnmounted(() => {
 }
 
 .text-tertiary {
-  color: #737373;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-pill-active {
-  background-color: #EBFDF2;
-  color: #009966;
-}
-
-.status-pill-inactive {
-  background-color: #FAFAFA;
   color: #737373;
 }
 
@@ -2422,30 +2372,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-/* ─── Status Pills (Figma Node 5520:79089) ─── */
-.status-pill-subtle {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.pill-published {
-  background-color: #EBFDF2;
-  color: #027A48;
-}
-
-.pill-draft {
-  background-color: #FEF7C3;
-  color: #713F12;
-}
-
-.pill-superseded {
-  background-color: #FEF3F2;
-  color: #B42318;
 }
 
 /* Ethiopian GC Date field */

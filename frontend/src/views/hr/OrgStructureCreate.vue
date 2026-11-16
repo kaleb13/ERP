@@ -14,9 +14,11 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 // ─── Breadcrumb Navigation ───
 const breadcrumbItems = [
@@ -26,7 +28,6 @@ const breadcrumbItems = [
 
 // ─── Document State ───
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 const isUnitPlacementOpen = ref(true);
 
 // ─── Active Tab (BaseTabs Standard Matching Critic Screenshot) ───
@@ -233,11 +234,9 @@ const clearForm = () => {
   showToast('Form cleared.');
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Organization Structure', msg);
 };
 
 const showMoreMenu = ref(false);
@@ -246,7 +245,7 @@ const handleSaveAsDraft = () => {
   showMoreMenu.value = false;
   form.value.structure_state_lookup_value_id = 'draft';
   isSaved.value = true;
-  quickActionToast.value = 'Organization structure saved as Draft.';
+  toast.success('Draft Saved', 'Organization structure saved as Draft.');
   setTimeout(() => {
     router.push('/hr/org-structures');
   }, 500);
@@ -323,11 +322,6 @@ onUnmounted(() => {
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Quick Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- Capsule Tabs Navigation Standard (<BaseTabs /> Matching Image 1 & 2) -->
@@ -545,24 +539,9 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.state-pill {
-  display: inline-block;
-  padding: 1.5px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  margin-left: 6px;
-}
-.state-unsaved {
-  background-color: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
-}
-.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
+
+
+
 
 .header-actions {
   display: flex;
@@ -669,20 +648,6 @@ onUnmounted(() => {
 }
 .btn-save-action:hover {
   background-color: #094482;
-}
-
-/* Toast */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  margin-bottom: 12px;
 }
 
 /* Tabs */
@@ -807,7 +772,7 @@ onUnmounted(() => {
   gap: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: #475569;
+  color: #737373;
   cursor: pointer;
   padding: 3px 6px;
   border-radius: 4px;
@@ -831,7 +796,7 @@ onUnmounted(() => {
   border: none;
   padding: 4px 6px;
   border-radius: 4px;
-  color: #475569;
+  color: #737373;
   font-size: 12px;
   cursor: pointer;
   display: flex;
@@ -839,12 +804,12 @@ onUnmounted(() => {
   gap: 2px;
   transition: background 0.15s;
 }
-.editor-icon-btn:hover { background: #e2e8f0; color: #0f172a; }
+.editor-icon-btn:hover { background: #e2e8f0; color: #404040; }
 
 .editor-color-box {
   width: 14px;
   height: 14px;
-  background: #0f172a;
+  background: #404040;
   border: 1px solid #cbd5e1;
   border-radius: 2px;
   cursor: pointer;

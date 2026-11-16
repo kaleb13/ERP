@@ -6,6 +6,7 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
@@ -28,6 +29,37 @@ const currentUser = {
   entity_id: 7,
   entity_name: 'Bole Commercial Branch',
   org_unit: 'Retail Operations'
+};
+
+// ─── Status & State Color Helpers ───
+const getDayStatusColor = (status: string): 'success' | 'warning' | 'error' | 'blue' | 'gray' => {
+  switch (status?.toLowerCase()) {
+    case 'present':
+    case 'on_duty':
+      return 'success';
+    case 'late':
+    case 'early_departure':
+      return 'warning';
+    case 'absent':
+      return 'error';
+    case 'on_leave':
+      return 'blue';
+    default:
+      return 'gray';
+  }
+};
+
+const getExceptionStateColor = (state: string): 'success' | 'warning' | 'error' => {
+  switch (state?.toLowerCase()) {
+    case 'approved':
+    case 'waived':
+    case 'resolved':
+      return 'success';
+    case 'rejected':
+      return 'error';
+    default:
+      return 'warning';
+  }
 };
 
 // ─── Top Tabs (AGENTS.md Rule 1: <BaseTabs /> Standard) ───
@@ -574,9 +606,9 @@ const getExceptionTypeLabel = (type: string) => {
 
               <!-- Status Column (Pill strictly reserved for status, Rule 6 & 9) -->
               <td>
-                <span class="status-pill" :class="`status-${row.day_status}`">
+                <BaseBadge :color="getDayStatusColor(row.day_status)">
                   {{ row.day_status.replace('_', ' ').toUpperCase() }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Action Column -->
@@ -657,22 +689,22 @@ const getExceptionTypeLabel = (type: string) => {
 
               <!-- State Column (Rule 9) -->
               <td>
-                <span class="status-pill" :class="`state-${ex.exception_state}`">
+                <BaseBadge :color="getExceptionStateColor(ex.exception_state)">
                   {{ ex.exception_state.toUpperCase() }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Actions (Rule 6: Rectangular button 8px radius, NEVER fully rounded) -->
               <td class="text-right">
-                <button
+                <AppButton
                   v-if="ex.exception_state === 'open'"
-                  type="button"
-                  class="btn-action-primary"
+                  variant="primary"
+                  size="sm"
                   @click="openJustifyModal(ex)"
                 >
-                  <Send :size="13" />
-                  <span>{{ ex.employee_note ? 'Edit Justification' : 'Justify' }}</span>
-                </button>
+                  <template #icon-left><Send :size="13" /></template>
+                  {{ ex.employee_note ? 'Edit Justification' : 'Justify' }}
+                </AppButton>
                 <button
                   v-else
                   type="button"
@@ -769,9 +801,9 @@ const getExceptionTypeLabel = (type: string) => {
 
         <div class="modal-body">
           <div class="audit-status-strip">
-            <span class="status-pill" :class="`state-${inspectingException.exception_state}`">
+            <BaseBadge :color="getExceptionStateColor(inspectingException.exception_state)">
               {{ inspectingException.exception_state.toUpperCase() }}
-            </span>
+            </BaseBadge>
             <span class="text-tertiary text-xs ml-3">
               Reviewed by <strong>{{ inspectingException.reviewer_name || 'System / Line Manager' }}</strong> on {{ inspectingException.reviewed_at || '—' }}
             </span>
@@ -984,62 +1016,6 @@ const getExceptionTypeLabel = (type: string) => {
   background: #f1f5f9;
   padding: 3px 8px;
   border-radius: 6px;
-}
-
-/* ─── Status Pills (Rule 8 & 9 Standard) ─── */
-.status-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.status-present {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.status-late {
-  background: #fffbeb;
-  color: #d97706;
-}
-
-.status-absent {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.status-weekend, .status-holiday {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.status-on_leave {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-/* Exception States */
-.state-open {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.state-regularized {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.state-justified {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-.state-rejected {
-  background: #fef2f2;
-  color: #dc2626;
 }
 
 /* ─── Buttons (AGENTS.md Rule 6: 8px to 10px Rectangular Shape) ─── */

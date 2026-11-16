@@ -9,9 +9,13 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
+import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   overtimeRequestsData, 
   OVERTIME_TYPE_MAP, 
@@ -35,11 +39,21 @@ const activeTab = ref<TabKey>('all');
 
 const searchQuery = ref('');
 const selectedTypeFilter = ref<string>('all');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getOvertimeStatusColor = (state: string): 'warning' | 'success' | 'error' | 'blue' => {
+  switch (state) {
+    case 'approved': return 'success';
+    case 'pending': return 'warning';
+    case 'rejected':
+    case 'cancelled':
+      return 'error';
+    default: return 'blue';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Metric Cards Computed (AGENTS.md Rule 2) ───
@@ -61,7 +75,7 @@ const metrics = computed(() => {
 });
 
 // ─── Tabs Configuration ───
-const underlineTabs = computed<UnderlineTabItem<TabKey>[]>(() => [
+const underlineTabs = computed<BaseTabItem<TabKey>[]>(() => [
   { id: 'all', label: 'All Requests', count: overtimeRequestsData.value.length },
   { id: 'pending', label: 'Pending Approval', count: overtimeRequestsData.value.filter(r => r.request_state === 'pending').length, badgeVariant: 'warning' },
   { id: 'approved', label: 'Approved (Payroll Ready)', count: overtimeRequestsData.value.filter(r => r.request_state === 'approved').length, badgeVariant: 'success' },
@@ -134,6 +148,10 @@ const handleToggleRow = (id: number) => {
   else selectedRowIds.value.push(id);
 };
 
+const handleBatchDelete = () => {
+  selectedRowIds.value = [];
+};
+
 // ─── Inspection & Approval Modal ───
 const inspectingRequest = ref<OvertimeRequestRecord | null>(null);
 const approvalForm = ref({
@@ -184,14 +202,6 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-box">
-        <CheckCircle2 :size="16" class="toast-icon" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </transition>
-
     <!-- KPI / Metric Cards (AGENTS.md Rule 2 Standard) -->
     <div class="metrics-grid">
       <MetricCard
@@ -216,11 +226,12 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
       />
     </div>
 
-    <!-- Sub-Section Tabs (AGENTS.md Rule 1: UnderlineTabs Standard) -->
+    <!-- Sub-Section Tabs (AGENTS.md Single Tab Rule) -->
     <div class="tabs-header-wrap">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="underlineTabs"
+        type="rounded"
       />
     </div>
 
@@ -275,11 +286,10 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
           <thead>
             <tr>
               <th class="th-checkbox">
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="isAllSelected"
-                  @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
+                <FormCheckbox
+                  :model-value="isAllSelected"
+                  :indeterminate="selectedRowIds.length > 0 && !isAllSelected"
+                  @update:model-value="handleToggleSelectAll(Boolean($event))"
                 />
               </th>
               <th v-if="tableColumns.find(c => c.key === 'employee')?.visible">Employee</th>
@@ -312,11 +322,9 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
             >
               <!-- Checkbox -->
               <td class="td-checkbox" @click.stop>
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="selectedRowIds.includes(item.id)"
-                  @change="handleToggleRow(item.id)"
+                <FormCheckbox
+                  :model-value="selectedRowIds.includes(item.id)"
+                  @update:model-value="handleToggleRow(item.id)"
                 />
               </td>
 
@@ -365,9 +373,9 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 
               <!-- Status (Rule 9: Badges strictly for lifecycle state) -->
               <td v-if="tableColumns.find(c => c.key === 'status')?.visible">
-                <span class="status-pill" :class="`status-${item.request_state}`">
+                <BaseBadge :color="getOvertimeStatusColor(item.request_state)">
                   {{ item.request_state.toUpperCase() }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Attendance Day (FK AttendanceDay nullable, Schema line 1961) -->
@@ -382,9 +390,9 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 
               <!-- State (Rule 9: Active / Inactive reserved for State) -->
               <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-active' : 'status-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Action Menu (Rule 8: 28x28 Action Button) -->
@@ -403,6 +411,16 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
         </table>
       </template>
     </AppDataTable>
+
+    <!-- Floating Batch Bar -->
+    <TableFloatingBar
+      :show="selectedRowIds.length > 0"
+      :count="selectedRowIds.length"
+      :total="filteredRequests.length"
+      @delete="handleBatchDelete"
+      @close="selectedRowIds = []"
+      @clear="selectedRowIds = []"
+    />
 
     <!-- ═══ Overtime Inspection & Approval Modal ═══ -->
     <div v-if="inspectingRequest" class="modal-backdrop" @click="inspectingRequest = null">
@@ -445,9 +463,9 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 
           <div class="info-group">
             <span class="info-label">Current Approval Lifecycle</span>
-            <span class="status-pill mt-1" :class="`status-${inspectingRequest.request_state}`">
+            <BaseBadge class="mt-1" :color="getOvertimeStatusColor(inspectingRequest.request_state)">
               {{ inspectingRequest.request_state.toUpperCase() }}
-            </span>
+            </BaseBadge>
           </div>
 
           <div class="info-group">
@@ -538,35 +556,6 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 .breadcrumb-container {
   display: flex;
   align-items: center;
-}
-
-/* Toast */
-.toast-box {
-  position: fixed;
-  top: 20px;
-  right: 24px;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #0f172a;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-}
-
-.toast-icon {
-  color: #10b981;
-}
-
-.toast-fade-enter-active, .toast-fade-leave-active {
-  transition: all 0.2s ease;
-}
-.toast-fade-enter-from, .toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 
 /* Metrics Grid (Rule 2 Standard) */
@@ -761,46 +750,6 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 .comp-text {
   font-size: 12.5px;
   color: #737373;
-}
-
-/* Status Pills (Rule 9) */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-pending {
-  background-color: #fffbeb;
-  color: #b45309;
-}
-
-.status-draft {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.status-rejected, .status-cancelled {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 .th-actions, .td-actions {

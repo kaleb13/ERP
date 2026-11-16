@@ -15,9 +15,11 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 // ─── Breadcrumb Navigation ───
 const breadcrumbItems = [
@@ -27,7 +29,6 @@ const breadcrumbItems = [
 
 // ─── Document State ───
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 const isStepsSectionOpen = ref(true);
 
 // ─── Active Tab (<BaseTabs /> Capsule Pill Standard) ───
@@ -236,11 +237,9 @@ const clearForm = () => {
   showToast('Form cleared.');
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success('Job Grade', msg);
 };
 
 const formatETB = (val: number) => {
@@ -292,11 +291,6 @@ onMounted(() => {
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Quick Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- Capsule Tabs Navigation Standard (<BaseTabs />) -->
@@ -565,23 +559,11 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.state-pill {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  margin-left: 6px;
-}
 
-.state-unsaved {
-  background-color: #fff1f2;
-  color: #e11d48;
-}
 
-.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
+
+
+
 
 .header-actions {
   display: flex;
@@ -631,20 +613,6 @@ onMounted(() => {
   background-color: #09427d;
 }
 
-/* Toast */
-.quick-toast-banner {
-  position: fixed;
-  top: 24px;
-  right: 32px;
-  z-index: 1000;
-  padding: 10px 18px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  font-size: 13px;
-  color: #404040;
-}
-
 /* Tabs */
 .create-tabs-wrapper {
   margin-bottom: 20px;
@@ -683,7 +651,7 @@ onMounted(() => {
 
 .code-preview-pill {
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
   font-size: 11.5px;
   font-weight: 600;
   font-family: monospace;
@@ -750,7 +718,7 @@ onMounted(() => {
 
 .badge-count {
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
   font-size: 11.5px;
   font-weight: 500;
   padding: 1px 8px;

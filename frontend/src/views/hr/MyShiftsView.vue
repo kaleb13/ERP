@@ -756,7 +756,7 @@ const navigateToSwaps = () => {
 
 .btn-nav:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .week-range-text {
@@ -771,7 +771,7 @@ const navigateToSwaps = () => {
   border: 1px solid #cbd5e1;
   border-radius: 4px;
   font-size: 11px;
-  color: #475569;
+  color: #737373;
   cursor: pointer;
 }
 
@@ -925,7 +925,7 @@ const navigateToSwaps = () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #2563eb;
+  color: #0B529C;
 }
 
 .status-upcoming {
@@ -937,7 +937,7 @@ const navigateToSwaps = () => {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background-color: #2563eb;
+  background-color: #0B529C;
 }
 
 /* Rest Pill */

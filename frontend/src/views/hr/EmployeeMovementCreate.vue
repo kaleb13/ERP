@@ -12,8 +12,10 @@ import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Breadcrumb (Image 1 & 2: "[Monitor] > Employee Movement > Create Movement") ───
 const breadcrumbItems = [
@@ -24,12 +26,6 @@ const breadcrumbItems = [
 // ─── Action Menu State ───
 const showMoreDropdown = ref(false);
 const isDescriptionOpen = ref(true);
-const toastMessage = ref<string | null>(null);
-
-const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
-};
 
 // ─── Employees Directory Dataset (Matching Image 1 & 2) ───
 export interface EmployeeProfileItem {
@@ -220,20 +216,20 @@ const handleClearForm = () => {
     to_manager_id: '',
     description: ''
   };
-  showToast('Form cleared.');
+  toast.info('Form Cleared', 'Form cleared.');
 };
 
 const handleSaveDraft = () => {
   showMoreDropdown.value = false;
-  showToast('Movement proposal saved as Draft.');
+  toast.success('Draft Saved', 'Movement proposal saved as Draft.');
 };
 
 const handleSave = () => {
   if (!form.value.employee_id) {
-    showToast('Please select an employee.');
+    toast.error('Validation Error', 'Please select an employee.');
     return;
   }
-  showToast('Movement proposal saved successfully.');
+  toast.success('Movement Created', 'Movement proposal saved successfully.');
   setTimeout(() => {
     router.push('/hr/movements');
   }, 1000);
@@ -296,13 +292,6 @@ const closeMenus = () => {
         </AppButton>
       </div>
     </div>
-
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- ─── CARD 1: Employee Target & Classification ─── -->
     <div class="form-section-card">
@@ -843,7 +832,7 @@ const closeMenus = () => {
   display: inline-block;
   padding: 2px 8px;
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
   border-radius: 4px;
   font-size: 11.5px;
   font-weight: 500;
@@ -923,7 +912,7 @@ const closeMenus = () => {
 }
 
 .delta-info-icon {
-  color: #2563eb;
+  color: #0B529C;
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -1031,7 +1020,7 @@ const closeMenus = () => {
 
 .tb-icon-btn:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .tb-spacer {
@@ -1064,33 +1053,5 @@ const closeMenus = () => {
 .char-count-text {
   font-size: 11.5px;
   color: #737373;
-}
-
-/* ─── Toast Bar ─── */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background-color: #064e3b;
-  color: #ffffff;
-  border-radius: 8px;
-  font-size: 13px;
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 </style>

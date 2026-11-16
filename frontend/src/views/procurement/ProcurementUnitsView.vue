@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Plus, ArrowUpDown, MoreVertical, Eye, Edit2, Check, Trash2,
-  ArrowLeft, Building2, Users, UserPlus
+  Building2, Users, UserPlus
 } from 'lucide-vue-next';
 import { useToast } from '../../composables/useToast';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
@@ -95,18 +95,13 @@ const quickForm = ref({
   entity_id: '2'
 });
 
-// ─── Toast Feedback Helper ───
-const toastMessage = ref('');
-const toastVariant = ref<'success' | 'error'>('success');
-let toastTimer: ReturnType<typeof setTimeout> | null = null;
-
+// ─── Toast Feedback Helper (Strict useToast Standard) ───
 const showLocalToast = (msg: string, variant: 'success' | 'error' = 'success') => {
-  toastMessage.value = msg;
-  toastVariant.value = variant;
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastMessage.value = '';
-  }, 3500);
+  if (variant === 'error') {
+    toast.error('Procurement Units', msg);
+  } else {
+    toast.success('Procurement Units', msg);
+  }
 };
 
 // ─── Breadcrumb Navigation (AGENTS.md Rule 3) ───
@@ -628,26 +623,11 @@ onUnmounted(() => {
       <AppBreadcrumb :items="breadcrumbItems" :noMargin="true" />
     </div>
 
-    <!-- ═══ LOCAL TOAST FEEDBACK BANNER ═══ -->
-    <div v-if="toastMessage" class="toast-wrapper">
-      <div class="toast-box" :class="{ 'toast-error': toastVariant === 'error' }">
-        <Check v-if="toastVariant === 'success'" :size="15" class="toast-icon" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </div>
-
     <!-- ══════════════════════════════════════════════════════════════ -->
     <!-- ISOLATED DETAIL VIEW (AGENTS.md Rule 10.3 & Rule 10.5)         -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-if="inspectingUnit" class="detail-view-wrapper">
       <div class="detail-top-actions">
-        <AppButton variant="outline" size="sm" @click="inspectingUnit = null">
-          <template #icon-left>
-            <ArrowLeft :size="15" />
-          </template>
-          Back to Procurement Units
-        </AppButton>
-
         <div class="detail-right-actions">
           <AppButton
             variant="outline"
@@ -1264,50 +1244,6 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-/* Toast Feedback */
-.toast-wrapper {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  animation: slideInToast 0.2s ease-out;
-}
-
-@keyframes slideInToast {
-  from {
-    transform: translateY(-8px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.toast-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  background-color: #ECFDF5;
-  border: 1px solid #D0FAE5;
-  border-radius: 8px;
-  color: #007A55;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.toast-box.toast-error {
-  background-color: #FEF2F2;
-  border-color: #FFE2E2;
-  color: #C10007;
-}
-
-.toast-icon {
-  color: #009966;
-  flex-shrink: 0;
-}
-
 /* Filter Panel */
 .filter-panel-grid {
   display: grid;
@@ -1561,7 +1497,7 @@ onUnmounted(() => {
 .detail-top-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .detail-right-actions {

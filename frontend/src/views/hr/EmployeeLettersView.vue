@@ -9,12 +9,13 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import AppButton from '../../components/AppButton.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import {
   employeeLettersData,
   letterTemplatesData,
@@ -42,13 +43,12 @@ const breadcrumbItems = [
 type LetterTabKey = 'all' | 'pending_approval' | 'approved' | 'issued' | 'revoked' | 'draft';
 const activeTab = ref<LetterTabKey>('all');
 
+const { toast } = useToast();
 const searchQuery = ref('');
 const selectedTypeFilter = ref<string>('all');
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Metric Cards Computed (Matches Figma 7454:138268 exactly) ───
@@ -126,6 +126,16 @@ const filteredLetters = computed(() => {
 
 const currentPage = ref(1);
 const perPage = ref(10);
+
+const getLetterStateColor = (state: string): 'warning' | 'blue' | 'error' | 'gray' => {
+  switch (state) {
+    case 'issued': return 'blue';
+    case 'pending_approval':
+    case 'pending': return 'warning';
+    case 'revoked': return 'error';
+    default: return 'gray';
+  }
+};
 
 const paginatedLetters = computed(() => {
   const start = (currentPage.value - 1) * perPage.value;
@@ -468,14 +478,6 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
     <!-- Breadcrumb Standard (AGENTS.md Rule 3) -->
     <AppBreadcrumb :items="breadcrumbItems" />
 
-    <!-- Toast Notification -->
-    <transition name="fade">
-      <div v-if="toastMessage" class="toast-notification">
-        <CheckCircle2 :size="16" class="toast-icon" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </transition>
-
     <!-- Top KPI Metrics (Rule 2 - Interactive Click-to-Filter) -->
     <div class="metrics-grid">
       <div
@@ -609,18 +611,18 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
                   <span class="cell-plain-text">{{ letter.addressed_to?.organization || '—' }}</span>
                 </td>
 
-                <!-- Direction / Lifecycle Status (Soft pill) -->
+                <!-- Direction / Lifecycle Status -->
                 <td v-if="isColVisible('letter_state')" class="td-status">
-                  <span class="direction-soft-pill" :class="'dir-' + letter.letter_state">
+                  <BaseBadge :color="getLetterStateColor(letter.letter_state)">
                     {{ letter.letter_state === 'pending_approval' ? 'Pending' : (letter.letter_state === 'issued' ? 'Issued' : (letter.letter_state === 'draft' ? 'Draft' : letter.letter_state)) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
-                <!-- Status (Active / Inactive state pill) -->
+                <!-- Status (Active / Inactive) -->
                 <td v-if="isColVisible('state')" class="td-state">
-                  <span class="state-pill" :class="letter.state === 'active' ? 'state-active' : 'state-inactive'">
+                  <BaseBadge :color="letter.state === 'active' ? 'success' : 'gray'">
                     {{ letter.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Row Actions -->
@@ -1307,27 +1309,6 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   margin: 0 auto;
 }
 
-/* Toast */
-.toast-notification {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background-color: #065f46;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 2000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.toast-icon {
-  color: #34d399;
-}
-
 /* Metric Cards Grid */
 .metrics-grid {
   display: grid;
@@ -1432,7 +1413,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 .btn-icon-toolbar:hover {
   background-color: #f8fafc;
-  color: #0f172a;
+  color: #404040;
 }
 
 /* Table Styles Standard */
@@ -1516,32 +1497,6 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   color: #737373;
   font-size: 13px;
 }
-
-/* Direction Soft Pills (Figma 7454:138268) */
-.direction-soft-pill {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.dir-draft { background-color: #fce7f3; color: #db2777; }
-.dir-pending_approval, .dir-pending { background-color: #fef3c7; color: #d97706; }
-.dir-issued { background-color: #e0f2fe; color: #0284c7; }
-.dir-revoked { background-color: #fee2e2; color: #dc2626; }
-
-/* Status State Pill (Active / Inactive) */
-.state-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.state-active { background-color: #ecfdf5; color: #059669; }
-.state-inactive { background-color: #f1f5f9; color: #64748b; }
 
 .btn-action-dots {
   width: 28px;
@@ -1754,7 +1709,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 .seg-pill-btn.active {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #404040;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   font-weight: 600;
 }
@@ -1774,7 +1729,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 .btn-close-header:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 /* Split Body */
@@ -2015,7 +1970,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 .stat-number {
   font-size: 13.5px;
   font-weight: 700;
-  color: #0f172a;
+  color: #404040;
 }
 
 /* Right Preview Pane (Figma 7454:138647) */
@@ -2146,13 +2101,13 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .fact-val {
-  color: #475569;
+  color: #737373;
 }
 
 .figma-letter-body-block {
   font-size: 13px;
   line-height: 1.7;
-  color: #475569;
+  color: #737373;
   margin-bottom: 24px;
 }
 
@@ -2176,7 +2131,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 .purpose-body-text {
   font-size: 12.5px;
   line-height: 1.6;
-  color: #475569;
+  color: #737373;
   margin: 0;
 }
 

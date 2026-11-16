@@ -93,6 +93,7 @@ Whenever creating a page, component, or rendering icons in this repo:
 - **Current / Active Item**: `Text sm/Medium` (`14px` / `20px` line-height, weight `500`), color `#404040` (`color/text/secondary`), semantic `aria-current="page"`.
 - **Inline Badge**: Optional `#badge` slot directly adjacent to the active page title for `<SaveStateBadge />` (Node `6095:94979`).
 - **Spacing**: `gap: 6px` between root icon, chevrons, text items, and badge.
+- **Zero Card Background (Canvas Standard)**: The breadcrumb component and its parent navigation row (`.create-header-bar`, `.top-nav-bar`, `.top-header-action-bar`, `.breadcrumb-bar`) **MUST ALWAYS sit directly on the transparent canvas background** (`background: transparent; border: none; box-shadow: none; padding: 0;`). **NEVER** enclose the breadcrumb bar inside a white card box (`background-color: #ffffff`), card container, or bordered box (`border: 1px solid #e5e5e5; border-radius: 12px; padding: 14px 24px;`).
 - **Figma Generation**: When an AI builds or modifies Figma frames from design, it MUST reuse the canonical Breadcrumb instance `6095:94972` instead of creating detached frames.
 
 ### 3.2 Badge & Badge Group Specification (Figma 3345:21147 & 5221:28673)

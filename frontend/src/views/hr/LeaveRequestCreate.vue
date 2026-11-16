@@ -14,6 +14,8 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import DynamicSubTable, { type DynamicTableColumn } from '../../components/DynamicSubTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
@@ -28,10 +30,27 @@ const breadcrumbItems = [
 type TabKey = 'details' | 'schedule';
 const activeTab = ref<TabKey>('details');
 
-const tabs: BaseTabItem<TabKey>[] = [
+const tabs = computed<BaseTabItem<TabKey>[]>(() => [
   { id: 'details', label: 'Leave Detail', icon: CalendarDays },
-  { id: 'schedule', label: 'Day Breakdown Schedule', icon: List }
+  { id: 'schedule', label: `Daily Breakdown Schedule (${form.value?.schedule?.length || 0})`, icon: List }
+]);
+
+const scheduleColumns: DynamicTableColumn[] = [
+  { key: 'formatted_date', label: 'Date', width: '167px', type: 'readonly' },
+  { key: 'day_of_week', label: 'Day of Week', type: 'readonly' },
+  { key: 'portion', label: 'Shift Portion', type: 'custom' }
 ];
+
+const portionSelectOptions: SelectOption[] = [
+  { value: 'full', label: 'Full Day' },
+  { value: 'first_half', label: 'First Half Day' },
+  { value: 'second_half', label: 'Second Half Day' }
+];
+
+const handlePortionSelect = (row: ScheduleDayItem, val: 'full' | 'first_half' | 'second_half') => {
+  row.portion = val;
+  row.day_value = val === 'full' ? 1.0 : 0.5;
+};
 
 // ─── Entities (LeaveRequest.entity_id FK Entity) ───
 const entityOptions: SelectOption[] = [
@@ -277,13 +296,12 @@ const computedRequestedDays = computed(() => {
 });
 
 // Top bar state
+const { toast } = useToast();
 const isSaved = ref(false);
 const showMoreDropdown = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const handleClearForm = () => {
@@ -347,8 +365,11 @@ const removeAttachment = (idx: number) => {
     <!-- ─── TOP BAR: Breadcrumb + Not Saved Badge + Action Buttons ─── -->
     <div class="top-nav-bar">
       <div class="breadcrumb-group">
-        <AppBreadcrumb :items="breadcrumbItems" />
-        <SaveStateBadge :isSaved="isSaved" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" />
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="actions-group">
@@ -394,14 +415,6 @@ const removeAttachment = (idx: number) => {
         </AppButton>
       </div>
     </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- ─── TOP TABS: <BaseTabs /> Capsule Standard (Rule 1) ─── -->
     <div class="tabs-container">
@@ -594,83 +607,78 @@ const removeAttachment = (idx: number) => {
       </div>
     </div>
 
-    <!-- ─── TAB 2: DAY BREAKDOWN SCHEDULE (Image 2) ─── -->
+    <!-- ─── TAB 2: DAILY BREAKDOWN SCHEDULE (Figma Node 7009:114091) ─── -->
     <div v-show="activeTab === 'schedule'" class="tab-content-stack">
       <div class="clean-card">
         <div class="schedule-header-box">
-          <h4 class="schedule-title">Daily Breakdown Schedule (LeaveRequestDay)</h4>
+          <h4 class="schedule-title">Daily Breakdown Schedule</h4>
           <p class="schedule-subtitle">Configure day-by-day portions and attendance debit values for each requested day.</p>
         </div>
 
-        <div class="table-responsive-wrapper">
-          <table class="schedule-table">
-            <thead>
-              <tr>
-                <th style="width: 60px;">No.</th>
-                <th style="width: 240px;">Date</th>
-                <th style="width: 240px;">Day of the Week</th>
-                <th>Shift Portion</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(day, idx) in form.schedule" :key="day.date">
-                <td class="td-tertiary">{{ day.no }}</td>
-                <td class="td-date-bold">{{ day.formatted_date }}</td>
-                <td class="td-tertiary">{{ day.day_of_week }}</td>
-                <td class="td-portion-cell" @click.stop>
-                  <!-- Interactive Shift Portion Selector -->
-                  <div class="portion-trigger-wrapper">
-                    <button 
-                      type="button" 
-                      class="btn-portion-trigger"
-                      @click="togglePortionPopover(idx)"
-                    >
-                      <span>{{ getPortionLabel(day.portion) }}</span>
-                    </button>
+        <DynamicSubTable
+          v-model="form.schedule"
+          :columns="scheduleColumns"
+          entity-name="Schedule Day"
+          entity-name-plural="Schedule Days"
+          empty-text="Select valid start and end dates to generate attendance schedule days."
+          :can-add-row="true"
+          :can-delete="true"
+        >
+          <!-- Custom Cell: Shift Portion FormSelect -->
+          <template #portion="{ row }">
+            <div class="table-cell-select-wrap">
+              <FormSelect
+                v-model="row.portion"
+                :options="portionSelectOptions"
+                placeholder="Select Portion"
+                variant="cell"
+                :teleport="true"
+                @update:modelValue="(val: any) => handlePortionSelect(row, val)"
+              />
+            </div>
+          </template>
 
-                    <!-- Popover Dropdown matching Image 2 -->
-                    <Transition name="popover-fade">
-                      <div v-if="activePortionRowIdx === idx" class="portion-popover-menu">
-                        <button 
-                          type="button" 
-                          class="portion-menu-option" 
-                          :class="{ 'is-selected': day.portion === 'full' }"
-                          @click="selectPortion(day, 'full')"
-                        >
-                          <span>Full Day</span>
-                          <Check v-if="day.portion === 'full'" :size="14" class="portion-check-icon" />
-                        </button>
-                        <button 
-                          type="button" 
-                          class="portion-menu-option" 
-                          :class="{ 'is-selected': day.portion === 'first_half' }"
-                          @click="selectPortion(day, 'first_half')"
-                        >
-                          <span>First Half Day</span>
-                          <Check v-if="day.portion === 'first_half'" :size="14" class="portion-check-icon" />
-                        </button>
-                        <button 
-                          type="button" 
-                          class="portion-menu-option" 
-                          :class="{ 'is-selected': day.portion === 'second_half' }"
-                          @click="selectPortion(day, 'second_half')"
-                        >
-                          <span>Second Half Day</span>
-                          <Check v-if="day.portion === 'second_half'" :size="14" class="portion-check-icon" />
-                        </button>
-                      </div>
-                    </Transition>
+          <!-- Custom Expand Row Detail Modal (Authoritative Figma Spec) -->
+          <template #expand-modal="{ row }">
+            <div class="schedule-expand-modal-body">
+              <div class="modal-grid-2col">
+                <div class="modal-field-block">
+                  <label class="modal-field-label">Scheduled Date</label>
+                  <div class="modal-readonly-block">
+                    <Calendar :size="15" class="text-tertiary" />
+                    <span>{{ row.formatted_date || row.date || '—' }}</span>
                   </div>
-                </td>
-              </tr>
-              <tr v-if="form.schedule.length === 0">
-                <td colspan="4" class="empty-state-row">
-                  Select valid start and end dates to generate attendance schedule days.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+
+                <div class="modal-field-block">
+                  <label class="modal-field-label">Day of Week</label>
+                  <div class="modal-readonly-block">
+                    <span>{{ row.day_of_week || '—' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-field-block mt-3">
+                <FormSelect
+                  v-model="row.portion"
+                  label="Shift Portion"
+                  :options="portionSelectOptions"
+                  :teleport="true"
+                  placeholder="Select Shift Portion"
+                  @update:modelValue="(val: any) => handlePortionSelect(row, val)"
+                />
+              </div>
+
+              <div class="modal-field-block mt-3">
+                <label class="modal-field-label">Attendance Debit Impact</label>
+                <div class="modal-debit-banner">
+                  <span class="debit-pill">{{ (row.day_value || 1.0).toFixed(1) }} Days</span>
+                  <span class="debit-note">Debited from employee's {{ activeLeaveBalance.leave_type_name }} balance.</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </DynamicSubTable>
       </div>
     </div>
   </div>
@@ -816,21 +824,6 @@ const removeAttachment = (idx: number) => {
 
 .btn-save-primary:hover {
   background-color: #094380;
-}
-
-/* Toast */
-.toast-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #0B529C;
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(11, 82, 156, 0.2);
-  align-self: flex-start;
 }
 
 /* Tabs */
@@ -1192,7 +1185,7 @@ const removeAttachment = (idx: number) => {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: #475569;
+  color: #737373;
   cursor: pointer;
   font-size: 12px;
 }
@@ -1250,6 +1243,17 @@ const removeAttachment = (idx: number) => {
   margin: 0;
   font-size: 12px;
   color: #737373;
+}
+
+.table-cell-select-wrap {
+  width: 100%;
+  min-width: 180px;
+}
+
+.debit-pill {
+  font-size: 13px;
+  font-weight: 600;
+  color: #404040;
 }
 
 .table-responsive-wrapper {
@@ -1363,5 +1367,59 @@ const removeAttachment = (idx: number) => {
   padding: 24px;
   color: #737373;
   font-size: 12.5px;
+}
+
+/* Schedule Expand Modal Layout */
+.schedule-expand-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.modal-field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--alias-color-text-secondary, #404040);
+}
+
+.modal-readonly-block {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background-color: #fafafa;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: var(--alias-radius-md, 8px);
+  font-size: 13.5px;
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 450;
+}
+
+.modal-debit-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: var(--primitive-color-brand-blue-50, #f0f7ff);
+  border: 1px solid var(--primitive-color-brand-blue-100, #e1eefd);
+  border-radius: 8px;
+}
+
+.debit-note {
+  font-size: 12.5px;
+  color: var(--alias-color-text-secondary, #404040);
 }
 </style>

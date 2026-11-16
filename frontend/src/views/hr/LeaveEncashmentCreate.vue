@@ -12,6 +12,8 @@ import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
+import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   staffList, 
   createEncashment, 
@@ -31,14 +33,6 @@ const leaveTypeOptions: SelectOption[] = [
   { value: 1, label: 'Annual Leave (Encashable — Policy Rule 2026)' },
   { value: 2, label: 'Sick Leave (Not Encashable — Statutory Leave)' },
   { value: 3, label: 'Maternity Leave (Not Encashable — Statutory Leave)' }
-];
-
-// Quick Justification Presets for HR record
-const reasonPresets = [
-  'End-of-Year Statutory Surplus Quota Liquidation',
-  'Statutory Carry-Forward Expiry Conversion',
-  'Personal & Family Emergency Financial Requirements',
-  'Annual Leave Buy-Back per Collective Agreement'
 ];
 
 // ─── Schema-Aligned Form State (LeaveEncashmentRequest: HR Schema lines 1785–1812) ───
@@ -88,14 +82,13 @@ const isExceedingQuota = computed(() => {
 });
 
 // ─── Top Bar State & Lifecycle (Rule 4 & Rule 30) ───
+const { toast } = useToast();
 const isSaved = ref(false);
 const isDraft = ref(false);
 const showMoreDropdown = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // Sync query parameters if navigated from modal
@@ -108,10 +101,6 @@ onMounted(() => {
 // Quick Actions
 const setMaxDays = () => {
   form.value.requested_days = selectedStaff.value.available_days;
-};
-
-const applyPreset = (preset: string) => {
-  form.value.reason = preset;
 };
 
 // Form Actions
@@ -175,7 +164,9 @@ const formatCurrency = (val: number) => {
     <div class="top-bar">
       <div class="top-bar-left">
         <AppBreadcrumb :items="breadcrumbItems" no-margin>
-          <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+          <template #badge>
+            <SaveStateBadge :isSaved="isSaved" :isDraft="isDraft" />
+          </template>
         </AppBreadcrumb>
       </div>
 
@@ -223,14 +214,6 @@ const formatCurrency = (val: number) => {
         </AppButton>
       </div>
     </div>
-
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- ─── TOP CARD: CLEAN & FOCUSED (EXACTLY MATCHING USER MOCKUP) ─── -->
     <!-- Contains ONLY essential requester context and quota balance snapshot -->
@@ -404,47 +387,12 @@ const formatCurrency = (val: number) => {
         <Transition name="accordion-slide">
           <div v-if="isReasonOpen" class="accordion-body">
             <!-- Preset Quick Reason Chips -->
-            <div class="reason-preset-strip">
-              <span class="preset-label">Quick Suggestions:</span>
-              <button
-                v-for="(preset, i) in reasonPresets"
-                :key="i"
-                type="button"
-                class="btn-preset-chip"
-                @click="applyPreset(preset)"
-              >
-                {{ preset }}
-              </button>
-            </div>
-
-            <!-- Focused Justification Editor -->
-            <div class="justification-editor-box">
-              <div class="editor-mini-toolbar">
-                <div class="toolbar-tools">
-                  <span class="toolbar-label">Paragraph</span>
-                  <span class="toolbar-divider"></span>
-                  <button type="button" class="btn-tool" title="Bold"><Bold :size="13" /></button>
-                  <button type="button" class="btn-tool" title="Italic"><Italic :size="13" /></button>
-                  <button type="button" class="btn-tool" title="Underline"><Underline :size="13" /></button>
-                  <span class="toolbar-divider"></span>
-                  <button type="button" class="btn-tool" title="Bulleted List"><List :size="13" /></button>
-                  <button type="button" class="btn-tool ml-auto" title="Clear Text" @click="form.reason = ''"><RotateCcw :size="13" /></button>
-                </div>
-              </div>
-
-              <textarea
-                v-model="form.reason"
-                rows="4"
-                maxlength="1000"
-                class="editor-textarea-field"
-                placeholder="State the employee's rationale or business justification for liquidating unutilized annual leave..."
-              ></textarea>
-
-              <div class="editor-counter-footer">
-                <span class="counter-text">{{ form.reason.length }} / 1,000 Characters</span>
-                <span class="autosave-tag">Stored in reason (jsonb)</span>
-              </div>
-            </div>
+            <!-- Standard FormRichText Component (Figma 3345:21147 & Node 7009:114735) -->
+            <FormRichText
+              v-model="form.reason"
+              placeholder="State the employee's rationale or business justification for liquidating unutilized annual leave..."
+              :max-length="5000"
+            />
           </div>
         </Transition>
       </div>
@@ -855,7 +803,7 @@ const formatCurrency = (val: number) => {
   background-color: #e2e8f0;
   padding: 1px 4px;
   border-radius: 3px;
-  color: #334155;
+  color: #404040;
 }
 
 /* ─── Accordion Justification Section ─── */
@@ -888,33 +836,6 @@ const formatCurrency = (val: number) => {
   border-top: 1px solid #f1f5f9;
 }
 
-.reason-preset-strip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 12px;
-}
-.preset-label {
-  font-size: 11.5px;
-  color: #737373;
-  font-weight: 500;
-}
-.btn-preset-chip {
-  font-size: 11px;
-  color: #404040;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 3px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-preset-chip:hover {
-  background-color: #eff6ff;
-  border-color: #bfdbfe;
-  color: #0B529C;
-}
 
 .justification-editor-box {
   border: 1px solid #e2e8f0;
@@ -992,26 +913,6 @@ const formatCurrency = (val: number) => {
   color: #94a3b8;
   font-family: monospace;
 }
-
-/* Toast */
-.toast-bar {
-  position: fixed;
-  top: 24px;
-  right: 28px;
-  background-color: #047857;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.25);
-  z-index: 9999;
-}
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.25s, transform 0.25s; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(-8px); }
 
 .dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-4px); }

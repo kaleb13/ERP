@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Plus, ArrowUpDown, MoreVertical, Eye, Edit2, Check, Trash2,
-  ArrowLeft, FolderTree, ChevronDown, ChevronRight
+  FolderTree, ChevronDown, ChevronRight
 } from 'lucide-vue-next';
 import { useToast } from '../../composables/useToast';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
@@ -519,13 +519,6 @@ onUnmounted(() => {
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-if="inspectingCategory" class="detail-view-wrapper">
       <div class="detail-top-actions">
-        <AppButton variant="outline" size="sm" @click="inspectingCategory = null">
-          <template #icon-left>
-            <ArrowLeft :size="15" />
-          </template>
-          Back to Procurement Categories
-        </AppButton>
-
         <div class="detail-right-actions">
           <AppButton
             variant="outline"
@@ -1094,25 +1087,6 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* Toast */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.toast-icon {
-  color: #059669;
-  flex-shrink: 0;
-}
-
 /* Filter Panel */
 .filter-panel-grid {
   display: grid;
@@ -1379,7 +1353,7 @@ onUnmounted(() => {
 .detail-top-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .detail-right-actions {

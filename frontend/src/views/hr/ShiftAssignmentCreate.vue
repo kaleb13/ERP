@@ -12,6 +12,7 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
@@ -23,15 +24,14 @@ const breadcrumbItems = [
 ];
 
 // ─── Document Lifecycle State (HR_Schema_final-v4.sql lines 1402–1424) ───
+const { toast } = useToast();
 const isSaved = ref(false);
 const isDraft = ref(true);
 const isSubmitting = ref(false);
 const showMoreMenu = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3500);
+  toast.success(msg);
 };
 
 // ─── Tabs Configuration (BaseTabs Capsule Standard) ───
@@ -337,14 +337,6 @@ const handleSavePublished = () => {
         </AppButton>
       </div>
     </div>
-
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="action-toast">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- Main Form Container -->
     <div class="form-body-wrapper">
@@ -664,32 +656,6 @@ const handleSavePublished = () => {
 .btn-save-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* ─── Toast ─── */
-.action-toast {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 16px;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.2s ease;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 
 /* ─── Tabs Row ─── */

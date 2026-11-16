@@ -15,6 +15,7 @@ import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
@@ -26,8 +27,8 @@ const breadcrumbItems = [
 ];
 
 // ─── Document State ───
+const { toast } = useToast();
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 const isRequirementsOpen = ref(true);
 
 // ─── Active Tab (BaseTabs Capsule Standard) ───
@@ -543,10 +544,7 @@ const clearForm = () => {
 };
 
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => {
-    quickActionToast.value = null;
-  }, 4000);
+  toast.success(msg);
 };
 
 // ─── Mounted: Hydrate from Route Query if navigated from Quick Create ───
@@ -590,11 +588,6 @@ onMounted(() => {
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Quick Toast Notification -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- Capsule Tabs Navigation Standard (<BaseTabs />) -->
@@ -1106,23 +1099,11 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.state-pill {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-  margin-left: 4px;
-}
 
-.state-unsaved {
-  background-color: #fffbeb;
-  color: #d97706;
-}
 
-.state-saved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
+
+
+
 
 .header-actions {
   display: flex;
@@ -1167,16 +1148,6 @@ onMounted(() => {
 
 .btn-save-action:hover {
   background-color: #09427d;
-}
-
-/* Toast */
-.quick-toast-banner {
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
 }
 
 /* Tabs */
@@ -1661,7 +1632,7 @@ onMounted(() => {
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
   opacity: 0.4;
@@ -1685,7 +1656,7 @@ onMounted(() => {
 }
 .btn-modal-ctrl-action:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
   border-color: #cbd5e1;
 }
 

@@ -10,8 +10,10 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import {
   finalSettlementsData,
   separationsData,
@@ -41,11 +43,19 @@ type SettlementTabKey = 'all' | 'draft' | 'calculated' | 'approved' | 'paid';
 const activeTab = ref<SettlementTabKey>('all');
 
 const searchQuery = ref('');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getSettlementStatusColor = (state: string): 'indigo' | 'blue' | 'warning' | 'success' => {
+  switch (state) {
+    case 'paid': return 'success';
+    case 'approved': return 'warning';
+    case 'calculated': return 'blue';
+    default: return 'indigo';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Metric Cards Computed (AGENTS.md Rule 2 & Rule 21) ───
@@ -69,7 +79,7 @@ const metrics = computed(() => {
 });
 
 // ─── Tabs Configuration ───
-const underlineTabs = computed<UnderlineTabItem<SettlementTabKey>[]>(() => [
+const underlineTabs = computed<BaseTabItem<SettlementTabKey>[]>(() => [
   { id: 'all', label: 'All Settlements', count: finalSettlementsData.value.length },
   { id: 'draft', label: 'Ready for Calculation', count: finalSettlementsData.value.filter(s => s.settlement_state === 'draft').length, badgeVariant: 'warning' },
   { id: 'calculated', label: 'Calculated (Pending Review)', count: finalSettlementsData.value.filter(s => s.settlement_state === 'calculated').length, badgeVariant: 'primary' },
@@ -383,11 +393,12 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
       </div>
     </div>
 
-    <!-- Admin UnderlineTabs (AGENTS.md Rule 1) -->
+    <!-- Primary Tab Group (AGENTS.md Single Tab Rule) -->
     <div class="tabs-wrapper">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="underlineTabs"
+        type="rounded"
       />
     </div>
 
@@ -494,22 +505,16 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 
               <!-- Status Pills strictly for Lifecycle State (Rule 6 & 9) -->
               <td v-if="tableColumns.find(c => c.key === 'settlement_state')?.visible" class="td-state">
-                <span 
-                  class="status-pill"
-                  :style="{ 
-                    backgroundColor: SETTLEMENT_STATE_MAP[item.settlement_state].bg, 
-                    color: SETTLEMENT_STATE_MAP[item.settlement_state].color 
-                  }"
-                >
+                <BaseBadge :color="getSettlementStatusColor(item.settlement_state)">
                   {{ SETTLEMENT_STATE_MAP[item.settlement_state].label }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- State (Rule 9: Active / Inactive reserved for State) -->
               <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-active' : 'status-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Standardized 3-Dots Action Dropdown Menu (AGENTS.md Rule 8) -->
@@ -618,15 +623,9 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
           </div>
 
           <div class="drawer-header-actions">
-            <span 
-              class="status-pill status-pill-lg"
-              :style="{ 
-                backgroundColor: SETTLEMENT_STATE_MAP[selectedSettlement.settlement_state].bg, 
-                color: SETTLEMENT_STATE_MAP[selectedSettlement.settlement_state].color 
-              }"
-            >
+            <BaseBadge :color="getSettlementStatusColor(selectedSettlement.settlement_state)">
               {{ SETTLEMENT_STATE_MAP[selectedSettlement.settlement_state].label }}
-            </span>
+            </BaseBadge>
             <button 
               type="button" 
               class="btn-drawer-close" 
@@ -756,11 +755,6 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
         </div>
 
       </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="toast-popup">
-      {{ toastMessage }}
     </div>
   </div>
 </template>
@@ -936,14 +930,6 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   font-size: 13.5px;
   font-weight: 600;
   color: #404040;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2.5px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
 }
 
 .metric-clickable-wrapper {
@@ -1252,7 +1238,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   align-items: center;
   padding: 2px 7px;
   background-color: #f1f5f9;
-  color: #475569;
+  color: #737373;
   font-size: 11px;
   font-weight: 600;
   border-radius: 4px;
@@ -1341,13 +1327,6 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   flex-shrink: 0;
 }
 
-.status-pill-lg {
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 9999px;
-}
-
 .btn-drawer-close {
   width: 32px;
   height: 32px;
@@ -1364,7 +1343,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 
 .btn-drawer-close:hover {
   background-color: #f8fafc;
-  color: #0f172a;
+  color: #404040;
   border-color: #cbd5e1;
 }
 
@@ -1569,7 +1548,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 
 .btn-footer-ghost:hover {
   background-color: #f1f5f9;
-  color: #334155;
+  color: #404040;
   border-color: #cbd5e1;
 }
 
@@ -1644,18 +1623,5 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 .popup-item.item-calc {
   color: #0b529c;
   font-weight: 500;
-}
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 2000;
 }
 </style>

@@ -7,9 +7,11 @@ import {
   CheckCircle2
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
+import AppButton from '../../components/AppButton.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -110,11 +112,10 @@ const patterns = ref<ShiftPatternRecord[]>([
 // ─── State ───
 const selectedPatternId = ref<number>(patterns.value[0].id);
 const searchQuery = ref('');
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3500);
+  toast.success(msg);
 };
 
 const selectedPattern = computed(() => {
@@ -193,12 +194,6 @@ const handleSaveQuick = () => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Notification Toast -->
-    <div v-if="toastMessage" class="action-toast">
-      <CheckCircle2 :size="16" class="text-emerald-600" />
-      <span>{{ toastMessage }}</span>
-    </div>
-
     <!-- ─── TOP HEADER CARD (Figma Node 6106:153854 & 6447:149782) ─── -->
     <div class="patterns-top-card">
       <div class="header-text-block">
@@ -208,14 +203,13 @@ const handleSaveQuick = () => {
         </p>
       </div>
 
-      <button 
-        type="button" 
-        class="btn-create-pattern" 
+      <AppButton 
+        variant="primary" 
         @click="router.push('/hr/shift-patterns/create')"
       >
-        <Plus :size="18" />
-        <span>Create Pattern</span>
-      </button>
+        <template #icon-left><Plus :size="16" /></template>
+        Create Pattern
+      </AppButton>
     </div>
 
     <!-- ─── MASTER-DETAIL CONTAINER (Figma Node 6106:153859 & 6447:149787) ─── -->
@@ -407,25 +401,6 @@ const handleSaveQuick = () => {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
-}
-
-/* Toast */
-.action-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #ffffff;
-  color: #404040;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e5e5;
-  font-size: 13.5px;
-  font-weight: 500;
-  z-index: 9999;
 }
 
 /* ─── TOP HEADER CARD (Figma Node 6106:153854 & 6447:149782) ─── */

@@ -13,6 +13,7 @@ import AppDataTable from '../../components/AppDataTable.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -58,7 +59,7 @@ const filterStatus = ref('All');
 const selectedRows = ref<number[]>([]);
 const currentSort = ref('unit_name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
-const toastMessage = ref('');
+const { toast } = useToast();
 const activeDropdownId = ref<number | null>(null);
 
 // Quick Approval Modal State
@@ -238,8 +239,7 @@ const handleToggleColumn = (colKey: string) => {
 
 // ─── Actions ───
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = ''; }, 3500);
+  toast.success(msg);
 };
 
 const handleCreate = () => {
@@ -633,12 +633,6 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
         </div>
       </div>
     </div>
-
-    <!-- Notification Toast -->
-    <div v-if="toastMessage" class="toast-popup">
-      <CheckCircle2 :size="15" class="text-emerald-500" />
-      <span>{{ toastMessage }}</span>
-    </div>
   </div>
 </template>
 
@@ -696,7 +690,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .role-pill-btn.role-active {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #404040;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
@@ -922,7 +916,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .badge-status-approved {
   background-color: #DBEAFE;
-  color: #2563EB;
+  color: #0B529C;
 }
 
 .badge-status-closed {
@@ -1219,21 +1213,5 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-}
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 100;
 }
 </style>

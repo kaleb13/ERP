@@ -8,14 +8,17 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Types Strictly Mapped to HR_Schema_final-v4.sql lines 1044–1064 ───
 // SalaryMatrix has NO name, NO code, NO description — zero phantom fields.
@@ -50,7 +53,6 @@ const currentSort = ref('effective_from');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
-const quickActionToast = ref<string | null>(null);
 
 // ─── Table Columns (Atomic, Minimalist Default, Name-First: Rule 9) ───
 const tableColumns = ref<ColumnDef[]>([
@@ -191,9 +193,9 @@ const closeActionMenu = () => {
   activeActionMenuId.value = null;
 };
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (msg: string) => {
-  quickActionToast.value = msg;
-  setTimeout(() => { quickActionToast.value = null; }, 4000);
+  toast.success('Salary Scales', msg);
 };
 
 // ─── Row Selection ───
@@ -296,12 +298,6 @@ onUnmounted(() => {
     <!-- Breadcrumb Bar -->
     <div class="page-breadcrumb-bar">
       <AppBreadcrumb :items="breadcrumbItems" />
-    </div>
-
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="quick-toast-banner">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- Single Table Card (Rule 10: Unified Table Card Layout) -->
@@ -419,9 +415,9 @@ onUnmounted(() => {
 
                 <!-- State (Lifecycle badge — only state gets a badge, Rule 6) -->
                 <td v-if="isColumnVisible('state')" class="col-state">
-                  <span class="status-pill" :class="item.state === 'active' ? 'status-pill-active' : 'status-pill-inactive'">
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions 3-dots -->
@@ -574,28 +570,6 @@ onUnmounted(() => {
   padding: 18px 28px 0;
 }
 
-/* ─── Toast ─── */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 28px 0;
-  padding: 10px 16px;
-  background: #ecfdf5;
-  color: #059669;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  animation: toastSlideIn 0.3s ease;
-}
-
-.toast-icon { color: #059669; flex-shrink: 0; }
-
-@keyframes toastSlideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* ─── Directory Table Container ─── */
 .directory-view-wrapper {
   padding: 16px 28px 28px;
@@ -714,26 +688,6 @@ onUnmounted(() => {
 }
 
 .font-mono { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
-
-/* ─── Status Pill (Rule 6: Badges reserved for lifecycle state) ─── */
-.status-pill {
-  display: inline-flex;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.status-pill-active {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.status-pill-inactive {
-  background: #f1f5f9;
-  color: #64748b;
-}
 
 /* ─── Actions ─── */
 .btn-action-dots {

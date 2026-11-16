@@ -9,12 +9,14 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 import {
   clearanceItemsData,
   separationsData,
@@ -46,11 +48,20 @@ const searchQuery = ref('');
 const selectedDeptFilter = ref<string>('all');
 const selectedSeparationFilter = ref<number | 'all'>('all');
 const selectedRowIds = ref<number[]>([]);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getClearanceStatusColor = (state: string): 'warning' | 'success' | 'error' | 'blue' | 'indigo' => {
+  switch (state) {
+    case 'cleared': return 'success';
+    case 'pending': return 'warning';
+    case 'flagged': return 'error';
+    case 'waived': return 'blue';
+    default: return 'indigo';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Dedicated Clearance Creation Modal State (Rule 4: <= 5 Fields) ───
@@ -147,7 +158,7 @@ const metrics = computed(() => {
 });
 
 // ─── Tabs Configuration ───
-const underlineTabs = computed<UnderlineTabItem<ClearanceTabKey>[]>(() => [
+const underlineTabs = computed<BaseTabItem<ClearanceTabKey>[]>(() => [
   { id: 'all', label: 'All Items', count: clearanceItemsData.value.length },
   { id: 'pending', label: 'Pending Sign-off', count: clearanceItemsData.value.filter(c => c.clearance_state === 'pending').length, badgeVariant: 'warning' },
   { id: 'flagged', label: 'Flagged (Deduction)', count: clearanceItemsData.value.filter(c => c.clearance_state === 'flagged').length, badgeVariant: 'danger' },
@@ -383,11 +394,12 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
       </div>
     </div>
 
-    <!-- Admin UnderlineTabs (AGENTS.md Rule 1) -->
+    <!-- Primary Tab Group (AGENTS.md Single Tab Rule) -->
     <div class="tabs-toolbar-row">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="underlineTabs"
+        type="rounded"
       />
       
       <div class="dept-filter-box">
@@ -489,15 +501,9 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 
               <!-- Clearance State Status Pill (Rule 6 & 9) -->
               <td v-if="tableColumns.find(c => c.key === 'clearance_state')?.visible" class="td-state">
-                <span 
-                  class="status-pill"
-                  :style="{ 
-                    backgroundColor: CLEARANCE_STATE_MAP[item.clearance_state].bg, 
-                    color: CLEARANCE_STATE_MAP[item.clearance_state].color 
-                  }"
-                >
+                <BaseBadge :color="getClearanceStatusColor(item.clearance_state)">
                   {{ CLEARANCE_STATE_MAP[item.clearance_state].label }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Flagged Amount -->
@@ -518,9 +524,9 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 
               <!-- State (Rule 9: Active / Inactive reserved for State) -->
               <td v-if="tableColumns.find(c => c.key === 'state')?.visible">
-                <span class="status-pill" :class="item.state === 'active' ? 'status-active' : 'status-inactive'">
+                <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                   {{ item.state === 'active' ? 'Active' : 'Inactive' }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Standardized 3-Dots Action Dropdown Menu (AGENTS.md Rule 8) -->
@@ -667,11 +673,6 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
         </div>
       </div>
     </QuickCreateModal>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="toast-popup">
-      {{ toastMessage }}
-    </div>
   </div>
 </template>
 
@@ -828,14 +829,6 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 .text-danger {
   color: #dc2626;
   font-weight: 600;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2.5px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
 }
 
 .metric-clickable-wrapper {
@@ -1039,7 +1032,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 
 .sep-filter-emp {
   font-weight: 600;
-  color: #0f172a;
+  color: #404040;
 }
 
 .sep-filter-dept {
@@ -1109,19 +1102,5 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-top: 4px;
-}
-
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 2000;
 }
 </style>

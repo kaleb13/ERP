@@ -6,23 +6,20 @@ import {
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import SalaryScalePrintModal from '../../components/SalaryScalePrintModal.vue';
+import { useToast } from '../../composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
+const { toast } = useToast();
 
 // ─── Scale ID from Route ───
 const scaleId = computed(() => Number(route.params.id) || 3);
 
 // ─── Active Tab State ───
 const activeTab = ref('matrix');
-const toastMessage = ref<string | null>(null);
-
-const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3500);
-};
 
 // ─── Types Strictly Aligned with HR_Schema_final-v4.sql lines 1044–1109 ───
 export interface StepDetail {
@@ -236,7 +233,13 @@ const tabs = computed(() => [
     <!-- ═══ TOP DOCUMENT ACTION BAR (Clean Breadcrumb Only - Zero Back Button) ═══ -->
     <div class="top-nav-bar no-print">
       <div class="top-bar-left">
-        <AppBreadcrumb :items="breadcrumbItems" />
+        <AppBreadcrumb :items="breadcrumbItems">
+          <template #badge>
+            <BaseBadge :color="currentScale.state === 'active' ? 'success' : 'gray'" size="sm">
+              {{ currentScale.state === 'active' ? 'Active' : 'Inactive' }}
+            </BaseBadge>
+          </template>
+        </AppBreadcrumb>
       </div>
 
       <div class="top-bar-right">
@@ -245,12 +248,6 @@ const tabs = computed(() => [
           Print / PDF Export
         </AppButton>
       </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="quick-toast-banner no-print">
-      <CheckCircle2 :size="15" class="toast-icon" />
-      <span>{{ toastMessage }}</span>
     </div>
 
     <!-- ═══ OFFICIAL SCALE HEADER CARD (Matching Reference Image) ═══ -->
@@ -270,9 +267,9 @@ const tabs = computed(() => [
             <h1 class="entity-title">{{ currentScale.entity_name }}</h1>
             <div class="entity-sub-row">
               <span class="entity-code font-mono">Code-{{ currentScale.code }} - </span>
-              <span class="status-pill status-pill-active">
+              <BaseBadge :color="currentScale.state === 'active' ? 'success' : 'gray'" size="sm">
                 {{ currentScale.state === 'active' ? 'Active' : 'Inactive' }}
-              </span>
+              </BaseBadge>
             </div>
           </div>
         </div>
@@ -333,9 +330,9 @@ const tabs = computed(() => [
         </p>
       </div>
 
-      <!-- 3. The Tabs -->
+      <!-- 3. The Tabs (Primary Pill Capsule Standard) -->
       <div class="view-tabs-container">
-        <UnderlineTabs :tabs="tabs" v-model="activeTab" />
+        <BaseTabs :tabs="tabs" v-model="activeTab" type="rounded" />
       </div>
     </div>
 
@@ -630,26 +627,6 @@ const tabs = computed(() => [
 }
 
 /* ═══ TOAST BANNER ═══ */
-.quick-toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
-  font-size: 13px;
-  animation: fadeIn 0.2s ease;
-}
-.toast-icon { color: #059669; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* ═══ CARD BASES ═══ */
 .clean-card {
   background: #ffffff;
@@ -716,19 +693,6 @@ const tabs = computed(() => [
   color: #64748b;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 9px;
-  font-size: 11.5px;
-  font-weight: 600;
-  border-radius: 9999px;
-}
-.status-pill-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
 .doc-meta-side {
   display: flex;
   flex-direction: column;
@@ -750,7 +714,7 @@ const tabs = computed(() => [
 
 .meta-text {
   font-weight: 500;
-  color: #475569;
+  color: #737373;
 }
 
 /* ═══ UNIFIED MIDDLE CARD (Metrics + Info Narrative + Tabs) ═══ */
@@ -1097,7 +1061,7 @@ const tabs = computed(() => [
 }
 .btn-modal-close:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .modal-dialog-body {
@@ -1146,7 +1110,7 @@ const tabs = computed(() => [
 .desc-card-label {
   font-size: 11.5px;
   font-weight: 600;
-  color: #475569;
+  color: #737373;
 }
 
 .desc-card-text {
@@ -1165,7 +1129,7 @@ const tabs = computed(() => [
 .steps-block-header {
   font-size: 12.5px;
   font-weight: 600;
-  color: #475569;
+  color: #737373;
 }
 
 .view-steps-table {

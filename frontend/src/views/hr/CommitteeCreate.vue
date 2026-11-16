@@ -15,9 +15,11 @@ import FormTextarea from '../../components/FormTextarea.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppButton from '../../components/AppButton.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+const { toast } = useToast();
 
 // ─── Breadcrumb Navigation Standard (Rule 3 & Rule 4) ───
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -27,11 +29,10 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 // ─── Save State ───
 const isSaved = ref(false);
-const quickActionToast = ref<string | null>(null);
 
+// ─── Toast (Strict useToast Standard) ───
 const showToast = (message: string) => {
-  quickActionToast.value = message;
-  setTimeout(() => { quickActionToast.value = null; }, 3500);
+  toast.success('Committees', message);
 };
 
 // ─── Tabs (BaseTabs Capsule Standard - Rule 1 & Rule 4) ───
@@ -328,12 +329,6 @@ const handleSaveCommittee = () => {
           Save
         </AppButton>
       </div>
-    </div>
-
-    <!-- Toast Notification Banner -->
-    <div v-if="quickActionToast" class="toast-banner">
-      <CheckCircle2 :size="15" class="text-emerald-600" />
-      <span>{{ quickActionToast }}</span>
     </div>
 
     <!-- ═══ TOP TABS: <BaseTabs /> (Rule 1: Primary Tab Standard) ═══ -->
@@ -778,20 +773,6 @@ const handleSaveCommittee = () => {
 
 .btn-save-primary:hover {
   background-color: #094380;
-}
-
-/* Toast */
-.toast-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
 }
 
 /* ─── Tabs Header ─── */
@@ -1256,7 +1237,7 @@ const handleSaveCommittee = () => {
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  color: #0f172a;
+  color: #404040;
   background-color: #f1f5f9;
 }
 
@@ -1412,7 +1393,7 @@ const handleSaveCommittee = () => {
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
   opacity: 0.4;
@@ -1436,7 +1417,7 @@ const handleSaveCommittee = () => {
 }
 .btn-modal-ctrl-action:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
   border-color: #cbd5e1;
 }
 </style>

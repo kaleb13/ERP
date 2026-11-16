@@ -10,7 +10,7 @@ import BaseButton from './BaseButton.vue';
 import FormCheckbox from './FormCheckbox.vue';
 import FormSelect from './FormSelect.vue';
 import IconColumnSolid from './IconColumnSolid.vue';
-import QuickCreateModal from './QuickCreateModal.vue';
+import DynamicTableModal from './DynamicTableModal.vue';
 
 export interface DynamicTableColumn {
   key: string;
@@ -311,6 +311,11 @@ const handleSaveExpandModal = () => {
 };
 
 const closeExpandModal = () => {
+  if (activeRowIndex.value >= 0 && activeRowIndex.value < props.modelValue.length) {
+    const next = [...props.modelValue];
+    next[activeRowIndex.value] = { ...activeRowData.value };
+    emit('update:modelValue', next);
+  }
   isExpandModalOpen.value = false;
   activeRowIndex.value = -1;
 };
@@ -321,6 +326,19 @@ watch(activeRowIndex, (newIdx) => {
     activeRowData.value = { ...props.modelValue[newIdx] };
   }
 });
+
+// Real-time synchronization of modal field edits into modelValue
+watch(
+  activeRowData,
+  (val) => {
+    if (activeRowIndex.value >= 0 && activeRowIndex.value < props.modelValue.length) {
+      const next = [...props.modelValue];
+      next[activeRowIndex.value] = { ...val };
+      emit('update:modelValue', next);
+    }
+  },
+  { deep: true }
+);
 
 // Modal Row Navigation Controls (Center Arrows: Down and Up)
 const canNavigateDown = computed(() => {
@@ -576,20 +594,20 @@ const hideTooltip = () => {
         <table class="dynamic-table">
           <thead>
             <tr class="table-header-row">
-              <!-- Select All Checkbox Column -->
-              <th class="th-cell th-check" @click.stop="toggleSelectAll">
-                <FormCheckbox
-                  :model-value="isAllSelected"
-                  :indeterminate="selectedIndices.length > 0 && !isAllSelected"
-                  size="sm"
-                  @click.stop
-                  @change="handleSelectAllChange"
-                  aria-label="Select all rows"
-                />
+              <!-- Lead Checkbox + Sequence Header (Figma 7009:114120) -->
+              <th class="th-cell th-lead" @click.stop="toggleSelectAll">
+                <div class="lead-th-content">
+                  <FormCheckbox
+                    :model-value="isAllSelected"
+                    :indeterminate="selectedIndices.length > 0 && !isAllSelected"
+                    size="sm"
+                    @click.stop
+                    @change="handleSelectAllChange"
+                    aria-label="Select all rows"
+                  />
+                  <span class="lead-th-label">No.</span>
+                </div>
               </th>
-
-              <!-- No. Sequence Column -->
-              <th class="th-cell th-no">No.</th>
 
               <!-- Dynamic Scanning Columns -->
               <template v-for="col in columns" :key="col.key">
@@ -640,7 +658,7 @@ const hideTooltip = () => {
           <tbody>
             <!-- Empty State: Standard Centered "No rows" -->
             <tr v-if="modelValue.length === 0" class="empty-state-row">
-              <td :colspan="visibleColumnsCount + 3" class="empty-cell">
+              <td :colspan="visibleColumnsCount + 2" class="empty-cell">
                 <div class="empty-text">{{ emptyText }}</div>
               </td>
             </tr>
@@ -653,19 +671,19 @@ const hideTooltip = () => {
               class="table-body-row"
               :class="{ 'row-selected': selectedIndices.includes(idx) }"
             >
-              <!-- Row Checkbox -->
-              <td class="td-cell td-check" @click.stop="toggleRowSelection(idx)">
-                <FormCheckbox
-                  :model-value="selectedIndices.includes(idx)"
-                  size="sm"
-                  @click.stop
-                  @change="(val) => handleRowCheckboxChange(idx, Boolean(val))"
-                  aria-label="Select row"
-                />
+              <!-- Lead Checkbox + Sequence Cell (Figma 7009:114120) -->
+              <td class="td-cell td-lead" @click.stop="toggleRowSelection(idx)">
+                <div class="lead-td-content">
+                  <FormCheckbox
+                    :model-value="selectedIndices.includes(idx)"
+                    size="sm"
+                    @click.stop
+                    @change="(val) => handleRowCheckboxChange(idx, Boolean(val))"
+                    aria-label="Select row"
+                  />
+                  <span class="lead-td-num">{{ idx + 1 }}</span>
+                </div>
               </td>
-
-              <!-- No. Sequence -->
-              <td class="td-cell td-no">{{ idx + 1 }}</td>
 
               <!-- Attribute Cells with Scoped Slots & QMT 3345:71204 Standard Cell Variants (ERPNext Grid Cell Pattern) -->
               <template v-for="col in columns" :key="col.key">
@@ -817,9 +835,11 @@ const hideTooltip = () => {
           v-if="canAddRow"
           variant="secondary-gray"
           size="sm"
-          :icon="Plus"
           @click="handleAddRow"
         >
+          <template #icon-left>
+            <Plus :size="14" class="icon-bold" />
+          </template>
           Add Row
         </BaseButton>
 
@@ -827,9 +847,11 @@ const hideTooltip = () => {
           v-if="canAddMultiple"
           variant="secondary-gray"
           size="sm"
-          :icon="Plus"
           @click="openAddMultipleModal"
         >
+          <template #icon-left>
+            <Plus :size="14" class="icon-bold" />
+          </template>
           Add Multiple
         </BaseButton>
       </div>
@@ -840,10 +862,12 @@ const hideTooltip = () => {
           v-if="canExport"
           variant="secondary-gray"
           size="sm"
-          :icon="FileDown"
           title="Export data in CSV format"
           @click="handleExportCsv"
         >
+          <template #icon-left>
+            <FileDown :size="14" class="icon-bold" />
+          </template>
           Export
         </BaseButton>
 
@@ -851,10 +875,12 @@ const hideTooltip = () => {
           v-if="canImport"
           variant="secondary-gray"
           size="sm"
-          :icon="FileUp"
           title="Import data in CSV format"
           @click="triggerImportClick"
         >
+          <template #icon-left>
+            <FileUp :size="14" class="icon-bold" />
+          </template>
           Import
         </BaseButton>
 
@@ -887,15 +913,25 @@ const hideTooltip = () => {
       </template>
     </TableFloatingBar>
 
-    <!-- ─── Expand Row Modal (Using Universal QuickCreateModal Standard) ─── -->
-    <QuickCreateModal
-      v-model:show="isExpandModalOpen"
-      :title="`Edit ${entityName} (Row ${activeRowIndex + 1})`"
-      :showExpandButton="false"
-      saveLabel="Save"
-      width="md"
-      @save="handleSaveExpandModal"
-      @cancel="closeExpandModal"
+    <!-- ─── Expand Row Detail Modal (Authoritative Figma Spec 6095:96369 & 6095:96370) ─── -->
+    <DynamicTableModal
+      :show="isExpandModalOpen"
+      :title="`Create ${entityName}`"
+      :row-index="activeRowIndex"
+      :total-rows="modelValue.length"
+      :can-delete="canDelete && activeRowIndex >= 0"
+      :can-navigate-down="canNavigateDown"
+      :can-navigate-up="canNavigateUp"
+      :can-duplicate="canDuplicate"
+      :can-insert-above="canAddRow"
+      :can-insert-below="canAddRow"
+      @delete="handleModalDeleteRow"
+      @navigateDown="handleNavigateDown"
+      @navigateUp="handleNavigateUp"
+      @duplicate="handleModalDuplicateRow"
+      @insertAbove="handleModalInsertAbove"
+      @insertBelow="handleModalInsertBelow"
+      @close="closeExpandModal"
     >
       <slot
         name="expand-modal"
@@ -910,13 +946,22 @@ const hideTooltip = () => {
             class="modal-field-wrap"
           >
             <label class="modal-field-label">{{ col.label }}</label>
-            <!-- Render custom slot if provided for this column -->
+            <!-- Render custom slot if provided for this column in modal -->
             <slot
               v-if="col.type === 'custom'"
-              :name="col.key"
+              :name="`modal-${col.key}`"
               :row="activeRowData"
               :index="activeRowIndex"
-            />
+            >
+              <slot
+                :name="col.key"
+                :row="activeRowData"
+                :index="activeRowIndex"
+              />
+            </slot>
+            <div v-else-if="col.type === 'readonly'" class="modal-readonly-block">
+              {{ activeRowData[col.key] || '—' }}
+            </div>
             <FormSelect
               v-else-if="col.type === 'select'"
               v-model="activeRowData[col.key]"
@@ -937,6 +982,19 @@ const hideTooltip = () => {
               </button>
               <span class="switch-label">{{ activeRowData[col.key] ? 'Yes' : 'No' }}</span>
             </div>
+            <div v-else-if="col.type === 'checkbox'" class="flex items-center gap-2 mt-2">
+              <FormCheckbox
+                v-model="activeRowData[col.key]"
+                :title="col.label"
+              />
+              <span class="text-sm text-[#404040]">{{ activeRowData[col.key] ? 'Enabled' : 'Disabled' }}</span>
+            </div>
+            <input
+              v-else-if="col.type === 'date'"
+              type="date"
+              v-model="activeRowData[col.key]"
+              class="modal-input"
+            />
             <input
               v-else
               :type="col.type === 'number' ? 'number' : 'text'"
@@ -946,19 +1004,7 @@ const hideTooltip = () => {
           </div>
         </div>
       </slot>
-
-      <template #footer-left>
-        <BaseButton
-          v-if="canDelete && activeRowIndex >= 0"
-          type="button"
-          variant="error"
-          size="sm"
-          @click="handleModalDeleteRow"
-        >
-          Delete Row
-        </BaseButton>
-      </template>
-    </QuickCreateModal>
+    </DynamicTableModal>
 
     <!-- ─── Column Hide / Show Popover Menu (Teleported to avoid clipping & section scrollbars) ─── -->
     <Teleport to="body">
@@ -1134,7 +1180,7 @@ const hideTooltip = () => {
 
 /* ─── Header Styling ──────────────────────────────────────────────────────── */
 .table-header-row {
-  background-color: #ffffff;
+  background-color: var(--color-background-primary, #fafafa);
   border-bottom: 1px solid var(--alias-color-border-subtle, #e5e5e5);
 }
 
@@ -1146,10 +1192,86 @@ const hideTooltip = () => {
   white-space: nowrap;
   user-select: none;
   border-right: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  background-color: var(--color-background-primary, #fafafa);
 }
 
 .th-cell:last-child {
   border-right: none;
+}
+
+/* ─── Lead Column (Checkbox + Sequence No.) — Figma Frame 7009:114120 ──────── */
+.dynamic-table th.th-lead,
+.dynamic-table td.td-lead {
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
+  padding: 0 11px !important;
+  vertical-align: middle;
+  box-sizing: border-box;
+  border-right: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  user-select: none;
+  cursor: pointer;
+}
+
+.dynamic-table th.th-lead {
+  height: 44px;
+  background-color: var(--color-background-primary, #fafafa);
+}
+
+.dynamic-table td.td-lead {
+  height: 44px;
+  background-color: #ffffff;
+}
+
+.lead-th-content,
+.lead-td-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lead-th-content :deep(.qmt-checkbox-wrapper),
+.lead-td-content :deep(.qmt-checkbox-wrapper) {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.lead-th-content :deep(.qmt-checkbox-box),
+.lead-td-content :deep(.qmt-checkbox-box) {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
+}
+
+.lead-th-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--alias-color-text-secondary, #404040);
+  line-height: 18px;
+  min-width: 18px;
+  display: inline-block;
+  user-select: none;
+}
+
+.lead-td-num {
+  font-size: 14px;
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 400;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  display: inline-block;
+  user-select: none;
 }
 
 .th-check {
@@ -1667,7 +1789,7 @@ const hideTooltip = () => {
 .default-modal-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
 .modal-field-wrap {
@@ -1677,28 +1799,87 @@ const hideTooltip = () => {
 }
 
 .modal-field-label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--alias-color-text-secondary, #404040);
 }
 
 .modal-input,
 .modal-select {
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
-  border-radius: var(--alias-radius-md, 8px);
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--alias-color-border-subtle, #d4d4d4);
+  border-radius: 12px;
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--alias-color-text-primary, #262626);
   outline: none;
-  transition: border-color 0.15s ease;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .modal-input:focus,
 .modal-select:focus {
   border-color: var(--alias-color-brand-default, #0b529c);
   box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.1);
+}
+
+.modal-readonly-block {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background-color: #fafafa;
+  border: 1px solid var(--alias-color-border-subtle, #d4d4d4);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--alias-color-text-secondary, #404040);
+  font-weight: 450;
+}
+
+/* Modal Row Navigation Controls */
+.modal-nav-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--primitive-color-neutral-100, #f5f5f5);
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--primitive-color-neutral-200, #e5e5e5);
+}
+
+.modal-nav-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--alias-color-text-tertiary, #737373);
+  padding: 0 4px;
+  user-select: none;
+}
+
+.btn-modal-nav {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--alias-color-text-secondary, #404040);
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-nav:hover:not(:disabled) {
+  background-color: #ffffff;
+  color: var(--primitive-color-brand-blue-700, #0B529C);
+}
+
+.btn-modal-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ─── Modal Footer (Left Delete, Center Nav, Right Actions) ───────────────── */

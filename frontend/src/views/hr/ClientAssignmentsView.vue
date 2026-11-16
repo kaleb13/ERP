@@ -9,7 +9,8 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
-import UnderlineTabs from '../../components/UnderlineTabs.vue';
+import BaseTabs from '../../components/BaseTabs.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 
 import {
@@ -88,6 +89,17 @@ const filteredAssignments = computed(() => {
     return true;
   });
 });
+
+const getAssignmentStatusColor = (status: string): 'success' | 'blue' | 'warning' | 'error' | 'indigo' => {
+  switch (status) {
+    case 'active': return 'success';
+    case 'completed': return 'blue';
+    case 'recalled': return 'warning';
+    case 'terminated': return 'error';
+    case 'draft': return 'indigo';
+    default: return 'blue';
+  }
+};
 
 // ─── SELECTION ───────────────────────────────────────────────────────────
 const selectedIds = ref<number[]>([]);
@@ -234,11 +246,12 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
       />
     </div>
 
-    <!-- Secondary UnderlineTabs (Rule 1) -->
+    <!-- Primary Tab Group (AGENTS.md Single Tab Rule) -->
     <div class="tabs-container">
-      <UnderlineTabs
+      <BaseTabs
         v-model="activeTab"
         :tabs="statusTabs"
+        type="rounded"
       />
     </div>
 
@@ -345,22 +358,16 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 
                 <!-- Status (Lifecycle state) -->
                 <td v-if="isColumnVisible('status')">
-                  <span
-                    class="status-pill"
-                    :class="`status-${item.assignment_state_lookup_value_id}`"
-                  >
+                  <BaseBadge :color="getAssignmentStatusColor(item.assignment_state_lookup_value_id)">
                     {{ item.assignment_state_lookup_value_id.replace(/\b\w/g, l => l.toUpperCase()) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- State (Rule 9: Active / Inactive) -->
                 <td v-if="isColumnVisible('state')">
-                  <span
-                    class="state-pill"
-                    :class="`state-${item.state}`"
-                  >
+                  <BaseBadge :color="item.state === 'active' ? 'success' : 'gray'">
                     {{ item.state.charAt(0).toUpperCase() + item.state.slice(1) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions Menu -->
@@ -747,60 +754,6 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 .tertiary-text {
   font-size: 12.5px;
   color: #737373;
-}
-
-/* Status & State Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-completed {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.status-recalled {
-  background-color: #fffbeb;
-  color: #d97706;
-}
-
-.status-terminated {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-draft {
-  background-color: #f1f5f9;
-  color: #64748b;
-}
-
-.state-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.state-active {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.state-inactive {
-  background-color: #f1f5f9;
-  color: #64748b;
 }
 
 /* Actions Menu */

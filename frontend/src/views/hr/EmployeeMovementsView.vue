@@ -9,8 +9,10 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -118,11 +120,20 @@ const movements = ref<MovementDirectoryRecord[]>([
 const searchQuery = ref('');
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
+
+const getStatusColor = (status: string): 'success' | 'indigo' | 'error' | 'warning' | 'blue' => {
+  switch (status) {
+    case 'approved': return 'success';
+    case 'effected': return 'indigo';
+    case 'rejected': return 'error';
+    case 'pending': return 'warning';
+    default: return 'blue';
+  }
+};
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const filteredMovements = computed(() => {
@@ -205,14 +216,6 @@ const handleBatchDelete = () => {
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
-
-    <!-- Notification Toast -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
 
     <!-- Master Unified Table Card (Matching Figma 6624:99272) -->
     <AppDataTable
@@ -304,9 +307,9 @@ const handleBatchDelete = () => {
 
                 <!-- Status (Status Pill: Rejected, Pending, Effected, Approved) -->
                 <td v-if="isColVisible('status')">
-                  <span class="status-pill" :class="`status-${item.status}`">
+                  <BaseBadge :color="getStatusColor(item.status)">
                     {{ item.status.charAt(0).toUpperCase() + item.status.slice(1) }}
-                  </span>
+                  </BaseBadge>
                 </td>
 
                 <!-- Actions (⋮ 3-dots popup) -->
@@ -647,36 +650,6 @@ const handleBatchDelete = () => {
   border-radius: 4px;
 }
 
-/* Status Pills (Image 3: Rejected in red, Pending in amber, Effected in purple) */
-.status-pill {
-  display: inline-block;
-  padding: 3px 12px;
-  border-radius: 12px;
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.status-rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-.status-pending {
-  background-color: #fef3c7;
-  color: #b45309;
-}
-
-.status-effected {
-  background-color: #f3e8ff;
-  color: #7e22ce;
-}
-
-.status-approved {
-  background-color: #dcfce7;
-  color: #15803d;
-}
-
 /* Actions */
 .th-actions, .td-actions {
   text-align: right;
@@ -704,7 +677,7 @@ const handleBatchDelete = () => {
 
 .btn-action-dots:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #404040;
 }
 
 .action-popup-menu {
@@ -846,33 +819,5 @@ const handleBatchDelete = () => {
 .page-ellipsis {
   padding: 0 4px;
   color: #94a3b8;
-}
-
-/* Toast */
-.toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background-color: #064e3b;
-  color: #ffffff;
-  border-radius: 8px;
-  font-size: 13px;
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 </style>

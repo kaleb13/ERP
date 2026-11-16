@@ -9,7 +9,6 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
-import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
@@ -17,6 +16,8 @@ import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 
@@ -244,11 +245,10 @@ const subTabs = computed<UnderlineTabItem[]>(() => [
 const searchQuery = ref('');
 const selectedRowIds = ref<number[]>([]);
 const activeActionMenuId = ref<number | null>(null);
-const toastMessage = ref<string | null>(null);
+const { toast } = useToast();
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 const filteredRequests = computed(() => {
@@ -438,14 +438,6 @@ const formatDateRange = (start: string, end: string) => {
       <AppBreadcrumb :items="breadcrumbItems" />
     </div>
 
-    <!-- Toast Notification -->
-    <Transition name="toast-fade">
-      <div v-if="toastMessage" class="toast-bar">
-        <CheckCircle2 :size="15" />
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
     <!-- ─── 4 UNIFIED METRIC CARDS (Exact Match to User Screenshot) ─── -->
     <div class="metrics-grid">
       <!-- Card 1: PENDING MY DECISION -->
@@ -585,11 +577,14 @@ const formatDateRange = (start: string, end: string) => {
                 {{ item.handover_employee_name || '—' }}
               </td>
 
-              <!-- Status Pill (Approved: green, Rejected: red, Pending: amber) -->
+              <!-- Status Badge (BaseBadge: Approved: success, Rejected: error, Pending: warning) -->
               <td v-if="isColVisible('status')">
-                <span class="status-pill" :class="`status-${item.request_state}`">
+                <BaseBadge
+                  :color="item.request_state === 'approved' ? 'success' : item.request_state === 'rejected' ? 'error' : 'warning'"
+                  size="sm"
+                >
                   {{ item.request_state.charAt(0).toUpperCase() + item.request_state.slice(1) }}
-                </span>
+                </BaseBadge>
               </td>
 
               <!-- Actions (⋮ 3-dots button with Approval / Detail actions) -->
@@ -722,21 +717,6 @@ const formatDateRange = (start: string, end: string) => {
 .breadcrumb-bar {
   display: flex;
   align-items: center;
-}
-
-/* Toast */
-.toast-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #0B529C;
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(11, 82, 156, 0.2);
-  align-self: flex-start;
 }
 
 /* 4 Metric Cards Grid */
@@ -886,36 +866,6 @@ const formatDateRange = (start: string, end: string) => {
 
 .td-tertiary {
   color: #737373;
-}
-
-/* Status Pills */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-approved {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.status-rejected {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-pending {
-  background-color: #fffbeb;
-  color: #d97706;
-}
-
-.status-taken {
-  background-color: #f1f5f9;
-  color: #475569;
 }
 
 /* Action Dots */

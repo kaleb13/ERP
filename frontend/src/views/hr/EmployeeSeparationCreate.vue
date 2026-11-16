@@ -10,6 +10,7 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import { useToast } from '../../composables/useToast';
 import { 
   addSeparationRecord, 
   type SeparationType, 
@@ -27,14 +28,13 @@ const breadcrumbItems = [
 ];
 
 // ─── Status / Save State Standard (AGENTS.md Rule 30) ───
+const { toast } = useToast();
 const isSaved = ref(false);
 const isDraft = ref(false);
 const showDraftMenu = ref(false);
-const toastMessage = ref<string | null>(null);
 
 const showToast = (msg: string) => {
-  toastMessage.value = msg;
-  setTimeout(() => { toastMessage.value = null; }, 3200);
+  toast.success(msg);
 };
 
 // ─── Top Level Tabs Standard (AGENTS.md Rule 1: BaseTabs) ───
@@ -330,11 +330,6 @@ const saveRecord = (status: SeparationStatus) => {
         />
       </div>
     </div>
-
-    <!-- Toast Notification -->
-    <div v-if="toastMessage" class="toast-popup">
-      {{ toastMessage }}
-    </div>
   </div>
 </template>
 
@@ -620,7 +615,7 @@ const saveRecord = (status: SeparationStatus) => {
 
 .btn-tool-icon:hover {
   background-color: #e2e8f0;
-  color: #0f172a;
+  color: #404040;
 }
 
 .rich-editor-content {
@@ -655,18 +650,5 @@ const saveRecord = (status: SeparationStatus) => {
   font-size: 11px;
   color: #cbd5e1;
   user-select: none;
-}
-
-.toast-popup {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #1e293b;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 2000;
 }
 </style>
