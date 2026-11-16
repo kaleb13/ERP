@@ -632,6 +632,7 @@ onUnmounted(() => {
 
 .collapsed-item-container {
   display: flex;
+  justify-content: center;
   align-items: center;
   justify-content: center;
   width: 100%;
