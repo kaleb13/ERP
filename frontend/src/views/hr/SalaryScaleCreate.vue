@@ -12,6 +12,7 @@ import FormCheckbox from '../../components/FormCheckbox.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
+import FormSelect from '../../components/FormSelect.vue';
 
 const router = useRouter();
 
@@ -313,15 +314,16 @@ const breadcrumbItems = [
       <div class="scale-form-content">
         <!-- Row 1: 3-column parameters grid -->
         <div class="form-grid-3">
-          <div class="form-field-group">
-            <label class="form-field-label">Owning Entity</label>
-            <select v-model="form.entity_id" class="form-select">
-              <option value="" disabled>Select Entity</option>
-              <option value="Haleta Addis Ababa">Haleta Addis Ababa</option>
-              <option value="Grand Hotel">Grand Hotel</option>
-              <option value="Mola Trading">Mola Trading</option>
-            </select>
-          </div>
+          <FormSelect
+            v-model="form.entity_id"
+            label="Owning Entity"
+            :options="[
+              { value: 'Haleta Addis Ababa', label: 'Haleta Addis Ababa' },
+              { value: 'Grand Hotel', label: 'Grand Hotel' },
+              { value: 'Mola Trading', label: 'Mola Trading' }
+            ]"
+            placeholder="Select Entity"
+          />
 
           <div class="form-field-group">
             <label class="form-field-label">Number of Steps <span class="required-star">*</span></label>
@@ -335,15 +337,17 @@ const breadcrumbItems = [
             />
           </div>
 
-          <div class="form-field-group">
-            <label class="form-field-label">Currency</label>
-            <select v-model="form.currency_code" class="form-select">
-              <option value="ETB">ETB</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </select>
-          </div>
+          <FormSelect
+            v-model="form.currency_code"
+            label="Currency"
+            :options="[
+              { value: 'ETB', label: 'ETB' },
+              { value: 'USD', label: 'USD' },
+              { value: 'EUR', label: 'EUR' },
+              { value: 'GBP', label: 'GBP' }
+            ]"
+            placeholder="Select Currency"
+          />
         </div>
 
         <!-- Row 2: 2-column dates grid with [GC] pill -->

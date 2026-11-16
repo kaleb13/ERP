@@ -53,7 +53,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyText: 'No results found',
   icon: undefined,
   id: undefined,
-  teleport: false,
+  teleport: true,
   variant: 'default'
 });
 
@@ -79,22 +79,70 @@ const popoverStyle = ref<Record<string, string>>({});
 const updatePopoverPosition = () => {
   if (!props.teleport || !triggerRef.value) return;
   const rect = triggerRef.value.getBoundingClientRect();
-  const popoverWidth = Math.max(rect.width, 220);
+  const popoverWidth = Math.max(rect.width, 200);
   const spaceBelow = window.innerHeight - rect.bottom;
   const openAbove = spaceBelow < 250 && rect.top > 250;
+  
+  let left = rect.left;
+  if (left + popoverWidth > window.innerWidth - 12) {
+    left = Math.max(12, window.innerWidth - popoverWidth - 12);
+  }
+
   popoverStyle.value = {
     position: 'fixed',
     top: openAbove ? 'auto' : `${rect.bottom + 4}px`,
     bottom: openAbove ? `${window.innerHeight - rect.top + 4}px` : 'auto',
-    left: `${Math.min(rect.left, Math.max(16, window.innerWidth - popoverWidth - 16))}px`,
-    width: `${popoverWidth}px`,
+    left: `${left}px`,
+    width: `${rect.width > 0 ? rect.width : popoverWidth}px`,
     zIndex: '99999'
   };
 };
 
-const normalizedOptions = computed<SelectOption[]>(() =>
-  props.options.map((opt) => (typeof opt === 'string' ? { value: opt, label: opt } : opt))
-);
+const extractOptionsFromVNodes = (nodes: any[]): SelectOption[] => {
+  const result: SelectOption[] = [];
+  for (const node of nodes) {
+    if (!node) continue;
+    if (node.type === 'option') {
+      const val = node.props?.value ?? '';
+      let text = '';
+      if (typeof node.children === 'string') {
+        text = node.children;
+      } else if (Array.isArray(node.children)) {
+        text = node.children.map((c: any) => (typeof c === 'string' ? c : c?.children || '')).join('');
+      } else if (typeof node.children === 'object' && node.children?.default) {
+        try {
+          const rendered = node.children.default();
+          text = rendered.map((c: any) => (typeof c === 'string' ? c : '')).join('');
+        } catch {
+          text = '';
+        }
+      }
+      result.push({
+        value: val,
+        label: text.trim() || String(val),
+        disabled: Boolean(node.props?.disabled)
+      });
+    } else if (Array.isArray(node.children)) {
+      result.push(...extractOptionsFromVNodes(node.children));
+    }
+  }
+  return result;
+};
+
+const slotOptions = computed<SelectOption[]>(() => {
+  if (!slots.default) return [];
+  try {
+    return extractOptionsFromVNodes(slots.default());
+  } catch {
+    return [];
+  }
+});
+
+const normalizedOptions = computed<SelectOption[]>(() => {
+  const explicit = props.options.map((opt) => (typeof opt === 'string' ? { value: opt, label: opt } : opt));
+  if (explicit.length > 0) return explicit;
+  return slotOptions.value;
+});
 
 const filteredOptions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
@@ -280,20 +328,22 @@ const handleClickOutside = (e: MouseEvent) => {
   }
 };
 
+const onScrollOrResize = () => {
+  if (isOpen.value && props.teleport) {
+    updatePopoverPosition();
+  }
+};
+
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside);
-  if (props.teleport) {
-    window.addEventListener('scroll', updatePopoverPosition, true);
-    window.addEventListener('resize', updatePopoverPosition);
-  }
+  window.addEventListener('scroll', onScrollOrResize, true);
+  window.addEventListener('resize', onScrollOrResize);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutside);
-  if (props.teleport) {
-    window.removeEventListener('scroll', updatePopoverPosition, true);
-    window.removeEventListener('resize', updatePopoverPosition);
-  }
+  window.removeEventListener('scroll', onScrollOrResize, true);
+  window.removeEventListener('resize', onScrollOrResize);
 });
 </script>
 
@@ -314,29 +364,8 @@ onBeforeUnmount(() => {
       <span v-if="required" class="required-asterisk">*</span>
     </label>
 
-    <!-- Native fallback only when explicit <option> slot children are provided -->
-    <div v-if="hasCustomSlotOptions" class="select-container">
-      <select
-        :id="id"
-        :value="modelValue"
-        :disabled="disabled"
-        class="form-select"
-        :class="{ 'with-error-icon': !!error }"
-        @change="handleNativeChange"
-      >
-        <option v-if="placeholder" value="" disabled selected hidden>
-          {{ placeholder }}
-        </option>
-        <slot />
-      </select>
-      <div class="select-trailing">
-        <AlertCircle v-if="error" :size="16" class="select-error-icon" aria-hidden="true" />
-        <ChevronDown :size="15" class="select-arrow" />
-      </div>
-    </div>
-
     <!-- Custom QMT Select Trigger & Popover Menu (QMT 3377:50 / 5338:672) -->
-    <div v-else class="select-container">
+    <div class="select-container">
       <button
         :id="id"
         ref="triggerRef"

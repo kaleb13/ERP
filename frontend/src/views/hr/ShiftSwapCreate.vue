@@ -6,6 +6,7 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppButton from '../../components/AppButton.vue';
 import FormRichText from '../../components/FormRichText.vue';
+import FormSelect from '../../components/FormSelect.vue';
 
 const router = useRouter();
 
@@ -96,6 +97,24 @@ const onCounterpartChange = () => {
   const cShifts = availableCounterpartShifts.value;
   form.value.counterpart_shift_id = cShifts.length > 0 ? cShifts[0].id : '';
 };
+
+const requesterOptions = computed(() =>
+  employees.map(emp => ({ value: emp.id, label: `${emp.name} — ${emp.role}` }))
+);
+
+const requesterShiftOptions = computed(() =>
+  availableRequesterShifts.value.map(s => ({ value: s.id, label: s.label }))
+);
+
+const counterpartOptions = computed(() => [
+  { value: '', label: '(None — Create Open Giveaway Cover)' },
+  ...availableCounterparts.value.map(c => ({ value: c.id, label: `${c.name} — ${c.role}` }))
+]);
+
+const counterpartShiftOptions = computed(() => [
+  { value: '', label: form.value.counterpart_id ? 'Select Shift' : 'No reciprocal slot required' },
+  ...availableCounterpartShifts.value.map(s => ({ value: s.id, label: s.label }))
+]);
 
 // ─── Clear Form ───
 const handleClearForm = () => {
@@ -207,89 +226,46 @@ const handleRequest = () => {
         <div class="form-grid-layout">
           <!-- Row 1: Requesting Employee & Assigned Shift To Give Away -->
           <div class="form-row">
-            <!-- Requesting Employee -->
-            <div class="form-field-group">
-              <label class="field-label">
-                <span>Requesting Employee</span>
-                <span class="required-star">*</span>
-              </label>
-              <div class="select-wrapper">
-                <select 
-                  v-model="form.requester_id" 
-                  class="qmt-native-select"
-                  @change="onRequesterChange"
-                >
-                  <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                    {{ emp.name }} — {{ emp.role }}
-                  </option>
-                </select>
-              </div>
-            </div>
+            <FormSelect
+              v-model="form.requester_id"
+              label="Requesting Employee"
+              required
+              :options="requesterOptions"
+              placeholder="Select Employee"
+              @update:model-value="() => onRequesterChange()"
+            />
 
-            <!-- Assigned Shift To Give Away -->
-            <div class="form-field-group">
-              <label class="field-label">
-                <span>Assigned Shift To Give Away</span>
-                <span class="required-star">*</span>
-              </label>
-              <div class="select-wrapper">
-                <select 
-                  v-model="form.requester_shift_id" 
-                  class="qmt-native-select"
-                >
-                  <option value="" disabled>Select Shift</option>
-                  <option v-for="shift in availableRequesterShifts" :key="shift.id" :value="shift.id">
-                    {{ shift.label }}
-                  </option>
-                </select>
-              </div>
-            </div>
+            <FormSelect
+              v-model="form.requester_shift_id"
+              label="Assigned Shift To Give Away"
+              required
+              :options="requesterShiftOptions"
+              placeholder="Select Shift"
+            />
           </div>
 
           <!-- Row 2: Counterpart Colleague & Colleague Shift in Return -->
           <div class="form-row">
-            <!-- Counterpart Colleague -->
             <div class="form-field-group">
-              <label class="field-label">
-                <span>Counterpart Colleague</span>
-              </label>
-              <div class="select-wrapper">
-                <select 
-                  v-model="form.counterpart_id" 
-                  class="qmt-native-select"
-                  @change="onCounterpartChange"
-                >
-                  <option value="">(None — Create Open Giveaway Cover)</option>
-                  <option v-for="colleague in availableCounterparts" :key="colleague.id" :value="colleague.id">
-                    {{ colleague.name }} — {{ colleague.role }}
-                  </option>
-                </select>
-              </div>
-              <p class="field-helper-text">
-                If you don't select a counter party the system will create a give away shift swap request and it will be a one way cover open to any colleague.
-              </p>
+              <FormSelect
+                v-model="form.counterpart_id"
+                label="Counterpart Colleague"
+                :options="counterpartOptions"
+                placeholder="Select Colleague"
+                hint="If you don't select a counter party the system will create a give away shift swap request and it will be a one way cover open to any colleague."
+                @update:model-value="() => onCounterpartChange()"
+              />
             </div>
 
-            <!-- Colleague Shift in Return -->
             <div class="form-field-group">
-              <label class="field-label">
-                <span>Colleague Shift in Return</span>
-              </label>
-              <div class="select-wrapper">
-                <select 
-                  v-model="form.counterpart_shift_id" 
-                  class="qmt-native-select"
-                  :disabled="!form.counterpart_id"
-                >
-                  <option value="">{{ form.counterpart_id ? 'Select Shift' : 'No reciprocal slot required' }}</option>
-                  <option v-for="shift in availableCounterpartShifts" :key="shift.id" :value="shift.id">
-                    {{ shift.label }}
-                  </option>
-                </select>
-              </div>
-              <p v-if="!form.counterpart_id" class="field-helper-text-muted">
-                One-way shift cover: recipient earns coverage without sacrificing a scheduled shift slot.
-              </p>
+              <FormSelect
+                v-model="form.counterpart_shift_id"
+                label="Colleague Shift in Return"
+                :disabled="!form.counterpart_id"
+                :options="counterpartShiftOptions"
+                placeholder="Select Shift"
+                :hint="!form.counterpart_id ? 'One-way shift cover: recipient earns coverage without sacrificing a scheduled shift slot.' : undefined"
+              />
             </div>
           </div>
         </div>

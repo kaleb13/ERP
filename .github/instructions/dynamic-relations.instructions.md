@@ -54,7 +54,10 @@ Reference URLs:
    - Display strictly 3 to 5 core mandatory scanning columns inline.
    - Column headers display optional help icons (`🛈`) which render a dark tooltip bubble on hover (`#0F172A`, title + concise description, downward caret pointer).
    - **Column Hide/Show Header Icon** (`<IconColumnSolid :size="16" />`): Clicking the header icon opens an interactive dropdown popover checklist allowing users to dynamically hide and show columns. Must use the exact 3-column solid SVG icon from Figma (`6095:96606` / `column-solid`), never generic Lucide `<Columns />`.
-   - Empty state: when no rows exist, display centered `No rows` in muted `#A3A3A3` across all visible columns.
+   - **Mandatory Default Non-Empty Initial State (1 Row Minimum)**:
+     - Dynamic tables in creation forms and initial designs **MUST NEVER default to an empty state** (`[]`).
+     - Always pre-populate at least **one default row** (`defaultInitialRow: true`). This ensures column structure, interactive inputs, cell dropdowns, and formatting are immediately visible and testable for users and directly mirrors how tables are presented in Figma.
+     - The centered `No rows` empty state only appears if the user explicitly deletes every single row.
 
 3. **Table Action Bar & Standardized `<AppButton>` (Always Below Table)**:
    - **Mandatory System Button**: All dynamic table buttons MUST use the authoritative `<AppButton>` component (`variant="secondary"`, `size="sm"` with `#icon-left` slot). Never render raw HTML `<button>` or ad-hoc button classes.
@@ -84,33 +87,22 @@ Reference URLs:
 
 5. **Expand Row Modal ("EXPAND ICON ACTION")**:
    - Triggered by clicking the `↗` expand icon (`<Maximize2 :size="13" />`) on any row.
-   - Secondary attributes (effectivity dates, calculations, certificates, attachments, notes, rollover rules) belong exclusively in this modal.
-   - **Modal Header**:
-     - Strictly titled `[Entity/Section Name] (Row [Index])`, e.g., `"Create Item (Row 1)"`, `"Academic Qualification (Row 1)"` (*"Tells the user on which row they are in"*).
-     - Top-right close button `×`.
-   - **Modal Body**: Organized cleanly in a 2-column grid (`.modal-grid-2`) with standard inputs, selects, multi-badge tag selectors, and checkboxes with descriptions.
-   - **Canonical Row Controls Footer (`.row-modal-footer`)**:
-     - **Left**: `Delete` button (`.btn-modal-delete`, solid red `#E7000B`).
-     - **Center**: Row Navigation Controls (*"Used to navigate through the rows"*):
-       - Down Arrow (`↓`, `<ArrowDown :size="15" />`, disabled on last row).
-       - Up Arrow (`↑`, `<ArrowUp :size="15" />`, disabled on first row).
-       - Seamlessly switches the modal to inspect/edit the adjacent row without closing.
-     - **Right**:
-       - `Duplicate Row` button (`<Copy :size="13" />`): Clones the active row.
-       - `+ Insert Above` button (`<Plus :size="13" />`): Inserts a blank row directly above the active row in the parent table.
-       - `+ Insert Below` button (`<Plus :size="13" />`): Inserts a blank row directly below the active row in the parent table.
+   - Secondary attributes (effectivity dates, calculations, certificates, attachments, notes, rollover rules) belong in this modal.
+   - **Universal Modal Standard (`<QuickCreateModal />`)**:
+     - MUST use the authoritative `<QuickCreateModal />` component, ensuring the modal is 100% editable, saveable, and visually unified with all ERP dialogs.
+     - **Header**: Titled `Edit [Entity/Section Name] (Row [Index])` with top-right `(X)` close button.
+     - **Body**: Fully editable form fields mapped to row attributes. If custom table columns are used (`type: 'custom'`), the view can provide a dedicated `<template #expand-modal="{ row }">` slot with `<FormSelect>`, `<FormInput>`, etc.
+     - **Footer**: Bottom-right has standard plain-text **"Save"** primary button; bottom-left has an optional **"Delete Row"** destructive button.
+     - **No Ad-Hoc Modal Dialogs**: Never build raw custom modal shells with uneditable inputs.
 
-6. **Multi-Selection Modal & Search Dropdown ("+ Add Multiple", Figma `6095:96639` & `6095:96649`)**:
+6. **Dropdown & Popover Teleportation Standard (Anti-Clipping & Anti-Scrollbar Rule)**:
+   - **Column Hider Dropdown (`<IconColumnSolid />`)**: The column hide/show popover MUST ALWAYS be teleported to `body` (`<Teleport to="body">`) with dynamic fixed positioning (`getBoundingClientRect()`). It must NEVER be rendered inside the table header (`<th>`) or table scroll container, which would cause horizontal scrollbars or clipping.
+   - **Select Menus (`<FormSelect />`)**: All dropdowns across dynamic tables and forms MUST default to `teleport: true` so their popovers float above cards, accordions, and modals without being hidden or clipped by parent containers with `overflow: hidden`.
+7. **Multi-Selection Modal & Search Dropdown ("+ Add Multiple", Figma `6095:96639` & `6095:96649`)**:
    - Triggered by the `+ Add Multiple` button.
-   - **Modal**: Titled `Select [Entities]` with embedded search bar (`🔍 Search...`), scrollable checklist with rounded checkboxes, and selected item counter.
+   - **Modal**: Titled `Select [Entities]` (e.g. `Select Customers`) with `Select... ⌵` multi-select field, embedded search bar (`🔍 Search...`), scrollable checklist with rounded checkboxes, and `Close` button.
+   - Selected items highlighted with subtle surface background (`#F5F5F5`).
    - Bottom persistent action: `+ Create a new [Entity]` link (in `#0B529C` brand blue with `+` icon).
-   - Triggered by the `+ Add Multiple` button.
-   - **Modal**: Titled `Select [Entities]` (e.g. `Select Customers`) with `Select... ⌵` multi-select field and `Close` button.
-   - **Dropdown Panel**:
-     - Embedded search bar: `🔍 Search...`
-     - Scrollable checklist with rounded checkboxes.
-     - Selected items highlighted with subtle surface background (`#F5F5F5`).
-     - Bottom persistent action: `+ Create a new [Entity]` link (in `#0B529C` brand blue with `+` icon).
 
 ---
 

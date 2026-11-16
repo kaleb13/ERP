@@ -176,9 +176,9 @@ const subscribedCount = computed(() => {
 
 // Filter tabs for toolbar
 const filterTabs = computed(() => [
-  { id: 'all' as const, label: `All (${totalCount.value})` },
-  { id: 'subscribed' as const, label: `Subscribed (${subscribedCount.value})` },
-  { id: 'unsubscribed' as const, label: `Locked Modules (${totalCount.value - subscribedCount.value})` }
+  { id: 'all' as const, label: 'All', count: totalCount.value },
+  { id: 'subscribed' as const, label: 'Subscribed', count: subscribedCount.value },
+  { id: 'unsubscribed' as const, label: 'Not Subscribed', count: totalCount.value - subscribedCount.value }
 ]);
 
 // Filtered sections and modules
@@ -213,7 +213,7 @@ const filteredSections = computed(() => {
 const getCategoryCountText = (section: any) => {
   const total = section.modules.length;
   const subscribed = section.modules.filter((m: any) => m.subscribed).length;
-  return `${subscribed}/${total} unlocked`;
+  return `${subscribed}/${total} subscribed`;
 };
 
 // Handle module card click
@@ -292,7 +292,7 @@ const handleModuleClick = (mod: any) => {
           <BaseTabs v-model="activeFilter" :tabs="filterTabs" />
           
           <div class="subscribed-summary">
-            <span class="summary-text">{{ subscribedCount }} of {{ totalCount }} modules unlocked</span>
+            <span class="summary-text">{{ subscribedCount }} of {{ totalCount }} modules subscribed</span>
           </div>
         </div>
 
@@ -326,7 +326,7 @@ const handleModuleClick = (mod: any) => {
                   <div class="card-icon-box" :style="{ backgroundColor: mod.iconBg }">
                     <component :is="mod.icon" :size="20" :style="{ color: mod.iconColor }" />
                   </div>
-                  <div v-if="!mod.subscribed" class="card-lock-indicator" title="Locked Module">
+                  <div v-if="!mod.subscribed" class="card-lock-indicator" title="Not Subscribed">
                     <Lock :size="14" class="text-neutral-400" />
                   </div>
                 </div>
@@ -345,7 +345,7 @@ const handleModuleClick = (mod: any) => {
                   </div>
                   <div v-else class="unsubscribed-pill">
                     <Lock :size="10" class="mr-1 text-neutral-500" />
-                    <span>Locked Module</span>
+                    <span>Not Subscribed</span>
                   </div>
                 </div>
               </div>
@@ -400,10 +400,10 @@ const handleModuleClick = (mod: any) => {
         </div>
 
         <div class="modal-body-content">
-          <h3 class="modal-title">{{ selectedModule?.title }} is Locked</h3>
+          <h3 class="modal-title">{{ selectedModule?.title }} is Not Subscribed</h3>
           <p class="modal-subtitle">Enterprise Suite Module</p>
           <p class="modal-description">
-            The <strong>{{ selectedModule?.title }}</strong> module is currently locked in your deployment. Active operational modules include <strong>Inventory</strong>, <strong>Procurement</strong>, and <strong>Human Resources</strong>.
+            The <strong>{{ selectedModule?.title }}</strong> module is not subscribed in your deployment. Active operational modules include <strong>Inventory</strong>, <strong>Procurement</strong>, and <strong>Human Resources</strong>.
           </p>
 
           <div class="premium-features-list">

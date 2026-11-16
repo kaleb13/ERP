@@ -368,32 +368,11 @@ const handleSave = () => {
 
             <!-- Custom Select Box Matching Figma Input Instance (3345:3622 / 3345:3522) -->
             <div class="slot-select-container">
-              <div class="slot-select-box">
-                <span 
-                  class="slot-select-value"
-                  :class="{ 'is-placeholder': slot.shift_id === 'rest' }"
-                >
-                  {{ slot.shift_id === 'rest' ? 'Select Shift' : (shiftDetailsMap[slot.shift_id]?.name || 'Office Day Shift') }}
-                </span>
-
-                <div class="slot-select-tail">
-                  <ChevronDown :size="18" class="chevron-tail-icon" />
-                </div>
-
-                <!-- Native HTML select overlaid invisibly for full cross-browser interaction -->
-                <select
-                  v-model="slot.shift_id"
-                  class="native-select-overlay"
-                  :aria-label="`Day ${slot.day_index} Shift Assignment`"
-                >
-                  <option value="rest">Select Shift</option>
-                  <option value="1">Office Day Shift</option>
-                  <option value="2">Retail Morning Shift</option>
-                  <option value="3">Retail Evening Shift</option>
-                  <option value="4">Night Guard Shift</option>
-                  <option value="5">Shop Split Shift</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="slot.shift_id"
+                :options="availableShifts"
+                placeholder="Select Shift"
+              />
             </div>
 
             <!-- Card Helper Text (Figma Node 6328:114231 & 6328:114252) -->

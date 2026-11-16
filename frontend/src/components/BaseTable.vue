@@ -151,10 +151,10 @@ if (typeof window !== 'undefined') {
           :class="{ 'btn-active': props.filterCount > 0 || showFilterPanel }"
           @click.stop="showFilterPanel = !showFilterPanel; showSortDropdown = false; showColumnsDropdown = false;"
         >
-          <Filter :size="15" />
+          <Filter :size="15" :stroke-width="2.5" class="icon-bold" />
           <span>Filter</span>
           <span v-if="props.filterCount > 0" class="filter-count-badge">{{ props.filterCount }}</span>
-          <ChevronDown :size="12" class="opacity-60 transition-transform" :class="{ 'rotate-180': showFilterPanel }" />
+          <ChevronDown :size="12" :stroke-width="2.5" class="opacity-60 transition-transform icon-bold" :class="{ 'rotate-180': showFilterPanel }" />
         </button>
 
         <!-- Sort Button & Dropdown -->
@@ -162,12 +162,12 @@ if (typeof window !== 'undefined') {
           <button
             type="button"
             class="toolbar-btn"
-            :class="{ 'btn-active': showSortDropdown || !!props.currentSort }"
+            :class="{ 'btn-open': showSortDropdown }"
             @click.stop="showSortDropdown = !showSortDropdown; showColumnsDropdown = false;"
           >
-            <ArrowUpDown :size="15" />
+            <ArrowUpDown :size="15" :stroke-width="2.5" class="icon-bold" />
             <span>Sort</span>
-            <ChevronDown :size="12" class="opacity-60" />
+            <ChevronDown :size="12" :stroke-width="2.5" class="opacity-60 transition-transform icon-bold" :class="{ 'rotate-180': showSortDropdown }" />
           </button>
 
           <div v-if="showSortDropdown" class="dropdown-popover sort-popover" @click.stop>
@@ -403,6 +403,16 @@ if (typeof window !== 'undefined') {
   background: var(--alias-color-background-hover, #f5f5f5);
   border-color: var(--alias-color-border-primary, #d4d4d4);
   color: var(--alias-color-text-secondary, #404040);
+}
+
+.toolbar-btn.btn-open {
+  background: var(--alias-color-background-hover, #f5f5f5);
+  border-color: var(--alias-color-border-primary, #d4d4d4);
+  color: var(--alias-color-text-secondary, #404040);
+}
+
+.icon-bold {
+  stroke-width: 2.5px;
 }
 
 .btn-active {

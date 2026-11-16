@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-vue-next';
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ArrowLeft, ArrowRight, ChevronDown, Check } from 'lucide-vue-next';
 
 interface Props {
   currentPage: number;
@@ -82,12 +82,75 @@ const handleNext = () => {
   }
 };
 
-const handlePerPageChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement;
-  const newSize = parseInt(target.value, 10);
-  emit('update:perPage', newSize);
-  emit('update:currentPage', 1);
+const isPerPageOpen = ref(false);
+const perPageButtonRef = ref<HTMLButtonElement | null>(null);
+const perPageMenuRef = ref<HTMLElement | null>(null);
+const perPageMenuStyle = ref<Record<string, string>>({});
+
+const updatePerPageMenuPosition = () => {
+  if (!perPageButtonRef.value) return;
+  const rect = perPageButtonRef.value.getBoundingClientRect();
+  const menuHeight = (props.perPageOptions.length * 36) + 12;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openAbove = spaceBelow < menuHeight && rect.top > menuHeight;
+
+  perPageMenuStyle.value = {
+    position: 'fixed',
+    top: openAbove ? 'auto' : `${rect.bottom + 4}px`,
+    bottom: openAbove ? `${window.innerHeight - rect.top + 4}px` : 'auto',
+    left: `${rect.left}px`,
+    minWidth: `${Math.max(rect.width, 80)}px`,
+    zIndex: '99999'
+  };
 };
+
+const togglePerPageMenu = () => {
+  isPerPageOpen.value = !isPerPageOpen.value;
+  if (isPerPageOpen.value) {
+    nextTick(() => {
+      updatePerPageMenuPosition();
+    });
+  }
+};
+
+const closePerPageMenu = () => {
+  isPerPageOpen.value = false;
+};
+
+const selectPerPage = (opt: number) => {
+  emit('update:perPage', opt);
+  emit('update:currentPage', 1);
+  closePerPageMenu();
+};
+
+const handleClickOutside = (e: MouseEvent) => {
+  if (!isPerPageOpen.value) return;
+  const target = e.target as Node;
+  if (
+    perPageButtonRef.value && !perPageButtonRef.value.contains(target) &&
+    perPageMenuRef.value && !perPageMenuRef.value.contains(target)
+  ) {
+    closePerPageMenu();
+  }
+};
+
+const handleWindowScrollResize = () => {
+  if (isPerPageOpen.value) {
+    updatePerPageMenuPosition();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  window.addEventListener('scroll', handleWindowScrollResize, true);
+  window.addEventListener('resize', handleWindowScrollResize);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('scroll', handleWindowScrollResize, true);
+  window.removeEventListener('resize', handleWindowScrollResize);
+});
 </script>
 
 <template>
@@ -106,20 +169,43 @@ const handlePerPageChange = (event: Event) => {
         <span class="qmt-pagination-page-size-label" data-node-id="5626:1163">Per page</span>
         
         <div class="qmt-pagination-select-wrapper" data-node-id="5626:1164">
-          <div class="qmt-pagination-select-button" data-node-id="I5626:1164;3345:17964">
-            <span class="qmt-pagination-select-value">{{ perPage }}</span>
-            <ChevronDown :size="16" class="qmt-pagination-select-chevron" />
-          </div>
-          <select 
-            :value="perPage" 
-            class="qmt-pagination-select-native"
-            aria-label="Per page"
-            @change="handlePerPageChange"
+          <button
+            ref="perPageButtonRef"
+            type="button"
+            class="qmt-pagination-select-button"
+            data-node-id="I5626:1164;3345:17964"
+            aria-haspopup="listbox"
+            :aria-expanded="isPerPageOpen"
+            title="Select entries per page"
+            @click="togglePerPageMenu"
           >
-            <option v-for="opt in perPageOptions" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
+            <span class="qmt-pagination-select-value">{{ perPage }}</span>
+            <ChevronDown :size="16" class="qmt-pagination-select-chevron" :class="{ 'is-open': isPerPageOpen }" />
+          </button>
+
+          <Teleport to="body">
+            <div
+              v-if="isPerPageOpen"
+              ref="perPageMenuRef"
+              class="qmt-pagination-dropdown-menu"
+              :style="perPageMenuStyle"
+              role="listbox"
+            >
+              <button
+                v-for="opt in perPageOptions"
+                :key="opt"
+                type="button"
+                class="qmt-pagination-dropdown-item"
+                :class="{ 'is-active': opt === perPage }"
+                role="option"
+                :aria-selected="opt === perPage"
+                @click="selectPerPage(opt)"
+              >
+                <span>{{ opt }}</span>
+                <Check v-if="opt === perPage" :size="14" class="qmt-pagination-item-check" />
+              </button>
+            </div>
+          </Teleport>
         </div>
       </div>
     </div>
@@ -249,7 +335,7 @@ const handlePerPageChange = (event: Event) => {
   align-items: center;
   gap: var(--qmt-button-gap, 8px);
   box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
-  pointer-events: none;
+  cursor: pointer;
   transition: all 0.15s ease;
 }
 
@@ -263,27 +349,68 @@ const handlePerPageChange = (event: Event) => {
 .qmt-pagination-select-chevron {
   color: #414651;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-.qmt-pagination-select-native {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 10;
+.qmt-pagination-select-chevron.is-open {
+  transform: rotate(180deg);
 }
 
-.qmt-pagination-select-wrapper:hover .qmt-pagination-select-button {
+.qmt-pagination-select-button:hover {
   border-color: #a1a1a1;
   background-color: #fafafa;
 }
 
-.qmt-pagination-select-native:focus ~ .qmt-pagination-select-button,
-.qmt-pagination-select-native:focus-visible ~ .qmt-pagination-select-button {
+.qmt-pagination-select-button:focus,
+.qmt-pagination-select-button:focus-visible {
+  outline: none;
   border-color: #0b529c;
   box-shadow: 0 0 0 3px var(--qmt-color-focus-ring-brand, #e1eefd);
+}
+
+/* Teleported Dropdown Menu for Per Page */
+.qmt-pagination-dropdown-menu {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qmt-pagination-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #404040;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.qmt-pagination-dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #0b529c;
+}
+
+.qmt-pagination-dropdown-item.is-active {
+  background-color: #e1eefd;
+  color: #0b529c;
+  font-weight: 600;
+}
+
+.qmt-pagination-item-check {
+  color: #0b529c;
+  margin-left: 8px;
 }
 
 /* ─── RIGHT: Segmented Button Group (Figma Node 5626:1105) ─── */

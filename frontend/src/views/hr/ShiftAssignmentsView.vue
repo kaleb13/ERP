@@ -360,29 +360,29 @@ const shiftSelectOptions = [
 
           <!-- Shift Window Filter -->
           <div class="filter-select-item">
-            <select v-model="shiftTypeFilter" class="filter-select">
-              <option v-for="opt in shiftTypeOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
+            <FormSelect
+              v-model="shiftTypeFilter"
+              :options="shiftTypeOptions"
+              placeholder="Select Shift Window"
+            />
           </div>
 
           <!-- Facility Filter -->
           <div class="filter-select-item">
-            <select v-model="entityFilter" class="filter-select">
-              <option v-for="opt in entityOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
+            <FormSelect
+              v-model="entityFilter"
+              :options="entityOptions"
+              placeholder="Select Facility"
+            />
           </div>
 
           <!-- Roster State Filter -->
           <div class="filter-select-item">
-            <select v-model="stateFilter" class="filter-select">
-              <option v-for="opt in stateOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
+            <FormSelect
+              v-model="stateFilter"
+              :options="stateOptions"
+              placeholder="Select State"
+            />
           </div>
         </div>
       </template>

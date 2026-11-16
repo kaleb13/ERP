@@ -30,7 +30,35 @@ If no suitable component is found, or the library component cannot be imported:
 3. Ask the user to provide a component link, approve a reusable auto-layout component, or choose an existing alternative.
 4. Continue only after the user chooses. Do not treat an unsuccessful search or import as permission to approximate.
 
-## 4. Verify the result
+## 4. ERP Layout & Creation Form Standards
+
+- **Tabular Create Forms for 1:N Lines & Child Schemas**:
+  - Whenever designing an expanded full creation form with related lines or child schemas (e.g. `ProcurementUnitMember` lines for `ProcurementUnit`, PO lines, committee members, addresses), **NEVER place child tables on the same page underneath the master card**.
+  - Always use **Primary Tabs (`<BaseTabs />` pill capsule)**: Tab 1 for master entity details, Tab 2+ for related child lines and sub-tables.
+- **Dynamic Table Default Non-Empty Initial State (1 Row Minimum)**:
+  - When designing dynamic sub-tables (`DynamicSubTable` / Figma `6095:96580`), the default design state MUST NEVER be blank or empty.
+  - ALWAYS provide at least **one pre-populated default row** in the initial design state. This ensures column layouts, text inputs, selects, numeric alignments, and interactive action controls are immediately visible and testable.
+- **Dropdown & Popover Standard (Zero Native Browser Selects)**:
+  - All dropdown selectors, per-page selectors, and filter pickers must use official QMT popover components (`FormSelect` / linked QMT select menus). Never use raw OS select popups or unstyled select menus.
+  - **Short Selection Placeholders**: Keep the complete field name in the label; use concise `Select [core noun]` placeholder copy (for example, `Statutory Purchase Method` → `Select Method`, `Category Scope` → `Select Scope`). Avoid repeating the full label or using explanatory/global-scope text as a form placeholder. `All ...` prompts are for filters.
+- **Table Top Filter Section Controls**:
+  - The Sort button in data tables MUST ALWAYS be the clean **Secondary Button** (`secondary-gray`), matching the Filter button. It must NEVER be colored or brand-blue.
+  - Both Filter and Sort buttons MUST use icons with `stroke-width="2.5"` (`class="icon-bold"`).
+- **Table Data Representation: Status, State, and Dual-Lookup Standard (Badges vs. Plain Text)**:
+  - **Status and State are Always Badged**: In all tables, directory frames, and sub-tables, `status` and `state` MUST always use linked badge component instances (`BaseBadge`).
+  - **Dual Representation for Schema Lookups**: Lookups (e.g. operation mode, spend class, receipt mode, unit type, category type) have two valid visual representations:
+    1. **Plain Tertiary Text** (`#737373`): Clean, quiet typography for secondary, informational, or high-density columns.
+    2. **Badges** (`BaseBadge`): Visually anchored badge pills for high-salience operational classifications.
+  - **Designer Discretion & Balancing Rule**: The designer/agent must evaluate the overall table composition and decide whether to represent a lookup in text or as a badge:
+    - *Avoid Badge Clutter*: Do not place badges in every column. Having too many badges across multiple columns creates visual noise, eye fatigue, and destroys table scanability.
+    - *Avoid Hidden Information*: Do not make critical, high-impact operational distinctions plain text if doing so conceals vital functional modes or routing workflows from quick scanning.
+    - *Decision Criteria*: Weigh the operational importance, cardinality, and row density of the specific table. If a lookup represents a critical operational distinction (such as `Centralized` vs `Decentralized` in Procurement Units), a badge is effective; if the table is dense or the lookup is secondary metadata, render it as clean plain tertiary text.
+    - *Badge Color*: Do not apply one badge color to every lookup for visual uniformity. When a badge is warranted, select its color for the value's meaning and contrast. **NEVER use the inactive Gray color for active lookups or options (such as Permissive)**; Gray is strictly reserved for Inactive system states (`state === 'inactive'`). Active policy and category lookups in Figma MUST use the authoritative QMT Team Library colors (`Color=Indigo` for Mandatory rules, `Color=Blue` for Permissive alternatives, `Color=Purple` or `Color=Orange` for specialized classifications). Keep State/status colors semantically distinct from ordinary classifications.
+- **Mandatory 3-Dot Actions Column Standard (`MoreVertical`)**:
+  - In all Figma directory tables, data frames, and sub-tables, the Actions column MUST ALWAYS use the 3-dot kebab menu button instance (`MoreVertical` / QMT 3-dot action button instance).
+  - NEVER design loose inline action icons (e.g. View, Edit, and Delete icons side-by-side in the table cell). The cell strictly houses the 3-dot menu trigger.
+
+## 5. Verify the result
 
 Before reporting completion:
 

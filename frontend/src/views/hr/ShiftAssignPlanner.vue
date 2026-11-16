@@ -464,21 +464,21 @@ const handlePublishRoster = () => {
     <div class="scope-toolbar-card">
       <div class="scope-controls-group">
         <div class="scope-field">
-          <label class="scope-label">Facility / Branch</label>
-          <select v-model="selectedEntityId" class="scope-select">
-            <option v-for="opt in entityOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
+          <FormSelect
+            v-model="selectedEntityId"
+            label="Facility / Branch"
+            :options="entityOptions"
+            placeholder="Select Facility"
+          />
         </div>
 
         <div class="scope-field">
-          <label class="scope-label">Department</label>
-          <select v-model="selectedOrgUnitId" class="scope-select">
-            <option v-for="opt in orgUnitOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
+          <FormSelect
+            v-model="selectedOrgUnitId"
+            label="Department"
+            :options="orgUnitOptions"
+            placeholder="Select Department"
+          />
         </div>
       </div>
 

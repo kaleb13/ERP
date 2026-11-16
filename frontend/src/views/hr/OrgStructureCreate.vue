@@ -78,7 +78,15 @@ export interface StructureUnitRow {
   type: string;
 }
 
-const unitsList = ref<StructureUnitRow[]>([]);
+const unitsList = ref<StructureUnitRow[]>([
+  {
+    id: 1,
+    unit_id: masterOrgUnits[0].id,
+    code: masterOrgUnits[0].code,
+    name: masterOrgUnits[0].name,
+    type: masterOrgUnits[0].type
+  }
+]);
 const selectedUnitIds = ref<number[]>([]);
 
 const orgUnitSelectOptions = computed(() => {

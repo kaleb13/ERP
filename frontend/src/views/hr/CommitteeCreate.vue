@@ -71,6 +71,13 @@ const availableEmployees = [
   { id: 62, code: 'EMP-062', name: 'Tewodros Kassahun', position: 'Inventory Controller' }
 ];
 
+const employeeOptions = computed(() =>
+  availableEmployees.map((emp) => ({
+    value: emp.id,
+    label: `${emp.name} (${emp.code}) — ${emp.position}`
+  }))
+);
+
 // ─── Form State: Committee (Header [DIST]) ───
 const form = ref({
   name: '',
@@ -494,27 +501,22 @@ const handleSaveCommittee = () => {
 
                 <!-- Employee Inline Select -->
                 <td class="child-td">
-                  <select 
-                    v-model="row.employee_id" 
-                    class="child-inline-select font-medium"
-                  >
-                    <option v-for="emp in availableEmployees" :key="emp.id" :value="emp.id">
-                      {{ emp.name }} ({{ emp.code }}) — {{ emp.position }}
-                    </option>
-                  </select>
+                  <FormSelect
+                    v-model="row.employee_id"
+                    :options="employeeOptions"
+                    variant="cell"
+                    placeholder="Select Staff"
+                  />
                 </td>
 
                 <!-- Committee Role Inline Select -->
                 <td class="child-td">
-                  <select 
-                    v-model="row.role" 
-                    class="child-inline-select font-medium"
-                    :class="{ 'text-blue-700': row.role === 'chair' }"
-                  >
-                    <option v-for="opt in committeeRoleOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <FormSelect
+                    v-model="row.role"
+                    :options="committeeRoleOptions"
+                    variant="cell"
+                    placeholder="Select Role"
+                  />
                 </td>
 
                 <!-- Appointment Date Inline Input -->
@@ -592,30 +594,24 @@ const handleSaveCommittee = () => {
             <div class="modal-grid-2">
               <!-- Employee (Col 1) -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Appointed Staff Member <span class="required-star">*</span></label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.employee_id" class="modal-form-select">
-                    <option value="" disabled>Select</option>
-                    <option v-for="emp in availableEmployees" :key="emp.id" :value="emp.id">
-                      {{ emp.name }} ({{ emp.code }}) — {{ emp.position }}
-                    </option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.employee_id"
+                  label="Appointed Staff Member"
+                  required
+                  :options="employeeOptions"
+                  placeholder="Select Staff"
+                />
               </div>
 
               <!-- Role (Col 2) -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Governance Role <span class="required-star">*</span></label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.role" class="modal-form-select">
-                    <option value="" disabled>Select</option>
-                    <option v-for="opt in committeeRoleOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.role"
+                  label="Governance Role"
+                  required
+                  :options="committeeRoleOptions"
+                  placeholder="Select Role"
+                />
               </div>
 
               <!-- Appointment Date (Col 1) -->

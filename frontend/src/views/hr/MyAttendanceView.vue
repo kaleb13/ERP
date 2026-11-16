@@ -11,6 +11,7 @@ import MetricCard from '../../components/MetricCard.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
+import FormSelect from '../../components/FormSelect.vue';
 import type { ColumnDef, SortOption } from '../../components/BaseTable.vue';
 
 // ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3: Exact Sidebar Page Name Only) ───
@@ -448,11 +449,11 @@ const getExceptionTypeLabel = (type: string) => {
         </p>
       </div>
       <div class="context-filter">
-        <select v-model="selectedMonth" class="month-select">
-          <option v-for="opt in monthOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+        <FormSelect
+          v-model="selectedMonth"
+          :options="monthOptions"
+          placeholder="Select Month"
+        />
       </div>
     </div>
 

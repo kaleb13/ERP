@@ -14,9 +14,113 @@ import {
   CalendarRange, ArrowLeftRight, CalendarDays, Umbrella,
   GitCommit, PieChart, Banknote, ListFilter,
   Fingerprint, UserMinus, CheckSquare, Receipt,
-  ClipboardCheck, Calculator, Megaphone, LifeBuoy
-} from 'lucide-vue-next';;
+  ClipboardCheck, Calculator, Megaphone, LifeBuoy,
+  Tag, DollarSign, Check, Lock, Scale
+} from 'lucide-vue-next';
 import BaseNavItem from './BaseNavItem.vue';
+
+interface ERPModuleItem {
+  id: string;
+  title: string;
+  icon: any;
+  iconColor: string;
+  iconBg: string;
+  subscribed: boolean;
+  route: string;
+}
+
+const allModulesList: ERPModuleItem[] = [
+  {
+    id: 'inventory',
+    title: 'Inventory',
+    icon: Box,
+    iconColor: '#0B529C',
+    iconBg: '#EFF6FF',
+    subscribed: true,
+    route: '/inventory/stock-summary'
+  },
+  {
+    id: 'procurement',
+    title: 'Procurement',
+    icon: ShoppingCart,
+    iconColor: '#009966',
+    iconBg: '#ECFDF5',
+    subscribed: true,
+    route: '/procurement/categories'
+  },
+  {
+    id: 'hr',
+    title: 'Human Resources',
+    icon: Users,
+    iconColor: '#7C3AED',
+    iconBg: '#F5F3FF',
+    subscribed: true,
+    route: '/hr/employees'
+  },
+  {
+    id: 'buying',
+    title: 'Buying',
+    icon: Tag,
+    iconColor: '#0D9488',
+    iconBg: '#F0FDFA',
+    subscribed: false,
+    route: '/inventory/stock-summary'
+  },
+  {
+    id: 'company_setup',
+    title: 'Company Setup',
+    icon: Building2,
+    iconColor: '#525252',
+    iconBg: '#F5F5F5',
+    subscribed: false,
+    route: '/company-setup'
+  },
+  {
+    id: 'sales',
+    title: 'Sales',
+    icon: ShoppingBag,
+    iconColor: '#FA7014',
+    iconBg: '#FFF7ED',
+    subscribed: false,
+    route: '/inventory/stock-summary'
+  },
+  {
+    id: 'finance',
+    title: 'Finance & Accounting',
+    icon: DollarSign,
+    iconColor: '#E7000B',
+    iconBg: '#FEF2F2',
+    subscribed: false,
+    route: '/inventory/stock-summary'
+  },
+  {
+    id: 'selling',
+    title: 'Selling & POS',
+    icon: Receipt,
+    iconColor: '#D97706',
+    iconBg: '#FEF3C7',
+    subscribed: false,
+    route: '/inventory/stock-summary'
+  },
+  {
+    id: 'sys_config',
+    title: 'System Config',
+    icon: Sliders,
+    iconColor: '#0284C7',
+    iconBg: '#F0F9FF',
+    subscribed: false,
+    route: '/sys-config'
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    icon: Settings,
+    iconColor: '#475569',
+    iconBg: '#F1F5F9',
+    subscribed: false,
+    route: '/settings'
+  }
+];
 
 interface Props {
   collapsed?: boolean;
@@ -147,7 +251,8 @@ const iconsMap: Record<string, any> = {
   CheckSquare,
   Settings,
   Megaphone,
-  LifeBuoy
+  LifeBuoy,
+  Scale
 };
 
 // Active link matching helper
@@ -190,7 +295,9 @@ const activeModule = computed(() => {
       iconBg: '#ECFDF5',
       menu: [
         { isHeader: true, label: 'Foundation & Policy' },
-        { to: '/procurement/categories', label: 'Procurement Categories', icon: 'FolderTree' }
+        { to: '/procurement/categories', label: 'Procurement Categories', icon: 'FolderTree' },
+        { to: '/procurement/units', label: 'Procurement Units', icon: 'Building2' },
+        { to: '/procurement/thresholds', label: 'Spend Threshold Bands', icon: 'Scale' }
       ]
     };
   } else if (path.startsWith('/hr')) {
@@ -323,26 +430,30 @@ onUnmounted(() => {
 
             <!-- SUBMENU (positioned absolutely to the right) -->
             <div v-if="isSubmenuOpen" class="brand-submenu-menu" @click.stop>
-              <BaseNavItem
-                type="sidebar"
-                label="Inventory"
-                :icon="Box"
-                @click="navigateToModule('/inventory/stock-summary')"
-              />
-
-              <BaseNavItem
-                type="sidebar"
-                label="Procurement"
-                :icon="ShoppingCart"
-                @click="navigateToModule('/procurement/categories')"
-              />
-
-              <BaseNavItem
-                type="sidebar"
-                label="Human Resources"
-                :icon="Users"
-                @click="navigateToModule('/hr/employees')"
-              />
+              <div 
+                v-for="mod in allModulesList" 
+                :key="mod.id"
+                class="submenu-module-card"
+                :class="{ 
+                  'is-active': activeModule.id === mod.id,
+                  'is-unsubscribed': !mod.subscribed 
+                }"
+                :title="mod.subscribed ? mod.title : `${mod.title} (Not Subscribed)`"
+                @click="navigateToModule(mod.subscribed ? mod.route : '/')"
+              >
+                <div class="submenu-module-tile" :style="{ backgroundColor: mod.iconBg }">
+                  <component 
+                    :is="mod.icon" 
+                    :size="16" 
+                    :style="{ color: mod.iconColor }" 
+                  />
+                </div>
+                <div class="submenu-module-body">
+                  <span class="submenu-module-name">{{ mod.title }}</span>
+                  <span v-if="!mod.subscribed" class="submenu-module-pill">Not Subscribed</span>
+                </div>
+                <Check v-if="activeModule.id === mod.id" :size="14" class="submenu-module-check" />
+              </div>
             </div>
           </div>
 
@@ -581,18 +692,91 @@ onUnmounted(() => {
   position: absolute;
   top: 0;
   left: calc(100% + 8px);
-  width: 220px;
+  width: 250px;
+  max-height: 440px;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: #ffffff;
   border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: var(--alias-radius-xl, 12px);
   box-shadow: 0 10px 25px -5px rgba(10, 13, 18, 0.08), 0 8px 10px -6px rgba(10, 13, 18, 0.04);
   z-index: 1000;
-  padding: var(--alias-spacing-xs, 4px);
+  padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   animation: subFade 0.15s ease-out;
   box-sizing: border-box;
+}
+
+.brand-submenu-menu::-webkit-scrollbar {
+  width: 5px;
+}
+.brand-submenu-menu::-webkit-scrollbar-thumb {
+  background-color: #e5e5e5;
+  border-radius: 9999px;
+}
+
+.submenu-module-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.submenu-module-card:hover {
+  background-color: #f5f5f5;
+}
+
+.submenu-module-card.is-active {
+  background-color: #eff6ff;
+}
+
+.submenu-module-tile {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+}
+
+.submenu-module-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.submenu-module-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.submenu-module-card.is-active .submenu-module-name {
+  color: #0b529c;
+  font-weight: 600;
+}
+
+.submenu-module-pill {
+  font-size: 10px;
+  color: #737373;
+  line-height: 1.2;
+}
+
+.submenu-module-check {
+  color: #0b529c;
+  flex-shrink: 0;
 }
 
 @keyframes subFade {

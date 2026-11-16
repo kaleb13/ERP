@@ -996,15 +996,17 @@ const handleClear = () => {
 
                   <!-- 1. Left: Target Type Dropdown -->
                   <td class="child-td child-td-type">
-                    <select
+                    <FormSelect
                       v-model="row.target_type"
-                      class="child-inline-select"
-                      @change="handleTargetTypeChange(row)"
-                    >
-                      <option value="client_assignment">Client Assignment</option>
-                      <option value="entity">Branch / Entity</option>
-                      <option value="org_unit">Organization Unit</option>
-                    </select>
+                      :options="[
+                        { value: 'client_assignment', label: 'Client Assignment' },
+                        { value: 'entity', label: 'Branch / Entity' },
+                        { value: 'org_unit', label: 'Organization Unit' }
+                      ]"
+                      variant="cell"
+                      placeholder="Select Type"
+                      @update:model-value="() => handleTargetTypeChange(row)"
+                    />
                   </td>
 
                   <!-- 2. Right: Filtered Target Destination Dropdown -->
@@ -1015,36 +1017,24 @@ const handleClear = () => {
                     </div>
 
                     <!-- Case B: Branch / Entity Options -->
-                    <select
+                    <FormSelect
                       v-else-if="row.target_type === 'entity'"
-                      :value="row.target_entity_id"
-                      class="child-inline-select"
-                      @change="(e) => handleBranchChange(row, Number((e.target as HTMLSelectElement).value))"
-                    >
-                      <option
-                        v-for="b in clientBranchOptions"
-                        :key="b.value"
-                        :value="b.value"
-                      >
-                        {{ b.label }}
-                      </option>
-                    </select>
+                      :model-value="row.target_entity_id"
+                      :options="clientBranchOptions"
+                      variant="cell"
+                      placeholder="Select Branch"
+                      @update:model-value="(val) => handleBranchChange(row, Number(val))"
+                    />
 
                     <!-- Case C: Organization Unit Options -->
-                    <select
+                    <FormSelect
                       v-else-if="row.target_type === 'org_unit'"
-                      :value="row.organization_unit_id"
-                      class="child-inline-select"
-                      @change="(e) => handleUnitChange(row, Number((e.target as HTMLSelectElement).value))"
-                    >
-                      <option
-                        v-for="u in clientOrgUnitOptions"
-                        :key="u.value"
-                        :value="u.value"
-                      >
-                        {{ u.label }}
-                      </option>
-                    </select>
+                      :model-value="row.organization_unit_id"
+                      :options="clientOrgUnitOptions"
+                      variant="cell"
+                      placeholder="Select Unit"
+                      @update:model-value="(val) => handleUnitChange(row, Number(val))"
+                    />
                   </td>
 
                   <!-- Split Value Input (Percentage or Amount) -->
@@ -1083,10 +1073,15 @@ const handleClear = () => {
 
                   <!-- State Selector -->
                   <td class="child-td child-td-state">
-                    <select v-model="row.state" class="child-inline-select w-24">
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                    <FormSelect
+                      v-model="row.state"
+                      :options="[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' }
+                      ]"
+                      variant="cell"
+                      placeholder="Select State"
+                    />
                   </td>
 
                   <!-- Row Actions Group (Rule 11: Expand modal + Remove) -->
@@ -1174,42 +1169,50 @@ const handleClear = () => {
           <div class="modal-form-grid">
             <!-- Target Destination Type -->
             <div class="modal-form-group">
-              <label class="modal-label">Target Bucket Destination Type</label>
-              <select v-model="activeAllocRow.target_type" class="modal-select">
-                <option value="client_assignment">Client Assignment (This Placement Direct)</option>
-                <option value="entity">Client Branch Entity (Target Branch Granularity)</option>
-                <option value="org_unit">Client Organization Unit (Unit Granularity)</option>
-              </select>
+              <FormSelect
+                v-model="activeAllocRow.target_type"
+                label="Target Bucket Destination Type"
+                :options="[
+                  { value: 'client_assignment', label: 'Client Assignment (This Placement Direct)' },
+                  { value: 'entity', label: 'Client Branch Entity (Target Branch Granularity)' },
+                  { value: 'org_unit', label: 'Client Organization Unit (Unit Granularity)' }
+                ]"
+                placeholder="Select Destination Type"
+              />
             </div>
 
             <!-- Target Branch Entity (if target_type === 'entity') -->
             <div v-if="activeAllocRow.target_type === 'entity'" class="modal-form-group">
-              <label class="modal-label">Target Client Branch Entity</label>
-              <select v-model="activeAllocRow.target_entity_id" class="modal-select">
-                <option v-for="b in clientBranchOptions" :key="b.value" :value="b.value">
-                  {{ b.label }}
-                </option>
-              </select>
+              <FormSelect
+                v-model="activeAllocRow.target_entity_id"
+                label="Target Client Branch Entity"
+                :options="clientBranchOptions"
+                placeholder="Select Branch"
+              />
             </div>
 
             <!-- Target Org Unit (if target_type === 'org_unit') -->
             <div v-if="activeAllocRow.target_type === 'org_unit'" class="modal-form-group">
-              <label class="modal-label">Target Organization Unit</label>
-              <select v-model="activeAllocRow.organization_unit_id" class="modal-select">
-                <option v-for="u in clientOrgUnitOptions" :key="u.value" :value="u.value">
-                  {{ u.label }}
-                </option>
-              </select>
+              <FormSelect
+                v-model="activeAllocRow.organization_unit_id"
+                label="Target Organization Unit"
+                :options="clientOrgUnitOptions"
+                placeholder="Select Organization Unit"
+              />
             </div>
 
             <!-- Allocation Share / Amount -->
             <div class="modal-form-grid-2">
               <div class="modal-form-group">
-                <label class="modal-label">Share Basis</label>
-                <select v-model="activeAllocRow.split_type" class="modal-select">
-                  <option value="percent">Percentage (%)</option>
-                  <option value="amount">Fixed Amount (ETB)</option>
-                </select>
+                <FormSelect
+                  v-model="activeAllocRow.split_type"
+                  label="Share Basis"
+                  :options="[
+                    { value: 'percent', label: 'Percentage (%)' },
+                    { value: 'amount', label: 'Fixed Amount (ETB)' }
+                  ]"
+                  placeholder="Select Basis"
+                />
               </div>
 
               <div class="modal-form-group">
@@ -1248,11 +1251,15 @@ const handleClear = () => {
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-label">State</label>
-                <select v-model="activeAllocRow.state" class="modal-select">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <FormSelect
+                  v-model="activeAllocRow.state"
+                  label="State"
+                  :options="[
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' }
+                  ]"
+                  placeholder="Select State"
+                />
               </div>
             </div>
           </div>

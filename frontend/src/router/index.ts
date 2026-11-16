@@ -78,6 +78,9 @@ import ClientAssignmentsView from '../views/hr/ClientAssignmentsView.vue';
 import ClientAssignmentCreate from '../views/hr/ClientAssignmentCreate.vue';
 import ProcurementCategoriesView from '../views/procurement/ProcurementCategoriesView.vue';
 import ProcurementCategoryCreate from '../views/procurement/ProcurementCategoryCreate.vue';
+import ProcurementUnitsView from '../views/procurement/ProcurementUnitsView.vue';
+import ProcurementUnitCreate from '../views/procurement/ProcurementUnitCreate.vue';
+import ProcurementMethodsView from '../views/procurement/ProcurementMethodsView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -555,6 +558,25 @@ const router = createRouter({
       path: '/procurement/categories/create',
       name: 'procurementCategoryCreate',
       component: ProcurementCategoryCreate
+    },
+    {
+      path: '/procurement/units',
+      name: 'procurementUnits',
+      component: ProcurementUnitsView
+    },
+    {
+      path: '/procurement/units/create',
+      name: 'procurementUnitCreate',
+      component: ProcurementUnitCreate
+    },
+    {
+      path: '/procurement/thresholds',
+      name: 'procurementThresholds',
+      component: ProcurementMethodsView
+    },
+    {
+      path: '/procurement/methods',
+      redirect: '/procurement/thresholds'
     }
   ]
 });

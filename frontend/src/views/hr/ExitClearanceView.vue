@@ -391,12 +391,12 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
       />
       
       <div class="dept-filter-box">
-        <label class="dept-filter-label">Filter Department:</label>
-        <select v-model="selectedDeptFilter" class="dept-select">
-          <option v-for="opt in departmentFilterOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+        <FormSelect
+          v-model="selectedDeptFilter"
+          label="Filter Department:"
+          :options="departmentFilterOptions"
+          placeholder="Select Department"
+        />
       </div>
     </div>
 

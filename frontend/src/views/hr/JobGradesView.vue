@@ -611,12 +611,16 @@ onUnmounted(() => {
         <div class="matrix-control-bar">
           <div class="control-left">
             <div class="entity-selector-wrap">
-              <label class="control-label">Owning Entity</label>
-              <select v-model="selectedEntityForMatrix" class="entity-dropdown">
-                <option value="Haleta Addis Ababa HQ">Haleta Addis Ababa HQ</option>
-                <option value="Haleta Grand Hotel & Suites">Haleta Grand Hotel & Suites</option>
-                <option value="Haleta Hawassa Hub">Haleta Hawassa Hub</option>
-              </select>
+              <FormSelect
+                v-model="selectedEntityForMatrix"
+                label="Owning Entity"
+                :options="[
+                  { value: 'Haleta Addis Ababa HQ', label: 'Haleta Addis Ababa HQ' },
+                  { value: 'Haleta Grand Hotel & Suites', label: 'Haleta Grand Hotel & Suites' },
+                  { value: 'Haleta Hawassa Hub', label: 'Haleta Hawassa Hub' }
+                ]"
+                placeholder="Select Entity"
+              />
             </div>
 
             <div class="matrix-metadata-pill-strip">

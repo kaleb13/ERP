@@ -116,6 +116,9 @@ const newStepFactory = () => {
   };
 };
 
+// Default initial state: at least 1 discrete step row
+stepsList.value = [ newStepFactory() ];
+
 const isAllStepsSelected = computed(() => {
   return stepsList.value.length > 0 && stepsList.value.every(s => selectedStepIds.value.includes(s.id));
 });

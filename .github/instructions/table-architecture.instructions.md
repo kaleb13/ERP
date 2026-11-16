@@ -16,6 +16,7 @@ Use the linked QMT components for both Figma and the ERP implementation. The can
 - **Selection:** Do not create a checkbox-only column. The first header cell combines its label and select-all checkbox (`Text=True`, `Checkbox=True`); each body row uses the QMT `Lead checkbox` table-cell variant. In Vue, render the shared `<FormCheckbox />` inside the first identity cell and give it an accessible label. Keep that identity column visible so row selection remains available.
 - **Footer:** Use the linked QMT **Pagination** component in Figma (the desktop square card button-group variant) and the existing `<BasePagination />` through `<AppDataTable />`/`<BaseTable />` in Vue. Do not replace pagination with a hand-built footer or plain “Showing entries” text.
 - **Component integrity:** Figma controls must remain linked instances of their source components. Build only the row/column structure around those instances; do not detach or redraw shared controls.
+- **Sort & Filter Buttons Standard (Secondary Button with Icon Bold):** The Sort button in the Table Top Filter Section MUST ALWAYS be styled as our **Secondary Button** (`secondary-gray`: white background `#ffffff`, subtle border `#e5e5e5`, secondary text `#404040`), exactly matching the Filter button in visual hierarchy. It MUST NEVER be rendered as a colored/brand-blue button. Both Filter (`Filter`) and Sort (`ArrowUpDown`) button icons MUST have the property of `icon bold` (`stroke-width="2.5"` / `class="icon-bold"`).
 
 ---
 
@@ -190,16 +191,32 @@ const isColVisible = (key: string) => {
 
 ---
 
-## 7. Strict Anti-Badge Standard (Plain Text Default)
-- **Plain Text Default**: Table data cells MUST default to clean, readable plain text in the tertiary color (`#737373`).
-- **NEVER wrap ordinary content in badges**:
-  - ❌ **Forbidden**: Wrapping unit counts (`16 Units`, `8 Units`) in a badge or colored container.
-  - ❌ **Forbidden**: Wrapping entity types (`Department`, `Section`, `Region`) in badge pills.
-  - ❌ **Forbidden**: Wrapping boolean visibility or flags (`Visible`, `Hidden`) in badges.
-  - ✅ **Mandatory**: Simply write the plain text (`16 Units`, `Department`, `Section`).
-- **Badges/Pills are Strictly Reserved for Lifecycle States**:
-  - Badges are permitted **only** for actual record lifecycle states (`Active`, `Inactive`, `Draft`, `Pending`), and even then, only when genuinely needed.
-  - If information can simply be written as clear text, write it as plain text without badges.
+## 7. Table Data Representation: Status, State, and Dual-Lookup Standard (Badges vs. Plain Text)
+- **Status and State are Always Represented with Badges**:
+  - In all sections and tables across the system, **Status** (`status_lookup_value_id`, approval status, lifecycle status) and **State** (`active` / `inactive`) MUST ALWAYS be represented with badges (`BaseBadge` / status pills).
+- **Dual Representation for Schema Lookup Values**:
+  - Schema lookup values (e.g. `mode_lookup_value_id`, `class_lookup_value_id`, `receipt_mode_lookup_value_id`, `unit_type_id`, `method_type_id`) have two valid representations:
+    1. **Plain Tertiary Text** (`#737373` / `.tertiary-plain-text`): Clean typography for quiet, secondary, or high-density columns.
+    2. **Badges** (`BaseBadge`): Visually anchored badges for high-impact operational distinctions.
+- **Agent/Designer Decision Responsibility**:
+  - It is for the agent/designer to carefully evaluate each table and decide whether a lookup value is best represented in text or in a badge:
+    - **Avoid Badge Clutter**: We do not want too many badges across the table rows. An excess of badges across multiple columns creates visual noise, eye fatigue, and reduces table scanability.
+    - **Prevent Hidden Information**: We do not want critical operational information to be obscured or overlooked by flattening everything into plain text. When a lookup represents a vital operational distinction or mode that users must quickly distinguish at a glance, a badge provides optimal hierarchy.
+    - **Evaluation Rule**: Inspect the table as a whole. Consider total column count, existing badge density (since Status and State are already badged), and the business criticality of the lookup. If a lookup represents a key operational mode (e.g. `Centralized` vs `Decentralized` in Procurement Units), a badge is effective. If the table is wide or the lookup is secondary/taxonomic, use plain tertiary text.
+- **No Inactive Gray for Active Lookups**:
+  - `color="gray"` is **strictly reserved for Inactive / Dormant states** (`state === 'inactive'`).
+  - **NEVER** use `gray` for active functional lookup values, policy modes, or options (such as `Permissive` in policy enforcement, secondary operational modes, etc.).
+  - Using inactive gray for operational options makes active configurations appear dead, disabled, or dormant, and conflicts with the State column.
+  - Active lookups that warrant a badge MUST use dedicated QMT Library semantic colors from Figma node `3345:21147`:
+    - Policy Enforcement: `Mandatory` ➔ `indigo` (`#432DD7` / `#EEF2FF`), `Permissive` ➔ `blue` (`#0069A8` / `#F0F9FF`).
+    - Governance Status: `acceptForAll` ➔ `success`, `acceptForThis` ➔ `primary`, `pending` ➔ `warning`, `reject` ➔ `error`.
+    - Custom classifications: `purple` (`#8200DB` / `#FAF5FF`), `orange` (`#CA3500` / `#FFF7ED`).
+- **Strict Anti-Badge Rule for Non-Lookup Raw Data**:
+  - Raw numbers, scalar attributes, counts, and dates MUST NEVER be wrapped in badges:
+    - ❌ **Forbidden**: Wrapping unit or item counts (`16 Units`, `8 Items`) in badge pills.
+    - ❌ **Forbidden**: Wrapping simple boolean flags (`Yes`, `No`, `Visible`, `Hidden`) in badges.
+    - ❌ **Forbidden**: Wrapping dates or timestamps in badge pills.
+    - ✅ **Mandatory**: Render raw scalar data as clean, readable plain text.
 
 ---
 
@@ -237,3 +254,61 @@ const isColVisible = (key: string) => {
       - **Employees (`EMPLOYMENT_STATUS`)**: `active` ➔ **`In Service`** (e.g. `In Service`, `Probation`, `Suspended`, `On Leave`, `Separated`).
       - **Governance Catalogues (`status_lookup_value_id`)**: `acceptForAll` ➔ **`Approved for All Entities`**, `acceptForThis` ➔ **`Approved for This Entity Only`**, `pending` ➔ **`Pending Approval`**.
       - **Versioned Blueprints (`structure_state_lookup_value_id`)**: `active` ➔ **`Current / In Effect`**, `draft` ➔ **`Draft`**, `superseded` ➔ **`Superseded`**.
+
+---
+
+## 11. Mandatory 3-Dot Actions Column Standard (MoreVertical / Zero Loose Inline Action Buttons)
+- **Strict Prohibition of Loose Inline Buttons**:
+  - The Actions column in tables MUST NEVER render loose, bare, or inline action buttons side-by-side in the table cell (e.g. `Eye`, `Edit2`, and `Trash2` sitting bare next to each other).
+  - Inline action buttons create visual clutter, break row rhythm, cause unpredictable column widths, and violate QMT design system standards.
+- **Mandatory 3-Dot Kebab Menu (`MoreVertical`)**:
+  - The Actions cell MUST ALWAYS contain a single 3-dot kebab menu button (`.btn-action-dots` with `<MoreVertical :size="15" />`).
+- **Standardized Action Popover Menu (`.action-menu-popup`)**:
+  - Clicking the 3-dot trigger button toggles a floating menu containing contextual actions for that record:
+    1. **Inspect / View Details**: `<Eye :size="14" />` with `Inspect [Noun]` or `View Details`.
+    2. **Edit Record**: `<Edit2 :size="14" />` with `Edit [Noun]`.
+    3. **Lifecycle State Toggle**: `<Check :size="14" />` with `Activate [Noun]` or `Deactivate [Noun]`.
+    4. **Divider**: `<div class="menu-divider"></div>` separating non-destructive from destructive operations.
+    5. **Delete Record**: `<Trash2 :size="14" />` with danger styling (`.menu-item.danger` with `#E7000B`).
+- **Standard Implementation Pattern (Vue)**:
+  ```html
+  <td v-if="isColVisible('actions')" class="col-actions">
+    <div class="action-dropdown-wrapper">
+      <button
+        type="button"
+        class="btn-action-dots"
+        title="More actions"
+        @click="toggleActionMenu(row.id, $event)"
+      >
+        <MoreVertical :size="15" />
+      </button>
+
+      <div
+        v-if="activeActionMenuId === row.id"
+        class="action-menu-popup"
+        @click.stop
+      >
+        <button type="button" class="menu-item" @click="() => { closeActionMenu(); openInspectDrawer(row); }">
+          <Eye :size="14" />
+          <span>Inspect Details</span>
+        </button>
+        <button type="button" class="menu-item" @click="() => { closeActionMenu(); openEditModal(row); }">
+          <Edit2 :size="14" />
+          <span>Edit Record</span>
+        </button>
+        <button type="button" class="menu-item" @click="() => { closeActionMenu(); handleToggleState(row); }">
+          <Check :size="14" />
+          <span>{{ row.state === 'active' ? 'Deactivate' : 'Activate' }}</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button type="button" class="menu-item danger" @click="() => { closeActionMenu(); handleDelete(row); }">
+          <Trash2 :size="14" />
+          <span>Delete</span>
+        </button>
+      </div>
+    </div>
+  </td>
+  ```
+- **Outside-Click & Cleanup**:
+  - Register a document/window click handler to automatically close the action popover when the user clicks elsewhere.
+  - Always clean up the event listener in `onUnmounted`.

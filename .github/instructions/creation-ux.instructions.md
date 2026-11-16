@@ -73,6 +73,7 @@ interface Props {
     <FormSelect
       v-model="quickForm.group"
       label="Customer Group"
+      placeholder="Select Group"
       :options="customerGroupOptions"
     />
     <FormCheckbox
@@ -84,7 +85,7 @@ interface Props {
 </QuickCreateModal>
 ```
 
-Use the shared `FormInput`, `FormSelect`, and `FormCheckbox` components shown above (import them where required). Text inputs have no placeholder; select components use their standard `Select` prompt.
+Use the shared `FormInput`, `FormSelect`, and `FormCheckbox` components shown above (import them where required). Text inputs have no placeholder. Select placeholders must be concise and action-led: use `Select [core noun]`, not the full field label (for example, `Statutory Purchase Method` uses `Select Method`, and both `Category Scope` and `Buying Desk Scope` use `Select Scope`). Do not use explanatory text such as `All Categories (Global Scope)` as a form placeholder; use `All ...` prompts for filters only.
 
 ---
 
@@ -135,5 +136,12 @@ When the user clicks **"Expand Full Form"** from `<QuickCreateModal />` (or navi
      - Rich text toolbar: Paragraph dropdown, Font Type dropdown, List dropdown, Bold, Italic, Underline, Strikethrough, Code, Table, Color, Link, Image, Undo, Redo.
      - Rich-text editing surface (not a plain textarea).
      - Footer character counter: dynamic `0 / 5,000 Characters`.
-4. **Sub-Record Panels on Subsequent Tabs**:
-   - Multi-record cards for adding 1:N child entities directly during creation.
+4. **Sub-Record Panels on Subsequent Tabs (Strict Tabular Separation Standard)**:
+   - **Never Stack on Same Scrollable Page**: When an entity includes related lines, child schemas, or 1:N associations (e.g. `ProcurementUnitMember` lines for a `ProcurementUnit`, purchase order lines, committee members, addresses, qualifications), **THEY MUST NEVER BE RENDERED ON THE SAME PAGE AS THE MASTER FORM CARD**. Stacking child tables below master forms on a single page degrades UX and breaks our design system.
+   - **Mandatory Dedicated Tabs (`<BaseTabs />`)**: All child line tables and related sub-schemas MUST be isolated into their own dedicated tabs using the primary capsule `<BaseTabs />`.
+     - **Tab 1**: Master entity information & parameters (`[Entity] Details`).
+     - **Tab 2+**: Related lines, child rosters, or line item tables (`[Line/Member] Roster` using `<DynamicSubTable />`).
+   - **Reactive Tab Counters**: Subsequent tab labels must display reactive item counts (e.g. `Unit Members (3)`, `Addresses (2)`).
+   - **Validation Route-Back**: If the user clicks "Save" while on a sub-record tab and master fields in Tab 1 fail validation, the system MUST automatically switch `activeTab` back to Tab 1 and display the validation toasts/errors.
+   - **Mandatory Default 1-Row Initial State**: In every dynamic child table tab (`<DynamicSubTable />`), the initial design state MUST NEVER be blank or empty (`[]`). Always provide at least **one pre-populated default row** (`defaultInitialRow: true`) so that column definitions, interactive cell inputs, action buttons, and table alignments are immediately visible and testable, directly mirroring the Figma design representation.
+   - **Zero Raw Browser Selects**: All dropdowns, options, and filter pickers across master cards, modal dialogs, and dynamic tables MUST use `<FormSelect>` or teleported QMT dropdown popovers. Never use raw HTML `<select>` elements.

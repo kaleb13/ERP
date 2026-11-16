@@ -422,12 +422,17 @@ onMounted(() => {
       <div class="parameters-grid">
         <!-- Owning Entity: schema line 1048 -->
         <div class="param-item">
-          <label class="param-label">Owning Entity <span class="required-star">*</span></label>
-          <select v-model="form.entity_id" class="param-select">
-            <option value="Haleta Addis Ababa HQ">Haleta Addis Ababa HQ</option>
-            <option value="Haleta Grand Hotel & Suites">Haleta Grand Hotel & Suites</option>
-            <option value="Haleta Hawassa Hub">Haleta Hawassa Hub</option>
-          </select>
+          <FormSelect
+            v-model="form.entity_id"
+            label="Owning Entity"
+            required
+            :options="[
+              { value: 'Haleta Addis Ababa HQ', label: 'Haleta Addis Ababa HQ' },
+              { value: 'Haleta Grand Hotel & Suites', label: 'Haleta Grand Hotel & Suites' },
+              { value: 'Haleta Hawassa Hub', label: 'Haleta Hawassa Hub' }
+            ]"
+            placeholder="Select Entity"
+          />
         </div>
 
         <!-- Effective From Date with [GC] Tag: schema line 1049 -->
@@ -461,17 +466,18 @@ onMounted(() => {
 
         <!-- Number of Steps: schema line 1051 -->
         <div class="param-item">
-          <label class="param-label">Grid Steps Dimension</label>
-          <select 
-            v-model="form.number_of_steps" 
-            class="param-select" 
-            @change="handleStepsCountChange"
-          >
-            <option :value="5">5 Steps Ladder</option>
-            <option :value="7">7 Steps Ladder</option>
-            <option :value="9">9 Steps Ladder (Official Scale)</option>
-            <option :value="10">10 Steps Ladder</option>
-          </select>
+          <FormSelect
+            v-model="form.number_of_steps"
+            label="Grid Steps Dimension"
+            :options="[
+              { value: 5, label: '5 Steps Ladder' },
+              { value: 7, label: '7 Steps Ladder' },
+              { value: 9, label: '9 Steps Ladder (Official Scale)' },
+              { value: 10, label: '10 Steps Ladder' }
+            ]"
+            placeholder="Select Steps"
+            @update:model-value="() => handleStepsCountChange()"
+          />
         </div>
 
         <!-- Currency: schema line 1052 -->

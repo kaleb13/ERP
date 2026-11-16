@@ -388,23 +388,31 @@ onUnmounted(() => {
 
         <!-- Status Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Status:</label>
-          <select v-model="filterStatus" class="filter-select">
-            <option value="All">All Statuses</option>
-            <option value="acceptForAll">Approved for All</option>
-            <option value="acceptForThis">Entity Specific</option>
-            <option value="pending">Pending Approval</option>
-          </select>
+          <FormSelect
+            v-model="filterStatus"
+            label="Status:"
+            :options="[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'acceptForAll', label: 'Approved for All' },
+              { value: 'acceptForThis', label: 'Entity Specific' },
+              { value: 'pending', label: 'Pending Approval' }
+            ]"
+            placeholder="Select Status"
+          />
         </div>
 
         <!-- Lifecycle State Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">State:</label>
-          <select v-model="filterState" class="filter-select">
-            <option value="All">All States</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <FormSelect
+            v-model="filterState"
+            label="State:"
+            :options="[
+              { value: 'All', label: 'All States' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]"
+            placeholder="Select State"
+          />
         </div>
       </template>
 

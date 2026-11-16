@@ -36,7 +36,10 @@ const toggleSidebar = () => {
           <div class="search-wrap">
             <Search :size="20" class="search-icon" />
             <input type="text" placeholder="Search Everything..." class="search-input" />
-            <div class="search-shortcut">⌘K</div>
+            <div class="search-shortcut" title="Press ⌘K or Ctrl+K to search">
+              <span class="shortcut-cmd">⌘</span>
+              <span class="shortcut-key">K</span>
+            </div>
           </div>
         </div>
 
@@ -191,16 +194,34 @@ const toggleSidebar = () => {
   border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: var(--alias-radius-sm, 6px);
   height: 20px;
-  padding: 3px var(--alias-spacing-xs, 4px);
-  display: flex;
+  padding: 0 5px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--alias-font-size-xs, 12px);
-  line-height: var(--alias-line-height-xs, 18px);
+  gap: 1.5px;
   color: var(--alias-color-text-tertiary, #737373);
   font-family: inherit;
   user-select: none;
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.shortcut-cmd {
+  font-size: 11px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-0.5px);
+}
+
+.shortcut-key {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .topbar-right {

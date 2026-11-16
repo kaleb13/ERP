@@ -165,6 +165,19 @@ const selectedCalendar = computed(() => {
   return calendars.value.find(c => c.id === selectedCalendarId.value) || calendars.value[0];
 });
 
+const calendarSelectOptions = computed(() =>
+  calendars.value.map(cal => ({
+    value: cal.id,
+    label: `${cal.name} (${cal.code})${cal.is_default ? ' · Default' : ''}`
+  }))
+);
+
+const dayTypeOptions = [
+  { value: 'working', label: 'Working Day' },
+  { value: 'half_day', label: 'Half-Day' },
+  { value: 'weekend', label: 'Weekend (Off)' }
+];
+
 // ─── Navigation Sub-Tabs (<UnderlineTabs>) ───
 const activeSubTab = ref<'weekdays' | 'calendar_days' | 'all_calendars'>('weekdays');
 
@@ -354,20 +367,12 @@ const filteredCalendars = computed(() => {
         <div class="switcher-left-group">
           <!-- Calendar Selector Dropdown -->
           <div class="calendar-selector-box">
-            <label class="selector-micro-label">ACTIVE WORK CALENDAR</label>
-            <select 
-              v-model="selectedCalendarId" 
-              class="calendar-select-dropdown"
-              aria-label="Select work calendar"
-            >
-              <option 
-                v-for="cal in calendars" 
-                :key="cal.id" 
-                :value="cal.id"
-              >
-                {{ cal.name }} ({{ cal.code }}) {{ cal.is_default ? '· Default' : '' }}
-              </option>
-            </select>
+            <FormSelect
+              v-model="selectedCalendarId"
+              label="ACTIVE WORK CALENDAR"
+              :options="calendarSelectOptions"
+              placeholder="Select active calendar"
+            />
           </div>
 
           <!-- Entity & Default Badges -->
@@ -442,17 +447,12 @@ const filteredCalendars = computed(() => {
 
             <!-- Day Type Selector -->
             <div class="day-type-selector-wrapper">
-              <select 
-                :value="wd.day_type"
-                class="day-type-inline-select"
-                :class="`select-${wd.day_type}`"
-                @change="updateDayType(wd, ($event.target as HTMLSelectElement).value as CalendarDayType)"
-                aria-label="Select day type"
-              >
-                <option value="working">Working Day</option>
-                <option value="half_day">Half-Day</option>
-                <option value="weekend">Weekend (Off)</option>
-              </select>
+              <FormSelect
+                :model-value="wd.day_type"
+                :options="dayTypeOptions"
+                variant="cell"
+                @update:model-value="(val) => updateDayType(wd, val as CalendarDayType)"
+              />
             </div>
 
             <!-- Planned Hours & Schedule Window -->

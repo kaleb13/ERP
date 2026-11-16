@@ -592,20 +592,20 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 
               <!-- Facility Filter -->
               <div class="filter-select-item">
-                <select v-model="selectedEntityFilter" class="filter-select">
-                  <option v-for="opt in entityOptions" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
+                <FormSelect
+                  v-model="selectedEntityFilter"
+                  :options="entityOptions"
+                  placeholder="Select Facility"
+                />
               </div>
 
               <!-- Hardware Type Filter -->
               <div class="filter-select-item">
-                <select v-model="selectedTypeFilter" class="filter-select">
-                  <option v-for="opt in deviceTypeOptions" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
+                <FormSelect
+                  v-model="selectedTypeFilter"
+                  :options="deviceTypeOptions"
+                  placeholder="Select Hardware Type"
+                />
               </div>
             </div>
           </template>
@@ -730,13 +730,17 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 
               <!-- Credential Type Filter -->
               <div class="filter-select-item">
-                <select v-model="selectedTypeFilter" class="filter-select">
-                  <option value="all">All Credential Types</option>
-                  <option value="rfid_card">RFID Smart Card</option>
-                  <option value="fingerprint_template">Fingerprint Template Slot</option>
-                  <option value="face_template">Facial Biometric Template Slot</option>
-                  <option value="pin">Security PIN</option>
-                </select>
+                <FormSelect
+                  v-model="selectedTypeFilter"
+                  :options="[
+                    { value: 'all', label: 'All Credential Types' },
+                    { value: 'rfid_card', label: 'RFID Smart Card' },
+                    { value: 'fingerprint_template', label: 'Fingerprint Template Slot' },
+                    { value: 'face_template', label: 'Facial Biometric Template Slot' },
+                    { value: 'pin', label: 'Security PIN' }
+                  ]"
+                  placeholder="Select Credential"
+                />
               </div>
             </div>
           </template>

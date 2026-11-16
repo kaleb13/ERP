@@ -97,7 +97,20 @@ Whenever creating a page, component, or rendering icons in this repo:
 
 ### 3.2 Badge & Badge Group Specification (Figma 3345:21147 & 5221:28673)
 - **BaseBadge (`BaseBadge.vue` / Figma `3345:21147`)**:
-  - Authoritative pill badge supporting variants: `Size` (`sm`, `md`, `lg`), `Type` (`pill-color`, `solid`, `modern`), `Color` (`primary`/`brand`, `gray`, `error`, `warning`, `success`), `Icon` (`false`, `dot`, `leading`, `trailing`, `avatar`, `closable` / `X close`).
+  - Authoritative pill badge supporting variants: `Size` (`sm`, `md`, `lg`), `Type` (`pill-color`, `solid`, `modern`), `Color` (`primary`/`brand`, `gray`, `error`, `warning`, `success`, `blue`, `indigo`, `purple`, `pink`, `orange`), `Icon` (`false`, `dot`, `leading`, `trailing`, `avatar`, `closable` / `X close`).
+  - **Mandatory Prop Contract**: Always pass the color via `:color="..."` (NEVER `:variant="..."`, which does not exist and causes the component to default to monochrome gray).
+  - **Valid Semantic Colors**:
+    - `color="success"`: Active lifecycle state, approved governance, completed (`#009966`).
+    - `color="gray"`: **Strictly reserved for Inactive / Dormant states** (`state === 'inactive'`). **NEVER** use `gray` for active functional lookup values or options (e.g. `Permissive`), because doing so makes valid active records appear dead or disabled.
+    - `color="indigo"`: Statutory policy rules, mandatory compliance, and legal enforcement (`#432DD7` / `#EEF2FF`).
+    - `color="blue"`: Permissive alternatives, secondary scopes, and informational lookup options (`#0069A8` / `#F0F9FF`).
+    - `color="purple"`: Specialized operational modes or classifications (`#8200DB` / `#FAF5FF`).
+    - `color="warning"`: Pending review, cautionary thresholds (`#E17100` / `#FEF3C6`).
+    - `color="error"`: Rejected, failed, strict breach (`#E7000B` / `#FEE2E2`).
+    - `color="primary"`: Brand blue anchor (`#0B529C` / `#E1EEFD`).
+    - Never pass `'neutral'`; use `'gray'` only for mechanical inactive states.
+  - **No Inactive Gray on Active Lookups**: Active operational options (e.g. `Permissive` vs `Mandatory`) must NEVER be styled with inactive gray. Use distinct QMT library colors (`indigo` and `blue`).
+  - **No Monochrome Uniformity**: Never paint multiple distinct lookups with the same badge color across a table row. Use semantic contrast.
   - **No ad-hoc status pills**: Never write inline `<span class="status-pill">` or `<span class="status-dot">`. Always use `<BaseBadge type="pill-color" :color="statusColor" :dot="true" size="sm">`.
   - **SaveStateBadge (`SaveStateBadge.vue`)**: Specialized `BaseBadge` strictly placed inside `<AppBreadcrumb><template #badge><SaveStateBadge ... /></template></AppBreadcrumb>`. Never place it as an unsealed external sibling.
 - **BadgeGroup (`BadgeGroup.vue` / Figma `5221:28673`)**:
@@ -107,6 +120,15 @@ Whenever creating a page, component, or rendering icons in this repo:
   - Variants: `badgePosition` (`leading` | `trailing`), `size` (`md` [30px] | `lg` [32px]), `color` (`gray`, `primary`/`brand`, `warning`, `success`, `error`), `arrow` (`true` | `false`), `clickable` or `:to` (interactive hover state).
   - Used for announcements, system status summaries, live metric highlights, and inventory notices (e.g. `StockSummary.vue`). Single status pills with dot (like `Biometric Sync: 4 Devices Online` in `AttendanceView.vue` top bar and table status cells) use `BaseBadge` (Figma `3345:21147` / `7221:140247`).
   - **Rule for Longer Badges**: Whenever creating or editing longer badges or compound notifications in code or in Figma, you MUST ALWAYS use the canonical `Badge group` component (`5221:28673`). Never create ad-hoc pill divs.
+- **Lookup Values Representation Standard (Discretionary Badges vs. Plain Text)**:
+  - **Status and State are Always Badges**: In all tables, sections, and views across the entire system, **Status** (`status_lookup_value_id`, governance status, workflow status) and **State** (`active` / `inactive`) MUST ALWAYS be represented with badges (`BaseBadge` / status pills).
+  - **Dual Appearance for Schema Lookups**: All other schema lookups (e.g., operation modes, spend classes, receipt modes, unit types, procurement methods) have two valid visual representations:
+    1. **Plain Tertiary Text** (`#737373` / `.tertiary-plain-text`): Quiet, clean typography for secondary, informational, or high-density categorical columns.
+    2. **Badges** (`BaseBadge`): Visually anchored pills for high-salience operational classifications.
+  - **Agent Decision Authority & Balancing Principle**: The agent/designer has the discretion and responsibility to decide whether each lookup column is best rendered as plain text or as a badge:
+    - *Avoid Badge Clutter*: Carefully inspect the table's visual density. Never overload a table row with badges across multiple columns, which creates visual noise and degrades scanability.
+    - *Avoid Hidden Information*: Never bury critical operational distinctions in plain text if doing so conceals vital workflow differences or routing categories from quick visual identification.
+    - *Decision Criteria*: Evaluate the operational impact, cardinality, and column count of the specific table. If a lookup represents a critical operational mode (e.g. `Centralized` vs `Decentralized` procurement unit mode) in a moderate table, a badge may be optimal; if the table already has several badged/highlighted columns or the lookup is secondary metadata, render it in clean plain tertiary text.
 
 ### 3.3 Date & Calendar Header Navigation Standard (Figma 6328:119469 & 6328:119471)
 - **Today Button (`.btn-today-pill`)**:
@@ -124,6 +146,23 @@ Whenever creating a page, component, or rendering icons in this repo:
 - **Secondary Tabs (`UnderlineTabs` or `BaseTabs type="underline"` / Figma `5578:110`)**:
   - Horizontal bottom border `#D4D4D4` with `#0B529C` brand accent line indicator and `#E1EEFD` active background.
   - **Consecutive / Two-Tier Tabs Rule**: The **ONLY** place a Secondary Tab is used is directly beneath/nested within a Primary Tab at the top. When two levels of tabs appear consecutively (one below the other or side by side), Level 1 is always Primary and Level 2 is Secondary. Never use a secondary underline tab as an isolated/single tab on a page.
+
+### 3.5 Form Select Placeholder Copy
+
+- Keep the full field meaning in the label and make a form selector's placeholder a short action plus the core noun: `Statutory Purchase Method` → `Select Method`; `Category Scope` and `Buying Desk Scope` → `Select Scope`.
+- Do not repeat long labels or place explanatory/global-scope copy in form placeholders. If an optional `null` value represents an all/global scope, let the empty control show `Select Scope`; use `All ...` wording for filters, where it describes filter behavior.
+
+### 3.6 Actions Column Standard (3-Dot Kebab Menu / Figma 3345:21133)
+
+- **Mandatory 3-Dot Kebab Menu**: In all directory and data tables across Haleta ERP, the Actions column MUST ALWAYS use a 3-dot icon button (`MoreVertical` from `lucide-vue-next`, size `15px` / `16px`, class `.btn-action-dots`).
+- **Zero Loose Inline Buttons**: Never render bare inline action buttons (such as `Eye`, `Edit2`, and `Trash2` side-by-side) in table rows.
+- **Action Dropdown Popover (`.action-menu-popup`)**: Clicking the 3-dot trigger button displays a floating popover with options:
+  - Inspect / View Details (`Eye` icon `14px`)
+  - Edit Record (`Edit2` icon `14px`)
+  - Status/State Toggle (`Check` icon `14px`)
+  - Separator line (`.menu-divider`)
+  - Delete / Destructive (`Trash2` icon `14px` with `.danger` styling in `#E7000B`)
+- **Outside-Click Dismissal**: Action menus must close on outside click and Escape key, with listener cleanup in `onUnmounted`.
 
 ---
 

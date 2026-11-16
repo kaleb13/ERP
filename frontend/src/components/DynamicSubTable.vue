@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import {
   Plus, Maximize2, ArrowUp, ArrowDown,
   Copy, FileDown, FileUp, X,
   Search, Info
-} from 'lucide-vue-next';;
+} from 'lucide-vue-next';
 import TableFloatingBar from './TableFloatingBar.vue';
 import BaseButton from './BaseButton.vue';
 import FormCheckbox from './FormCheckbox.vue';
 import FormSelect from './FormSelect.vue';
 import IconColumnSolid from './IconColumnSolid.vue';
+import QuickCreateModal from './QuickCreateModal.vue';
 
 export interface DynamicTableColumn {
   key: string;
@@ -49,6 +50,7 @@ interface Props {
   useCustomModal?: boolean;
   multiSelectCatalog?: CatalogItem[];
   newRowFactory?: () => any;
+  defaultInitialRow?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -66,7 +68,8 @@ const props = withDefaults(defineProps<Props>(), {
   canDuplicate: true,
   useCustomModal: false,
   multiSelectCatalog: () => [],
-  newRowFactory: undefined
+  newRowFactory: undefined,
+  defaultInitialRow: true
 });
 
 const emit = defineEmits<{
@@ -129,6 +132,8 @@ const handleSelectAllTotal = () => {
 // ─── Column Visibility State (Figma 6095:96580 & 3345:71204) ────────────────
 const isColumnsMenuOpen = ref(false);
 const columnsMenuRef = ref<HTMLElement | null>(null);
+const columnsDropdownRef = ref<HTMLElement | null>(null);
+const columnsDropdownStyle = ref<Record<string, string>>({});
 const columnVisibility = ref<Record<string, boolean>>({});
 
 // Initialize visibility from props
@@ -160,22 +165,70 @@ const visibleColumnsCount = computed(() => {
   return props.columns.filter(c => isColumnVisible(c.key)).length;
 });
 
+const updateColumnsMenuPosition = () => {
+  if (!columnsMenuRef.value) return;
+  const rect = columnsMenuRef.value.getBoundingClientRect();
+  const menuWidth = 220;
+  
+  let left = rect.right - menuWidth;
+  if (left < 12) left = 12;
+  if (left + menuWidth > window.innerWidth - 12) {
+    left = window.innerWidth - menuWidth - 12;
+  }
+  
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openAbove = spaceBelow < 260 && rect.top > 260;
+  
+  columnsDropdownStyle.value = {
+    position: 'fixed',
+    top: openAbove ? 'auto' : `${rect.bottom + 6}px`,
+    bottom: openAbove ? `${window.innerHeight - rect.top + 6}px` : 'auto',
+    left: `${left}px`,
+    width: `${menuWidth}px`,
+    zIndex: '99999'
+  };
+};
+
 const toggleColumnsMenu = () => {
   isColumnsMenuOpen.value = !isColumnsMenuOpen.value;
+  if (isColumnsMenuOpen.value) {
+    nextTick(updateColumnsMenuPosition);
+  }
 };
 
 const handleClickOutside = (event: MouseEvent) => {
-  if (columnsMenuRef.value && !columnsMenuRef.value.contains(event.target as Node)) {
+  const target = event.target as Node;
+  if (
+    isColumnsMenuOpen.value &&
+    columnsMenuRef.value &&
+    !columnsMenuRef.value.contains(target) &&
+    (!columnsDropdownRef.value || !columnsDropdownRef.value.contains(target))
+  ) {
     isColumnsMenuOpen.value = false;
+  }
+};
+
+const handleWindowScrollOrResize = () => {
+  if (isColumnsMenuOpen.value) {
+    updateColumnsMenuPosition();
   }
 };
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('scroll', handleWindowScrollOrResize, true);
+  window.addEventListener('resize', handleWindowScrollOrResize);
+
+  // Authoritative Rule: Dynamic tables must never initialize with an empty state; ensure at least 1 default row exists
+  if (props.defaultInitialRow && props.modelValue.length === 0) {
+    handleAddRow();
+  }
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('scroll', handleWindowScrollOrResize, true);
+  window.removeEventListener('resize', handleWindowScrollOrResize);
 });
 
 // ─── Default Row Factory ───────────────────────────────────────────────────
@@ -247,13 +300,17 @@ const openExpandModal = (index: number) => {
   }
 };
 
-const closeExpandModal = () => {
-  // Sync back edits to list
+const handleSaveExpandModal = () => {
   if (activeRowIndex.value >= 0 && activeRowIndex.value < props.modelValue.length) {
     const next = [...props.modelValue];
     next[activeRowIndex.value] = { ...activeRowData.value };
     emit('update:modelValue', next);
   }
+  isExpandModalOpen.value = false;
+  activeRowIndex.value = -1;
+};
+
+const closeExpandModal = () => {
   isExpandModalOpen.value = false;
   activeRowIndex.value = -1;
 };
@@ -575,27 +632,6 @@ const hideTooltip = () => {
                   >
                     <IconColumnSolid :size="16" />
                   </button>
-
-                  <!-- Column Hide / Show Popover Menu -->
-                  <div v-if="isColumnsMenuOpen" class="columns-dropdown-popover" @click.stop>
-                    <div class="columns-dropdown-header">
-                      <span class="columns-dropdown-title">Display Columns</span>
-                    </div>
-                    <div class="columns-checklist">
-                      <div
-                        v-for="col in columns"
-                        :key="col.key"
-                        class="column-check-row"
-                      >
-                        <FormCheckbox
-                          :model-value="isColumnVisible(col.key)"
-                          :label="col.label"
-                          size="sm"
-                          @change="(val) => setColumnVisibility(col.key, Boolean(val))"
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </th>
             </tr>
@@ -851,144 +887,106 @@ const hideTooltip = () => {
       </template>
     </TableFloatingBar>
 
-    <!-- ─── Expand Row Modal (Matching Figma 5104:71792) ─── -->
-    <Teleport to="body">
-      <Transition name="modal-fade">
-        <div v-if="isExpandModalOpen" class="modal-backdrop" @click="closeExpandModal">
-          <div class="expand-modal-box" @click.stop>
-            <!-- Modal Header -->
-            <div class="expand-modal-header">
-              <h3 class="modal-title">
-                {{ entityName }} <span class="row-tag">(Row {{ activeRowIndex + 1 }})</span>
-              </h3>
+    <!-- ─── Expand Row Modal (Using Universal QuickCreateModal Standard) ─── -->
+    <QuickCreateModal
+      v-model:show="isExpandModalOpen"
+      :title="`Edit ${entityName} (Row ${activeRowIndex + 1})`"
+      :showExpandButton="false"
+      saveLabel="Save"
+      width="md"
+      @save="handleSaveExpandModal"
+      @cancel="closeExpandModal"
+    >
+      <slot
+        name="expand-modal"
+        :row="activeRowData"
+        :index="activeRowIndex"
+      >
+        <!-- Default Grid of Inputs if no custom slot provided -->
+        <div class="default-modal-grid">
+          <div
+            v-for="col in columns"
+            :key="col.key"
+            class="modal-field-wrap"
+          >
+            <label class="modal-field-label">{{ col.label }}</label>
+            <!-- Render custom slot if provided for this column -->
+            <slot
+              v-if="col.type === 'custom'"
+              :name="col.key"
+              :row="activeRowData"
+              :index="activeRowIndex"
+            />
+            <FormSelect
+              v-else-if="col.type === 'select'"
+              v-model="activeRowData[col.key]"
+              :options="col.options || []"
+              :placeholder="col.placeholder || `Select ${col.label}`"
+              :searchable="col.searchable ?? ((col.options?.length || 0) > 6)"
+              :teleport="true"
+            />
+            <div v-else-if="col.type === 'switch'" class="switch-cell-wrapper mt-2">
               <button
                 type="button"
-                class="btn-modal-close"
-                @click="closeExpandModal"
-                aria-label="Close dialog"
+                class="qmt-switch"
+                :class="{ 'switch-active': activeRowData[col.key] }"
+                @click="activeRowData[col.key] = !activeRowData[col.key]"
+                role="switch"
               >
-                <X :size="16" />
+                <span class="switch-thumb"></span>
               </button>
+              <span class="switch-label">{{ activeRowData[col.key] ? 'Yes' : 'No' }}</span>
             </div>
-
-            <!-- Modal Content / Body Grid -->
-            <div class="expand-modal-body">
-              <slot
-                name="expand-modal"
-                :row="activeRowData"
-                :index="activeRowIndex"
-              >
-                <!-- Default Grid of Inputs if no custom slot provided -->
-                <div class="default-modal-grid">
-                  <div
-                    v-for="col in columns"
-                    :key="col.key"
-                    class="modal-field-wrap"
-                  >
-                    <label class="modal-field-label">{{ col.label }}</label>
-                    <input
-                      v-if="!col.type || col.type === 'text' || col.type === 'number'"
-                      :type="col.type === 'number' ? 'number' : 'text'"
-                      v-model="activeRowData[col.key]"
-                      class="modal-input"
-                    />
-                    <FormSelect
-                      v-else-if="col.type === 'select'"
-                      v-model="activeRowData[col.key]"
-                      :options="col.options || []"
-                      :placeholder="col.placeholder || `Select ${col.label}`"
-                      :searchable="col.searchable ?? ((col.options?.length || 0) > 6)"
-                      :teleport="true"
-                    />
-                    <div v-else-if="col.type === 'switch'" class="switch-cell-wrapper mt-2">
-                      <button
-                        type="button"
-                        class="qmt-switch"
-                        :class="{ 'switch-active': activeRowData[col.key] }"
-                        @click="activeRowData[col.key] = !activeRowData[col.key]"
-                        role="switch"
-                      >
-                        <span class="switch-thumb"></span>
-                      </button>
-                      <span class="switch-label">{{ activeRowData[col.key] ? 'Yes' : 'No' }}</span>
-                    </div>
-                  </div>
-                </div>
-              </slot>
-            </div>
-
-            <!-- Modal Footer (Figma Canonical 3-section layout) -->
-            <div class="expand-modal-footer">
-              <!-- Left: Solid Red Delete Button -->
-              <div class="footer-left">
-                <BaseButton
-                  type="button"
-                  variant="error"
-                  size="sm"
-                  @click="handleModalDeleteRow"
-                >
-                  Delete
-                </BaseButton>
-              </div>
-
-              <!-- Center: Row Navigation Arrows (Down & Up) -->
-              <div class="footer-center" title="Used To Navigate Through The Rows">
-                <button
-                  type="button"
-                  class="btn-nav-arrow"
-                  :disabled="!canNavigateDown"
-                  @click="handleNavigateDown"
-                  title="Next Row"
-                >
-                  <ArrowDown :size="15" />
-                </button>
-                <button
-                  type="button"
-                  class="btn-nav-arrow"
-                  :disabled="!canNavigateUp"
-                  @click="handleNavigateUp"
-                  title="Previous Row"
-                >
-                  <ArrowUp :size="15" />
-                </button>
-              </div>
-
-              <!-- Right: Duplicate Row, Insert Above, Insert Below -->
-              <div class="footer-right flex items-center gap-2">
-                <BaseButton
-                  v-if="canDuplicate"
-                  type="button"
-                  variant="secondary-gray"
-                  size="sm"
-                  :icon="Copy"
-                  @click="handleModalDuplicateRow"
-                  title="Clone current row"
-                >
-                  Duplicate Row
-                </BaseButton>
-                <BaseButton
-                  type="button"
-                  variant="secondary-gray"
-                  size="sm"
-                  :icon="Plus"
-                  @click="handleModalInsertAbove"
-                >
-                  Insert Above
-                </BaseButton>
-                <BaseButton
-                  type="button"
-                  variant="secondary-gray"
-                  size="sm"
-                  :icon="Plus"
-                  @click="handleModalInsertBelow"
-                >
-                  Insert Below
-                </BaseButton>
-              </div>
-            </div>
+            <input
+              v-else
+              :type="col.type === 'number' ? 'number' : 'text'"
+              v-model="activeRowData[col.key]"
+              class="modal-input"
+            />
           </div>
         </div>
-      </Transition>
+      </slot>
+
+      <template #footer-left>
+        <BaseButton
+          v-if="canDelete && activeRowIndex >= 0"
+          type="button"
+          variant="error"
+          size="sm"
+          @click="handleModalDeleteRow"
+        >
+          Delete Row
+        </BaseButton>
+      </template>
+    </QuickCreateModal>
+
+    <!-- ─── Column Hide / Show Popover Menu (Teleported to avoid clipping & section scrollbars) ─── -->
+    <Teleport to="body">
+      <div
+        v-if="isColumnsMenuOpen"
+        ref="columnsDropdownRef"
+        class="columns-dropdown-popover columns-dropdown-teleported"
+        :style="columnsDropdownStyle"
+        @click.stop
+      >
+        <div class="columns-dropdown-header">
+          <span class="columns-dropdown-title">Display Columns</span>
+        </div>
+        <div class="columns-checklist">
+          <div
+            v-for="col in columns"
+            :key="col.key"
+            class="column-check-row"
+          >
+            <FormCheckbox
+              :model-value="isColumnVisible(col.key)"
+              :label="col.label"
+              size="sm"
+              @change="(val) => setColumnVisibility(col.key, Boolean(val))"
+            />
+          </div>
+        </div>
+      </div>
     </Teleport>
 
     <!-- ─── Multi-Selection Modal ("+ Add Multiple") ─── -->
@@ -1240,18 +1238,19 @@ const hideTooltip = () => {
 }
 
 .columns-dropdown-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 210px;
+  width: 220px;
   background-color: #ffffff;
   border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
   border-radius: var(--alias-radius-lg, 8px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  z-index: 50;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   padding: 8px 0;
   display: flex;
   flex-direction: column;
+}
+
+.columns-dropdown-teleported {
+  position: fixed;
+  z-index: 99999;
 }
 
 .columns-dropdown-header {

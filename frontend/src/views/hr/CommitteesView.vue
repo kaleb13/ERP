@@ -758,33 +758,43 @@ onUnmounted(() => {
 
         <!-- Committee Term / Type Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Term Type:</label>
-          <select v-model="filterType" class="filter-select">
-            <option value="All">All Panels</option>
-            <option value="standing">Standing Committees (Permanent)</option>
-            <option value="adhoc">Ad-Hoc / Fixed Term Panels</option>
-          </select>
+          <FormSelect
+            v-model="filterType"
+            label="Term Type:"
+            :options="[
+              { value: 'All', label: 'All Panels' },
+              { value: 'standing', label: 'Standing Committees (Permanent)' },
+              { value: 'adhoc', label: 'Ad-Hoc / Fixed Term Panels' }
+            ]"
+            placeholder="Select Panel"
+          />
         </div>
 
         <!-- Owning Entity Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Entity:</label>
-          <select v-model="filterEntity" class="filter-select">
-            <option value="All">All Entities</option>
-            <option v-for="ent in entityOptions.filter(e => e.value > 0)" :key="ent.value" :value="ent.value">
-              {{ ent.label }}
-            </option>
-          </select>
+          <FormSelect
+            v-model="filterEntity"
+            label="Entity:"
+            :options="[
+              { value: 'All', label: 'All Entities' },
+              ...entityOptions.filter(e => Number(e.value) > 0)
+            ]"
+            placeholder="Select Entity"
+          />
         </div>
 
         <!-- State Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">State:</label>
-          <select v-model="filterState" class="filter-select">
-            <option value="All">All States</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <FormSelect
+            v-model="filterState"
+            label="State:"
+            :options="[
+              { value: 'All', label: 'All States' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]"
+            placeholder="Select State"
+          />
         </div>
       </template>
 

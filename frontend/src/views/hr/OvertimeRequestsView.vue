@@ -10,6 +10,7 @@ import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import { 
   overtimeRequestsData, 
@@ -253,13 +254,17 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 
           <!-- Type filter dropdown -->
           <div class="filter-select-wrap">
-            <select v-model="selectedTypeFilter" class="filter-select">
-              <option value="all">All Overtime Types</option>
-              <option value="normal_day">Normal Working Day (1.25×)</option>
-              <option value="night">Night Shift Work (1.50×)</option>
-              <option value="weekend">Weekly Rest / Weekend (2.00×)</option>
-              <option value="public_holiday">Statutory Public Holiday (2.50×)</option>
-            </select>
+            <FormSelect
+              v-model="selectedTypeFilter"
+              :options="[
+                { value: 'all', label: 'All Overtime Types' },
+                { value: 'normal_day', label: 'Normal Working Day (1.25×)' },
+                { value: 'night', label: 'Night Shift Work (1.50×)' },
+                { value: 'weekend', label: 'Weekly Rest / Weekend (2.00×)' },
+                { value: 'public_holiday', label: 'Statutory Public Holiday (2.50×)' }
+              ]"
+              placeholder="Select Overtime Type"
+            />
           </div>
         </div>
       </template>
@@ -484,12 +489,16 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
               </div>
 
               <div class="form-group">
-                <label class="form-label">Compensation Method</label>
-                <select v-model="approvalForm.compensation" class="modal-select">
-                  <option value="paid">Monetary Payout (Transferred to PayrollInput)</option>
-                  <option value="compensatory_leave">Compensatory Rest (Credits LeaveTransaction)</option>
-                </select>
-                <span class="input-hint">Choose monetary payroll bonus or additional compensatory rest day</span>
+                <FormSelect
+                  v-model="approvalForm.compensation"
+                  label="Compensation Method"
+                  :options="[
+                    { value: 'paid', label: 'Monetary Payout (Transferred to PayrollInput)' },
+                    { value: 'compensatory_leave', label: 'Compensatory Rest (Credits LeaveTransaction)' }
+                  ]"
+                  placeholder="Select Compensation"
+                  hint="Choose monetary payroll bonus or additional compensatory rest day"
+                />
               </div>
             </div>
           </div>

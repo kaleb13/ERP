@@ -767,15 +767,13 @@ onMounted(() => {
 
                   <!-- Requirement Type (all 9 options from Schema line 1181) -->
                   <td class="child-td">
-                    <select 
-                      v-model="row.requirement_type" 
-                      class="child-inline-select"
-                      @change="onReqTypeChange(row)"
-                    >
-                      <option v-for="opt in requirementTypeOptions" :key="opt.value" :value="opt.value">
-                        {{ opt.label.split(' (')[0] }}
-                      </option>
-                    </select>
+                    <FormSelect
+                      v-model="row.requirement_type"
+                      :options="requirementTypeOptions.map(opt => ({ value: opt.value, label: opt.label.split(' (')[0] }))"
+                      variant="cell"
+                      placeholder="Select Type"
+                      @update:model-value="() => onReqTypeChange(row)"
+                    />
                   </td>
 
                   <!-- Description / Specification -->
@@ -882,16 +880,14 @@ onMounted(() => {
           <div class="modal-form-grid">
             <!-- 1. Requirement Type (FK requirement_type_lookup_value_id: All 9 options from Schema line 1181) -->
             <div class="modal-form-group">
-              <label class="modal-field-label">Requirement Type (FK requirement_type_lookup_value_id) <span class="required-star">*</span></label>
-              <select 
-                v-model="activeReqRow.requirement_type" 
-                class="child-inline-select"
-                @change="onReqTypeChange(activeReqRow)"
-              >
-                <option v-for="opt in requirementTypeOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
+              <FormSelect
+                v-model="activeReqRow.requirement_type"
+                label="Requirement Type"
+                required
+                :options="requirementTypeOptions"
+                placeholder="Select Type"
+                @update:model-value="() => onReqTypeChange(activeReqRow)"
+              />
             </div>
 
             <!-- Scoring Weight -->
@@ -906,66 +902,53 @@ onMounted(() => {
 
             <!-- 2. Catalogue Value Selector (FK required_lookup_value_id): Skill Catalogue -->
             <div v-if="activeReqRow.requirement_type === 'skill'" class="modal-form-group col-span-2">
-              <label class="modal-field-label">Catalogue Value (FK required_lookup_value_id: SKILL_CATALOG) <span class="required-star">*</span></label>
-              <select 
-                v-model="activeReqRow.required_lookup_value_id" 
-                class="child-inline-select" 
-                @change="syncCatalogueDescription(activeReqRow)"
-              >
-                <option :value="null">Select Skill from SKILL_CATALOG</option>
-                <option v-for="skill in skillCatalogOptions" :key="skill.value" :value="skill.value">
-                  {{ skill.label }}
-                </option>
-              </select>
-              <span class="field-helper-hint">Joins PartySkill.skill_lookup_value_id for candidate matching and talent gap analysis.</span>
+              <FormSelect
+                v-model="activeReqRow.required_lookup_value_id"
+                label="Catalogue Value (SKILL_CATALOG)"
+                required
+                :options="skillCatalogOptions"
+                placeholder="Select Skill from SKILL_CATALOG"
+                hint="Joins PartySkill.skill_lookup_value_id for candidate matching and talent gap analysis."
+                @update:model-value="() => syncCatalogueDescription(activeReqRow)"
+              />
             </div>
 
             <!-- 2. Catalogue Value Selector (FK required_lookup_value_id): Certification Catalogue -->
             <div v-else-if="activeReqRow.requirement_type === 'certification' || activeReqRow.requirement_type === 'driving_license'" class="modal-form-group col-span-2">
-              <label class="modal-field-label">Catalogue Value (FK required_lookup_value_id: CERTIFICATION_CATALOG) <span class="required-star">*</span></label>
-              <select 
-                v-model="activeReqRow.required_lookup_value_id" 
-                class="child-inline-select" 
-                @change="syncCatalogueDescription(activeReqRow)"
-              >
-                <option :value="null">Select Certification / License from CERTIFICATION_CATALOG</option>
-                <option v-for="cert in certCatalogOptions" :key="cert.value" :value="cert.value">
-                  {{ cert.label }}
-                </option>
-              </select>
-              <span class="field-helper-hint">Joins PartyCertification.certification_lookup_value_id for applicant credential verification.</span>
+              <FormSelect
+                v-model="activeReqRow.required_lookup_value_id"
+                label="Catalogue Value (CERTIFICATION_CATALOG)"
+                required
+                :options="certCatalogOptions"
+                placeholder="Select Certification / License from CERTIFICATION_CATALOG"
+                hint="Joins PartyCertification.certification_lookup_value_id for applicant credential verification."
+                @update:model-value="() => syncCatalogueDescription(activeReqRow)"
+              />
             </div>
 
             <!-- 2. Catalogue Value Selector (FK required_lookup_value_id): Language Catalogue -->
             <div v-else-if="activeReqRow.requirement_type === 'language'" class="modal-form-group col-span-2">
-              <label class="modal-field-label">Catalogue Value (FK required_lookup_value_id: LANGUAGE_CATALOG) <span class="required-star">*</span></label>
-              <select 
-                v-model="activeReqRow.required_lookup_value_id" 
-                class="child-inline-select" 
-                @change="syncCatalogueDescription(activeReqRow)"
-              >
-                <option :value="null">Select Language from LANGUAGE_CATALOG</option>
-                <option v-for="lang in languageCatalogOptions" :key="lang.value" :value="lang.value">
-                  {{ lang.label }}
-                </option>
-              </select>
-              <span class="field-helper-hint">Joins PartyLanguage.language_lookup_value_id for linguistic proficiency evaluation.</span>
+              <FormSelect
+                v-model="activeReqRow.required_lookup_value_id"
+                label="Catalogue Value (LANGUAGE_CATALOG)"
+                required
+                :options="languageCatalogOptions"
+                placeholder="Select Language from LANGUAGE_CATALOG"
+                hint="Joins PartyLanguage.language_lookup_value_id for linguistic proficiency evaluation."
+                @update:model-value="() => syncCatalogueDescription(activeReqRow)"
+              />
             </div>
 
             <!-- Field of Study: FK field_of_study_id for Academic Qualification -->
             <div v-else-if="activeReqRow.requirement_type === 'qualification'" class="modal-form-group col-span-2">
-              <label class="modal-field-label">Field of Study Discipline (FK field_of_study_id)</label>
-              <select 
-                v-model="activeReqRow.field_of_study_id" 
-                class="child-inline-select" 
-                @change="syncCatalogueDescription(activeReqRow)"
-              >
-                <option :value="null">Select Academic Field of Study</option>
-                <option v-for="fos in fieldOfStudyOptions" :key="fos.value" :value="fos.value">
-                  {{ fos.label }}
-                </option>
-              </select>
-              <span class="field-helper-hint">Joins PartyQualification.field_of_study_id for educational qualification matching.</span>
+              <FormSelect
+                v-model="activeReqRow.field_of_study_id"
+                label="Field of Study Discipline (FK field_of_study_id)"
+                :options="fieldOfStudyOptions"
+                placeholder="Select Academic Field of Study"
+                hint="Joins PartyQualification.field_of_study_id for educational qualification matching."
+                @update:model-value="() => syncCatalogueDescription(activeReqRow)"
+              />
             </div>
 
             <!-- Specification / Description (description jsonb) -->

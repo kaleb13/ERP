@@ -646,52 +646,44 @@ const saveRecord = (stateToSet: AnnouncementState) => {
                   <!-- Target Entity / Value Selector -->
                   <td class="td-entity">
                     <!-- Unit Selector -->
-                    <select
+                    <FormSelect
                       v-if="line.target_type === 'organization_unit'"
-                      :value="line.organization_unit_id"
-                      class="table-inline-select"
-                      @change="handleTargetEntityChange(line, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option v-for="u in unitCatalog" :key="u.id" :value="u.id">
-                        {{ u.name }}
-                      </option>
-                    </select>
+                      :model-value="line.organization_unit_id"
+                      :options="unitCatalog.map(u => ({ value: u.id, label: u.name }))"
+                      variant="cell"
+                      placeholder="Select Unit"
+                      @update:model-value="(val) => handleTargetEntityChange(line, String(val))"
+                    />
 
                     <!-- Position Selector -->
-                    <select
+                    <FormSelect
                       v-else-if="line.target_type === 'job_position'"
-                      :value="line.job_position_id"
-                      class="table-inline-select"
-                      @change="handleTargetEntityChange(line, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option v-for="p in positionCatalog" :key="p.id" :value="p.id">
-                        {{ p.name }}
-                      </option>
-                    </select>
+                      :model-value="line.job_position_id"
+                      :options="positionCatalog.map(p => ({ value: p.id, label: p.name }))"
+                      variant="cell"
+                      placeholder="Select Position"
+                      @update:model-value="(val) => handleTargetEntityChange(line, String(val))"
+                    />
 
                     <!-- Grade Selector -->
-                    <select
+                    <FormSelect
                       v-else-if="line.target_type === 'job_grade'"
-                      :value="line.job_grade_id"
-                      class="table-inline-select"
-                      @change="handleTargetEntityChange(line, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option v-for="g in gradeCatalog" :key="g.id" :value="g.id">
-                        {{ g.name }}
-                      </option>
-                    </select>
+                      :model-value="line.job_grade_id"
+                      :options="gradeCatalog.map(g => ({ value: g.id, label: g.name }))"
+                      variant="cell"
+                      placeholder="Select Grade"
+                      @update:model-value="(val) => handleTargetEntityChange(line, String(val))"
+                    />
 
                     <!-- Employee Selector -->
-                    <select
+                    <FormSelect
                       v-else-if="line.target_type === 'employee'"
-                      :value="line.employee_id"
-                      class="table-inline-select"
-                      @change="handleTargetEntityChange(line, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option v-for="e in employeeCatalog" :key="e.id" :value="e.id">
-                        {{ e.name }} ({{ e.code }}) • {{ e.dept }}
-                      </option>
-                    </select>
+                      :model-value="line.employee_id"
+                      :options="employeeCatalog.map(e => ({ value: e.id, label: `${e.name} (${e.code}) • ${e.dept}` }))"
+                      variant="cell"
+                      placeholder="Select Employee"
+                      @update:model-value="(val) => handleTargetEntityChange(line, String(val))"
+                    />
                   </td>
 
                   <!-- Estimated Reach Column (Tertiary text, Rule 5 & 6) -->

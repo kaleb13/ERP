@@ -699,14 +699,18 @@ const paginatedTableSwaps = computed(() => {
 
         <template #filter-panel>
           <div class="swaps-filter-panel-row">
-            <label class="filter-label">Filter by Status:</label>
-            <select v-model="tableStatusFilter" class="filter-select">
-              <option value="all">All States</option>
-              <option value="requested">Awaiting Peer Consent</option>
-              <option value="accepted">Counterpart Accepted</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+            <FormSelect
+              v-model="tableStatusFilter"
+              label="Filter by Status:"
+              :options="[
+                { value: 'all', label: 'All States' },
+                { value: 'requested', label: 'Awaiting Peer Consent' },
+                { value: 'accepted', label: 'Counterpart Accepted' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' }
+              ]"
+              placeholder="Select Status"
+            />
           </div>
         </template>
 

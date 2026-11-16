@@ -594,34 +594,42 @@ onUnmounted(() => {
 
         <!-- Institution Type Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Type:</label>
-          <select v-model="filterType" class="filter-select">
-            <option value="All">All Institution Types</option>
-            <option v-for="t in institutionTypeOptions" :key="t.value" :value="t.value">
-              {{ t.label }}
-            </option>
-          </select>
+          <FormSelect
+            v-model="filterType"
+            label="Type:"
+            :options="[
+              { value: 'All', label: 'All Institution Types' },
+              ...institutionTypeOptions
+            ]"
+            placeholder="Select Type"
+          />
         </div>
 
         <!-- Country Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">Country:</label>
-          <select v-model="filterCountry" class="filter-select">
-            <option value="All">All Countries</option>
-            <option v-for="c in countryOptions" :key="c.value" :value="c.value">
-              {{ c.label }}
-            </option>
-          </select>
+          <FormSelect
+            v-model="filterCountry"
+            label="Country:"
+            :options="[
+              { value: 'All', label: 'All Countries' },
+              ...countryOptions
+            ]"
+            placeholder="Select Country"
+          />
         </div>
 
         <!-- State Filter -->
         <div class="filter-select-box">
-          <label class="filter-label">State:</label>
-          <select v-model="filterState" class="filter-select">
-            <option value="All">All States</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <FormSelect
+            v-model="filterState"
+            label="State:"
+            :options="[
+              { value: 'All', label: 'All States' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]"
+            placeholder="Select State"
+          />
         </div>
       </template>
 

@@ -53,3 +53,20 @@ When implementing or refining an Operational Lifecycle Status page:
    - Bottom Subtext: `#737373`, Medium (`500`), `12px`.
    - Card Padding: `15px 18px`, Min-height `106px`.
    - Border Radius: `14px`, Border: `1px solid #e2e8f0`.
+
+---
+
+## 3. Table Data Representation: Status, State, and Dual-Lookup Standard (Badges vs. Plain Text)
+
+- **Status and State are Always Represented with Badges**:
+  - In all sections, tables, and views across the system, **Status** (`status_lookup_value_id`, governance status, approval status, lifecycle status) and **State** (`active` / `inactive`) MUST ALWAYS be represented with badges (`BaseBadge` / status pills).
+- **Dual Appearance for Schema Lookup Values**:
+  - Schema lookup values (e.g., `mode_lookup_value_id`, `class_lookup_value_id`, `receipt_mode_lookup_value_id`, `unit_type_id`, `method_type_id`) have two valid representations:
+    1. **Plain Tertiary Text** (`#737373` / `.tertiary-plain-text`): Clean typography for quiet, secondary, or high-density categorical columns.
+    2. **Badges** (`BaseBadge`): Visually anchored badges for high-salience operational classifications.
+- **Agent/Designer Decision Authority & Balancing Principle**:
+  - The agent/designer has the discretion and responsibility to decide whether each lookup column is best rendered as plain text or as a badge:
+    - **Avoid Badge Clutter**: Carefully inspect the table's visual density. Never overload a table row with badges across multiple columns, which creates visual noise and degrades scanability.
+    - **Prevent Hidden Information**: Never bury critical operational distinctions in plain text if doing so conceals vital workflow differences or routing categories from quick visual identification.
+    - **Decision Criteria**: Evaluate the operational impact, cardinality, and column count of the specific table. If a lookup represents a critical operational mode (e.g., `Centralized` vs `Decentralized` procurement unit mode) in a moderate table, a badge may be optimal; if the table already has several badged/highlighted columns or the lookup is secondary metadata, render it in clean plain tertiary text.
+    - **Semantic Badge Colors**: Do not give every lookup badge the same color by default. Choose a color only when it communicates the value's business meaning; use neutral for non-emphasized alternatives and tertiary text for low-salience lookups. Keep lifecycle State colors distinct from other classifications (for example, Active uses success, while Inactive is neutral).

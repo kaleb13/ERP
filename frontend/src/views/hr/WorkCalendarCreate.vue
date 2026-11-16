@@ -926,15 +926,16 @@ onMounted(() => {
               <span class="wdc-hrs-unit">hrs</span>
             </div>
             <div class="wdc-controls">
-              <select
-                class="wdc-select"
+              <FormSelect
                 v-model="row.day_type"
-                @change="onDayTypeChange(row)"
-              >
-                <option value="working">Working</option>
-                <option value="half_day">Half Day</option>
-                <option value="weekend">Weekend</option>
-              </select>
+                :options="[
+                  { value: 'working', label: 'Working' },
+                  { value: 'half_day', label: 'Half Day' },
+                  { value: 'weekend', label: 'Weekend' }
+                ]"
+                variant="cell"
+                @update:model-value="() => onDayTypeChange(row)"
+              />
             </div>
             <div class="wdc-pill-wrap">
               <span
@@ -1069,17 +1070,18 @@ onMounted(() => {
                     </span>
                   </td>
                   <td>
-                    <select
-                      class="cell-select"
+                    <FormSelect
                       v-model="row.day_type"
                       :disabled="!row.is_active"
-                      @change="onHolidayDayTypeChange(row)"
-                    >
-                      <option value="holiday">Public Holiday (0h)</option>
-                      <option value="half_day">Half Day (4h)</option>
-                      <option value="working">Working Day (8h)</option>
-                      <option value="weekend">Rest / Weekend (0h)</option>
-                    </select>
+                      :options="[
+                        { value: 'holiday', label: 'Public Holiday (0h)' },
+                        { value: 'half_day', label: 'Half Day (4h)' },
+                        { value: 'working', label: 'Working Day (8h)' },
+                        { value: 'weekend', label: 'Rest / Weekend (0h)' }
+                      ]"
+                      variant="cell"
+                      @update:model-value="() => onHolidayDayTypeChange(row)"
+                    />
                   </td>
                   <td>
                     <span class="td-hours-val">{{ row.planned_hours.toFixed(1) }} h</span>
@@ -1202,15 +1204,12 @@ onMounted(() => {
                     />
                   </td>
                   <td>
-                    <select 
+                    <FormSelect 
                       v-model="cRow.day_type" 
-                      class="child-inline-select" 
-                      @change="onCustomRowDayTypeChange(cRow)"
-                    >
-                      <option v-for="opt in calDayTypeOptions" :key="opt.value" :value="opt.value">
-                        {{ opt.label }}
-                      </option>
-                    </select>
+                      :options="calDayTypeOptions"
+                      variant="cell" 
+                      @update:model-value="() => onCustomRowDayTypeChange(cRow)"
+                    />
                   </td>
                   <td>
                     <input 
@@ -1366,15 +1365,13 @@ onMounted(() => {
               </div>
 
               <div class="modal-form-group">
-                <label class="modal-form-label">Day Classification <span class="required-star">*</span></label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.day_type" class="modal-form-select" @change="onCustomRowDayTypeChange(activeRowData)">
-                    <option v-for="opt in calDayTypeOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.day_type"
+                  label="Day Classification"
+                  required
+                  :options="calDayTypeOptions"
+                  @update:model-value="() => onCustomRowDayTypeChange(activeRowData)"
+                />
               </div>
 
               <div class="modal-form-group">

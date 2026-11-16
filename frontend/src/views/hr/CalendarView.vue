@@ -5,21 +5,22 @@ import {
   Monitor, FileText, ShieldCheck, Briefcase
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
-import ellipseDarkerUrl from '../../assets/ellipse-darker.svg';
-import ellipseLightUrl from '../../assets/ellipse-light.svg';
+import CalendarSidebar from '../../components/CalendarSidebar.vue';
+import FormSelect from '../../components/FormSelect.vue';
 
 // ─── Breadcrumbs (Aligned with Figma 6328:119446: Monitor icon > Work Calendar) ───
 const breadcrumbItems = [
   { label: 'Work Calendar' }
 ];
 
-// ─── View Modes (Figma Tab Rounded Group: Week | Month | List) ───
+// ─── View Modes (Figma Tab Rounded Group: Month | Week | List) ───
+// By default, the calendar opens in Month view as requested
 type CalendarViewMode = 'week' | 'month' | 'list';
-const currentView = ref<CalendarViewMode>('week');
+const currentView = ref<CalendarViewMode>('month');
 
 const viewModes: { id: CalendarViewMode; label: string }[] = [
-  { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
+  { id: 'week', label: 'Week' },
   { id: 'list', label: 'List' }
 ];
 
@@ -97,10 +98,17 @@ const selectedCalendar = computed(() => {
   return companyCalendars.find(c => c.id === selectedCalendarId.value) || companyCalendars[0];
 });
 
+const calendarOptions = computed(() =>
+  companyCalendars.map(cal => ({
+    value: cal.id,
+    label: cal.name
+  }))
+);
+
 // ─── Current Navigation Date State (Defaults to December 2027 per Figma) ───
+const todayDate = new Date(2027, 11, 17); // Statutory demo today: Dec 17, 2027
 const currentDate = ref(new Date(2027, 11, 17)); // Dec 17, 2027
 const selectedDate = ref(new Date(2027, 11, 17));
-const miniCalendarDate = ref(new Date(2027, 7, 1)); // August 2027 per Figma mini picker
 
 // ─── Calendar Event Schema Model ───
 export interface CalendarEvent {
@@ -278,99 +286,10 @@ const currentMonthYear = computed(() => {
   };
 });
 
-// ─── Selected Date Display for Left Sidebar ("Thu, Dec 17") ───
-const selectedDateHeadline = computed(() => {
-  const d = selectedDate.value;
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
-});
-
-// ─── Mini Calendar Generator (Left Sidebar) ───
-const miniMonthTitle = computed(() => {
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  return `${monthNames[miniCalendarDate.value.getMonth()]} ${miniCalendarDate.value.getFullYear()}`;
-});
-
-export interface MiniDay {
-  day: number;
-  isCurrentMonth: boolean;
-  isSelected: boolean;
-  date: Date;
-  dateStr: string;
-}
-
-export interface MiniWeek {
-  days: MiniDay[];
-  hasSelectedDay: boolean;
-}
-
-const miniCalendarWeeks = computed<MiniWeek[]>(() => {
-  const y = miniCalendarDate.value.getFullYear();
-  const m = miniCalendarDate.value.getMonth();
-  const firstDay = new Date(y, m, 1).getDay();
-  const totalDays = new Date(y, m + 1, 0).getDate();
-  const prevMonthDays = new Date(y, m, 0).getDate();
-
-  const allDays: MiniDay[] = [];
-
-  // Trailing previous month days
-  for (let i = firstDay - 1; i >= 0; i--) {
-    const d = new Date(y, m - 1, prevMonthDays - i);
-    const isSelected = d.toDateString() === selectedDate.value.toDateString();
-    allDays.push({
-      day: d.getDate(),
-      isCurrentMonth: false,
-      isSelected,
-      date: d,
-      dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    });
-  }
-
-  // Current month days
-  for (let i = 1; i <= totalDays; i++) {
-    const d = new Date(y, m, i);
-    const isSelected = d.toDateString() === selectedDate.value.toDateString();
-    allDays.push({
-      day: i,
-      isCurrentMonth: true,
-      isSelected,
-      date: d,
-      dateStr: `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
-    });
-  }
-
-  // Next month leading days (fill up to complete weeks)
-  const targetTotal = allDays.length > 35 ? 42 : 35;
-  let nextDayNum = 1;
-  while (allDays.length < targetTotal) {
-    const d = new Date(y, m + 1, nextDayNum);
-    const isSelected = d.toDateString() === selectedDate.value.toDateString();
-    allDays.push({
-      day: nextDayNum,
-      isCurrentMonth: false,
-      isSelected,
-      date: d,
-      dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(nextDayNum).padStart(2, '0')}`
-    });
-    nextDayNum++;
-  }
-
-  // Chunk into 7-day weeks
-  const weeks: MiniWeek[] = [];
-  for (let i = 0; i < allDays.length; i += 7) {
-    const weekSlice = allDays.slice(i, i + 7);
-    weeks.push({
-      days: weekSlice,
-      hasSelectedDay: weekSlice.some(d => d.isSelected)
-    });
-  }
-
-  return weeks;
-});
+// ─── Sidebar Handlers ───
+const onSidebarMonthChange = ({ year, month }: { year: number; month: number }) => {
+  currentDate.value = new Date(year, month, 1);
+};
 
 // ─── Week View Days Headers (Dynamically generated for the week containing selectedDate) ───
 export interface WeekHeaderCol {
@@ -447,8 +366,7 @@ interface MonthCell {
   label: string;
   isCurrentMonth: boolean;
   isSelected: boolean;
-  isDay16: boolean;
-  isDay17: boolean;
+  isToday: boolean;
   dayType: 'working' | 'weekend' | 'holiday' | 'half_day';
   plannedHours: number;
   events: CalendarEvent[];
@@ -481,6 +399,7 @@ const monthGrid = computed(() => {
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
     const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    const isToday = d.toDateString() === todayDate.toDateString();
 
     cells.push({
       date: d,
@@ -489,8 +408,7 @@ const monthGrid = computed(() => {
       label: dNum === prevMonthDays - i ? `${monthShort} ${dNum}` : `${dNum}`,
       isCurrentMonth: false,
       isSelected,
-      isDay16: false,
-      isDay17: false,
+      isToday,
       dayType,
       plannedHours,
       events: evs
@@ -503,6 +421,7 @@ const monthGrid = computed(() => {
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
     const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    const isToday = d.toDateString() === todayDate.toDateString();
 
     cells.push({
       date: d,
@@ -511,8 +430,7 @@ const monthGrid = computed(() => {
       label: i === 1 ? `Dec 1` : `${i}`,
       isCurrentMonth: true,
       isSelected,
-      isDay16: i === 16,
-      isDay17: i === 17,
+      isToday,
       dayType,
       plannedHours,
       events: evs
@@ -526,6 +444,7 @@ const monthGrid = computed(() => {
     const evs = masterEvents.value.filter(e => e.date === dateStr);
     const { dayType, plannedHours } = getDayClassification(d, evs);
     const isSelected = d.toDateString() === selectedDate.value.toDateString();
+    const isToday = d.toDateString() === todayDate.toDateString();
 
     cells.push({
       date: d,
@@ -534,8 +453,7 @@ const monthGrid = computed(() => {
       label: n === 1 ? `Jan 1` : `${n}`,
       isCurrentMonth: false,
       isSelected,
-      isDay16: false,
-      isDay17: false,
+      isToday,
       dayType,
       plannedHours,
       events: evs
@@ -614,6 +532,7 @@ const handlePrevMonth = () => {
   const d = new Date(currentDate.value);
   d.setMonth(d.getMonth() - 1);
   currentDate.value = d;
+  selectedDate.value = new Date(d.getFullYear(), d.getMonth(), Math.min(selectedDate.value.getDate(), 28));
   handleClosePopover();
 };
 
@@ -621,30 +540,21 @@ const handleNextMonth = () => {
   const d = new Date(currentDate.value);
   d.setMonth(d.getMonth() + 1);
   currentDate.value = d;
+  selectedDate.value = new Date(d.getFullYear(), d.getMonth(), Math.min(selectedDate.value.getDate(), 28));
   handleClosePopover();
 };
 
-const handleMiniPrev = () => {
-  const d = new Date(miniCalendarDate.value);
-  d.setMonth(d.getMonth() - 1);
-  miniCalendarDate.value = d;
-};
-
-const handleMiniNext = () => {
-  const d = new Date(miniCalendarDate.value);
-  d.setMonth(d.getMonth() + 1);
-  miniCalendarDate.value = d;
-};
-
 const jumpToToday = () => {
-  currentDate.value = new Date(2027, 11, 17);
-  selectedDate.value = new Date(2027, 11, 17);
-  miniCalendarDate.value = new Date(2027, 7, 1);
+  currentDate.value = new Date(todayDate);
+  selectedDate.value = new Date(todayDate);
   handleClosePopover();
 };
 
 const selectDate = (d: Date) => {
   selectedDate.value = new Date(d);
+  if (d.getMonth() !== currentDate.value.getMonth() || d.getFullYear() !== currentDate.value.getFullYear()) {
+    currentDate.value = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
 };
 </script>
 
@@ -669,17 +579,12 @@ const selectDate = (d: Date) => {
       </div>
 
       <div class="company-calendar-selector">
-        <label class="selector-label">Select Work Calendar</label>
-        <div class="select-dropdown-container">
-          <select v-model="selectedCalendarId" class="work-calendar-dropdown">
-            <option v-for="cal in companyCalendars" :key="cal.id" :value="cal.id">
-              {{ cal.name }}
-            </option>
-          </select>
-          <div class="dropdown-chevron-box">
-            <ChevronDown :size="18" class="icon-tertiary" />
-          </div>
-        </div>
+        <FormSelect
+          v-model="selectedCalendarId"
+          label="Select Work Calendar"
+          :options="calendarOptions"
+          placeholder="Select Work Calendar"
+        />
       </div>
     </div>
 
@@ -727,121 +632,16 @@ const selectDate = (d: Date) => {
       <div class="calendar-split-body">
 
         <!-- ════════════════════════════════════════════
-             LEFT BLUE HERO SIDEBAR (Figma 6328:119480: 325x639)
+             LEFT BLUE HERO SIDEBAR (Figma 6328:119480 / 6328:120020)
         ════════════════════════════════════════════ -->
-        <aside class="blue-calendar-sidebar">
-          
-          <!-- Background Atmospheric Decorative Ellipses (Figma 8832:36492 / 6328:120021) -->
-          <div class="sidebar-bg-effects" aria-hidden="true">
-            <!-- 1. Darker Ellipse on top section, top attached to top center of the blue section -->
-            <img 
-              :src="ellipseDarkerUrl" 
-              class="sidebar-ellipse-darker" 
-              alt="" 
-            />
-            <!-- 2. Light Ellipse stuck to the left of the screen, centered and slightly top -->
-            <img 
-              :src="ellipseLightUrl" 
-              class="sidebar-ellipse-light" 
-              alt="" 
-            />
-          </div>
-
-          <!-- Giant Background Watermark "2027" (Figma 6328:120028) -->
-          <div class="sidebar-watermark-year">2027</div>
-
-          <!-- Header Section (Figma 6328:120024: 171px with hairline border) -->
-          <div class="sidebar-header-section">
-            <h2 class="sidebar-year-headline">2027</h2>
-            <p class="sidebar-cal-type">Gregorian calendar</p>
-          </div>
-
-          <!-- Body Section of Sidebar -->
-          <div class="sidebar-body-section">
-            <!-- Active Headline Date (Figma 6328:120031) -->
-            <div class="sidebar-active-date">{{ selectedDateHeadline }}</div>
-
-            <!-- Month Selection & Control Arrows (Figma 6328:120032) -->
-            <div class="sidebar-month-nav">
-              <button type="button" class="sidebar-month-pill" @click="handleMiniPrev">
-                <span>{{ miniMonthTitle }}</span>
-                <ChevronDown :size="12" />
-              </button>
-              <div class="sidebar-mini-arrows">
-                <button type="button" class="mini-arrow-btn" @click="handleMiniPrev" title="Previous Month">
-                  <ChevronLeft :size="16" />
-                </button>
-                <button type="button" class="mini-arrow-btn" @click="handleMiniNext" title="Next Month">
-                  <ChevronRight :size="16" />
-                </button>
-              </div>
-            </div>
-
-            <!-- Mini Calendar Grid (Figma 6328:120038) -->
-            <div class="sidebar-mini-table">
-              <!-- Weekday Initials (S M T W T F S) -->
-              <div class="mini-weekdays-row">
-                <span class="mini-weekday-col">S</span>
-                <span class="mini-weekday-col">M</span>
-                <span class="mini-weekday-col">T</span>
-                <span class="mini-weekday-col">W</span>
-                <span class="mini-weekday-col">T</span>
-                <span class="mini-weekday-col">F</span>
-                <span class="mini-weekday-col">S</span>
-              </div>
-
-              <!-- 5 Rows of Weeks with Capsule Band in Week Mode (Figma 6328:120143) -->
-              <div class="mini-weeks-container">
-                <div
-                  v-for="(week, wIdx) in miniCalendarWeeks"
-                  :key="wIdx"
-                  class="mini-week-row"
-                  :class="{ 'mini-week-row--active-band': currentView === 'week' && week.hasSelectedDay }"
-                >
-                  <div
-                    v-for="d in week.days"
-                    :key="d.dateStr"
-                    class="mini-day-cell"
-                    @click="selectDate(d.date)"
-                  >
-                    <div
-                      class="mini-day-inner"
-                      :class="{
-                        'mini-day-inner--muted': !d.isCurrentMonth,
-                        'mini-day-inner--selected': d.isSelected,
-                        'mini-day-inner--in-band': currentView === 'week' && week.hasSelectedDay && !d.isSelected
-                      }"
-                    >
-                      <span>{{ d.day }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Today's Event Section (Figma 6328:120102) -->
-            <div class="sidebar-todays-events">
-              <div class="todays-event-badge">Today’s Event</div>
-              <div class="todays-event-list">
-                <div class="todays-event-row">
-                  <span class="event-chevron">›</span>
-                  <div class="event-texts">
-                    <span class="event-name">Office Meeting</span>
-                    <span class="event-time">11:30</span>
-                  </div>
-                </div>
-                <div class="todays-event-row">
-                  <span class="event-chevron">›</span>
-                  <div class="event-texts">
-                    <span class="event-name">Culture Day</span>
-                    <span class="event-time">11:30</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </aside>
+        <CalendarSidebar
+          v-model="selectedDate"
+          :view-mode="currentView"
+          :today="todayDate"
+          :events="masterEvents"
+          @month-change="onSidebarMonthChange"
+          @date-select="selectDate"
+        />
 
         <!-- ════════════════════════════════════════════
              RIGHT CALENDAR MAIN VIEWS (Figma Frame 332: 904x639)
@@ -935,13 +735,15 @@ const selectDate = (d: Date) => {
                 class="month-cell-box"
                 :class="{
                   'month-cell-box--other': !cell.isCurrentMonth,
-                  'month-cell-box--selected': cell.isSelected
+                  'month-cell-box--selected': cell.isSelected,
+                  'month-cell-box--today': cell.isToday
                 }"
                 @click="selectDate(cell.date)"
               >
                 <!-- Cell Day Label / Circle Badge -->
                 <div class="month-cell-header">
                   <span v-if="cell.isSelected" class="day-badge-solid-blue">{{ cell.dayNum }}</span>
+                  <span v-else-if="cell.isToday" class="day-badge-today-blue">{{ cell.dayNum }}</span>
                   <span v-else class="day-label-text">{{ cell.label }}</span>
 
                   <span v-if="cell.isCurrentMonth" class="day-hours-hint">
@@ -1133,51 +935,6 @@ const selectDate = (d: Date) => {
   border-left: 1px solid #e5e5e5;
   padding-left: 24px;
   box-sizing: border-box;
-}
-
-.selector-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #737373;
-  line-height: 20px;
-  margin-bottom: 6px;
-}
-
-.select-dropdown-container {
-  position: relative;
-  width: 100%;
-}
-
-.work-calendar-dropdown {
-  width: 100%;
-  height: 44px;
-  border: 1px solid #d4d4d4;
-  border-radius: 12px;
-  padding: 0 38px 0 14px;
-  font-size: 16px;
-  font-weight: 400;
-  color: #404040;
-  background-color: #ffffff;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
-  transition: border-color 0.15s ease;
-}
-
-.work-calendar-dropdown:focus {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.1);
-}
-
-.dropdown-chevron-box {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
   justify-content: center;
 }
 
@@ -1311,319 +1068,6 @@ const selectDate = (d: Date) => {
   overflow: hidden;
   background: #ffffff;
   box-sizing: border-box;
-}
-
-/* ════════════════════════════════════════════
-   LEFT BLUE HERO SIDEBAR (Figma 6328:119480: 325x639)
-════════════════════════════════════════════ */
-.blue-calendar-sidebar {
-  width: 325px;
-  flex-shrink: 0;
-  height: 639px;
-  max-height: 639px;
-  background-color: var(--alias-color-brand-default, #0B529C);
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Atmospheric Decorative Background Effects (Figma 8832:36492 / 6328:120021) */
-.sidebar-bg-effects {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* 1. Darker Ellipse: Attached to top center of the blue section */
-.sidebar-ellipse-darker {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 325px;
-  height: 426px;
-  pointer-events: none;
-  user-select: none;
-  mix-blend-mode: normal;
-}
-
-/* 2. Light Ellipse: Center stuck to left of screen, centered and moved slightly to top */
-.sidebar-ellipse-light {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 325px;
-  height: 639px;
-  pointer-events: none;
-  user-select: none;
-  mix-blend-mode: normal;
-}
-
-/* Giant Background Watermark "2027" (Figma 6328:120028) */
-.sidebar-watermark-year {
-  position: absolute;
-  top: 34px;
-  left: -38px;
-  font-size: 165px;
-  font-weight: 700;
-  line-height: 110px;
-  color: rgba(131, 191, 246, 0.1);
-  pointer-events: none;
-  user-select: none;
-  z-index: 2;
-  font-family: 'Inter', sans-serif;
-}
-
-/* Header Section (Figma 6328:120024: 171px with hairline border) */
-.sidebar-header-section {
-  height: 171px;
-  border-bottom: 0.74px solid #83bff6;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 3;
-  padding: 43px 8.8px 28px 17.7px;
-  box-sizing: border-box;
-}
-
-.sidebar-year-headline {
-  font-size: 60px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 40px;
-  margin: 0;
-  letter-spacing: 0;
-}
-
-.sidebar-cal-type {
-  font-size: 12px;
-  color: #bddbfa;
-  margin: 10px 0 0 0;
-  font-weight: 400;
-  line-height: 18px;
-}
-
-/* Body Section of Sidebar (Figma 6328:120029) */
-.sidebar-body-section {
-  padding: 11px 8.84px 12px 8.84px;
-  display: flex;
-  flex-direction: column;
-  height: calc(639px - 171px);
-  box-sizing: border-box;
-  position: relative;
-  z-index: 3;
-}
-
-.sidebar-active-date {
-  padding: 0 7px;
-  font-size: 23.57px;
-  font-weight: 400;
-  color: #ffffff;
-  line-height: 29.47px;
-  margin-bottom: 4px;
-}
-
-/* Month Selector & Controls */
-.sidebar-month-nav {
-  padding: 2.95px 7px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.sidebar-month-pill {
-  display: flex;
-  align-items: center;
-  gap: 5.9px;
-  background: transparent;
-  border: none;
-  color: #e1eefd;
-  font-size: 10.3px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 6px 4px;
-  border-radius: 73.66px;
-  transition: background-color 0.15s ease;
-}
-
-.sidebar-month-pill:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-mini-arrows {
-  display: flex;
-  align-items: center;
-  gap: 0px;
-}
-
-.mini-arrow-btn {
-  width: 35.36px;
-  height: 35.36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  transition: background-color 0.15s ease;
-}
-
-.mini-arrow-btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Mini Calendar Table (Figma 6328:120038: 307.32px width) */
-.sidebar-mini-table {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.mini-weekdays-row {
-  display: flex;
-  width: 100%;
-  height: 35.36px;
-  align-items: center;
-  color: #ffffff;
-}
-
-.mini-weekday-col {
-  flex: 1 0 0;
-  min-width: 1px;
-  text-align: center;
-  font-size: 11.79px;
-  line-height: 17.68px;
-  font-weight: 400;
-}
-
-.mini-weeks-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.mini-week-row {
-  display: flex;
-  width: 100%;
-  height: 35.36px;
-  align-items: center;
-  border-radius: 9999px;
-  transition: background-color 0.15s ease;
-}
-
-/* Week Active Pill Band in Week Mode Only (Figma 6328:120143 & 6328:120388) */
-.mini-week-row--active-band {
-  background-color: #e1eefd;
-}
-
-.mini-day-cell {
-  flex: 1 0 0;
-  min-width: 1px;
-  height: 35.12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.mini-day-inner {
-  width: 29.47px;
-  height: 29.47px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 12px;
-  line-height: 18px;
-  transition: all 0.15s ease;
-}
-
-.mini-day-cell:hover .mini-day-inner:not(.mini-day-inner--selected) {
-  background-color: rgba(35, 48, 88, 0.29);
-}
-
-.mini-day-inner--muted {
-  color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.mini-day-inner--in-band {
-  color: #0B529C !important;
-  font-weight: 500;
-}
-
-.mini-day-inner--selected {
-  background-color: #fba81c !important;
-  border: 2px solid #ffd230 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-/* Today's Events in Sidebar (Figma 6328:120102) */
-.sidebar-todays-events {
-  margin-top: auto;
-  padding: 6px 15px 4px 15px;
-}
-
-.todays-event-badge {
-  display: inline-block;
-  background-color: #e1eefd;
-  color: #0B529C;
-  border-radius: 9999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 18px;
-  margin-bottom: 8px;
-}
-
-.todays-event-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.todays-event-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.event-chevron {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  line-height: 1.3;
-}
-
-.event-texts {
-  display: flex;
-  flex-direction: column;
-}
-
-.event-name {
-  font-size: 14px;
-  color: #ffffff;
-  line-height: 20px;
-  font-weight: 400;
-}
-
-.event-time {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 18px;
 }
 
 /* ════════════════════════════════════════════
@@ -1911,6 +1355,10 @@ const selectDate = (d: Date) => {
   background-color: #f1f7fe !important;
 }
 
+.month-cell-box--today:not(.month-cell-box--selected) {
+  background-color: #f8fafc;
+}
+
 .month-cell-box:nth-child(7n) {
   border-right: none;
 }
@@ -1949,6 +1397,20 @@ const selectDate = (d: Date) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.day-badge-today-blue {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #0B529C;
+  color: #0B529C;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .month-cell-events {

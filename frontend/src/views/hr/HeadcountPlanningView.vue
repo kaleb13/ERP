@@ -10,6 +10,7 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 
@@ -404,24 +405,30 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
       <template #filter>
         <div class="planning-filters-row">
           <div class="filter-item">
-            <span class="filter-label">Fiscal Year:</span>
-            <select v-model="filterYear" class="filter-select">
-              <option v-for="fy in uniqueFiscalYears" :key="fy" :value="fy">{{ fy }}</option>
-            </select>
+            <FormSelect
+              v-model="filterYear"
+              label="Fiscal Year:"
+              :options="uniqueFiscalYears.map(fy => ({ value: fy, label: String(fy) }))"
+              placeholder="Select Year"
+            />
           </div>
 
           <div class="filter-item">
-            <span class="filter-label">Owning Entity:</span>
-            <select v-model="filterEntity" class="filter-select">
-              <option v-for="ent in uniqueEntities" :key="ent" :value="ent">{{ ent }}</option>
-            </select>
+            <FormSelect
+              v-model="filterEntity"
+              label="Owning Entity:"
+              :options="uniqueEntities.map(ent => ({ value: ent, label: ent }))"
+              placeholder="Select Entity"
+            />
           </div>
 
           <div class="filter-item">
-            <span class="filter-label">Budget Status:</span>
-            <select v-model="filterStatus" class="filter-select">
-              <option v-for="st in statusOptions" :key="st" :value="st">{{ st }}</option>
-            </select>
+            <FormSelect
+              v-model="filterStatus"
+              label="Budget Status:"
+              :options="statusOptions.map(st => ({ value: st, label: st }))"
+              placeholder="Select Status"
+            />
           </div>
         </div>
       </template>

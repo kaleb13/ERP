@@ -491,25 +491,29 @@ onUnmounted(() => {
     >
       <div class="quick-modal-grid">
         <!-- Row 1: Owning Entity (Left) & Currency * (Right) -->
-        <div class="quick-field-group">
-          <label class="quick-field-label">Owning Entity</label>
-          <select v-model="quickScaleForm.entity_name" class="quick-field-select">
-            <option value="" disabled>Select Entity</option>
-            <option value="Haleta Addis Ababa">Haleta Addis Ababa</option>
-            <option value="Grand Hotel">Grand Hotel</option>
-            <option value="Mola Trading">Mola Trading</option>
-          </select>
-        </div>
+        <FormSelect
+          v-model="quickScaleForm.entity_name"
+          label="Owning Entity"
+          :options="[
+            { value: 'Haleta Addis Ababa', label: 'Haleta Addis Ababa' },
+            { value: 'Grand Hotel', label: 'Grand Hotel' },
+            { value: 'Mola Trading', label: 'Mola Trading' }
+          ]"
+          placeholder="Select Entity"
+        />
 
-        <div class="quick-field-group">
-          <label class="quick-field-label">Currency <span class="required-star">*</span></label>
-          <select v-model="quickScaleForm.currency_code" class="quick-field-select">
-            <option value="ETB">ETB</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-          </select>
-        </div>
+        <FormSelect
+          v-model="quickScaleForm.currency_code"
+          label="Currency"
+          required
+          :options="[
+            { value: 'ETB', label: 'ETB' },
+            { value: 'USD', label: 'USD' },
+            { value: 'EUR', label: 'EUR' },
+            { value: 'GBP', label: 'GBP' }
+          ]"
+          placeholder="Select Currency"
+        />
 
         <!-- Row 2: Number of Steps * (Left) & Effective From * (Right) -->
         <div class="quick-field-group">

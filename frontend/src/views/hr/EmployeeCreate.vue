@@ -1165,6 +1165,16 @@ const paymentProviders = [
   'Enterprise Digital Wallet'
 ];
 
+const degreeLevelOptions = [
+  'Primary School',
+  'Secondary School',
+  'TVET / Level IV Certificate',
+  'Diploma',
+  "Bachelor's Degree",
+  "Master's Degree",
+  'Doctorate (PhD)'
+];
+
 // ─── Dynamic Sub-Tables Column Definitions (Figma 6095:96580 & 3345:71204) ───
 const salaryComponentsColumns: DynamicTableColumn[] = [
   { 
@@ -3508,19 +3518,13 @@ onUnmounted(() => {
           <div class="row-modal-body">
             <!-- 1. Academic Qualification Fields (Aligned with PartyQualification Schema) -->
             <div v-if="activeModalType === 'academicQualifications'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Degree Level <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.degree_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Primary School">Primary School</option>
-                  <option value="Secondary School">Secondary School</option>
-                  <option value="TVET / Level IV Certificate">TVET / Level IV Certificate</option>
-                  <option value="Diploma">Diploma</option>
-                  <option value="Bachelor's Degree">Bachelor's Degree</option>
-                  <option value="Master's Degree">Master's Degree</option>
-                  <option value="Doctorate (PhD)">Doctorate (PhD)</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.degree_level"
+                label="Degree Level"
+                required
+                placeholder="Select"
+                :options="degreeLevelOptions"
+              />
               <div class="modal-form-group">
                 <label class="modal-form-label">Field of Study <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.field_of_study" class="modal-form-input" list="fieldsOfStudyList" />
@@ -3581,19 +3585,21 @@ onUnmounted(() => {
                 <label class="modal-form-label">Job Title / Position <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.job_title" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Employment Type <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.employment_type" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Permanent">Permanent</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Temporary">Temporary</option>
-                  <option value="Probation">Probation</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Consultancy">Consultancy</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.employment_type"
+                label="Employment Type"
+                required
+                placeholder="Select"
+                :options="[
+                  'Permanent',
+                  'Contract',
+                  'Temporary',
+                  'Probation',
+                  'Part-time',
+                  'Internship',
+                  'Consultancy'
+                ]"
+              />
               <div class="modal-form-group">
                 <label class="modal-form-label">Start Date <span class="text-rose-500">*</span></label>
                 <input type="date" v-model="activeRowData.start_date" class="modal-form-input" />
@@ -3632,16 +3638,18 @@ onUnmounted(() => {
                 <label class="modal-form-label">Skill / Competency <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.skill" class="modal-form-input" list="skillsCatalogList" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Proficiency Level <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.proficiency" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Expert">Expert</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.proficiency"
+                label="Proficiency Level"
+                required
+                placeholder="Select"
+                :options="[
+                  'Beginner',
+                  'Intermediate',
+                  'Advanced',
+                  'Expert'
+                ]"
+              />
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Years of Experience</label>
                 <input type="number" step="0.5" v-model="activeRowData.years_of_experience" class="modal-form-input" />
@@ -3657,60 +3665,37 @@ onUnmounted(() => {
                 <label class="modal-form-label">Language <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.language" class="modal-form-input" list="languagesCatalogList" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Overall Fluency Level <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.fluency_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Basic">Basic</option>
-                  <option value="Conversational">Conversational</option>
-                  <option value="Fluent">Fluent</option>
-                  <option value="Native">Native</option>
-                </select>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Speaking Competence</label>
-                <select v-model="activeRowData.speaking_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="None">None</option>
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Native">Native</option>
-                </select>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Listening Competence</label>
-                <select v-model="activeRowData.listening_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="None">None</option>
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Native">Native</option>
-                </select>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Reading Competence</label>
-                <select v-model="activeRowData.reading_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="None">None</option>
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Native">Native</option>
-                </select>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Writing Competence</label>
-                <select v-model="activeRowData.writing_level" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="None">None</option>
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Native">Native</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.fluency_level"
+                label="Overall Fluency Level"
+                required
+                placeholder="Select"
+                :options="['Basic', 'Conversational', 'Fluent', 'Native']"
+              />
+              <FormSelect
+                v-model="activeRowData.speaking_level"
+                label="Speaking Competence"
+                placeholder="Select"
+                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
+              />
+              <FormSelect
+                v-model="activeRowData.listening_level"
+                label="Listening Competence"
+                placeholder="Select"
+                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
+              />
+              <FormSelect
+                v-model="activeRowData.reading_level"
+                label="Reading Competence"
+                placeholder="Select"
+                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
+              />
+              <FormSelect
+                v-model="activeRowData.writing_level"
+                label="Writing Competence"
+                placeholder="Select"
+                :options="['None', 'Basic', 'Intermediate', 'Advanced', 'Native']"
+              />
               <div class="modal-form-group col-span-2 pt-2">
                 <FormCheckbox 
                   id="langIsNative"
@@ -3723,45 +3708,48 @@ onUnmounted(() => {
 
             <!-- 6. Statutory Clearances & Compliance Fields (Aligned with EmployeeCompliance Schema) -->
             <div v-else-if="activeModalType === 'regulatoryClearances'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Compliance Item <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.clearance_type" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="fayda_verification">Fayda National ID Verification</option>
-                  <option value="pension_registration">Pension Registration Confirmation</option>
-                  <option value="work_permit">Work Permit / Visa</option>
-                  <option value="medical_check">Pre-Employment Medical Check</option>
-                  <option value="police_clearance">Police Background Clearance</option>
-                  <option value="professional_license">Professional / Board License</option>
-                  <option value="tax_registration">Tax Registration / TIN Verification</option>
-                </select>
-                <p class="modal-form-hint">
-                  Statutory compliance item required prior to employee onboarding.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.clearance_type"
+                label="Compliance Item"
+                required
+                placeholder="Select"
+                hint="Statutory compliance item required prior to employee onboarding."
+                :options="[
+                  { value: 'fayda_verification', label: 'Fayda National ID Verification' },
+                  { value: 'pension_registration', label: 'Pension Registration Confirmation' },
+                  { value: 'work_permit', label: 'Work Permit / Visa' },
+                  { value: 'medical_check', label: 'Pre-Employment Medical Check' },
+                  { value: 'police_clearance', label: 'Police Background Clearance' },
+                  { value: 'professional_license', label: 'Professional / Board License' },
+                  { value: 'tax_registration', label: 'Tax Registration / TIN Verification' }
+                ]"
+              />
               <div class="modal-form-group">
                 <label class="modal-form-label">Reference / Permit No. <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.ref_number" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Compliance Status <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.verification_status" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Valid / Cleared">Valid / Cleared</option>
-                  <option value="Pending Verification">Pending Verification</option>
-                  <option value="Statutorily Waived">Statutorily Waived</option>
-                </select>
-              </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Inspected & Verified By</label>
-                <select v-model="activeRowData.verified_by" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Selamawit Bekele (Head of HR)">Selamawit Bekele (Head of HR)</option>
-                  <option value="Dawit Alemu (Compliance Officer)">Dawit Alemu (Compliance Officer)</option>
-                  <option value="Abebe Kebede (Finance Director)">Abebe Kebede (Finance Director)</option>
-                </select>
-                <p class="modal-form-hint">Designated compliance officer who inspected and verified the documentation.</p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.verification_status"
+                label="Compliance Status"
+                required
+                placeholder="Select"
+                :options="[
+                  'Valid / Cleared',
+                  'Pending Verification',
+                  'Statutorily Waived'
+                ]"
+              />
+              <FormSelect
+                v-model="activeRowData.verified_by"
+                label="Inspected & Verified By"
+                placeholder="Select"
+                hint="Designated compliance officer who inspected and verified the documentation."
+                :options="[
+                  'Selamawit Bekele (Head of HR)',
+                  'Dawit Alemu (Compliance Officer)',
+                  'Abebe Kebede (Finance Director)'
+                ]"
+              />
               <div class="modal-form-group">
                 <label class="modal-form-label">Issue Date</label>
                 <input type="date" v-model="activeRowData.issue_date" class="modal-form-input" />
@@ -3785,32 +3773,28 @@ onUnmounted(() => {
                 <label class="modal-form-label">Contact Full Name <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.full_name" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Relationship to Employee <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.relationship" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Spouse">Spouse</option>
-                  <option value="Parent">Parent</option>
-                  <option value="Child">Child</option>
-                  <option value="Sibling">Sibling</option>
-                  <option value="Relative">Relative</option>
-                  <option value="Colleague">Colleague</option>
-                  <option value="Friend">Friend</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.relationship"
+                label="Relationship to Employee"
+                required
+                placeholder="Select"
+                :options="['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Colleague', 'Friend']"
+              />
               <div class="modal-form-group">
                 <label class="modal-form-label">Primary Telephone <span class="text-rose-500">*</span></label>
                 <input type="tel" v-model="activeRowData.phone" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Call Priority <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.priority" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option :value="1">1 - Primary / First Call</option>
-                  <option :value="2">2 - Secondary / Backup Call</option>
-                </select>
-                <p class="modal-form-hint">Emergency response dialing sequence.</p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.priority"
+                label="Call Priority"
+                required
+                placeholder="Select"
+                hint="Emergency response dialing sequence."
+                :options="[
+                  { value: 1, label: '1 - Primary / First Call' },
+                  { value: 2, label: '2 - Secondary / Backup Call' }
+                ]"
+              />
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">City / Residential Location</label>
                 <input type="text" v-model="activeRowData.city_location" class="modal-form-input" />
@@ -3824,17 +3808,13 @@ onUnmounted(() => {
                 <label class="modal-form-label">Dependent Full Name <span class="text-rose-500">*</span></label>
                 <input type="text" v-model="activeRowData.dependent_name" class="modal-form-input" />
               </div>
-              <div class="modal-form-group">
-                <label class="modal-form-label">Relationship <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.relationship" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Spouse">Spouse</option>
-                  <option value="Child">Child</option>
-                  <option value="Parent">Parent</option>
-                  <option value="Sibling">Sibling</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.relationship"
+                label="Relationship"
+                required
+                placeholder="Select"
+                :options="['Spouse', 'Child', 'Parent', 'Sibling', 'Other']"
+              />
               <div class="modal-form-group col-span-2">
                 <label class="modal-form-label">Date of Birth</label>
                 <input type="date" v-model="activeRowData.birth_date" class="modal-form-input" />
@@ -3858,37 +3838,37 @@ onUnmounted(() => {
 
             <!-- 9. Statutory Rule Exemption Fields (with WYSIWYG Reason Editor) -->
             <div v-else-if="activeModalType === 'statutoryExemptionsList'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Rule Type <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.rule_type" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="pension_employee">Pension (Employee Contribution)</option>
-                  <option value="pension_employer">Pension (Employer Contribution)</option>
-                  <option value="income_tax">Employment Income Tax</option>
-                  <option value="overtime_rate">Overtime Rate</option>
-                  <option value="working_hours_weekly">Weekly Working Hours Limit</option>
-                  <option value="severance">Severance Pay</option>
-                  <option value="notice_period">Notice Period</option>
-                  <option value="annual_leave_minimum">Annual Leave Minimum</option>
-                  <option value="probation_maximum">Probation Maximum</option>
-                </select>
-                <p class="modal-form-hint">
-                  Statutory tax or labor policy being waived under authorized exemption.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.rule_type"
+                label="Rule Type"
+                required
+                placeholder="Select"
+                hint="Statutory tax or labor policy being waived under authorized exemption."
+                :options="[
+                  { value: 'pension_employee', label: 'Pension (Employee Contribution)' },
+                  { value: 'pension_employer', label: 'Pension (Employer Contribution)' },
+                  { value: 'income_tax', label: 'Employment Income Tax' },
+                  { value: 'overtime_rate', label: 'Overtime Rate' },
+                  { value: 'working_hours_weekly', label: 'Weekly Working Hours Limit' },
+                  { value: 'severance', label: 'Severance Pay' },
+                  { value: 'notice_period', label: 'Notice Period' },
+                  { value: 'annual_leave_minimum', label: 'Annual Leave Minimum' },
+                  { value: 'probation_maximum', label: 'Probation Maximum' }
+                ]"
+              />
 
-              <div class="modal-form-group">
-                <label class="modal-form-label">Exemption Authorized By <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.approved_by" class="modal-form-select">
-                  <option value="" disabled>Select</option>
-                  <option value="Selamawit Bekele (Head of HR)">Selamawit Bekele (Head of HR)</option>
-                  <option value="Abebe Kebede (Finance Director)">Abebe Kebede (Finance Director)</option>
-                  <option value="Dawit Alemu (Operations Manager)">Dawit Alemu (Operations Manager)</option>
-                </select>
-                <p class="modal-form-hint">
-                  Designated officer who validated the legal basis for the waiver.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.approved_by"
+                label="Exemption Authorized By"
+                required
+                placeholder="Select"
+                hint="Designated officer who validated the legal basis for the waiver."
+                :options="[
+                  'Selamawit Bekele (Head of HR)',
+                  'Abebe Kebede (Finance Director)',
+                  'Dawit Alemu (Operations Manager)'
+                ]"
+              />
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Effective From</label>
@@ -3919,13 +3899,13 @@ onUnmounted(() => {
 
             <!-- 10. Salary Disbursement Account Fields -->
             <div v-else-if="activeModalType === 'bankAccountsList'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Payment Provider / Bank <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.payment_provider" class="modal-form-select">
-                  <option value="" disabled>Select Provider</option>
-                  <option v-for="prov in paymentProviders" :key="prov" :value="prov">{{ prov }}</option>
-                </select>
-              </div>
+              <FormSelect
+                v-model="activeRowData.payment_provider"
+                label="Payment Provider / Bank"
+                required
+                placeholder="Select Provider"
+                :options="paymentProviders"
+              />
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Branch Name</label>
@@ -3966,33 +3946,35 @@ onUnmounted(() => {
 
             <!-- 11. Salary Component & Allowance Fields -->
             <div v-else-if="activeModalType === 'salaryComponentsList'" class="modal-grid-2">
-              <div class="modal-form-group">
-                <label class="modal-form-label">Payroll Component <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.component_name" class="modal-form-select">
-                  <option value="Transport Allowance">Transport Allowance</option>
-                  <option value="Housing Allowance">Housing Allowance</option>
-                  <option value="Representation Allowance">Representation Allowance</option>
-                  <option value="Hardship Allowance">Hardship Allowance</option>
-                  <option value="Fuel & Mileage Allowance">Fuel & Mileage Allowance</option>
-                  <option value="Mobile & Communication">Mobile & Communication Allowance</option>
-                  <option value="Food & Subsistence">Food Allowance</option>
-                  <option value="Other Special Allowance">Other Special Allowance</option>
-                </select>
-                <p class="modal-form-hint">
-                  Select the recurring allowance or earning component to add to monthly compensation.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.component_name"
+                label="Payroll Component"
+                required
+                placeholder="Select"
+                hint="Select the recurring allowance or earning component to add to monthly compensation."
+                :options="[
+                  'Transport Allowance',
+                  'Housing Allowance',
+                  'Representation Allowance',
+                  'Hardship Allowance',
+                  'Fuel & Mileage Allowance',
+                  { value: 'Mobile & Communication', label: 'Mobile & Communication Allowance' },
+                  { value: 'Food & Subsistence', label: 'Food Allowance' },
+                  'Other Special Allowance'
+                ]"
+              />
 
-              <div class="modal-form-group">
-                <label class="modal-form-label">Calculation Type <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.calc_type" class="modal-form-select">
-                  <option value="Fixed Amount">Fixed Amount (ETB)</option>
-                  <option value="Percentage of Basic">% of Monthly Basic Salary</option>
-                </select>
-                <p class="modal-form-hint">
-                  Choose whether this allowance is a fixed ETB amount or calculated as a percentage of basic salary.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.calc_type"
+                label="Calculation Type"
+                required
+                placeholder="Select"
+                hint="Choose whether this allowance is a fixed ETB amount or calculated as a percentage of basic salary."
+                :options="[
+                  { value: 'Fixed Amount', label: 'Fixed Amount (ETB)' },
+                  { value: 'Percentage of Basic', label: '% of Monthly Basic Salary' }
+                ]"
+              />
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Amount / Value <span class="text-rose-500">*</span></label>
@@ -4002,17 +3984,17 @@ onUnmounted(() => {
                 </p>
               </div>
 
-              <div class="modal-form-group">
-                <label class="modal-form-label">Calculation Formula (Optional)</label>
-                <select v-model="activeRowData.payroll_formula" class="modal-form-select">
-                  <option value="Default Component Formula">Default Component Formula</option>
-                  <option value="min(basic * 0.25, 2200)">Statutory Cap: min(basic * 0.25, 2200)</option>
-                  <option value="Direct Value (No Formula)">Direct Value (No Formula Pin)</option>
-                </select>
-                <p class="modal-form-hint">
-                  Optional automated calculation rule for statutory caps or tiered formulas.
-                </p>
-              </div>
+              <FormSelect
+                v-model="activeRowData.payroll_formula"
+                label="Calculation Formula (Optional)"
+                placeholder="Select"
+                hint="Optional automated calculation rule for statutory caps or tiered formulas."
+                :options="[
+                  'Default Component Formula',
+                  { value: 'min(basic * 0.25, 2200)', label: 'Statutory Cap: min(basic * 0.25, 2200)' },
+                  { value: 'Direct Value (No Formula)', label: 'Direct Value (No Formula Pin)' }
+                ]"
+              />
 
               <div class="modal-form-group">
                 <label class="modal-form-label">Effective From (Optional)</label>
@@ -4033,20 +4015,22 @@ onUnmounted(() => {
 
             <!-- 12. Address & Physical Domicile Fields -->
             <div v-else-if="activeModalType === 'addressesList'" class="modal-grid-2">
-              <div class="modal-form-group col-span-2">
-                <label class="modal-form-label">Address Type <span class="text-rose-500">*</span></label>
-                <select v-model="activeRowData.address_type" class="modal-form-select">
-                  <option value="residence">Residence / Primary Home</option>
-                  <option value="postal">Postal Address</option>
-                  <option value="work">Work Location</option>
-                  <option value="emergency">Emergency Domicile</option>
-                  <option value="birth_place">Place of Birth</option>
-                  <option value="other">Other Domicile</option>
-                </select>
-                <p class="modal-form-hint">
-                  Classification of this address record for official Party identity.
-                </p>
-              </div>
+              <FormSelect
+                class="col-span-2"
+                v-model="activeRowData.address_type"
+                label="Address Type"
+                required
+                placeholder="Select"
+                hint="Classification of this address record for official Party identity."
+                :options="[
+                  { value: 'residence', label: 'Residence / Primary Home' },
+                  { value: 'postal', label: 'Postal Address' },
+                  { value: 'work', label: 'Work Location' },
+                  { value: 'emergency', label: 'Emergency Domicile' },
+                  { value: 'birth_place', label: 'Place of Birth' },
+                  { value: 'other', label: 'Other Domicile' }
+                ]"
+              />
 
               <!-- Exact Geographic Location Hierarchy (Spine) -->
               <div class="modal-form-group col-span-2">
@@ -4065,46 +4049,54 @@ onUnmounted(() => {
 
                   <div class="location-picker-body">
                     <!-- Level 1: Country -->
-                    <div class="modal-form-group">
-                      <label class="modal-form-label">Country <span class="text-rose-500">*</span></label>
-                      <select v-model="activeRowData.country" class="modal-form-select" @change="onCountryChange">
-                        <option value="Ethiopia">Ethiopia [ET]</option>
-                        <option value="Kenya">Kenya [KE]</option>
-                        <option value="Djibouti">Djibouti [DJ]</option>
-                        <option value="United States">United States [US]</option>
-                        <option value="United Kingdom">United Kingdom [GB]</option>
-                      </select>
-                      <p class="modal-form-hint">Primary sovereign jurisdiction.</p>
-                    </div>
+                    <FormSelect
+                      v-model="activeRowData.country"
+                      label="Country"
+                      required
+                      placeholder="Select"
+                      hint="Primary sovereign jurisdiction."
+                      :options="[
+                        { value: 'Ethiopia', label: 'Ethiopia [ET]' },
+                        { value: 'Kenya', label: 'Kenya [KE]' },
+                        { value: 'Djibouti', label: 'Djibouti [DJ]' },
+                        { value: 'United States', label: 'United States [US]' },
+                        { value: 'United Kingdom', label: 'United Kingdom [GB]' }
+                      ]"
+                      @change="onCountryChange"
+                    />
 
                     <!-- Level 2: Region / City Administration -->
-                    <div class="modal-form-group">
-                      <label class="modal-form-label">Region / City Administration <span class="text-rose-500">*</span></label>
-                      <select v-model="activeRowData.region" class="modal-form-select" @change="onRegionChange">
-                        <option value="" disabled>Select</option>
-                        <option v-for="r in currentRegionOptions" :key="r" :value="r">{{ r }}</option>
-                      </select>
-                      <p class="modal-form-hint">Administrative state or chartered city.</p>
-                    </div>
+                    <FormSelect
+                      v-model="activeRowData.region"
+                      label="Region / City Administration"
+                      required
+                      placeholder="Select"
+                      hint="Administrative state or chartered city."
+                      :options="currentRegionOptions"
+                      @change="onRegionChange"
+                    />
 
                     <!-- Level 3: Zone / Sub-City -->
                     <div class="modal-form-group">
-                      <label class="modal-form-label">Zone / Sub-City</label>
                       <div v-if="currentSubcityOptions.length > 0" class="flex flex-col gap-1.5">
-                        <select v-model="activeRowData.subcity_zone" class="modal-form-select" @change="onSubcityChange">
-                          <option value="" disabled>Select</option>
-                          <option v-for="sc in currentSubcityOptions" :key="sc" :value="sc">{{ sc }}</option>
-                          <option value="__custom__">Other / Custom Zone...</option>
-                        </select>
+                        <FormSelect
+                          v-model="activeRowData.subcity_zone"
+                          label="Zone / Sub-City"
+                          placeholder="Select"
+                          :options="[...currentSubcityOptions, { value: '__custom__', label: 'Other / Custom Zone...' }]"
+                          @change="onSubcityChange"
+                        />
                         <input 
                           v-if="activeRowData.subcity_zone === '__custom__' || isCustomSubcity" 
                           type="text" 
                           v-model="customSubcityText" 
                           class="modal-form-input mt-1" 
                           @input="onCustomSubcityInput" 
+                          placeholder="Specify custom zone or subcity..."
                         />
                       </div>
                       <div v-else>
+                        <label class="modal-form-label">Zone / Sub-City</label>
                         <input 
                           type="text" 
                           v-model="activeRowData.subcity_zone" 
@@ -4117,22 +4109,25 @@ onUnmounted(() => {
 
                     <!-- Level 4: Woreda / District -->
                     <div class="modal-form-group">
-                      <label class="modal-form-label">Woreda / District</label>
                       <div v-if="currentWoredaOptions.length > 0" class="flex flex-col gap-1.5">
-                        <select v-model="activeRowData.woreda" class="modal-form-select" @change="onWoredaChange">
-                          <option value="" disabled>Select</option>
-                          <option v-for="w in currentWoredaOptions" :key="w" :value="w">{{ w }}</option>
-                          <option value="__custom__">Other / Custom Woreda...</option>
-                        </select>
+                        <FormSelect
+                          v-model="activeRowData.woreda"
+                          label="Woreda / District"
+                          placeholder="Select"
+                          :options="[...currentWoredaOptions, { value: '__custom__', label: 'Other / Custom Woreda...' }]"
+                          @change="onWoredaChange"
+                        />
                         <input 
                           v-if="activeRowData.woreda === '__custom__' || isCustomWoreda" 
                           type="text" 
                           v-model="customWoredaText" 
                           class="modal-form-input mt-1" 
                           @input="onCustomWoredaInput" 
+                          placeholder="Specify custom woreda..."
                         />
                       </div>
                       <div v-else>
+                        <label class="modal-form-label">Woreda / District</label>
                         <input 
                           type="text" 
                           v-model="activeRowData.woreda" 

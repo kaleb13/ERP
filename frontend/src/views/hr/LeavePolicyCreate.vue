@@ -95,6 +95,29 @@ const templateOptions = computed<SelectOption[]>(() => {
   ];
 });
 
+const leaveTypeOptions = computed(() =>
+  leaveTypesData.map((lt) => ({ value: lt.id, label: `${lt.name} (${lt.code})` }))
+);
+
+const accrualMethodOptions = [
+  { value: 'per_service_year', label: 'Per Service Year (+1d statutory)' },
+  { value: 'annual_grant', label: 'Annual Grant (Fiscal lump sum)' },
+  { value: 'monthly_accrual', label: 'Monthly Accrual (Prorated)' },
+  { value: 'fixed', label: 'Fixed Event Allocation' }
+];
+
+const roundingOptions = [
+  { value: 'none', label: 'Exact Fractional Days (e.g. 1.33 d)' },
+  { value: 'half_day', label: 'Round to Half Day (0.5 d increments)' },
+  { value: 'full_day', label: 'Round to Full Day (1.0 d increments)' }
+];
+
+const genderEligibilityOptions = [
+  { value: '', label: 'All Employees (No gender restriction)' },
+  { value: 'female', label: 'Female Staff Only (e.g. Maternity)' },
+  { value: 'male', label: 'Male Staff Only (e.g. Paternity)' }
+];
+
 // ─── Smart Statutory Defaults Dictionary ───
 const statutoryDefaultsByCode: Record<string, Partial<LeavePolicyRuleRecord>> = {
   ANNUAL: {
@@ -829,28 +852,23 @@ const handleClearForm = () => {
 
                 <!-- Leave Type Inline Dropdown -->
                 <td class="child-td">
-                  <select 
-                    v-model="row.leave_type_id" 
-                    class="child-inline-select font-medium"
-                    @change="onInlineLeaveTypeChange(row)"
-                  >
-                    <option v-for="lt in leaveTypesData" :key="lt.id" :value="lt.id">
-                      {{ lt.name }} ({{ lt.code }})
-                    </option>
-                  </select>
+                  <FormSelect
+                    v-model="row.leave_type_id"
+                    :options="leaveTypeOptions"
+                    variant="cell"
+                    placeholder="Select Type"
+                    @update:model-value="() => onInlineLeaveTypeChange(row)"
+                  />
                 </td>
 
                 <!-- Accrual Method Inline Dropdown -->
                 <td class="child-td">
-                  <select 
-                    v-model="row.accrual_method" 
-                    class="child-inline-select"
-                  >
-                    <option value="per_service_year">Per Service Year (+1d statutory)</option>
-                    <option value="annual_grant">Annual Grant (Fiscal lump sum)</option>
-                    <option value="monthly_accrual">Monthly Accrual (Prorated)</option>
-                    <option value="fixed">Fixed Event Allocation</option>
-                  </select>
+                  <FormSelect
+                    v-model="row.accrual_method"
+                    :options="accrualMethodOptions"
+                    variant="cell"
+                    placeholder="Select Method"
+                  />
                 </td>
 
                 <!-- Annual Days / Year Inline Input -->
@@ -934,33 +952,25 @@ const handleClearForm = () => {
             <div class="modal-grid-2">
               <!-- Leave Type -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Leave Type <span class="required-star">*</span></label>
-                <div class="modal-select-wrap">
-                  <select 
-                    v-model="activeRowData.leave_type_id" 
-                    class="modal-form-select" 
-                    @change="onModalLeaveTypeChange"
-                  >
-                    <option v-for="lt in leaveTypesData" :key="lt.id" :value="lt.id">
-                      {{ lt.name }} ({{ lt.code }})
-                    </option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.leave_type_id"
+                  label="Leave Type"
+                  required
+                  :options="leaveTypeOptions"
+                  placeholder="Select Type"
+                  @update:model-value="() => onModalLeaveTypeChange()"
+                />
               </div>
 
               <!-- Accrual Method -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Accrual Method <span class="required-star">*</span></label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.accrual_method" class="modal-form-select">
-                    <option value="per_service_year">Per Service Year (+1d statutory)</option>
-                    <option value="annual_grant">Annual Grant (Fiscal lump sum)</option>
-                    <option value="monthly_accrual">Monthly Accrual (Prorated)</option>
-                    <option value="fixed">Fixed Event Allocation</option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.accrual_method"
+                  label="Accrual Method"
+                  required
+                  :options="accrualMethodOptions"
+                  placeholder="Select Method"
+                />
               </div>
 
               <!-- Statutory Annual Days -->
@@ -1063,28 +1073,22 @@ const handleClearForm = () => {
 
               <!-- Fractional Rounding -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Fractional Day Rounding</label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.rounding" class="modal-form-select">
-                    <option value="none">Exact Fractional Days (e.g. 1.33 d)</option>
-                    <option value="half_day">Round to Half Day (0.5 d increments)</option>
-                    <option value="full_day">Round to Full Day (1.0 d increments)</option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.rounding"
+                  label="Fractional Day Rounding"
+                  :options="roundingOptions"
+                  placeholder="Select Rounding"
+                />
               </div>
 
               <!-- Gender Eligibility -->
               <div class="modal-form-group">
-                <label class="modal-form-label">Gender Eligibility</label>
-                <div class="modal-select-wrap">
-                  <select v-model="activeRowData.gender" class="modal-form-select">
-                    <option :value="null">All Employees (No gender restriction)</option>
-                    <option value="female">Female Staff Only (e.g. Maternity)</option>
-                    <option value="male">Male Staff Only (e.g. Paternity)</option>
-                  </select>
-                  <ChevronDown :size="14" class="modal-select-chevron" />
-                </div>
+                <FormSelect
+                  v-model="activeRowData.gender"
+                  label="Gender Eligibility"
+                  :options="genderEligibilityOptions"
+                  placeholder="Select Eligibility"
+                />
               </div>
 
               <!-- Policy Governance Checkboxes (Col-span-2) -->

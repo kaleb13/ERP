@@ -9,6 +9,7 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import UnderlineTabs, { type UnderlineTabItem } from '../../components/UnderlineTabs.vue';
+import FormSelect from '../../components/FormSelect.vue';
 import { 
   getPolicyById, 
   leavePoliciesData, 
@@ -481,12 +482,12 @@ const simProgressionRows = computed(() => {
 
             <!-- Rule Selection -->
             <div class="sim-control-group">
-              <label class="sim-label">Target Leave Type Rule</label>
-              <select v-model="selectedSimRuleId" class="sim-select">
-                <option v-for="r in policy.rules" :key="r.id" :value="r.id">
-                  {{ r.leave_type_name }} ({{ r.accrual_method.replace(/_/g, ' ') }})
-                </option>
-              </select>
+              <FormSelect
+                v-model="selectedSimRuleId"
+                label="Target Leave Type Rule"
+                :options="policy?.rules.map(r => ({ value: r.id, label: `${r.leave_type_name} (${r.accrual_method.replace(/_/g, ' ')})` })) || []"
+                placeholder="Select Rule"
+              />
             </div>
 
             <!-- Years of Service Slider -->

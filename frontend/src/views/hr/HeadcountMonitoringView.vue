@@ -6,6 +6,7 @@ import {
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
+import FormSelect from '../../components/FormSelect.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 
 // ─── Types & Models ───
@@ -281,24 +282,30 @@ const paginatedRecords = computed(() => {
       <template #filter>
         <div class="monitoring-filters-row">
           <div class="filter-item">
-            <span class="filter-label">Fiscal Year:</span>
-            <select v-model="filterYear" class="filter-select">
-              <option v-for="fy in uniqueFiscalYears" :key="fy" :value="fy">{{ fy }}</option>
-            </select>
+            <FormSelect
+              v-model="filterYear"
+              label="Fiscal Year:"
+              :options="uniqueFiscalYears.map(fy => ({ value: fy, label: String(fy) }))"
+              placeholder="Select Year"
+            />
           </div>
 
           <div class="filter-item">
-            <span class="filter-label">Owning Entity:</span>
-            <select v-model="filterEntity" class="filter-select">
-              <option v-for="ent in uniqueEntities" :key="ent" :value="ent">{{ ent }}</option>
-            </select>
+            <FormSelect
+              v-model="filterEntity"
+              label="Owning Entity:"
+              :options="uniqueEntities.map(ent => ({ value: ent, label: ent }))"
+              placeholder="Select Entity"
+            />
           </div>
 
           <div class="filter-item">
-            <span class="filter-label">Gate State:</span>
-            <select v-model="filterGateStatus" class="filter-select">
-              <option v-for="gt in gateOptions" :key="gt" :value="gt">{{ gt }}</option>
-            </select>
+            <FormSelect
+              v-model="filterGateStatus"
+              label="Gate State:"
+              :options="gateOptions.map(gt => ({ value: gt, label: gt }))"
+              placeholder="Select State"
+            />
           </div>
         </div>
       </template>
