@@ -1,3 +1,15 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  AUTHORITATIVE ARCHITECTURAL CONTRACT FOR AGENTS & DEVELOPERS:
+  1. SCANNING COLUMNS ONLY: In-table columns (:columns) MUST be strictly restricted
+     to 3 to 5 core mandatory scanning attributes. NEVER dump all entity fields inline.
+  2. ROW EXPANSION MODAL: Secondary attributes, scopes, and optional metadata MUST be
+     placed inside the #expand-modal="{ row, index }" template slot (<DynamicTableModal>).
+  3. CONTAINER INSET PADDING: The parent card container hosting this component MUST
+     apply 24px padding (padding: 24px). NEVER wrap this table in an unpadded container (padding: 0).
+  4. DEFAULT INITIAL ROW: Always initialize with at least 1 default row (:default-initial-row="true").
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import {
@@ -730,15 +742,16 @@ const hideTooltip = () => {
                         </span>
                       </div>
 
-                      <!-- 2. Number Cell (Right-Aligned, ERPNext Grid Cell) -->
+                      <!-- 2. Number Cell (Left-Aligned by default for consistency with text) -->
                       <div v-else-if="col.type === 'number'" class="cell-grid-wrap">
                         <input
                           type="number"
                           v-model.number="row[col.key]"
-                          class="cell-grid-input text-right"
+                          class="cell-grid-input"
+                          :class="{ 'text-right': col.align === 'right' }"
                           :data-cell-row="idx"
                           :data-cell-key="col.key"
-                          :placeholder="col.placeholder || '0'"
+                          :placeholder="col.placeholder ?? ''"
                           @keydown.enter="handleCellEnter(idx, col.key)"
                         />
                       </div>
@@ -1598,11 +1611,15 @@ const hideTooltip = () => {
   color: var(--alias-color-text-secondary, #404040);
 }
 
-/* ─── Pill Switch Component (Yes / No) ────────────────────────────────────── */
+/* ─── Pill Switch Component (Yes / No — Figma 10178:34635) ─────────────────── */
+.td-switch-cell {
+  padding: 0 14px !important;
+}
+
 .switch-cell-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .qmt-switch {
@@ -1614,8 +1631,10 @@ const hideTooltip = () => {
   cursor: pointer;
   position: relative;
   padding: 2px;
+  flex-shrink: 0;
   transition: background-color 0.2s ease;
   display: inline-block;
+  outline: none;
 }
 
 .qmt-switch.switch-active {
@@ -1637,10 +1656,11 @@ const hideTooltip = () => {
 }
 
 .switch-label {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
   color: var(--alias-color-text-secondary, #404040);
-  min-width: 26px;
+  min-width: 24px;
 }
 
 /* ─── Expand Icon Button ──────────────────────────────────────────────────── */
@@ -1709,7 +1729,7 @@ const hideTooltip = () => {
 }
 
 .qmt-pill-btn:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #d1d5db;
   color: var(--alias-color-text-primary, #262626);
 }
@@ -1776,7 +1796,7 @@ const hideTooltip = () => {
 }
 
 .btn-modal-close:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: var(--alias-color-text-primary, #262626);
 }
 
@@ -1936,7 +1956,7 @@ const hideTooltip = () => {
 }
 
 .btn-nav-arrow:hover:not(:disabled) {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
   color: var(--alias-color-text-primary, #262626);
 }
@@ -1969,7 +1989,7 @@ const hideTooltip = () => {
 }
 
 .btn-modal-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
   color: var(--alias-color-text-primary, #262626);
 }
@@ -2046,11 +2066,11 @@ const hideTooltip = () => {
 }
 
 .catalog-checklist-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .catalog-checklist-item.item-active {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .catalog-checklist-item :deep(.qmt-checkbox-wrapper) {
@@ -2120,7 +2140,7 @@ const hideTooltip = () => {
 .th-dark-tooltip {
   position: fixed;
   transform: translate(-50%, -100%);
-  background-color: #0f172a;
+  background-color: #404040;
   color: #ffffff;
   padding: 8px 12px;
   border-radius: var(--alias-radius-md, 8px);

@@ -1181,7 +1181,7 @@ const handleClearForm = () => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -1250,7 +1250,7 @@ const handleClearForm = () => {
   transition: background-color 0.15s ease;
 }
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* Main Cards */
@@ -1454,7 +1454,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .child-inline-input:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-input:focus {
@@ -1477,7 +1477,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .child-inline-select:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-select:focus {
@@ -1515,7 +1515,7 @@ const handleClearForm = () => {
 }
 .btn-row-expand:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 /* The ONE Add Row button directly below table */
@@ -1535,7 +1535,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1607,7 +1607,7 @@ const handleClearForm = () => {
 }
 .btn-modal-close:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .row-modal-body {
@@ -1705,7 +1705,7 @@ const handleClearForm = () => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1739,12 +1739,12 @@ const handleClearForm = () => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
@@ -1768,7 +1768,7 @@ const handleClearForm = () => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   border-color: #cbd5e1;
 }

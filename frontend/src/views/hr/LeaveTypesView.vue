@@ -359,7 +359,7 @@ const handleDeleteType = (id: number) => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -476,7 +476,7 @@ const handleDeleteType = (id: number) => {
   transition: background-color 0.12s ease;
 }
 .btn-action-dots:hover { 
-  background-color: #f1f5f9; 
+  background-color: #f5f5f5; 
   color: #404040; 
 }
 
@@ -510,7 +510,7 @@ const handleDeleteType = (id: number) => {
   text-align: left;
 }
 .dropdown-item:hover { 
-  background-color: #f8fafc; 
+  background-color: #fafafa; 
 }
 .dropdown-item.text-danger {
   color: #dc2626;
@@ -521,7 +521,7 @@ const handleDeleteType = (id: number) => {
 
 .dropdown-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 

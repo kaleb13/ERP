@@ -1,3 +1,18 @@
+<!--
+  Authoritative QMT DynamicTableModal Component (Figma 6095:96370 & 10178:22759)
+  =============================================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Row expansion modal for `DynamicSubTable.vue`: Opened via the `↗` expand icon on child table rows.
+  - Houses all secondary, configuration, or scope fields that should NOT clutter the primary scanning table columns.
+  - Standard Header: Entity title + `(Row X)` in tertiary text (`#737373`), top-right close `X` button.
+  - Standard Body: 2-column input grid (`gap: 20px`), clean white background, 24px padding.
+  - Standard Footer: 74px height, `#FAFAFA` canvas background, `#E5E5E5` subtle top border,
+    red destructive `Delete` button on bottom-left, row navigation (`↑`/`↓`), `Duplicate`, and `Insert Above/Below`.
+
+  WHEN NOT TO USE:
+  - DO NOT create ad-hoc bespoke modal overlays for child lines.
+  - DO NOT use for standalone page dialogs or confirmation alerts.
+-->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { X, ArrowDown, ArrowUp, Copy, Plus } from 'lucide-vue-next';
@@ -264,7 +279,7 @@ watch(
 .dynamic-modal-title-main {
   font-size: 20px;
   font-weight: 600;
-  color: #262626;
+  color: #404040;
   line-height: 28px;
 }
 

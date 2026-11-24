@@ -602,7 +602,7 @@ onMounted(() => {
 
 .role-pill-group {
   display: inline-flex;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px;
   border-radius: 8px;
   gap: 2px;
@@ -616,7 +616,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -645,7 +645,7 @@ onMounted(() => {
 }
 
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -780,8 +780,8 @@ onMounted(() => {
 .gc-badge {
   font-size: 10.5px;
   font-weight: 600;
-  color: #64748b;
-  background-color: #f1f5f9;
+  color: #737373;
+  background-color: #f5f5f5;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -796,7 +796,7 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
 }
 
 /* WYSIWYG Editor Styling (Image 3) */
@@ -812,7 +812,7 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
   flex-wrap: wrap;
 }
@@ -826,7 +826,7 @@ onMounted(() => {
 .toolbar-divider {
   width: 1px;
   height: 18px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   margin: 0 4px;
 }
 
@@ -849,14 +849,14 @@ onMounted(() => {
   justify-content: center;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toolbar-btn:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   color: #404040;
 }
 
@@ -955,7 +955,7 @@ onMounted(() => {
 .tag-title-gray {
   font-size: 11.5px;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px 8px;
   border-radius: 6px;
 }
@@ -971,7 +971,7 @@ onMounted(() => {
 
 .meta-subtext-line {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1022,7 +1022,7 @@ onMounted(() => {
 
 /* Capacity Justification Callout Panel (Image 5) */
 .justification-callout-panel {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 16px;
@@ -1045,7 +1045,7 @@ onMounted(() => {
 
 .callout-body-paragraph {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.5;
   margin: 0;
 }
@@ -1114,7 +1114,7 @@ onMounted(() => {
 .timeline-line-connector {
   width: 1.5px;
   flex: 1;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   margin: 3px 0;
   min-height: 24px;
 }
@@ -1132,6 +1132,6 @@ onMounted(() => {
 
 .timeline-sub-detail {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
 }
 </style>

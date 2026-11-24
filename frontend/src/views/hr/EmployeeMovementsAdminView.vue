@@ -12,16 +12,18 @@ import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
+import BaseDropdownMenu, { type DropdownMenuItem } from '../../components/BaseDropdownMenu.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import MetricCard from '../../components/MetricCard.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import { useToast } from '../../composables/useToast';
+import { formatDisplayDate } from '../../utils/dateFormat';
 
 const router = useRouter();
 
-// Breadcrumbs (Strict Breadcrumb-Only Navigation)
+// Breadcrumbs (Top-level directory page: exact page name only)
 const breadcrumbItems = [
-  { label: 'General Movements', to: '/hr/movements' },
   { label: 'Movement Admin' }
 ];
 
@@ -383,6 +385,33 @@ const handleBatchDelete = () => {
   selectedRowIds.value = [];
 };
 
+const getAdminRowActionItems = (item: MovementAdminItem): DropdownMenuItem[] => {
+  const items: DropdownMenuItem[] = [
+    {
+      key: 'view',
+      label: 'View Dossier',
+      icon: Eye,
+      onClick: () => handleInspectDossier(item.id)
+    }
+  ];
+  if (item.status === 'pending') {
+    items.push(
+      { key: 'approve', label: 'Approve Step', icon: Check, onClick: () => handleApproveSingle(item) },
+      { key: 'div', divider: true },
+      { key: 'reject', label: 'Reject Step', icon: X, destructive: true, onClick: () => handleRejectSingle(item) }
+    );
+  }
+  if (item.status === 'approved') {
+    items.push({
+      key: 'effect',
+      label: 'Effect Movement',
+      icon: ArrowUpRight,
+      onClick: () => handleEffectSingle(item)
+    });
+  }
+  return items;
+};
+
 const formatMovementType = (type: string) => {
   const map: Record<string, string> = {
     promotion: 'Promotion',
@@ -486,11 +515,9 @@ const formatMovementType = (type: string) => {
           <thead>
             <tr>
               <th class="th-checkbox">
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="isAllSelected"
-                  @change="handleToggleSelectAll"
+                <FormCheckbox
+                  :modelValue="isAllSelected"
+                  @update:modelValue="handleToggleSelectAll"
                 />
               </th>
               <th>Name</th>
@@ -511,15 +538,13 @@ const formatMovementType = (type: string) => {
             >
               <!-- Checkbox -->
               <td class="td-checkbox" @click.stop>
-                <input
-                  type="checkbox"
-                  class="table-checkbox"
-                  :checked="selectedRowIds.includes(item.id)"
-                  @change="handleToggleRowSelect(item.id)"
+                <FormCheckbox
+                  :modelValue="selectedRowIds.includes(item.id)"
+                  @update:modelValue="() => handleToggleRowSelect(item.id)"
                 />
               </td>
 
-              <!-- Employee Name (Rule 5: Secondary Color #404040) -->
+              <!-- Employee Name (Lead column: 2 lines allowed) -->
               <td>
                 <div class="emp-name-cell">
                   <span class="emp-name-text">{{ item.employee_name }}</span>
@@ -527,92 +552,49 @@ const formatMovementType = (type: string) => {
                 </div>
               </td>
 
-              <!-- Type (Rule 5: Tertiary Color #737373) -->
+              <!-- Type (Single-line tertiary text) -->
               <td class="td-tertiary">
-                <div class="movement-type-cell">
-                  <span>{{ formatMovementType(item.movement_type) }}</span>
-                  <span v-if="item.require_guarantee_refresh" class="admin-surety-pill" title="Financial Surety / Guarantor Refresh Required">
-                    <ShieldAlert :size="10" />
-                    <span>Surety Req.</span>
-                  </span>
-                </div>
+                <span>{{ formatMovementType(item.movement_type) }}</span>
               </td>
 
-              <!-- Proposed Transition (Rule 5 & 6: Plain Text Tertiary) -->
+              <!-- Proposed Transition (Single-line tertiary text) -->
               <td class="td-tertiary">
-                <div class="transition-summary-cell">
-                  <span class="to-placement-text">{{ item.to_placement }}</span>
-                  <span v-if="item.salary_delta !== 0" class="salary-delta-mini">
-                    {{ item.salary_delta > 0 ? '+' : '' }}ETB {{ item.salary_delta }}
-                  </span>
-                </div>
+                <span class="to-placement-text">{{ item.to_placement }}</span>
               </td>
 
-              <!-- Workflow Stage -->
+              <!-- Workflow Stage (Single-line) -->
               <td class="td-tertiary">
                 <span class="workflow-stage-pill">
                   {{ item.current_step_name }}
                 </span>
               </td>
 
-              <!-- Effective Date -->
+              <!-- Effective Date (MMM D, YYYY) -->
               <td class="td-tertiary">
-                {{ item.effective_date }}
+                {{ formatDisplayDate(item.effective_date) }}
               </td>
 
               <!-- Status (Rule 9: Status Column) -->
               <td>
                 <BaseBadge :color="getStatusColor(item.status)">
-                  {{ item.status }}
+                  {{ item.status.charAt(0).toUpperCase() + item.status.slice(1) }}
                 </BaseBadge>
               </td>
 
-              <!-- Actions (⋮ 3-dots popup) -->
+              <!-- Actions (⋮ 3-dots BaseDropdownMenu) -->
               <td class="td-actions" @click.stop>
-                <div class="action-dropdown-wrapper">
-                  <button
-                    type="button"
-                    class="btn-action-dots"
-                    title="Actions"
-                    @click="toggleActionMenu(item.id)"
-                  >
-                    <MoreVertical :size="15" />
-                  </button>
-
-                  <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
-                    <button type="button" class="popup-item" @click="handleInspectDossier(item.id); activeActionMenuId = null;">
-                      <Eye :size="13" />
-                      <span>View Dossier</span>
-                    </button>
+                <BaseDropdownMenu :items="getAdminRowActionItems(item)" minWidth="190px">
+                  <template #trigger="{ toggle }">
                     <button
-                      v-if="item.status === 'pending'"
                       type="button"
-                      class="popup-item item-approve"
-                      @click="handleApproveSingle(item); activeActionMenuId = null;"
+                      class="btn-action-dots"
+                      title="Actions"
+                      @click.stop="toggle"
                     >
-                      <Check :size="13" />
-                      <span>Approve Step</span>
+                      <MoreVertical :size="15" />
                     </button>
-                    <button
-                      v-if="item.status === 'pending'"
-                      type="button"
-                      class="popup-item item-reject"
-                      @click="handleRejectSingle(item); activeActionMenuId = null;"
-                    >
-                      <X :size="13" />
-                      <span>Reject Step</span>
-                    </button>
-                    <button
-                      v-if="item.status === 'approved'"
-                      type="button"
-                      class="popup-item item-effect"
-                      @click="handleEffectSingle(item); activeActionMenuId = null;"
-                    >
-                      <ArrowUpRight :size="13" />
-                      <span>Effect Movement</span>
-                    </button>
-                  </div>
-                </div>
+                  </template>
+                </BaseDropdownMenu>
               </td>
             </tr>
 
@@ -727,7 +709,7 @@ const formatMovementType = (type: string) => {
 }
 
 .btn-nav-general:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -797,7 +779,7 @@ const formatMovementType = (type: string) => {
 }
 
 .table-row-hover:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-checkbox, .td-checkbox {
@@ -873,7 +855,7 @@ const formatMovementType = (type: string) => {
 .workflow-stage-pill {
   font-size: 11.5px;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -905,13 +887,13 @@ const formatMovementType = (type: string) => {
   border: none;
   background: transparent;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

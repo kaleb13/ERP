@@ -275,7 +275,7 @@ const handleSubmitRequest = () => {
 <style scoped>
 .service-request-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -319,7 +319,7 @@ const handleSubmitRequest = () => {
 }
 
 .btn-clear-form:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-primary-save {
@@ -373,13 +373,13 @@ const handleSubmitRequest = () => {
 }
 
 .tb-dropdown-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .tb-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 4px;
 }
 
@@ -391,7 +391,7 @@ const handleSubmitRequest = () => {
   height: 26px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
@@ -399,7 +399,7 @@ const handleSubmitRequest = () => {
 }
 
 .tb-icon-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

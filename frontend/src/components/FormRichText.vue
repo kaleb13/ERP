@@ -1,3 +1,25 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  AUTHORITATIVE ARCHITECTURAL CONTRACT FOR AGENTS & DEVELOPERS:
+  1. FORM PLACEMENT: In creation forms, operational descriptions and policy guidelines
+     MUST NEVER be placed inside the master parameters card (and NEVER as a raw textarea).
+  2. DEDICATED ACCORDION CARD: Always place inside a separate collapsible card beneath
+     the master parameters card:
+       <div class="clean-card accordion-card">
+         <div class="card-accordion-header" :class="{ 'is-collapsed': !isDescriptionOpen }" @click="...">
+           <span>Description</span>
+           <ChevronDown v-if="isDescriptionOpen" :size="15" />
+           <ChevronRight v-else :size="15" />
+         </div>
+
+         <div v-show="isDescriptionOpen" class="card-accordion-body">
+           <FormRichText v-model="form.description" ... />
+         </div>
+       </div>
+  3. SHARP EDGE PREVENTION: Ensure .clean-card and .clean-card.accordion-card declare
+     `overflow: hidden; border-radius: 12px;` so child backgrounds never bleed past corners.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue';
 import {
@@ -648,7 +670,7 @@ onMounted(() => {
 
 .dropdown-item:hover {
   background-color: var(--alias-color-background-secondary, #f5f5f5);
-  color: #262626;
+  color: #404040;
 }
 
 /* Separator Line */

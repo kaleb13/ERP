@@ -626,7 +626,7 @@ const formatCurrency = (val: number) => {
   cursor: pointer;
 }
 .erp-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 .row-selected {
   background-color: #f0f7ff !important;
@@ -716,7 +716,7 @@ const formatCurrency = (val: number) => {
   transition: all 0.15s ease;
 }
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 .btn-action-dots:focus,
@@ -761,7 +761,7 @@ const formatCurrency = (val: number) => {
   text-align: left;
 }
 .action-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 .action-item.text-green { color: #059669; }
 .action-item.text-green:hover { background-color: #ecfdf5; }
@@ -796,7 +796,7 @@ const formatCurrency = (val: number) => {
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 10px 14px;

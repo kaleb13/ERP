@@ -1,3 +1,9 @@
+<!--
+  Authoritative QMT AppButton Component (Figma 4503:1152)
+  ============================================================
+  Wrapper around `BaseButton.vue` exposing the exact same props and slots.
+  Both `BaseButton` and `AppButton` are valid in views; `BaseButton` is the canonical base implementation.
+-->
 <script setup lang="ts">
 import BaseButton, { type ButtonSize, type ButtonVariant } from './BaseButton.vue';
 

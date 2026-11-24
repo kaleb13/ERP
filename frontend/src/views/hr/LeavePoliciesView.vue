@@ -605,7 +605,7 @@ const handleDeletePolicy = (id: number) => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .clickable-row {

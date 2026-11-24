@@ -620,7 +620,7 @@ const navigateToSwaps = () => {
 }
 
 .btn-swap-hero:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   transform: translateY(-1px);
 }
 
@@ -639,8 +639,8 @@ const navigateToSwaps = () => {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -696,7 +696,7 @@ const navigateToSwaps = () => {
 .pm-divider {
   width: 1px;
   height: 42px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 0 16px;
 }
 
@@ -735,7 +735,7 @@ const navigateToSwaps = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 4px 8px;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
@@ -750,12 +750,12 @@ const navigateToSwaps = () => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 
 .btn-nav:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -827,7 +827,7 @@ const navigateToSwaps = () => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -929,7 +929,7 @@ const navigateToSwaps = () => {
 }
 
 .status-upcoming {
-  color: #64748b;
+  color: #737373;
   opacity: 0.8;
 }
 
@@ -944,13 +944,13 @@ const navigateToSwaps = () => {
 .rest-pill-content {
   padding: 16px 8px;
   border-radius: 8px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   text-align: center;
-  color: #64748b;
+  color: #737373;
 }
 
 .rest-icon {
@@ -992,7 +992,7 @@ const navigateToSwaps = () => {
   border: 1px dashed #cbd5e1;
   border-radius: 6px;
   font-size: 11px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }

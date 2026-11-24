@@ -711,7 +711,7 @@ onUnmounted(() => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .erp-row.row-selected {
@@ -793,7 +793,7 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -828,12 +828,12 @@ onUnmounted(() => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 

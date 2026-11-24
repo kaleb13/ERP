@@ -356,12 +356,12 @@ const toggleSidebar = () => {
 }
 
 .page-content::-webkit-scrollbar-thumb {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   border-radius: 9999px;
 }
 
 .page-content::-webkit-scrollbar-thumb:hover {
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
 }
 
 .page-content {

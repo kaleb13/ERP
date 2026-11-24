@@ -867,7 +867,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 .btn-action-dots:hover {
   color: #0b529c;
   border-color: #0b529c;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .action-popup-menu {
@@ -903,7 +903,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 }
 
 .popup-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -945,7 +945,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 }
 
 .active-item-summary {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -1036,7 +1036,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
 }
 
 .sep-filter-dept {
-  color: #64748b;
+  color: #737373;
   font-size: 12.5px;
 }
 
@@ -1098,7 +1098,7 @@ const handleMetricClick = (tabKey: ClearanceTabKey) => {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-top: 4px;

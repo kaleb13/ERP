@@ -32,7 +32,7 @@ const statusData = [
 
 const RADIUS = 70;
 const CIRC = 2 * Math.PI * RADIUS;
-const GAP = 6; // visual gap between segments (in px of circumference)
+const GAP = 0; // no gap between segments — flush continuous ring
 
 const donutSegments = computed(() => {
   const total = statusData.reduce((sum, s) => sum + s.pct, 0);

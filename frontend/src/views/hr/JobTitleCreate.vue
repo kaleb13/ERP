@@ -550,7 +550,7 @@ onMounted(() => {
 .icon-card-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   line-height: 1.2;
 }
 
@@ -838,7 +838,7 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   background: #ffffff;
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.12s ease;

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import {
   CheckCircle2, Clock, ShieldCheck, ArrowUpRight,
-  ArrowRight, User, Check, X,
+  ArrowRight, User, Check, X, Info,
   Share2, Printer, ShieldAlert,
   PanelRightClose, PanelRightOpen, FileText
 } from 'lucide-vue-next';
@@ -12,10 +12,20 @@ import AppButton from '../../components/AppButton.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormTextarea from '../../components/FormTextarea.vue';
+import FormToggle from '../../components/FormToggle.vue';
+import PrintPreviewDrawer from '../../components/PrintPreviewDrawer.vue';
 import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const route = useRoute();
+
+// ─── Bottom Drawer Print Preview State ───
+const isPrintDrawerOpen = ref(false);
+const printOptions = ref({
+  showMovementParameters: true,
+  showApprovalAudit: true,
+  showOfficialSeal: true,
+});
 
 // Movement record ID from URL
 const movementId = computed(() => Number(route.params.id) || 4);
@@ -404,24 +414,88 @@ const step1State = computed(() => {
   return movement.value.approvals[0]?.approval_state || 'approved';
 });
 const step2State = computed(() => {
-  return movement.value.approvals[1]?.approval_state || 'pending';
+  const explicit = movement.value.approvals[1]?.approval_state;
+  if (explicit) return explicit;
+  if (step1State.value !== 'approved') return 'queued';
+  if (movement.value.movement_state === 'approved') return 'approved';
+  return 'pending';
 });
 const step3State = computed(() => {
-  return movement.value.approvals[2]?.approval_state || 'waiting';
+  const explicit = movement.value.approvals[2]?.approval_state;
+  if (explicit === 'waiting') return 'queued';
+  if (explicit) return explicit;
+  if (movement.value.movement_state === 'approved') return 'approved';
+  if (step2State.value === 'approved') return 'pending';
+  return 'queued';
 });
 
 const getConnectorLineClass = (fromState: string, toState: string): string => {
   if (fromState === 'approved' && toState === 'approved') return 'step-line-solid-blue';
   if (fromState === 'approved' && toState === 'pending') return 'step-line-gradient-blue-to-orange';
   if (fromState === 'approved' && toState === 'rejected') return 'step-line-gradient-blue-to-red';
+  if (fromState === 'approved' && (toState === 'waiting' || toState === 'queued')) return 'step-line-gradient-blue-to-gray';
   if (fromState === 'pending' && (toState === 'waiting' || toState === 'queued')) return 'step-line-gradient-orange-to-gray';
   if (fromState === 'pending' && toState === 'approved') return 'step-line-solid-blue';
-  if (toState === 'waiting' || toState === 'queued') return 'step-line-solid-gray';
-  return 'step-line-solid-blue';
+  if (fromState === 'rejected') return 'step-line-solid-gray';
+  if (fromState === 'queued' || fromState === 'waiting' || toState === 'waiting' || toState === 'queued') return 'step-line-solid-gray';
+  return 'step-line-solid-gray';
 };
 
+// ─── Center Stepper Circles on Cards Y-Axis Dynamically ───
+const stepperContentRef = ref<HTMLElement | null>(null);
+const stepperTrackPositions = ref<{
+  circles: { top: number }[];
+  lines: { top: number; height: number }[];
+}>({
+  circles: [],
+  lines: []
+});
+
+const updateStepperAlignment = () => {
+  if (!stepperContentRef.value) return;
+  const cards = Array.from(stepperContentRef.value.querySelectorAll('.step-card')) as HTMLElement[];
+  if (!cards.length) return;
+
+  const circles: { top: number }[] = [];
+  const lines: { top: number; height: number }[] = [];
+  const containerRect = stepperContentRef.value.getBoundingClientRect();
+
+  cards.forEach((card) => {
+    const cardRect = card.getBoundingClientRect();
+    const relativeCenter = (cardRect.top - containerRect.top) + (cardRect.height / 2);
+    circles.push({ top: Math.round(relativeCenter - 22) });
+  });
+
+  for (let i = 0; i < circles.length - 1; i++) {
+    const lineTop = circles[i].top + 44;
+    const lineHeight = Math.max(0, circles[i + 1].top - lineTop);
+    lines.push({ top: lineTop, height: lineHeight });
+  }
+
+  stepperTrackPositions.value = { circles, lines };
+};
+
+let stepperResizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  nextTick(() => {
+    updateStepperAlignment();
+    if (stepperContentRef.value && typeof ResizeObserver !== 'undefined') {
+      stepperResizeObserver = new ResizeObserver(() => {
+        updateStepperAlignment();
+      });
+      stepperResizeObserver.observe(stepperContentRef.value);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (stepperResizeObserver) {
+    stepperResizeObserver.disconnect();
+  }
+});
+
 const handlePrint = () => {
-  window.print();
+  isPrintDrawerOpen.value = true;
 };
 
 const handleEffectMovement = () => {
@@ -452,47 +526,49 @@ const handleEffectMovement = () => {
            LEFT COLUMN: Transition Dossier & Comparison Blueprint
            ═════════════════════════════════════════════════════════════ -->
       <div class="main-dossier-column">
-        <!-- Employee Hero Card -->
+        <!-- Employee Hero Card (Matching Figma 6624:99849 & LeaveRequestDetail) -->
         <div class="dossier-card hero-card">
           <div class="hero-left">
-            <div class="hero-avatar">
-              {{ movement.employee_name.charAt(0) }}
+            <div class="hero-avatar-wrap">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&h=150&q=80"
+                :alt="movement.employee_name"
+                class="hero-avatar-img"
+              />
             </div>
             <div class="hero-meta">
-              <div class="hero-title-row">
-                <h1 class="hero-name">{{ movement.employee_name }}</h1>
-                <BaseBadge color="blue" size="sm">
-                  {{ formatMovementType(movement.movement_type) }}
-                </BaseBadge>
-                <BaseBadge 
-                  :color="movement.movement_state === 'approved' || movement.movement_state === 'effected' ? 'success' : (movement.movement_state === 'rejected' ? 'error' : 'warning')" 
-                  size="sm"
-                >
-                  {{ movement.movement_state === 'effected' ? 'Live & Effected' : (movement.movement_state === 'approved' ? 'Approved' : (movement.movement_state === 'rejected' ? 'Rejected' : 'Pending Review')) }}
-                </BaseBadge>
-                <BaseBadge v-if="movement.require_guarantee_refresh" color="warning" size="sm">
-                  Guarantor Refresh Required
+              <h1 class="hero-name">{{ movement.employee_name }}</h1>
+              <div class="hero-id-row">
+                <span class="hero-code">{{ movement.employee_code }} -</span>
+                <BaseBadge color="gray" size="sm">
+                  {{ movement.employee_role }}
                 </BaseBadge>
               </div>
               <p class="hero-subtext">
-                {{ movement.employee_code }} &bull; Current: {{ movement.from_position_title }} &bull; {{ movement.from_entity_name }}
+                Works at {{ movement.from_entity_name }} - {{ movement.from_org_unit_name }}
               </p>
             </div>
           </div>
 
           <div class="hero-right">
-            <div class="meta-stat-block">
-              <span class="meta-label">Effective Date</span>
+            <div class="meta-inline-row">
+              <span class="meta-label">Movement Type :</span>
+              <BaseBadge color="primary" size="sm">
+                {{ formatMovementType(movement.movement_type) }}
+              </BaseBadge>
+            </div>
+            <p class="meta-inline-row">
+              <span class="meta-label">Effective Date :</span>
               <span class="meta-value">{{ formatDate(movement.effective_date) }}</span>
-            </div>
-            <div class="meta-stat-block">
-              <span class="meta-label">Movement ID</span>
+            </p>
+            <p class="meta-inline-row">
+              <span class="meta-label">Movement ID :</span>
               <span class="meta-value font-mono">{{ movement.code }}</span>
-            </div>
+            </p>
           </div>
         </div>
 
-        <!-- Transition Comparison Blueprint Card -->
+        <!-- Transition Comparison Blueprint Card (Matching Figma 6624:99849 & 6624:99659) -->
         <div class="dossier-card">
           <div class="card-header-bar">
             <div>
@@ -501,120 +577,69 @@ const handleEffectMovement = () => {
             </div>
           </div>
 
-          <!-- Salary Adjustment Callout Banner -->
-          <div class="delta-banner" :class="salaryDifference >= 0 ? 'delta-positive' : 'delta-negative'">
-            <div class="delta-icon-box">
-              <ArrowUpRight v-if="salaryDifference >= 0" :size="20" />
-              <ArrowRight v-else :size="20" />
-            </div>
-            <div class="delta-text">
-              <span class="delta-title">
-                Base Salary Variance: {{ salaryDifference >= 0 ? '+' : '' }}{{ formatCurrency(salaryDifference) }} 
-                ({{ salaryDifference >= 0 ? '+' : '' }}{{ salaryPercentChange }}%)
-              </span>
-              <span class="delta-sub">
-                Current: {{ formatCurrency(movement.from_salary) }} ➔ Proposed Target: {{ formatCurrency(movement.to_salary) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Side-by-side Blueprint Grid -->
+          <!-- Side-by-side Blueprint Grid (White Current Card + QMT Brand Blue Proposed Card) -->
           <div class="blueprint-grid-two">
             <!-- Left Side: Current Assignment -->
             <div class="bp-box current-box">
-              <div class="bp-header">
-                <span class="bp-tag">Current Assignment</span>
-                <span class="bp-entity-code">{{ movement.from_entity_name }}</span>
-              </div>
-
               <div class="bp-rows">
                 <div class="bp-row">
-                  <span class="bp-label">Facility / Cost Center:</span>
+                  <span class="bp-label">Current Entity</span>
                   <span class="bp-val">{{ movement.from_entity_name }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Department / Unit:</span>
-                  <span class="bp-val">{{ movement.from_org_unit_name }}</span>
-                </div>
-                <div class="bp-row">
-                  <span class="bp-label">Job Position Title:</span>
+                  <span class="bp-label">Job Position</span>
                   <span class="bp-val">{{ movement.from_position_title }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Job Grade &amp; Step:</span>
+                  <span class="bp-label">Seniority Level</span>
                   <span class="bp-val">{{ movement.from_job_grade_code }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Monthly Base Salary:</span>
+                  <span class="bp-label">Monthly Base Salary</span>
                   <span class="bp-val">{{ formatCurrency(movement.from_salary) }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Reporting Line Manager:</span>
-                  <span class="bp-val">{{ movement.from_manager_name }}</span>
-                </div>
-                <div class="bp-row">
-                  <span class="bp-label">Shift Work Pattern:</span>
+                  <span class="bp-label">Shift Work Pattern</span>
                   <span class="bp-val">{{ movement.from_shift_pattern }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Right Side: Proposed Target Assignment -->
+            <!-- Right Side: Proposed Target Assignment (QMT Brand Blue Surface) -->
             <div class="bp-box proposed-box">
-              <div class="bp-header">
-                <span class="bp-tag tag-target">Proposed Target</span>
-                <span class="bp-entity-code text-brand">{{ movement.to_position_title }}</span>
-              </div>
-
               <div class="bp-rows">
                 <div class="bp-row">
-                  <span class="bp-label">Facility / Cost Center:</span>
+                  <span class="bp-label">Target Entity</span>
                   <span class="bp-val val-highlight">{{ movement.to_entity_name }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Department / Unit:</span>
-                  <span class="bp-val val-highlight">{{ movement.to_org_unit_name }}</span>
-                </div>
-                <div class="bp-row">
-                  <span class="bp-label">Job Position Title:</span>
+                  <span class="bp-label">Job Position</span>
                   <span class="bp-val val-highlight">{{ movement.to_position_title }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Job Grade &amp; Step:</span>
+                  <span class="bp-label">Seniority Level</span>
                   <span class="bp-val val-highlight">{{ movement.to_job_grade_code }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Monthly Base Salary:</span>
+                  <span class="bp-label">Monthly Base Salary</span>
                   <span class="bp-val val-highlight">{{ formatCurrency(movement.to_salary) }}</span>
                 </div>
                 <div class="bp-row">
-                  <span class="bp-label">Reporting Line Manager:</span>
-                  <span class="bp-val val-highlight">{{ movement.to_manager_name }}</span>
-                </div>
-                <div class="bp-row">
-                  <span class="bp-label">Shift Work Pattern:</span>
+                  <span class="bp-label">Shift Work Pattern</span>
                   <span class="bp-val val-highlight">{{ movement.to_shift_pattern }}</span>
-                </div>
-                <div v-if="movement.require_guarantee_refresh" class="bp-row surety-bp-row">
-                  <span class="bp-label">Financial Surety / Guarantor:</span>
-                  <span class="bp-val val-surety">
-                    <ShieldAlert :size="12" /> Refresh Mandated
-                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Financial Surety / Guarantor Requirement Callout Card -->
+          <!-- Financial Surety / Guarantor Requirement Callout Card (Matching Figma 6624:99659) -->
           <div v-if="movement.require_guarantee_refresh" class="surety-compliance-card">
             <div class="surety-card-left">
-              <div class="surety-icon-circle">
-                <ShieldAlert :size="16" />
-              </div>
+              <ShieldAlert :size="18" class="surety-icon" />
               <div class="surety-text-content">
                 <div class="surety-header-row">
                   <h4 class="surety-title">Financial Surety &amp; Guarantor Refresh Required</h4>
-                  <span class="surety-status-chip">Policy Mandate</span>
+                  <BaseBadge color="warning" size="sm">Policy Mandate</BaseBadge>
                 </div>
                 <p class="surety-description">
                   This target position carries fiduciary or cash-handling obligations. Corporate policy mandates that active guarantor collateral and surety endorsement must be verified prior to effectuating this assignment.
@@ -624,22 +649,36 @@ const handleEffectMovement = () => {
           </div>
         </div>
 
-        <!-- Business Justification & Operational Reminders Card -->
+        <!-- Movement Description & Compensation Delta Card (Matching Figma 6624:99849 & 6624:99659) -->
         <div class="dossier-card">
           <div class="card-header-bar">
             <div>
-              <h2 class="card-section-title">Operational Business Justification</h2>
+              <h2 class="card-section-title">Movement Description</h2>
               <p class="card-section-subtitle">Formal rationale and handover guidance submitted by {{ movement.requested_by_name }}.</p>
             </div>
           </div>
 
           <div class="justification-quote-box">
-            <p class="justification-text">"{{ movement.reason }}"</p>
+            <p class="justification-text">&ldquo;{{ movement.reason }}&rdquo;</p>
           </div>
 
           <div v-if="movement.notes" class="notes-reminder-block">
             <span class="notes-title">Handover Reminders &amp; Checklists:</span>
             <p class="notes-body">{{ movement.notes }}</p>
+          </div>
+
+          <!-- Compensation Delta Callout Banner (QMT Brand Blue Surface) -->
+          <div class="delta-banner delta-brand">
+            <Info :size="18" class="delta-info-icon" />
+            <div class="delta-text">
+              <span class="delta-title">
+                Compensation Delta: {{ salaryDifference >= 0 ? '+' : '' }}{{ formatCurrency(salaryDifference) }}
+                ({{ salaryDifference >= 0 ? '+' : '' }}{{ salaryPercentChange }}%)
+              </span>
+              <span class="delta-sub">
+                Current: {{ formatCurrency(movement.from_salary) }} &rarr; Proposed: {{ formatCurrency(movement.to_salary) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -836,39 +875,34 @@ const handleEffectMovement = () => {
 
             <div class="stepper-wrap">
               <div class="stepper-track">
-                <!-- Step 1 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step1State" :title="step1State">
-                  <Check v-if="step1State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else-if="step1State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
-                  <X v-else-if="step1State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
-                </div>
+                <template v-for="(step, idx) in movement.approvals" :key="'track-' + step.id">
+                  <!-- Step Circle -->
+                  <div
+                    class="step-circle"
+                    :class="'step-circle-' + (idx === 0 ? step1State : idx === 1 ? step2State : step3State)"
+                    :style="stepperTrackPositions.circles[idx] ? { top: stepperTrackPositions.circles[idx].top + 'px' } : undefined"
+                    :title="step.approval_state"
+                  >
+                    <Check v-if="step.approval_state === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                    <Clock v-else-if="step.approval_state === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
+                    <X v-else-if="step.approval_state === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
+                    <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
+                  </div>
 
-                <!-- Connector Line 1: Step 1 -> Step 2 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-1" :class="getConnectorLineClass(step1State, step2State)"></div>
-
-                <!-- Step 2 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step2State" :title="step2State">
-                  <Check v-if="step2State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else-if="step2State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
-                  <X v-else-if="step2State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
-                </div>
-
-                <!-- Connector Line 2: Step 2 -> Step 3 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-2" :class="getConnectorLineClass(step2State, step3State)"></div>
-
-                <!-- Step 3 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step3State" :title="step3State">
-                  <Check v-if="step3State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else-if="step3State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
-                  <X v-else-if="step3State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
-                  <Clock v-else :size="20" class="step-icon-disabled" :stroke-width="2" />
-                </div>
+                  <!-- Connector Line (if not last) -->
+                  <div
+                    v-if="idx < movement.approvals.length - 1"
+                    :class="['step-line', getConnectorLineClass(
+                      idx === 0 ? step1State : idx === 1 ? step2State : step3State,
+                      idx === 0 ? step2State : idx === 1 ? step3State : 'queued'
+                    )]"
+                    :style="stepperTrackPositions.lines[idx] ? { top: stepperTrackPositions.lines[idx].top + 'px', height: stepperTrackPositions.lines[idx].height + 'px' } : undefined"
+                  ></div>
+                </template>
               </div>
 
               <!-- Right Content Cards Stack -->
-              <div class="stepper-content">
+              <div ref="stepperContentRef" class="stepper-content">
                 <div 
                   v-for="(step, idx) in movement.approvals" 
                   :key="step.id" 
@@ -895,6 +929,135 @@ const handleEffectMovement = () => {
         </div>
       </aside>
     </div>
+
+    <!-- ═══ BOTTOM DRAWER: PRINT PREVIEW (Figma Node 5005:78527) ═══ -->
+    <PrintPreviewDrawer
+      v-model:show="isPrintDrawerOpen"
+      title="Print Settings"
+      subtitle="Configure Document layout and Visibility"
+      documentTitle="Personnel Movement Notice"
+      :documentSubtitle="movement.employee_name + ' • ' + movement.employee_code"
+      :documentCode="movement.code"
+      :documentDate="movement.effective_date"
+      :documentMeta="(movement.movement_type || 'PROMOTION').toUpperCase() + ' • ' + (movement.entity_name || 'Haleta HQ')"
+      :currentPage="1"
+      :totalPages="1"
+    >
+      <!-- Left Dynamic Customizations -->
+      <template #settings>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Movement Transition Details</span>
+          <FormToggle v-model="printOptions.showMovementParameters" size="sm" aria-label="Movement Transition Details" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Approval Sign-off Audit Trail</span>
+          <FormToggle v-model="printOptions.showApprovalAudit" size="sm" aria-label="Approval Audit Trail" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Official Stamp &amp; Seal</span>
+          <FormToggle v-model="printOptions.showOfficialSeal" size="sm" aria-label="Official Stamp and Seal" />
+        </div>
+      </template>
+
+      <!-- Right Printable Document Sheet -->
+      <template #document>
+        <!-- Metadata Overview Card -->
+        <div class="print-sheet-meta-card">
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Employee</span>
+            <span class="print-meta-val">{{ movement.employee_name }} ({{ movement.employee_code }})</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Current Assignment</span>
+            <span class="print-meta-val">{{ movement.from_entity_name }} • {{ movement.from_job_title }}</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Action Type</span>
+            <span class="print-meta-val text-brand">{{ (movement.movement_type || '').toUpperCase() }} (Effective {{ movement.effective_date }})</span>
+          </div>
+        </div>
+
+        <!-- Transition Comparison Block -->
+        <div v-if="printOptions.showMovementParameters" class="print-sheet-section">
+          <h4 class="print-section-title">Assignment &amp; Grade Transition</h4>
+          <div class="print-info-grid">
+            <div class="print-info-cell">
+              <span class="cell-lbl">Source Unit &amp; Role</span>
+              <span class="cell-val">{{ movement.from_org_unit_name }} &bull; {{ movement.from_job_title }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Target Unit &amp; Role</span>
+              <span class="cell-val font-semibold text-brand">{{ movement.to_org_unit_name }} &bull; {{ movement.to_job_title }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Compensation Grade</span>
+              <span class="cell-val">{{ movement.from_job_grade_code || 'JG-08' }} &rarr; {{ movement.to_job_grade_code || 'JG-09' }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Reporting Supervisor</span>
+              <span class="cell-val">{{ movement.to_supervisor_name || 'Almaz Mengistu' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approval Audit Trail -->
+        <div v-if="printOptions.showApprovalAudit" class="print-sheet-section">
+          <h4 class="print-section-title">Sequential Authorization Endorsements</h4>
+          <table class="print-audit-table">
+            <thead>
+              <tr>
+                <th>Workflow Stage</th>
+                <th>Designated Approver</th>
+                <th>Status</th>
+                <th>Sign-off Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="step in movement.approvals" :key="step.id">
+                <td class="font-medium">{{ step.step_name }}</td>
+                <td>{{ step.approver_name }} ({{ step.approver_role }})</td>
+                <td>
+                  <span :class="step.approval_state === 'approved' ? 'text-success' : 'text-muted'">
+                    {{ (step.approval_state || '').toUpperCase() }}
+                  </span>
+                </td>
+                <td>{{ step.actioned_at ? formatDateTime(step.actioned_at) : 'Pending' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Official Seal and Signatures Footer -->
+        <div class="print-endorsement-footer">
+          <div v-if="printOptions.showOfficialSeal" class="official-seal-wrapper">
+            <svg class="official-stamp-svg" viewBox="0 0 160 160" fill="none">
+              <circle cx="80" cy="80" r="74" stroke="#0B529C" stroke-width="2.5" stroke-dasharray="4,3" fill="none" opacity="0.85" />
+              <circle cx="80" cy="80" r="66" stroke="#0B529C" stroke-width="1.2" fill="none" opacity="0.75" />
+              <circle cx="80" cy="80" r="24" fill="#0B529C" fill-opacity="0.08" stroke="#0B529C" stroke-width="1.5" />
+              <text x="80" y="77" text-anchor="middle" font-size="9" font-weight="800" fill="#0B529C">HR DIVISION</text>
+              <text x="80" y="89" text-anchor="middle" font-size="7" font-weight="600" fill="#0B529C">AUTHORIZED</text>
+            </svg>
+          </div>
+          <div class="print-signatures-group">
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Employee Acceptance</span>
+              <span class="sig-note">{{ movement.employee_name }}</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Department Head</span>
+              <span class="sig-note">Releasing Authority</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">HR Operations Director</span>
+              <span class="sig-note">Final Sign-off</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </PrintPreviewDrawer>
   </div>
 </template>
 
@@ -904,7 +1067,7 @@ const handleEffectMovement = () => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: var(--alias-color-bg-canvas, #f8fafc);
+  background-color: var(--alias-color-background-primary, #fafafa);
   min-height: 100vh;
 }
 
@@ -947,20 +1110,20 @@ const handleEffectMovement = () => {
 
 .dossier-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 12px;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Hero Card */
+/* Hero Card (Matching Figma 6624:99849) */
 .hero-card {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 24px;
+  padding: 20px 24px;
 }
 
 .hero-left {
@@ -969,18 +1132,19 @@ const handleEffectMovement = () => {
   gap: 16px;
 }
 
-.hero-avatar {
-  width: 52px;
-  height: 52px;
+.hero-avatar-wrap {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background-color: #eff6ff;
-  color: #0B529C;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 600;
-  border: 2px solid #dbeafe;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid #e5e5e5;
+}
+
+.hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-meta {
@@ -989,10 +1153,15 @@ const handleEffectMovement = () => {
   gap: 4px;
 }
 
-.hero-title-row {
+.hero-id-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+}
+
+.hero-code {
+  font-size: 13px;
+  color: #737373;
 }
 
 .hero-name {
@@ -1000,28 +1169,6 @@ const handleEffectMovement = () => {
   font-size: 18px;
   font-weight: 600;
   color: #404040;
-}
-
-.movement-badge-type {
-  font-size: 11.5px;
-  font-weight: 600;
-  background-color: #f1f5f9;
-  color: #737373;
-  padding: 2px 10px;
-  border-radius: 6px;
-}
-
-.badge-surety-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
-  background-color: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
-  padding: 2px 10px;
-  border-radius: 100px;
 }
 
 .hero-subtext {
@@ -1032,19 +1179,21 @@ const handleEffectMovement = () => {
 
 .hero-right {
   display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.meta-stat-block {
-  display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 6px;
+}
+
+.meta-inline-row {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
 }
 
 .meta-label {
-  font-size: 11.5px;
+  font-size: 13px;
   color: #737373;
 }
 
@@ -1067,51 +1216,53 @@ const handleEffectMovement = () => {
 
 .card-section-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #404040;
 }
 
 .card-section-subtitle {
   margin: 2px 0 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: #737373;
 }
 
-/* Delta Banner */
+/* Compensation Delta Banner (QMT Brand Blue Surface per Figma 6624:99849) */
 .delta-banner {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
 }
 
-.delta-positive {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+.delta-brand {
+  background-color: var(--primitive-color-brand-blue-50, #f1f7fe);
+  border: 1px solid var(--primitive-color-brand-blue-200, #bddbfa);
+  color: var(--primitive-color-brand-blue-700, #0b529c);
 }
 
-.delta-negative {
-  background-color: #fff1f2;
-  color: #9f1239;
-  border: 1px solid #fecdd3;
+.delta-info-icon {
+  color: #0b529c;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .delta-title {
   display: block;
   font-size: 13.5px;
   font-weight: 600;
+  color: #0b529c;
 }
 
 .delta-sub {
   display: block;
-  font-size: 12px;
-  opacity: 0.85;
+  font-size: 12.5px;
+  color: #404040;
+  margin-top: 2px;
 }
 
-/* Blueprint Grid */
+/* Blueprint Grid (Figma 6624:99849: Clean White Current + Brand Blue Tint Proposed) */
 .blueprint-grid-two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1119,110 +1270,63 @@ const handleEffectMovement = () => {
 }
 
 .bp-box {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
+  border: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-radius: 12px;
+  padding: 16px 20px;
   background-color: #ffffff;
 }
 
 .current-box {
-  border-left: 3px solid #94a3b8;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
 }
 
 .proposed-box {
-  border-left: 3px solid #0B529C;
-  background-color: #fcfdfe;
-}
-
-.bp-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 12px;
-}
-
-.bp-tag {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.tag-target {
-  color: #0B529C;
-}
-
-.bp-entity-code {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.text-brand {
-  color: #0B529C;
+  background-color: var(--primitive-color-brand-blue-50, #f1f7fe);
+  border: 1px solid var(--primitive-color-brand-blue-200, #bddbfa);
 }
 
 .bp-rows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .bp-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12.5px;
-  padding: 3px 0;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 20px;
+  padding: 2px 0;
 }
 
 .bp-label {
   color: #737373;
+  font-weight: 400;
 }
 
 .bp-val {
   color: #404040;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: right;
 }
 
 .val-highlight {
-  color: #0B529C;
+  color: #0b529c;
   font-weight: 600;
 }
 
-.surety-bp-row {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed #fde68a;
-}
-
-.val-surety {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #b45309;
-  font-weight: 600;
-  font-size: 11px;
-  background-color: #fffbeb;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid #fde68a;
-}
-
-/* Surety Compliance Card */
+/* Surety Compliance Card (QMT Warning Surface per Figma 6624:99659) */
 .surety-compliance-card {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  border-left: 4px solid #d97706;
-  border-radius: 8px;
+  background-color: var(--primitive-color-amber-50, #fffbeb);
+  border: 1px solid var(--primitive-color-amber-300, #ffd230);
+  border-radius: 12px;
   padding: 14px 18px;
-  margin-top: 4px;
 }
 
 .surety-card-left {
@@ -1231,17 +1335,10 @@ const handleEffectMovement = () => {
   gap: 12px;
 }
 
-.surety-icon-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #fef3c7;
-  color: #d97706;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.surety-icon {
+  color: var(--primitive-color-amber-600, #e17100);
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .surety-text-content {
@@ -1285,7 +1382,7 @@ const handleEffectMovement = () => {
 /* Justification */
 .justification-quote-box {
   padding: 14px 18px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-left: 3px solid #0B529C;
   border-radius: 6px;
 }
@@ -1630,17 +1727,16 @@ const handleEffectMovement = () => {
 .stepper-wrap {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
+  position: relative;
   width: 100%;
 }
 
 .stepper-track {
   width: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 27px;
+  position: relative;
   flex-shrink: 0;
+  min-height: 100%;
 }
 
 .step-circle {
@@ -1652,6 +1748,10 @@ const handleEffectMovement = () => {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  z-index: 2;
+  transition: top 0.15s ease;
 }
 
 /* Step Circles */
@@ -1665,7 +1765,8 @@ const handleEffectMovement = () => {
   border: none;
 }
 
-.step-circle-queued {
+.step-circle-queued,
+.step-circle-waiting {
   background-color: var(--color-background-tertiary, #e5e5e5);
   border: 1px solid var(--color-border-primary, #d4d4d4);
 }
@@ -1685,16 +1786,12 @@ const handleEffectMovement = () => {
 }
 
 /* ─── Reactive Connector Lines ─── */
-.step-line-1 {
+.step-line {
+  position: absolute;
+  left: 21px;
   width: 2px;
-  height: 100px;
-  margin: 0 auto;
-}
-
-.step-line-2 {
-  width: 2px;
-  height: 100px;
-  margin: 0 auto;
+  z-index: 1;
+  transition: top 0.15s ease, height 0.15s ease;
 }
 
 .step-line-solid-blue {
@@ -1717,11 +1814,15 @@ const handleEffectMovement = () => {
   background: linear-gradient(180deg, #0b529c 0%, #e7000b 100%) !important;
 }
 
+.step-line-gradient-blue-to-gray {
+  background: linear-gradient(180deg, #0b529c 0%, #d4d4d4 100%) !important;
+}
+
 .stepper-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .step-card {
@@ -1773,5 +1874,170 @@ const handleEffectMovement = () => {
 
 .text-muted {
   color: #a1a1a1 !important;
+}
+
+/* ─── Bottom Drawer Print Sheet Styles ─── */
+.print-setting-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 12px;
+  border-bottom: 0.5px solid #f5f5f5;
+}
+
+.print-setting-toggle-title {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #404040;
+}
+
+.print-sheet-meta-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+
+.print-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.print-meta-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.print-meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.print-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+.print-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.print-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.cell-val {
+  font-size: 13.5px;
+  color: #404040;
+}
+
+.print-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.print-audit-table th {
+  background: #fafafa;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-audit-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #404040;
+}
+
+.text-brand {
+  color: #0b529c !important;
+}
+
+.text-success {
+  color: #009966 !important;
+}
+
+.print-endorsement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.official-seal-wrapper {
+  width: 120px;
+  height: 120px;
+}
+
+.official-stamp-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.print-signatures-group {
+  display: flex;
+  gap: 32px;
+}
+
+.sig-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+  text-align: center;
+  gap: 4px;
+}
+
+.sig-line {
+  width: 100%;
+  height: 1px;
+  background: #404040;
+  margin-bottom: 6px;
+}
+
+.sig-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.sig-note {
+  font-size: 10px;
+  color: #737373;
 }
 </style>

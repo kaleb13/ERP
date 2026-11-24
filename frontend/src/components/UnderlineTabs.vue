@@ -1,3 +1,17 @@
+<!--
+  Authoritative QMT UnderlineTabs Component (Figma 5578:110)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Secondary (Level 2) sub-navigation inside dossier inspection cards:
+    e.g., inside an Employee Dossier card to switch between `Personal Details`, `Job History`, `Compensation`, `Documents`.
+  - Consecutive / Two-Tier tab layouts: When two levels of tabs appear consecutively,
+    Level 1 is ALWAYS Primary (`BaseTabs` with `type="rounded"`), and Level 2 directly underneath is `UnderlineTabs`.
+
+  WHEN NOT TO USE:
+  - DO NOT use as the top-level page tab bar (Top-level tabs MUST ALWAYS use `BaseTabs` capsule standard).
+  - DO NOT use for Tabular Create Forms (Master Details vs Child Roster MUST use `BaseTabs type="rounded"`).
+  - DO NOT use as an isolated single tab bar on a page.
+-->
 <script setup lang="ts" generic="T extends string | number">
 import { ref, onMounted, onUnmounted, watch, nextTick, type Component } from 'vue';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';

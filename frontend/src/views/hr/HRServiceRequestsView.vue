@@ -738,7 +738,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -856,7 +856,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 }
 
 .erp-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -950,13 +950,13 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0B529C;
 }
 
@@ -991,7 +991,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
@@ -1106,7 +1106,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1184,7 +1184,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
 }
 
 .btn-reassign:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #0B529C;
   color: #0B529C;
 }
@@ -1243,7 +1243,7 @@ const handleCancelRequest = (item: HRServiceRequestRecord) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 

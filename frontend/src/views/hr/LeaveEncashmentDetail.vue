@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   Check, Clock, X, ShieldCheck, Printer, FileText,
@@ -11,6 +11,8 @@ import AppButton from '../../components/AppButton.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
+import FormToggle from '../../components/FormToggle.vue';
+import PrintPreviewDrawer from '../../components/PrintPreviewDrawer.vue';
 import { useToast } from '../../composables/useToast';
 import { 
   encashmentsData, 
@@ -87,8 +89,16 @@ const remainingAfterApproval = computed(() => {
 });
 
 // ─── Top Bar Actions ───
+// ─── Print Drawer State (Figma Node 5005:78527) ───
+const isPrintDrawerOpen = ref(false);
+const printOptions = ref({
+  showTaxComputation: true,
+  showLedgerImpact: true,
+  showOfficialSeal: true
+});
+
 const handlePrintSlip = () => {
-  window.print();
+  isPrintDrawerOpen.value = true;
 };
 
 const handleDownloadVoucher = () => {
@@ -133,23 +143,36 @@ const handleSubmitDecision = () => {
 
 // ─── Stepper States & Reactive Connector Line Calculation ───
 const step1State = computed(() => {
+  if (currentItem.value.request_state === 'draft') return 'pending';
   return currentItem.value.approvals[0]?.approval_state || 'approved';
 });
 const step2State = computed(() => {
-  return currentItem.value.approvals[1]?.approval_state || 'approved';
+  if (currentItem.value.request_state === 'draft') return 'queued';
+  const explicit = currentItem.value.approvals[1]?.approval_state;
+  if (explicit) return explicit;
+  if (step1State.value !== 'approved') return 'queued';
+  if (currentItem.value.request_state === 'approved') return 'approved';
+  return 'pending';
 });
 const step3State = computed(() => {
-  return currentItem.value.approvals[2]?.approval_state || 'pending';
+  if (currentItem.value.request_state === 'draft') return 'queued';
+  const explicit = currentItem.value.approvals[2]?.approval_state;
+  if (explicit) return explicit;
+  if (currentItem.value.request_state === 'approved') return 'approved';
+  if (step2State.value === 'approved') return 'pending';
+  return 'queued';
 });
 
 const getConnectorLineClass = (fromState: string, toState: string): string => {
   if (fromState === 'approved' && toState === 'approved') return 'step-line-solid-blue';
   if (fromState === 'approved' && toState === 'pending') return 'step-line-gradient-blue-to-orange';
   if (fromState === 'approved' && toState === 'rejected') return 'step-line-gradient-blue-to-red';
-  if (fromState === 'pending' && toState === 'queued') return 'step-line-gradient-orange-to-gray';
+  if (fromState === 'approved' && (toState === 'queued' || toState === 'waiting')) return 'step-line-gradient-blue-to-gray';
+  if (fromState === 'pending' && (toState === 'queued' || toState === 'waiting')) return 'step-line-gradient-orange-to-gray';
   if (fromState === 'pending' && toState === 'approved') return 'step-line-solid-blue';
-  if (fromState === 'queued' && toState === 'queued') return 'step-line-solid-gray';
-  return 'step-line-solid-blue';
+  if (fromState === 'rejected') return 'step-line-solid-gray';
+  if (fromState === 'queued' || toState === 'queued') return 'step-line-solid-gray';
+  return 'step-line-solid-gray';
 };
 
 const formatCurrency = (val: number) => {
@@ -162,6 +185,59 @@ const formatDate = (dateStr?: string | null) => {
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
+
+// ─── Center Stepper Circles on Cards Y-Axis Dynamically ───
+const stepperContentRef = ref<HTMLElement | null>(null);
+const stepperTrackPositions = ref<{
+  circles: { top: number }[];
+  lines: { top: number; height: number }[];
+}>({
+  circles: [],
+  lines: []
+});
+
+const updateStepperAlignment = () => {
+  if (!stepperContentRef.value) return;
+  const cards = Array.from(stepperContentRef.value.querySelectorAll('.step-card')) as HTMLElement[];
+  if (!cards.length) return;
+
+  const circles: { top: number }[] = [];
+  const lines: { top: number; height: number }[] = [];
+  const containerRect = stepperContentRef.value.getBoundingClientRect();
+
+  cards.forEach((card) => {
+    const cardRect = card.getBoundingClientRect();
+    const relativeCenter = (cardRect.top - containerRect.top) + (cardRect.height / 2);
+    circles.push({ top: Math.round(relativeCenter - 22) });
+  });
+
+  for (let i = 0; i < circles.length - 1; i++) {
+    const lineTop = circles[i].top + 44;
+    const lineHeight = Math.max(0, circles[i + 1].top - lineTop);
+    lines.push({ top: lineTop, height: lineHeight });
+  }
+
+  stepperTrackPositions.value = { circles, lines };
+};
+
+let stepperResizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  nextTick(() => {
+    updateStepperAlignment();
+    if (stepperContentRef.value && typeof ResizeObserver !== 'undefined') {
+      stepperResizeObserver = new ResizeObserver(() => {
+        updateStepperAlignment();
+      });
+      stepperResizeObserver.observe(stepperContentRef.value);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (stepperResizeObserver) {
+    stepperResizeObserver.disconnect();
+  }
+});
 </script>
 
 <template>
@@ -566,7 +642,12 @@ const formatDate = (dateStr?: string | null) => {
               <!-- Left Track with Circles and Reactive Connector Lines -->
               <div class="stepper-track">
                 <!-- Step 1 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step1State" :title="step1State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step1State"
+                  :style="stepperTrackPositions.circles[0] ? { top: stepperTrackPositions.circles[0].top + 'px' } : undefined"
+                  :title="step1State"
+                >
                   <Check v-if="step1State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step1State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step1State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -574,10 +655,19 @@ const formatDate = (dateStr?: string | null) => {
                 </div>
                 
                 <!-- Connector Line 1: Step 1 -> Step 2 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-1" :class="getConnectorLineClass(step1State, step2State)"></div>
+                <div
+                  class="step-line-1"
+                  :class="getConnectorLineClass(step1State, step2State)"
+                  :style="stepperTrackPositions.lines[0] ? { top: stepperTrackPositions.lines[0].top + 'px', height: stepperTrackPositions.lines[0].height + 'px' } : undefined"
+                ></div>
 
                 <!-- Step 2 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step2State" :title="step2State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step2State"
+                  :style="stepperTrackPositions.circles[1] ? { top: stepperTrackPositions.circles[1].top + 'px' } : undefined"
+                  :title="step2State"
+                >
                   <Check v-if="step2State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step2State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step2State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -585,10 +675,19 @@ const formatDate = (dateStr?: string | null) => {
                 </div>
                 
                 <!-- Connector Line 2: Step 2 -> Step 3 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-2" :class="getConnectorLineClass(step2State, step3State)"></div>
+                <div
+                  class="step-line-2"
+                  :class="getConnectorLineClass(step2State, step3State)"
+                  :style="stepperTrackPositions.lines[1] ? { top: stepperTrackPositions.lines[1].top + 'px', height: stepperTrackPositions.lines[1].height + 'px' } : undefined"
+                ></div>
 
                 <!-- Step 3 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step3State" :title="step3State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step3State"
+                  :style="stepperTrackPositions.circles[2] ? { top: stepperTrackPositions.circles[2].top + 'px' } : undefined"
+                  :title="step3State"
+                >
                   <Check v-if="step3State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step3State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step3State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -597,7 +696,7 @@ const formatDate = (dateStr?: string | null) => {
               </div>
 
               <!-- Right Content Cards Stack -->
-              <div class="stepper-content">
+              <div ref="stepperContentRef" class="stepper-content">
                 <!-- Step 1 Card: Encashment Request Submission -->
                 <div class="step-card">
                   <div class="step-meta">
@@ -614,11 +713,11 @@ const formatDate = (dateStr?: string | null) => {
                 <div class="step-card">
                   <div class="step-meta" :class="{ 'step-meta-queued': step2State === 'queued' }">
                     <span class="step-title" :class="{ 'text-muted': step2State === 'queued' }">Line Manager Endorsement</span>
-                    <span class="step-actor" :class="{ 'text-muted': step2State === 'queued' }">Sara Tefera &bull; Shift Supervisor</span>
+                    <span class="step-actor" :class="{ 'text-muted': step2State === 'queued' }">{{ currentItem.approvals[1]?.approver_name || 'Sara Tefera' }} &bull; {{ currentItem.approvals[1]?.approver_role || 'Shift Supervisor' }}</span>
                     <span v-if="step2State === 'approved'" class="step-time">{{ formatDate(currentItem.created_at) }}, 02:30 PM</span>
                   </div>
                   <div v-if="step2State === 'approved'" class="step-quote-box">
-                    <p class="step-quote-text">&ldquo;Cashier staffing capacity verified. Endorsed for cash conversion.&rdquo;</p>
+                    <p class="step-quote-text">&ldquo;{{ currentItem.approvals[1]?.remarks || 'Cashier staffing capacity verified. Endorsed for cash conversion.' }}&rdquo;</p>
                   </div>
                 </div>
 
@@ -626,7 +725,7 @@ const formatDate = (dateStr?: string | null) => {
                 <div class="step-card">
                   <div class="step-meta" :class="{ 'step-meta-queued': step3State === 'queued' }">
                     <span class="step-title" :class="{ 'text-muted': step3State === 'queued' }">Finance &amp; Payroll Authorization</span>
-                    <span class="step-actor" :class="{ 'text-muted': step3State === 'queued' }">{{ currentItem.approver_name || 'Marta Tadesse' }} ({{ currentItem.approver_role || 'Financial Controller' }})</span>
+                    <span class="step-actor" :class="{ 'text-muted': step3State === 'queued' }">{{ currentItem.approvals[2]?.approver_name || currentItem.approver_name || 'Marta Tadesse' }} ({{ currentItem.approvals[2]?.approver_role || currentItem.approver_role || 'Financial Controller' }})</span>
                     <span v-if="step3State === 'approved'" class="step-time">{{ formatDate(currentItem.approved_at) }}</span>
                   </div>
                   <div v-if="step3State === 'approved'" class="step-quote-box">
@@ -639,6 +738,176 @@ const formatDate = (dateStr?: string | null) => {
         </div>
       </aside>
     </div>
+
+    <!-- ═══ BOTTOM DRAWER: PRINT PREVIEW (Figma Node 5005:78527) ═══ -->
+    <PrintPreviewDrawer
+      v-model:show="isPrintDrawerOpen"
+      title="Print Settings"
+      subtitle="Configure Document layout and Visibility"
+      documentTitle="Leave Encashment Settlement Voucher"
+      :documentSubtitle="currentItem.employee_name + ' • ' + currentItem.employee_code"
+      :documentCode="currentItem.code"
+      :documentDate="formatDate(currentItem.requested_at)"
+      :documentMeta="formatCurrency(currentItem.net_payout_amount) + ' • ' + currentItem.days_requested + ' Days'"
+      :currentPage="1"
+      :totalPages="1"
+    >
+      <!-- Left Dynamic Customizations -->
+      <template #settings>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Tax Computation Details</span>
+          <FormToggle v-model="printOptions.showTaxComputation" size="sm" aria-label="Tax Computation Details" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Ledger Balance Impact</span>
+          <FormToggle v-model="printOptions.showLedgerImpact" size="sm" aria-label="Ledger Balance Impact" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Official Stamp &amp; Seal</span>
+          <FormToggle v-model="printOptions.showOfficialSeal" size="sm" aria-label="Official Stamp and Seal" />
+        </div>
+      </template>
+
+      <!-- Right Printable Document Sheet -->
+      <template #document>
+        <!-- Metadata Overview Card -->
+        <div class="print-sheet-meta-card">
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Employee</span>
+            <span class="print-meta-val">{{ currentItem.employee_name }} ({{ currentItem.employee_code }})</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Department &amp; Job</span>
+            <span class="print-meta-val">{{ currentItem.department_name }} • {{ currentItem.job_title }}</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Settlement Net Total</span>
+            <span class="print-meta-val text-brand">{{ formatCurrency(currentItem.net_payout_amount) }}</span>
+          </div>
+        </div>
+
+        <!-- Encashment Parameters Card -->
+        <div class="print-sheet-section">
+          <h4 class="print-section-title">Encashment Parameters</h4>
+          <div class="print-info-grid">
+            <div class="print-info-cell">
+              <span class="cell-lbl">Approved Days to Liquidate</span>
+              <span class="cell-val font-bold">{{ currentItem.days_requested }} Working Days</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Daily Rate Basis</span>
+              <span class="cell-val font-mono">{{ formatCurrency(currentItem.daily_rate) }} / day</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Gross Encashment Pay</span>
+              <span class="cell-val font-mono font-bold">{{ formatCurrency(currentItem.gross_payout_amount) }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Payroll Cycle Batch</span>
+              <span class="cell-val">{{ currentItem.payroll_cycle_name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statutory Tax & Deduction Breakdown -->
+        <div v-if="printOptions.showTaxComputation" class="print-sheet-section">
+          <h4 class="print-section-title">Statutory Withholding &amp; Net Disbursable</h4>
+          <table class="print-audit-table">
+            <thead>
+              <tr>
+                <th>Item Description</th>
+                <th>Calculation Basis</th>
+                <th>Deduction / Addition</th>
+                <th>Net Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-medium">Gross Statutory Encashment Value</td>
+                <td>{{ currentItem.days_requested }} days × {{ formatCurrency(currentItem.daily_rate) }}</td>
+                <td class="text-success font-mono">+{{ formatCurrency(currentItem.gross_payout_amount) }}</td>
+                <td class="font-mono font-bold">{{ formatCurrency(currentItem.gross_payout_amount) }}</td>
+              </tr>
+              <tr>
+                <td class="font-medium">Statutory Income Tax Withholding</td>
+                <td>Marginal income tax bracket (35%)</td>
+                <td class="text-danger font-mono">-{{ formatCurrency(currentItem.tax_deduction_amount) }}</td>
+                <td class="font-mono font-bold text-brand">{{ formatCurrency(currentItem.net_payout_amount) }}</td>
+              </tr>
+              <tr class="table-row-highlight">
+                <td colspan="3" class="font-bold text-right">Net Payable Settlement:</td>
+                <td class="font-bold text-brand font-mono">{{ formatCurrency(currentItem.net_payout_amount) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Ledger Balance Impact -->
+        <div v-if="printOptions.showLedgerImpact" class="print-sheet-section">
+          <h4 class="print-section-title">Annual Leave Quota Ledger Impact</h4>
+          <div class="print-info-grid">
+            <div class="print-info-cell">
+              <span class="cell-lbl">Balance Prior to Encashment</span>
+              <span class="cell-val">{{ currentItem.available_balance_before }} Days</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Liquidated Days</span>
+              <span class="cell-val text-danger font-bold">-{{ currentItem.days_requested }} Days</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Remaining Balance Available</span>
+              <span class="cell-val font-bold">{{ computedRemainingBalance }} Days</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Effective Deduction Date</span>
+              <span class="cell-val">{{ formatDate(currentItem.requested_at) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Seal & Signatures Block -->
+        <div v-if="printOptions.showOfficialSeal" class="print-endorsement-footer">
+          <div class="official-seal-wrapper">
+            <svg class="official-stamp-svg" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="74" stroke="#0B529C" stroke-width="2.5" fill="none" opacity="0.85" />
+              <circle cx="80" cy="80" r="68" stroke="#0B529C" stroke-width="1.2" stroke-dasharray="3,2" fill="none" opacity="0.85" />
+              <path id="curveTopEncash" d="M 22 80 A 58 58 0 0 1 138 80" fill="none" />
+              <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+                <textPath href="#curveTopEncash" startOffset="50%" text-anchor="middle">
+                  ★ HALETA FINANCE / PAYROLL SETTLEMENT ★
+                </textPath>
+              </text>
+              <polygon points="80,50 83,62 95,62 85,70 88,82 80,74 72,82 75,70 65,62 77,62" fill="#0B529C" opacity="0.85" />
+              <text x="80" y="96" font-size="10" font-weight="800" fill="#0B529C" text-anchor="middle" opacity="0.85">DISBURSED</text>
+              <text x="80" y="107" font-size="7.5" font-weight="600" fill="#0B529C" text-anchor="middle" opacity="0.85">PAYROLL VOUCHER</text>
+              <path id="curveBottomEncash" d="M 138 80 A 58 58 0 0 1 22 80" fill="none" />
+              <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+                <textPath href="#curveBottomEncash" startOffset="50%" text-anchor="middle">
+                  QMT ENTERPRISE MANAGEMENT
+                </textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="print-signatures-group">
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Employee Sign-off</span>
+              <span class="sig-note">{{ currentItem.employee_name }}</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Compensation Officer</span>
+              <span class="sig-note">Daily Rate Verified</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Financial Controller</span>
+              <span class="sig-note">Approved for Disbursement</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </PrintPreviewDrawer>
   </div>
 </template>
 
@@ -881,7 +1150,7 @@ const formatDate = (dateStr?: string | null) => {
 }
 
 .pool-formula {
-  color: #64748b;
+  color: #737373;
   font-size: 12px;
 }
 
@@ -1152,7 +1421,7 @@ const formatDate = (dateStr?: string | null) => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 12px 14px;
@@ -1175,7 +1444,7 @@ const formatDate = (dateStr?: string | null) => {
 }
 
 .calc-sub {
-  color: #64748b;
+  color: #737373;
   font-size: 11.5px;
 }
 
@@ -1349,17 +1618,16 @@ const formatDate = (dateStr?: string | null) => {
 .stepper-wrap {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
+  position: relative;
   width: 100%;
 }
 
 .stepper-track {
   width: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 27px;
+  position: relative;
   flex-shrink: 0;
+  min-height: 100%;
 }
 
 .step-circle {
@@ -1371,7 +1639,16 @@ const formatDate = (dateStr?: string | null) => {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  z-index: 2;
+  transition: top 0.15s ease;
 }
+
+/* Fallback default top positions if JS has not run yet */
+.step-circle:nth-of-type(1) { top: 46px; }
+.step-circle:nth-of-type(2) { top: 180px; }
+.step-circle:nth-of-type(3) { top: 290px; }
 
 /* Step Circles */
 .step-circle-approved {
@@ -1404,17 +1681,18 @@ const formatDate = (dateStr?: string | null) => {
 }
 
 /* ─── Reactive Connector Lines ─── */
-.step-line-1 {
+.step-line-1,
+.step-line-2 {
+  position: absolute;
+  left: 21px;
   width: 2px;
-  height: 100px;
-  margin: 0 auto;
+  z-index: 1;
+  transition: top 0.15s ease, height 0.15s ease;
 }
 
-.step-line-2 {
-  width: 2px;
-  height: 100px;
-  margin: 0 auto;
-}
+/* Fallbacks */
+.step-line-1 { top: 90px; height: 90px; }
+.step-line-2 { top: 224px; height: 66px; }
 
 .step-line-solid-blue {
   background-color: #0b529c !important;
@@ -1436,11 +1714,15 @@ const formatDate = (dateStr?: string | null) => {
   background: linear-gradient(180deg, #0b529c 0%, #e7000b 100%) !important;
 }
 
+.step-line-gradient-blue-to-gray {
+  background: linear-gradient(180deg, #0b529c 0%, #d4d4d4 100%) !important;
+}
+
 .stepper-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .step-card {
@@ -1492,5 +1774,178 @@ const formatDate = (dateStr?: string | null) => {
 
 .text-muted {
   color: #a1a1a1 !important;
+}
+
+/* ─── Bottom Drawer Print Sheet Styles ─── */
+.print-setting-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 12px;
+  border-bottom: 0.5px solid #f5f5f5;
+}
+
+.print-setting-toggle-title {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #404040;
+}
+
+.print-sheet-meta-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+
+.print-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.print-meta-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.print-meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.print-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+.print-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.print-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.cell-val {
+  font-size: 13.5px;
+  color: #404040;
+}
+
+.print-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.print-audit-table th {
+  background: #fafafa;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-audit-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #404040;
+}
+
+.table-row-highlight {
+  background: #f8fafc;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-brand {
+  color: #0b529c !important;
+}
+
+.text-success {
+  color: #009966 !important;
+}
+
+.print-endorsement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.official-seal-wrapper {
+  width: 120px;
+  height: 120px;
+}
+
+.official-stamp-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.print-signatures-group {
+  display: flex;
+  gap: 32px;
+}
+
+.sig-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+  text-align: center;
+  gap: 4px;
+}
+
+.sig-line {
+  width: 100%;
+  height: 1px;
+  background: #404040;
+  margin-bottom: 6px;
+}
+
+.sig-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.sig-note {
+  font-size: 10px;
+  color: #737373;
 }
 </style>

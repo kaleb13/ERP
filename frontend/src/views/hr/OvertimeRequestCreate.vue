@@ -418,7 +418,7 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
 }
 
 .btn-icon-more:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
 }
 
@@ -451,7 +451,7 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
 }
 
 .dropdown-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-secondary-action {
@@ -470,7 +470,7 @@ const executeSave = (state: OvertimeRequestState = 'pending') => {
 }
 
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-primary-action {

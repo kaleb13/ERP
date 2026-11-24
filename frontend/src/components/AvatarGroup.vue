@@ -1,3 +1,16 @@
+<!--
+  Authoritative QMT AvatarGroup Component (Figma 3345:28608)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Multi-stakeholder rosters: Evaluation committees, tender opening boards, joint sign-off lists,
+    multi-tier approval chains, shift rosters, and department member overviews.
+  - Displays up to `max` (default 4) overlapping avatars with a clean +N overflow indicator pill.
+  - Can be rendered inside table cells (`Table cell / Avatar group`), summary cards, or inspection headers.
+
+  WHEN NOT TO USE:
+  - DO NOT use for single employee profiles or individual users (use `BaseAvatar.vue` instead).
+  - DO NOT use in standard form inputs or filter triggers.
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 import BaseAvatar from './BaseAvatar.vue';

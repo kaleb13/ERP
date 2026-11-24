@@ -763,7 +763,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -813,7 +813,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -825,7 +825,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .dossier-review-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 14px 16px;

@@ -642,7 +642,7 @@ onUnmounted(() => {
 .job-levels-page {
   min-height: 100vh;
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .breadcrumb-container {
@@ -772,7 +772,7 @@ onUnmounted(() => {
 }
 
 .table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .table-row.row-selected {
@@ -842,13 +842,13 @@ onUnmounted(() => {
   height: 28px;
   border: 1px solid transparent;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #e2e8f0;
   color: #404040;
 }
@@ -883,7 +883,7 @@ onUnmounted(() => {
   transition: background-color 0.12s ease;
 }
 .dropdown-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .dropdown-item-danger {
@@ -895,7 +895,7 @@ onUnmounted(() => {
 
 .dropdown-divider {
   height: 1px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 4px 0;
 }
 

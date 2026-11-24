@@ -1,3 +1,15 @@
+<!--
+  Authoritative QMT FormInput Component (Figma 3345:19141)
+  ============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Primary single-line input across the entire ERP for text, numbers, codes, dates, email, and phone.
+  - Supports leading icons, trailing icons, leading prefixes (e.g. `ETB`), currency formatting, helper text, and error states.
+
+  WHEN NOT TO USE:
+  - DO NOT use for multi-line text, operational descriptions, or circular notes (use `FormRichText.vue` or `FormTextarea.vue`).
+  - DO NOT use for choices/options (use `FormSelect.vue` or `FormCombobox.vue`).
+  - DO NOT use raw HTML `<input>` elements directly in templates.
+-->
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';

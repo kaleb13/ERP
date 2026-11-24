@@ -2,14 +2,17 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  Plus, Search, Filter, MoreVertical,
+  Plus, MoreVertical,
   CheckCircle2, Eye, Check, X,
-  ShieldAlert
-} from 'lucide-vue-next';;
+  Clock, GitPullRequest, Briefcase
+} from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
+import BaseDropdownMenu, { type DropdownMenuItem } from '../../components/BaseDropdownMenu.vue';
+import FormCheckbox from '../../components/FormCheckbox.vue';
+import MetricCard from '../../components/MetricCard.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import { useToast } from '../../composables/useToast';
@@ -118,9 +121,22 @@ const movements = ref<MovementDirectoryRecord[]>([
 
 // ─── Filter & Search State ───
 const searchQuery = ref('');
+const statusFilter = ref<'all' | 'pending' | 'approved' | 'effected' | 'rejected'>('all');
 const selectedRowIds = ref<number[]>([]);
-const activeActionMenuId = ref<number | null>(null);
 const { toast } = useToast();
+
+const movementMetrics = computed(() => {
+  const pendingCount = movements.value.filter(m => m.status === 'pending').length;
+  const approvedCount = movements.value.filter(m => m.status === 'approved').length;
+  const effectedCount = movements.value.filter(m => m.status === 'effected').length;
+  return {
+    awaitingAction: pendingCount,
+    allPending: pendingCount,
+    readyToEffect: approvedCount,
+    total: movements.value.length,
+    effectedCount
+  };
+});
 
 const getStatusColor = (status: string): 'success' | 'indigo' | 'error' | 'warning' | 'blue' => {
   switch (status) {
@@ -137,9 +153,13 @@ const showToast = (msg: string) => {
 };
 
 const filteredMovements = computed(() => {
-  if (!searchQuery.value) return movements.value;
+  let rows = movements.value;
+  if (statusFilter.value !== 'all') {
+    rows = rows.filter(m => m.status === statusFilter.value);
+  }
+  if (!searchQuery.value) return rows;
   const q = searchQuery.value.toLowerCase().trim();
-  return movements.value.filter(m => 
+  return rows.filter(m =>
     m.name.toLowerCase().includes(q) ||
     m.emp_code.toLowerCase().includes(q) ||
     m.movement_type.toLowerCase().includes(q) ||
@@ -176,29 +196,37 @@ const handleNavigateCreate = () => {
   router.push('/hr/movements/create');
 };
 
-const toggleActionMenu = (id: number) => {
-  activeActionMenuId.value = activeActionMenuId.value === id ? null : id;
-};
-
-const closeActionMenus = () => {
-  activeActionMenuId.value = null;
+const getRowActionItems = (record: MovementDirectoryRecord): DropdownMenuItem[] => {
+  const items: DropdownMenuItem[] = [
+    {
+      key: 'view',
+      label: 'View Details',
+      icon: Eye,
+      onClick: () => handleInspectDetails(record.id)
+    }
+  ];
+  if (record.status === 'pending') {
+    items.push(
+      { key: 'approve', label: 'Approve', icon: Check, onClick: () => handleApprove(record) },
+      { key: 'div', divider: true },
+      { key: 'reject', label: 'Reject', icon: X, destructive: true, onClick: () => handleReject(record) }
+    );
+  }
+  return items;
 };
 
 // Row Actions
 const handleInspectDetails = (id: number) => {
-  activeActionMenuId.value = null;
   router.push(`/hr/movements/${id}`);
 };
 
 const handleApprove = (record: MovementDirectoryRecord) => {
   record.status = 'approved';
-  activeActionMenuId.value = null;
   showToast(`Movement ${record.code} approved.`);
 };
 
 const handleReject = (record: MovementDirectoryRecord) => {
   record.status = 'rejected';
-  activeActionMenuId.value = null;
   showToast(`Movement ${record.code} rejected.`);
 };
 
@@ -211,13 +239,56 @@ const handleBatchDelete = () => {
 </script>
 
 <template>
-  <div class="movement-directory-page" @click="closeActionMenus">
-    <!-- Breadcrumb Standard (Image 3: "[Monitor] > Employee Movement") -->
+  <div class="movement-directory-page">
+    <!-- Breadcrumb Standard (Transparent Canvas) -->
     <div class="breadcrumb-container">
-      <AppBreadcrumb :items="breadcrumbItems" />
+      <AppBreadcrumb :items="breadcrumbItems" :noMargin="true" />
     </div>
 
-    <!-- Master Unified Table Card (Matching Figma 6624:99272) -->
+    <!-- Top KPI Metrics Grid (Matching Figma 6624:99382) -->
+    <div class="metrics-grid">
+      <MetricCard
+        label="Awaiting Action"
+        :value="`${movementMetrics.awaitingAction} Pending`"
+        subtext="Requires your endorsement"
+        :icon="Clock"
+        :show-menu="false"
+        class="metric-card-clickable"
+        :class="{ 'metric-card-selected': statusFilter === 'pending' }"
+        @click="statusFilter = statusFilter === 'pending' ? 'all' : 'pending'"
+      />
+      <MetricCard
+        label="All Pending Queue"
+        :value="`${movementMetrics.allPending} In Review`"
+        subtext="Active department approval chains"
+        :icon="GitPullRequest"
+        :show-menu="false"
+        class="metric-card-clickable"
+        @click="statusFilter = 'pending'"
+      />
+      <MetricCard
+        label="Ready to Effect"
+        :value="`${movementMetrics.readyToEffect} Approved`"
+        subtext="Endorsed by governance"
+        :icon="CheckCircle2"
+        :show-menu="false"
+        class="metric-card-clickable"
+        :class="{ 'metric-card-selected': statusFilter === 'approved' }"
+        @click="statusFilter = statusFilter === 'approved' ? 'all' : 'approved'"
+      />
+      <MetricCard
+        label="All Lifecycle Records"
+        :value="`${movementMetrics.total} Total`"
+        subtext="Complete organizational movement registry"
+        :icon="Briefcase"
+        :show-menu="false"
+        class="metric-card-clickable"
+        :class="{ 'metric-card-selected': statusFilter === 'all' }"
+        @click="statusFilter = 'all'"
+      />
+    </div>
+
+    <!-- Master Unified Table Card (Matching Figma 6624:99382) -->
     <AppDataTable
       title="Employee Movement"
       subtitle="Manage lifecycle employee promotions, lateral transfers, grade step increments, secondments, and active employment assignments across facilities."
@@ -239,11 +310,9 @@ const handleBatchDelete = () => {
             <thead>
               <tr>
                 <th v-if="isColVisible('select')" class="th-checkbox">
-                  <input
-                    type="checkbox"
-                    class="table-checkbox"
-                    :checked="isAllSelected"
-                    @change="handleToggleSelectAll(($event.target as HTMLInputElement).checked)"
+                  <FormCheckbox
+                    :modelValue="isAllSelected"
+                    @update:modelValue="(v) => handleToggleSelectAll(Boolean(v))"
                   />
                 </th>
                 <th v-if="isColVisible('name')">Name</th>
@@ -263,11 +332,9 @@ const handleBatchDelete = () => {
               >
                 <!-- Checkbox -->
                 <td v-if="isColVisible('select')" class="td-checkbox" @click.stop>
-                  <input
-                    type="checkbox"
-                    class="table-checkbox"
-                    :checked="selectedRowIds.includes(item.id)"
-                    @change="handleToggleRow(item.id)"
+                  <FormCheckbox
+                    :modelValue="selectedRowIds.includes(item.id)"
+                    @update:modelValue="() => handleToggleRow(item.id)"
                   />
                 </td>
 
@@ -282,15 +349,9 @@ const handleBatchDelete = () => {
                   </div>
                 </td>
 
-                <!-- Movement Type (Tertiary color #737373) -->
+                <!-- Movement Type (Single-line tertiary text) -->
                 <td v-if="isColVisible('movement_type')" class="td-tertiary">
-                  <div class="movement-type-cell">
-                    <span>{{ item.movement_type }}</span>
-                    <span v-if="item.require_guarantee_refresh" class="table-surety-badge" title="Financial Surety / Guarantor Refresh Required">
-                      <ShieldAlert :size="10" />
-                      <span>Surety Req.</span>
-                    </span>
-                  </div>
+                  <span>{{ item.movement_type }}</span>
                 </td>
 
                 <!-- Transition Detail: e.g. Inventory Controller ➔ Inventory Controller -->
@@ -312,43 +373,20 @@ const handleBatchDelete = () => {
                   </BaseBadge>
                 </td>
 
-                <!-- Actions (⋮ 3-dots popup) -->
+                <!-- Actions (⋮ 3-dots BaseDropdownMenu) -->
                 <td v-if="isColVisible('actions')" class="td-actions" @click.stop>
-                  <div class="action-dropdown-wrapper">
-                    <button
-                      type="button"
-                      class="btn-action-dots"
-                      title="Actions"
-                      @click="toggleActionMenu(item.id)"
-                    >
-                      <MoreVertical :size="15" />
-                    </button>
-
-                    <div v-if="activeActionMenuId === item.id" class="action-popup-menu">
-                      <button type="button" class="popup-item" @click="handleInspectDetails(item.id)">
-                        <Eye :size="13" />
-                        <span>View Details</span>
-                      </button>
-                      <button 
-                        v-if="item.status === 'pending'" 
-                        type="button" 
-                        class="popup-item item-approve" 
-                        @click="handleApprove(item)"
+                  <BaseDropdownMenu :items="getRowActionItems(item)" minWidth="180px">
+                    <template #trigger="{ toggle }">
+                      <button
+                        type="button"
+                        class="btn-action-dots"
+                        title="Actions"
+                        @click.stop="toggle"
                       >
-                        <Check :size="13" />
-                        <span>Approve</span>
+                        <MoreVertical :size="15" />
                       </button>
-                      <button 
-                        v-if="item.status === 'pending'" 
-                        type="button" 
-                        class="popup-item item-reject" 
-                        @click="handleReject(item)"
-                      >
-                        <X :size="13" />
-                        <span>Reject</span>
-                      </button>
-                    </div>
-                  </div>
+                    </template>
+                  </BaseDropdownMenu>
                 </td>
               </tr>
 
@@ -381,13 +419,40 @@ const handleBatchDelete = () => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: var(--alias-color-bg-canvas, #f8fafc);
+  background-color: var(--alias-color-background-primary, #fafafa);
   min-height: 100vh;
 }
 
 .breadcrumb-container {
   display: flex;
   align-items: center;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metric-card-clickable {
+  cursor: pointer;
+}
+
+.metric-card-selected {
+  border-color: #0b529c !important;
+  box-shadow: 0 0 0 1px #0b529c;
+}
+
+@media (max-width: 1120px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Master Unified Table Card (Matching Image 3) */
@@ -498,7 +563,7 @@ const handleBatchDelete = () => {
 }
 
 .btn-toolbar-secondary:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -517,7 +582,7 @@ const handleBatchDelete = () => {
 }
 
 .btn-toolbar-icon:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -573,7 +638,7 @@ const handleBatchDelete = () => {
 }
 
 .table-row-hover:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   cursor: pointer;
 }
 
@@ -670,13 +735,13 @@ const handleBatchDelete = () => {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -709,7 +774,7 @@ const handleBatchDelete = () => {
 }
 
 .popup-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .item-approve { color: #059669; }

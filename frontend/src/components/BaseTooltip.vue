@@ -1,3 +1,17 @@
+<!--
+  Authoritative QMT BaseTooltip Component (Figma 3345:33314)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Contextual hover microcopy on interactive icons, compact utility buttons, and truncated text.
+  - Examples: Hover hint on `.btn-action-dots` (More Actions), column toggle trigger (`IconColumnSolid`),
+    refresh buttons, view density switches, and truncated status pills.
+  - Supports dark theme (`#171717`) or light theme (`#ffffff` with `#e5e5e5` border) with optional arrow.
+
+  WHEN NOT TO USE:
+  - DO NOT use for primary form field descriptions or instructions (use `helper-text` / `hint` on `FormInput` / `FormSelect`).
+  - DO NOT hide critical validation rules or required field indicators inside tooltips.
+  - DO NOT place complex interactive elements (buttons, inputs) inside tooltips (use popover or modal instead).
+-->
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 

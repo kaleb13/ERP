@@ -1085,7 +1085,7 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 }
 
 .erp-table tr:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -1214,7 +1214,7 @@ const handleRevokeSingleEnrollment = (enr: EmployeeDeviceEnrollmentRecord) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

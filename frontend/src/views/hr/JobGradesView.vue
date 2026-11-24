@@ -1156,7 +1156,7 @@ onUnmounted(() => {
 <style scoped>
 .job-grades-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -1284,7 +1284,7 @@ onUnmounted(() => {
 }
 
 .btn-revise-scale:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1302,7 +1302,7 @@ onUnmounted(() => {
 .grid-table th {
   height: 36px;
   padding: 8px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #f1f5f9;
   font-size: 12px;
   font-weight: 500;
@@ -1515,7 +1515,7 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1548,12 +1548,12 @@ onUnmounted(() => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 
@@ -1642,7 +1642,7 @@ onUnmounted(() => {
 
 /* Info Box */
 .info-alert-box {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 14px;
@@ -1718,7 +1718,7 @@ onUnmounted(() => {
 .ladder-table th {
   height: 32px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   font-size: 11.5px;
   font-weight: 500;
   color: #737373;
@@ -1807,7 +1807,7 @@ onUnmounted(() => {
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

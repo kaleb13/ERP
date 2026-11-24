@@ -518,28 +518,6 @@ onUnmounted(() => {
     <!-- ISOLATED DETAIL VIEW (Rule 10.3 & Rule 10.5)                   -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-if="inspectingCategory" class="detail-view-wrapper">
-      <div class="detail-top-actions">
-        <div class="detail-right-actions">
-          <AppButton
-            variant="outline"
-            size="sm"
-            @click="router.push({ path: '/procurement/categories/create', query: { editId: String(inspectingCategory.id) } })"
-          >
-            <template #icon-left>
-              <Edit2 :size="14" />
-            </template>
-            Edit Category
-          </AppButton>
-          <AppButton
-            variant="outline"
-            size="sm"
-            @click="handleToggleState(inspectingCategory)"
-          >
-            {{ inspectingCategory.state === 'active' ? 'Deactivate' : 'Activate' }}
-          </AppButton>
-        </div>
-      </div>
-
       <div class="detail-card">
         <div class="detail-header-row">
           <div>
@@ -642,13 +620,13 @@ onUnmounted(() => {
       <div class="clean-card accordion-card">
         <div
           class="card-accordion-header"
+          :class="{ 'is-collapsed': !isDetailDescriptionOpen }"
           @click="isDetailDescriptionOpen = !isDetailDescriptionOpen"
         >
           <span>Description</span>
           <ChevronDown v-if="isDetailDescriptionOpen" :size="16" class="header-chevron" />
           <ChevronRight v-else :size="16" class="header-chevron" />
         </div>
-        <div v-show="isDetailDescriptionOpen" class="card-accordion-divider"></div>
         <div v-show="isDetailDescriptionOpen" class="card-accordion-body">
           <p class="detail-description">
             {{ inspectingCategory.description || 'No description provided.' }}
@@ -1015,7 +993,7 @@ onUnmounted(() => {
             v-model="quickForm.class_code"
             label="Spend Class"
             :options="spendClassOptions"
-            placeholder="Select"
+            placeholder="Select Class"
             :error="quickFieldErrors.class_code"
             required
           />
@@ -1025,7 +1003,7 @@ onUnmounted(() => {
             v-model="quickForm.receipt_mode"
             label="Receipt Mode"
             :options="receiptModeOptions"
-            placeholder="Select"
+            placeholder="Select Mode"
             :error="quickFieldErrors.receipt_mode"
             required
           />
@@ -1037,7 +1015,7 @@ onUnmounted(() => {
             v-model="quickForm.parent_id"
             label="Parent Category"
             :options="parentCategoryOptions"
-            placeholder="Select"
+            placeholder="Select Parent"
           />
 
           <!-- Inventory Item Category -->
@@ -1045,7 +1023,7 @@ onUnmounted(() => {
             v-model="quickForm.item_category_id"
             label="Inventory Item Category"
             :options="itemCategoryOptions"
-            placeholder="Select"
+            placeholder="Select Item Category"
           />
         </div>
 
@@ -1169,7 +1147,7 @@ onUnmounted(() => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -1337,8 +1315,8 @@ onUnmounted(() => {
 }
 
 .modal-checkbox-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding-top: 6px;
 }
@@ -1348,18 +1326,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.detail-top-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.detail-right-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .detail-card {
@@ -1415,31 +1381,35 @@ onUnmounted(() => {
 .card-accordion-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 4px;
   padding: 16px 24px;
   font-size: 14px;
   font-weight: 600;
   color: #404040;
   cursor: pointer;
   user-select: none;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
   transition: background-color 0.15s ease;
 }
 
+.card-accordion-header.is-collapsed {
+  border-bottom: none;
+}
+
 .card-accordion-header:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .header-chevron {
   color: #737373;
-}
-
-.card-accordion-divider {
-  height: 1px;
-  background: #f1f5f9;
+  flex-shrink: 0;
 }
 
 .card-accordion-body {
-  padding: 20px 24px;
+  padding: 20px 24px 24px;
+  background-color: #ffffff;
 }
 
 .detail-grid-3 {

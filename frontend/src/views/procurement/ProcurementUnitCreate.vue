@@ -1,3 +1,16 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  HALETA ERP ARCHITECTURAL SPECIFICATION — ENTITY CREATION STANDARD:
+  1. SCHEMA RELATIONAL INTEGRITY: ProcurementUnit is an aggregate root with 1:N
+     ProcurementUnitMember lines. Both are unified here via <BaseTabs />:
+     - Tab 1: Master Parameters (ProcurementUnit)
+     - Tab 2: Unit Members & Roles (ProcurementUnitMember via <DynamicSubTable />)
+  2. DYNAMIC SUBTABLE: Strictly 3 to 5 mandatory scanning columns. Container MUST
+     provide 24px padding (padding: 24px).
+  3. CONTROLS: All boolean flags must use <FormCheckbox /> with Title + Description.
+  4. TOP BAR: Breadcrumb sits directly on canvas; Save button has ZERO icons.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -89,13 +102,12 @@ const membersList = ref<Array<{
   valid_to: string;
 }>>([newMemberFactory()]);
 
-// ─── Sub-Table Column Definitions (Figma 5104:71792 specification) ───
+// ─── Sub-Table Column Definitions: Strictly Core Mandatory Scanning Columns ───
+// Secondary/scope attributes (Validity dates) are configured in the Expand Row Modal (↗)
 const memberTableColumns: DynamicTableColumn[] = [
-  { key: 'employee', label: 'Employee / Person', minWidth: '220px', type: 'custom' },
-  { key: 'role', label: 'Assigned Role', minWidth: '180px', type: 'custom' },
-  { key: 'department', label: 'Department Served', minWidth: '200px', type: 'custom' },
-  { key: 'valid_from', label: 'Valid From', minWidth: '140px', type: 'custom' },
-  { key: 'valid_to', label: 'Valid To', minWidth: '140px', type: 'custom' }
+  { key: 'employee', label: 'Employee / Person', minWidth: '240px', type: 'custom' },
+  { key: 'role', label: 'Assigned Role', minWidth: '200px', type: 'custom' },
+  { key: 'department', label: 'Department Served', minWidth: '220px', type: 'custom' }
 ];
 
 // ─── Breadcrumbs (AGENTS.md Rule 3: Sealed Badge Standard) ───
@@ -213,9 +225,6 @@ const handleSave = () => {
   if (!entityOptions.some((option) => option.value === form.value.entity_id)) {
     errors.entity_id = 'Owning Entity is required.';
     missingLabels.push('Owning Entity');
-  }
-  if (!governanceStatusOptions.some((option) => option.value === form.value.status)) {
-    errors.status = 'Select a governance sharing scope.';
   }
   if (
     form.value.authority_ceiling !== '' &&
@@ -367,7 +376,7 @@ const handleSave = () => {
       </AppBreadcrumb>
 
       <div class="top-bar-actions">
-        <AppButton variant="outline" size="sm" @click="clearForm">
+        <AppButton variant="secondary-gray" size="sm" @click="clearForm">
           <template #icon-left><X :size="14" /></template>
           Clear Form
         </AppButton>
@@ -405,7 +414,7 @@ const handleSave = () => {
             v-model="form.mode"
             label="Procurement Unit Mode"
             :options="unitModeOptions"
-            placeholder="Select"
+            placeholder="Select Mode"
             :error="fieldErrors.mode"
             required
           />
@@ -426,7 +435,7 @@ const handleSave = () => {
             v-model="form.entity_id"
             label="Owning Entity"
             :options="entityOptions"
-            placeholder="Select"
+            placeholder="Select Entity"
             :error="fieldErrors.entity_id"
             required
           />
@@ -435,32 +444,24 @@ const handleSave = () => {
             v-model="form.currency_code"
             label="Ceiling Currency"
             :options="currencyOptions"
-            placeholder="Select"
+            placeholder="Select Currency"
           />
 
           <FormSelect
             v-model="form.default_location_id"
             label="Default Store Location"
             :options="locationOptions"
-            placeholder="Select"
+            placeholder="Select Location"
           />
         </div>
 
-        <!-- Row 3: Governance & Dimension -->
+        <!-- Row 3: Dimension -->
         <div class="form-grid-3">
           <FormSelect
             v-model="form.cost_center_dimension_id"
             label="Default Cost Center"
             :options="costCenterOptions"
-            placeholder="Select"
-          />
-
-          <FormSelect
-            v-model="form.status"
-            label="Governance Sharing Scope"
-            :options="governanceStatusOptions"
-            placeholder="Select"
-            :error="fieldErrors.status"
+            placeholder="Select Cost Center"
           />
         </div>
 
@@ -535,31 +536,9 @@ const handleSave = () => {
                 <FormSelect
                   v-model="row.organization_unit_id"
                   :options="departmentOptions"
-                  placeholder="All Departments"
+                  placeholder="Select Department"
                   variant="cell"
                   :teleport="true"
-                />
-              </div>
-            </template>
-
-            <!-- Custom Cell: Valid From -->
-            <template #valid_from="{ row }">
-              <div class="cell-wrap">
-                <input
-                  v-model="row.valid_from"
-                  type="date"
-                  class="cell-grid-date"
-                />
-              </div>
-            </template>
-
-            <!-- Custom Cell: Valid To -->
-            <template #valid_to="{ row }">
-              <div class="cell-wrap">
-                <input
-                  v-model="row.valid_to"
-                  type="date"
-                  class="cell-grid-date"
                 />
               </div>
             </template>
@@ -589,7 +568,7 @@ const handleSave = () => {
                     v-model="row.organization_unit_id"
                     label="Department Served"
                     :options="departmentOptions"
-                    placeholder="All Departments"
+                    placeholder="Select Department"
                   />
                 </div>
 
@@ -605,7 +584,6 @@ const handleSave = () => {
                     v-model="row.valid_to"
                     label="Valid To"
                     type="date"
-                    placeholder="Indefinite if empty"
                   />
                 </div>
               </div>
@@ -661,7 +639,7 @@ const handleSave = () => {
 .clean-card {
   background: #ffffff;
   border: 1px solid #e5e5e5;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
 }
@@ -724,62 +702,6 @@ const handleSave = () => {
 
 .cell-wrap {
   width: 100%;
-}
-
-.cell-grid-date {
-  width: 100%;
-  height: 42px;
-  min-height: 42px;
-  padding: 8px 14px;
-  font-size: 14px;
-  color: #404040;
-  border: none;
-  border-radius: 0;
-  background-color: transparent;
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.cell-grid-date:focus {
-  box-shadow: inset 0 0 0 2px #0B529C;
-}
-
-/* ─── Collapsible Description ─── */
-.accordion-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-accordion-header {
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-  transition: background-color 0.15s ease;
-}
-
-.card-accordion-header:hover {
-  background-color: #fafafa;
-}
-
-.header-chevron {
-  color: #737373;
-}
-
-.card-accordion-divider {
-  height: 1px;
-  background-color: #e5e5e5;
-  width: 100%;
-}
-
-.card-accordion-body {
-  padding: 24px;
 }
 
 /* ─── Expand Row Modal Inside DynamicSubTable ─── */

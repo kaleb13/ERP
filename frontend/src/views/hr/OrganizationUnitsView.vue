@@ -1337,7 +1337,7 @@ onUnmounted(() => {
 }
 
 .erp-row:hover td {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected td {
@@ -1377,7 +1377,7 @@ onUnmounted(() => {
   user-select: none;
 }
 .sortable:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 .th-content {
   display: inline-flex;
@@ -1408,7 +1408,7 @@ onUnmounted(() => {
   font-size: 11.5px;
   padding: 1.5px 6px;
   border-radius: 4px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   color: #737373; /* Tertiary color */
 }
@@ -1442,7 +1442,7 @@ onUnmounted(() => {
   display: inline-block;
   padding: 1.5px 7px;
   border-radius: 4px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #94a3b8;
   font-weight: 500;
 }
@@ -1457,8 +1457,8 @@ onUnmounted(() => {
   color: #059669;
 }
 .vis-hidden {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
 }
 
 /* Actions */
@@ -1487,7 +1487,7 @@ onUnmounted(() => {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 .btn-action-dots:hover {
@@ -1529,7 +1529,7 @@ onUnmounted(() => {
   text-align: left;
 }
 .action-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
@@ -1538,7 +1538,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   padding: 10px 14px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -1595,7 +1595,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1642,7 +1642,7 @@ onUnmounted(() => {
 
 .unit-desc {
   font-size: 12.5px;
-  color: #64748b;
+  color: #737373;
   max-width: 650px;
   margin: 0;
   line-height: 1.4;
@@ -1657,7 +1657,7 @@ onUnmounted(() => {
 }
 
 .incumbent-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 16px;
@@ -1694,7 +1694,7 @@ onUnmounted(() => {
 }
 .incumbent-role {
   font-size: 11.5px;
-  color: #64748b;
+  color: #737373;
 }
 
 .unassigned-card {
@@ -1750,7 +1750,7 @@ onUnmounted(() => {
 }
 
 .child-erp-table th {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   font-size: 11.5px;
 }
 

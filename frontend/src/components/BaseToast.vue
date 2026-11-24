@@ -1,3 +1,19 @@
+<!--
+  Authoritative QMT BaseToast Component (Figma 4055:37)
+  ======================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Platform-wide feedback toasts for user actions (create, edit, delete, status change, errors).
+  - Typically dispatched via the centralized `useToast()` composable and rendered globally by `<BaseToaster />`:
+      import { useToast } from '../../composables/useToast';
+      const { toast } = useToast();
+      toast.success('Saved successfully', 'Record has been persisted.');
+  - Supports types: `flat` (default surface with colored icon & border) and `solid` (prominent colored background).
+  - Supports statuses: `success`, `error`, `warning`, `info`, `loading`.
+
+  WHEN NOT TO USE:
+  - NEVER construct inline, in-page `.toast-bar` banners or custom transition alert divs that push page layouts.
+  - DO NOT use for form field validation errors (use `error` prop on `FormInput` / `FormSelect`).
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 import {

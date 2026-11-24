@@ -724,7 +724,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-secondary-toolbar:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-icon-toolbar {
@@ -733,7 +733,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #ffffff;
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -741,7 +741,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-icon-toolbar:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
 }
 
@@ -796,7 +796,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .table-row-hover:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   cursor: pointer;
 }
 
@@ -847,7 +847,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -964,7 +964,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 .drawer-drag-pill {
   width: 44px;
   height: 4px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   border-radius: 9999px;
   margin: 8px auto 0 auto;
 }
@@ -1004,7 +1004,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .drawer-segmented-pills {
   display: flex;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 3px;
   border-radius: 9999px;
   gap: 2px;
@@ -1016,7 +1016,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   padding: 5px 14px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1034,7 +1034,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   height: 32px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1043,7 +1043,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-close-header:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1161,7 +1161,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 .fetch-info-title {
   font-size: 13.5px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
 }
 
 .fetch-info-count-pill {
@@ -1197,7 +1197,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -1252,7 +1252,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .accordion-header:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .accordion-title {
@@ -1343,7 +1343,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 .brand-company-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin: 0;
 }
 
@@ -1395,7 +1395,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 
 .fact-bold-val {
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
 }
 
 .figma-letter-body-block {
@@ -1450,7 +1450,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-footer-close:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-footer-save {
@@ -1508,7 +1508,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .doc-code-pill {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   padding: 2px 8px;
   border-radius: 6px;
@@ -1528,7 +1528,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
   height: 32px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1537,7 +1537,7 @@ const handleInspectTemplate = (tmpl: LetterTemplateRecord) => {
 }
 
 .btn-close-header:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

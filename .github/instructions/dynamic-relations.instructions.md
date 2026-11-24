@@ -62,6 +62,7 @@ Reference URLs:
      - The centered `No rows` empty state only appears if the user explicitly deletes every single row.
 
 3. **Table Action Bar & Standardized `<AppButton>` (Always Below Table)**:
+   - **Mandatory 24px Container Padding**: The outer card wrapper hosting `<DynamicSubTable />` MUST declare `padding: 24px; display: flex; flex-direction: column; gap: 16px;`. NEVER wrap `<DynamicSubTable />` in a zero-padding wrapper (`.subtable-body { padding: 0 }`), which jams the dynamic table and the `+ Add Row` action button against the outer borders.
    - **Mandatory System Button**: All dynamic table buttons MUST use the authoritative `<AppButton>` component (`variant="secondary"`, `size="sm"` with `#icon-left` slot). Never render raw HTML `<button>` or ad-hoc button classes.
    - **Default Visibility (Only Add Row)**:
      - **`+ Add Row`** is the **ONLY** button that always appears by default.

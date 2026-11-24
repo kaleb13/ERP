@@ -860,7 +860,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 }
 
 .clickable-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-checkbox, .td-checkbox {
@@ -937,7 +937,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 .btn-action-dots:hover {
   color: #0b529c;
   border-color: #0b529c;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .action-popup-menu {
@@ -973,7 +973,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 }
 
 .popup-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -1063,8 +1063,8 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
   position: absolute;
   right: 8px;
   padding: 2px 6px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 10.5px;
   font-weight: 600;
   border-radius: 4px;
@@ -1153,7 +1153,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 10px 14px;
   border-radius: 8px;
 }
@@ -1179,7 +1179,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
   font-size: 13px;
   color: #404040;
   line-height: 1.5;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 12px 14px;
   border-radius: 8px;
   margin: 0;
@@ -1204,7 +1204,7 @@ const handleNavigateToClearance = (separationId: number, openRegister = false) =
 
 .inspector-footer {
   padding: 14px 20px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   display: flex;
   justify-content: flex-end;
   gap: 10px;

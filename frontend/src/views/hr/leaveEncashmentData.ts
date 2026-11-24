@@ -448,17 +448,28 @@ export const encashmentsData = ref<LeaveEncashmentRecord[]>([
         approver_name: 'Kassahun Belay',
         approver_role: 'Branch Head (Requester)',
         approval_state: 'approved',
-        acted_at: 'Jul 29, 2026, 10:00 AM'
+        acted_at: 'Jul 29, 2026, 10:00 AM',
+        remarks: 'Submitted request for 8.0 days encashment.'
       },
       {
         id: 708,
         step_number: 2,
-        step_name: 'Executive Leadership Endorsement',
+        step_name: 'Line Manager Endorsement',
+        approver_name: 'Sara Tefera',
+        approver_role: 'Shift Supervisor',
+        approval_state: 'approved',
+        acted_at: 'Jul 29, 2026, 02:30 PM',
+        remarks: 'Cashier staffing capacity verified. Endorsed for cash conversion.'
+      },
+      {
+        id: 715,
+        step_number: 3,
+        step_name: 'Finance & Payroll Authorization',
         approver_name: 'Yonas Gebre',
         approver_role: 'HR Executive Director',
         approval_state: 'approved',
         acted_at: 'Aug 2, 2026, 02:30 PM',
-        remarks: 'Executive authorization granted.'
+        remarks: 'Authorized per executive retention provision. Debited 8.0 days from allocation bucket.'
       }
     ]
   },
@@ -506,9 +517,10 @@ export const encashmentsData = ref<LeaveEncashmentRecord[]>([
         step_number: 1,
         step_name: 'Encashment Request Submission',
         approver_name: 'Dawit Yohannes',
-        approver_role: 'Logistics Officer',
+        approver_role: 'Logistics Officer (Requester)',
         approval_state: 'approved',
-        acted_at: 'Aug 3, 2026, 09:15 AM'
+        acted_at: 'Aug 3, 2026, 09:15 AM',
+        remarks: 'Submitted request for 4.0 days encashment.'
       },
       {
         id: 710,
@@ -516,8 +528,15 @@ export const encashmentsData = ref<LeaveEncashmentRecord[]>([
         step_name: 'Regional Operations Endorsement',
         approver_name: 'Marta Tadesse',
         approver_role: 'Operations Lead',
-        approval_state: 'pending',
-        acted_at: undefined
+        approval_state: 'pending'
+      },
+      {
+        id: 714,
+        step_number: 3,
+        step_name: 'Finance & Payroll Authorization',
+        approver_name: 'Yonas Gebre',
+        approver_role: 'HR Executive Director',
+        approval_state: 'queued'
       }
     ]
   },
@@ -554,7 +573,7 @@ export const encashmentsData = ref<LeaveEncashmentRecord[]>([
     payroll_days_basis: 26,
     available_balance_before: 41.0,
     reason: 'Unutilized leave from previous service cycle.',
-    request_state: 'draft',
+    request_state: 'pending',
     state: 'active',
     payroll_settlement_month: 'September 2026 Payroll',
     is_synced_to_payroll: false,
@@ -563,11 +582,30 @@ export const encashmentsData = ref<LeaveEncashmentRecord[]>([
       {
         id: 711,
         step_number: 1,
-        step_name: 'Draft Request',
+        step_name: 'Encashment Request Submission',
         approver_name: 'Marta Tadesse',
-        approver_role: 'Branch Manager',
-        approval_state: 'pending',
-        remarks: 'Draft pending final submission.'
+        approver_role: 'Branch Manager (Requester)',
+        approval_state: 'approved',
+        acted_at: 'Aug 5, 2026, 08:45 AM',
+        remarks: 'Submitted request for 12.0 days encashment.'
+      },
+      {
+        id: 712,
+        step_number: 2,
+        step_name: 'Line Manager Endorsement',
+        approver_name: 'Sara Tefera',
+        approver_role: 'Shift Supervisor',
+        approval_state: 'approved',
+        acted_at: 'Aug 5, 2026, 02:30 PM',
+        remarks: 'Cashier staffing capacity verified. Endorsed for cash conversion.'
+      },
+      {
+        id: 713,
+        step_number: 3,
+        step_name: 'Finance & Payroll Authorization',
+        approver_name: 'Marta Tadesse',
+        approver_role: 'Financial Controller',
+        approval_state: 'pending'
       }
     ]
   },

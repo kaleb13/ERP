@@ -1,3 +1,13 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  HALETA ERP ARCHITECTURAL SPECIFICATION — ENTITY CREATION STANDARD:
+  1. DESCRIPTION INVARIANT: NEVER place descriptions as a textarea in the master card.
+     Always render in a dedicated collapsible card (<div class="clean-card accordion-card">)
+     with overflow: hidden and border-radius: 12px using <FormRichText />.
+  2. CONTROLS: All boolean flags must use <FormCheckbox /> with Title + Description.
+  3. TOP BAR: Breadcrumb sits directly on canvas; Save button has ZERO icons.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -227,7 +237,7 @@ const handleSave = () => {
       </AppBreadcrumb>
 
       <div class="top-bar-actions">
-        <AppButton variant="outline" size="sm" @click="clearForm">
+        <AppButton variant="secondary-gray" size="sm" @click="clearForm">
           <template #icon-left><X :size="14" /></template>
           Clear Form
         </AppButton>
@@ -253,7 +263,7 @@ const handleSave = () => {
           v-model="form.class_code"
           label="Spend Class"
           :options="spendClassOptions"
-          placeholder="Select"
+          placeholder="Select Class"
           :error="fieldErrors.class_code"
           required
         />
@@ -262,7 +272,7 @@ const handleSave = () => {
           v-model="form.receipt_mode"
           label="Receipt Mode"
           :options="receiptModeOptions"
-          placeholder="Select"
+          placeholder="Select Mode"
           :error="fieldErrors.receipt_mode"
           required
         />
@@ -273,30 +283,21 @@ const handleSave = () => {
           v-model="form.parent_id"
           label="Parent Category"
           :options="parentCategoryOptions"
-          placeholder="Select"
+          placeholder="Select Parent"
         />
 
         <FormSelect
           v-model="form.entity_id"
           label="Owning Entity"
           :options="entityOptions"
-          placeholder="Select"
+          placeholder="Select Entity"
         />
 
         <FormSelect
           v-model="form.item_category_id"
           label="Inventory Item Category"
           :options="itemCategoryOptions"
-          placeholder="Select"
-        />
-      </div>
-
-      <div class="form-grid-3">
-        <FormSelect
-          v-model="form.status"
-          label="Governance Sharing Scope"
-          :options="governanceStatusOptions"
-          placeholder="Select"
+          placeholder="Select Item Category"
         />
       </div>
 
@@ -322,15 +323,17 @@ const handleSave = () => {
 
     <!-- ═══ COLLAPSIBLE DESCRIPTION SECTION BELOW (Rule 18, 20, 25) ═══ -->
     <div class="clean-card accordion-card">
-      <div class="card-accordion-header" @click="isDescriptionOpen = !isDescriptionOpen">
+      <div
+        class="card-accordion-header"
+        :class="{ 'is-collapsed': !isDescriptionOpen }"
+        @click="isDescriptionOpen = !isDescriptionOpen"
+      >
         <span>Description</span>
-        <ChevronDown v-if="isDescriptionOpen" :size="15" class="header-chevron" />
-        <ChevronRight v-else :size="15" class="header-chevron" />
+        <ChevronDown v-if="isDescriptionOpen" :size="16" class="header-chevron" />
+        <ChevronRight v-else :size="16" class="header-chevron" />
       </div>
 
-      <div v-if="isDescriptionOpen" class="card-accordion-divider"></div>
-
-      <div v-if="isDescriptionOpen" class="card-accordion-body">
+      <div v-show="isDescriptionOpen" class="card-accordion-body">
         <FormRichText
           v-model="form.description"
           placeholder="Enter category description, operational scope, or procurement classification notes..."
@@ -369,21 +372,17 @@ const handleSave = () => {
   gap: 10px;
 }
 
-.validation-banner {
-  padding: 10px 14px;
-  border-radius: 8px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  font-size: 13px;
-}
-
 /* Master Card */
 .clean-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.clean-card.accordion-card {
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 .form-card-body {
@@ -406,19 +405,28 @@ const handleSave = () => {
   padding-top: 6px;
 }
 
-/* Collapsible Accordion Section (Matches EmployeeCreate.vue) */
+/* Collapsible Accordion Section (Matches EmployeeCreate.vue & ProcurementMethodCreate.vue) */
 .card-accordion-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 22px;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 16px 24px;
   cursor: pointer;
   user-select: none;
   background: #ffffff;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: #404040;
+  border-bottom: 1px solid #e5e5e5;
   transition: background-color 0.15s ease;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-accordion-header.is-collapsed {
+  border-radius: 12px;
+  border-bottom: none;
 }
 
 .card-accordion-header:hover {
@@ -430,132 +438,10 @@ const handleSave = () => {
   flex-shrink: 0;
 }
 
-.card-accordion-divider {
-  height: 1px;
-  background-color: #f1f5f9;
-  width: 100%;
-}
-
 .card-accordion-body {
-  padding: 20px 24px;
+  padding: 20px 24px 24px;
   background-color: #ffffff;
-}
-
-/* Rule 18 & 25: Rich Text Editor Container */
-.rich-editor-container {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #ffffff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.rich-editor-container:focus-within {
-  border-color: #0B529C;
-  box-shadow: 0 0 0 3px rgba(11, 82, 156, 0.08);
-}
-
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  flex-wrap: wrap;
-}
-
-.toolbar-dropdown {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #404040;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: #e2e8f0;
-  margin: 0 2px;
-}
-
-.toolbar-icon-group {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.toolbar-right-group {
-  margin-left: auto;
-}
-
-.editor-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 5px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: #404040;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.editor-icon-btn:hover {
-  background: #e2e8f0;
-}
-
-.editor-color-box {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  border: 1px solid #cbd5e1;
-  background: #404040;
-  margin: 0 4px;
-  cursor: pointer;
-}
-
-.editor-textarea {
-  width: 100%;
-  border: none;
-  outline: none;
-  padding: 12px 14px;
-  font-size: 13.5px;
-  color: #404040;
-  line-height: 1.55;
-  resize: vertical;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-.editor-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: #fafafa;
-  border-top: 1px solid #f1f5f9;
-}
-
-.char-count-pill {
-  font-size: 11.5px;
-  color: #737373;
-}
-
-.editor-resize-handle {
-  font-size: 11px;
-  color: #94a3b8;
-  user-select: none;
+  border-radius: 0 0 12px 12px;
 }
 
 @media (max-width: 900px) {

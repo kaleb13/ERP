@@ -7,10 +7,12 @@ import {
 } from 'lucide-vue-next';;
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
+import BaseDropdownMenu, { type DropdownMenuItem } from '../../components/BaseDropdownMenu.vue';
 import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
 import FormInput from '../../components/FormInput.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
+import FormCheckboxCard from '../../components/FormCheckboxCard.vue';
 import FormRichText from '../../components/FormRichText.vue';
 import { useToast } from '../../composables/useToast';
 
@@ -159,7 +161,7 @@ const form = ref({
   employee_id: 124 as number | '',
   movement_type: 'promotion',
   assignment_type: 'primary',
-  effective_date: '10/12/2026',
+  effective_date: '2026-10-12',
   to_entity_id: 'bole_branch',
   to_position_id: 'senior_accountant',
   to_seniority_level: 'level_2',
@@ -200,12 +202,21 @@ const formatNumber = (val: number) => {
 };
 
 // ─── Actions ───
+const moreMenuItems: DropdownMenuItem[] = [
+  {
+    key: 'save-draft',
+    label: 'Save as Draft',
+    icon: Save,
+    onClick: () => handleSaveDraft()
+  }
+];
+
 const handleClearForm = () => {
   form.value = {
     employee_id: '',
     movement_type: '',
     assignment_type: '',
-    effective_date: '10/12/2026',
+    effective_date: '2026-10-12',
     to_entity_id: '',
     to_position_id: '',
     to_seniority_level: '',
@@ -253,28 +264,25 @@ const closeMenus = () => {
       </div>
 
       <div class="actions-group">
-        <!-- 3-Dots More Options (Save as Draft) per Rule 4 -->
-        <div class="more-menu-wrapper" @click.stop>
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            iconOnly
-            title="More actions"
-            @click="showMoreDropdown = !showMoreDropdown"
-          >
-            <MoreVertical :size="16" />
-          </AppButton>
-          <div v-if="showMoreDropdown" class="more-dropdown-menu">
-            <button type="button" class="dropdown-item" @click="handleSaveDraft">
-              <Save :size="14" />
-              <span>Save as Draft</span>
-            </button>
-          </div>
-        </div>
+        <!-- 3-Dots More Options (Save as Draft via BaseDropdownMenu) -->
+        <BaseDropdownMenu :items="moreMenuItems" minWidth="180px">
+          <template #trigger="{ isOpen, toggle }">
+            <AppButton
+              variant="secondary-gray"
+              size="sm"
+              :iconOnly="true"
+              :active="isOpen"
+              title="More actions"
+              @click="toggle"
+            >
+              <MoreVertical :size="16" />
+            </AppButton>
+          </template>
+        </BaseDropdownMenu>
 
         <!-- Clear Form Button -->
-        <AppButton 
-          variant="outline" 
+        <AppButton
+          variant="secondary-gray"
           size="sm"
           @click="handleClearForm"
         >
@@ -282,13 +290,13 @@ const closeMenus = () => {
           Clear Form
         </AppButton>
 
-        <!-- Primary Save Button -->
-        <AppButton 
-          variant="primary" 
+        <!-- Primary Workflow Submit Button -->
+        <AppButton
+          variant="primary"
           size="sm"
           @click="handleSave"
         >
-          Save
+          Submit
         </AppButton>
       </div>
     </div>
@@ -328,20 +336,15 @@ const closeMenus = () => {
         </div>
       </div>
 
-      <!-- Effective Date Row -->
-      <div class="effective-date-row">
-        <label class="field-label">
-          Effective Date <span class="required-star">*</span>
-        </label>
-        <div class="date-input-container">
-          <Calendar :size="16" class="calendar-prefix-icon" />
-          <input 
-            type="text" 
-            v-model="form.effective_date" 
-            class="native-date-input" 
-            placeholder="MM/DD/YYYY"
+      <!-- Effective Date Row (Strict 3-Column Grid: 1 slot occupied) -->
+      <div class="grid-3col">
+        <div>
+          <FormInput
+            v-model="form.effective_date"
+            type="date"
+            label="Effective Date"
+            :required="true"
           />
-          <span class="gc-badge-pill">GC</span>
         </div>
       </div>
 
@@ -452,25 +455,21 @@ const closeMenus = () => {
           />
         </div>
 
-        <!-- Right Panel: Synchronize Direct Reporting manager (with conditional dropdown inside!) -->
-        <div class="checkbox-panel-box" :class="{ 'has-manager-dropdown': form.sync_direct_manager }">
-          <FormCheckbox
-            v-model="form.sync_direct_manager"
-            label="Synchronize Direct Reporting manager"
-            description="Automatically update the employee's active supervision chain in company organization chart upon effectuation."
+        <!-- Right Panel: Synchronize Direct Reporting manager (FormCheckboxCard) -->
+        <FormCheckboxCard
+          v-model="form.sync_direct_manager"
+          label="Synchronize Direct Reporting manager"
+          description="Automatically update the employee's active supervision chain in company organization chart upon effectuation."
+          :expandWhenChecked="true"
+        >
+          <FormSelect
+            v-model="form.to_manager_id"
+            label="New Direct Reporting Manager"
+            :options="managerOptions"
+            placeholder="Select Manager"
+            :required="true"
           />
-
-          <!-- Nested Manager Dropdown (Visible when checked per Image 1) -->
-          <div v-if="form.sync_direct_manager" class="sub-manager-field">
-            <FormSelect
-              v-model="form.to_manager_id"
-              label="New Direct Reporting Manager"
-              :options="managerOptions"
-              placeholder="Select Manager"
-              :required="true"
-            />
-          </div>
-        </div>
+        </FormCheckboxCard>
       </div>
 
       <!-- Row 4: Compensation Delta Banner (Image 1) -->
@@ -511,7 +510,7 @@ const closeMenus = () => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: var(--alias-color-bg-canvas, #f8fafc);
+  background-color: var(--alias-color-background-primary, #fafafa);
   min-height: 100vh;
 }
 
@@ -566,7 +565,7 @@ const closeMenus = () => {
 }
 
 .btn-more-options:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -599,7 +598,7 @@ const closeMenus = () => {
 }
 
 .dropdown-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-clear-form {
@@ -619,7 +618,7 @@ const closeMenus = () => {
 }
 
 .btn-clear-form:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -736,8 +735,8 @@ const closeMenus = () => {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
@@ -831,7 +830,7 @@ const closeMenus = () => {
 .profile-role-tag {
   display: inline-block;
   padding: 2px 8px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
   border-radius: 4px;
   font-size: 11.5px;
@@ -993,13 +992,13 @@ const closeMenus = () => {
 }
 
 .tb-dropdown-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .tb-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 4px;
 }
 
@@ -1011,7 +1010,7 @@ const closeMenus = () => {
   height: 26px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
@@ -1019,7 +1018,7 @@ const closeMenus = () => {
 }
 
 .tb-icon-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

@@ -1447,7 +1447,7 @@ onMounted(() => {
 /* ─── Page Layout ─── */
 .wc-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
@@ -1492,7 +1492,7 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-clear:hover { background-color: #f8fafc; border-color: #cbd5e1; }
+.btn-clear:hover { background-color: #fafafa; border-color: #cbd5e1; }
 .btn-save {
   height: 38px;
   padding: 0 22px;
@@ -1559,7 +1559,7 @@ onMounted(() => {
 .riser-line {
   flex: 1;
   height: 1px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 /* ─── Form Grids ─── */
@@ -1623,7 +1623,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 20px;
@@ -1642,7 +1642,7 @@ onMounted(() => {
 .ws-divider {
   width: 1px;
   height: 36px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 /* 7-day cards grid */
@@ -1710,7 +1710,7 @@ onMounted(() => {
 }
 .pill-working { background-color: #dcfce7; color: #15803d; }
 .pill-halfday { background-color: #fef3c7; color: #b45309; }
-.pill-weekend { background-color: #f1f5f9; color: #64748b; }
+.pill-weekend { background-color: #f5f5f5; color: #737373; }
 
 /* ──────────────────────────────────────────────
    TAB 3: HOLIDAY RECONCILIATION & OVERRIDES
@@ -1749,7 +1749,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 20px;
@@ -1776,7 +1776,7 @@ onMounted(() => {
 .rs-divider {
   width: 1px;
   height: 32px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 .rs-stat--conflict .rs-num { color: #d97706; }
 .rs-stat--aligned .rs-num  { color: #059669; }
@@ -1866,7 +1866,7 @@ onMounted(() => {
   white-space: nowrap;
 }
 .base-working { background-color: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
-.base-weekend { background-color: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+.base-weekend { background-color: #fafafa; color: #737373; border: 1px solid #e2e8f0; }
 
 /* Conflict pills */
 .conflict-pill {
@@ -1959,7 +1959,7 @@ onMounted(() => {
 .pill-holiday { background-color: #f3e8ff; color: #7c3aed; }
 .pill-halfday { background-color: #fef3c7; color: #b45309; }
 .pill-working { background-color: #dcfce7; color: #059669; }
-.pill-weekend { background-color: #f1f5f9; color: #64748b; }
+.pill-weekend { background-color: #f5f5f5; color: #737373; }
 
 .btn-row-delete {
   width: 26px; height: 26px;
@@ -2060,7 +2060,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .child-inline-input:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-input:focus {
@@ -2083,7 +2083,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .child-inline-select:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-select:focus {
@@ -2106,7 +2106,7 @@ onMounted(() => {
 }
 .btn-row-expand:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 /* The ONE Add Row button directly below table */
@@ -2126,7 +2126,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -2198,7 +2198,7 @@ onMounted(() => {
 }
 .btn-modal-close:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .row-modal-body {
@@ -2289,7 +2289,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -2328,7 +2328,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 .btn-modal-ctrl-icon:disabled {
@@ -2352,7 +2352,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -2371,7 +2371,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 12px 20px;
@@ -2380,7 +2380,7 @@ onMounted(() => {
 .mat-num  { font-size: 20px; font-weight: 700; color: #404040; }
 .mat-lbl  { font-size: 11px; font-weight: 500; color: #737373; white-space: nowrap; }
 .mat-stat--holiday .mat-num { color: #7c3aed; }
-.mat-stat--rest .mat-num    { color: #64748b; }
+.mat-stat--rest .mat-num    { color: #737373; }
 .mat-stat--hours .mat-num   { color: #0B529C; }
 
 .year-matrix-grid {
@@ -2414,7 +2414,7 @@ onMounted(() => {
   height: 6px;
   border-radius: 4px;
   overflow: hidden;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 .mmc-bar { height: 100%; transition: width 0.3s ease; }
 .mmc-bar--work    { background-color: #059669; }

@@ -679,7 +679,7 @@ const handleBatchDelete = () => {
 <style scoped>
 .work-shifts-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -779,7 +779,7 @@ const handleBatchDelete = () => {
 }
 
 .erp-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -885,7 +885,7 @@ const handleBatchDelete = () => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -918,7 +918,7 @@ const handleBatchDelete = () => {
 }
 
 .action-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .action-divider {

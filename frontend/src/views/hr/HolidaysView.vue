@@ -544,7 +544,7 @@ const handleBatchDelete = () => {
 <style scoped>
 .holidays-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -643,7 +643,7 @@ const handleBatchDelete = () => {
 }
 
 .erp-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -731,7 +731,7 @@ const handleBatchDelete = () => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -764,7 +764,7 @@ const handleBatchDelete = () => {
 }
 
 .action-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* Date-Square Cards Grid */
@@ -840,7 +840,7 @@ const handleBatchDelete = () => {
 
 .card-am-name {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   margin: 2px 0 0 0;
 }
 
@@ -882,7 +882,7 @@ const handleBatchDelete = () => {
   padding: 2px 6px;
   border-radius: 4px;
   background: #f8fafc;
-  color: #64748b;
+  color: #737373;
   border: 1px solid #e2e8f0;
 }
 

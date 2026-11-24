@@ -1,3 +1,15 @@
+<!--
+  Authoritative QMT MetricCard Component (Figma 10178:31133)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Top summary KPI cards above directory tables or on executive dashboard views.
+  - Examples: Total Active Methods, Threshold Breach Count, Active Employees, Pending Approvals.
+  - Displays label, prominent numerical value, trend indicator percentage (up/down/neutral), icon, and 3-dot options menu.
+
+  WHEN NOT TO USE:
+  - DO NOT use inside create forms, sub-tables, or row detail modals.
+  - DO NOT use for simple inline numbers (use inline typography or `BaseBadge` instead).
+-->
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { MoreVertical, TrendingUp, TrendingDown } from 'lucide-vue-next';

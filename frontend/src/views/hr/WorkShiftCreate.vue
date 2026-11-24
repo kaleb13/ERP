@@ -332,7 +332,7 @@ const handleSave = () => {
 <style scoped>
 .shift-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -373,7 +373,7 @@ const handleSave = () => {
 }
 
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 

@@ -1356,7 +1356,7 @@ const selectDate = (d: Date) => {
 }
 
 .month-cell-box--today:not(.month-cell-box--selected) {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .month-cell-box:nth-child(7n) {

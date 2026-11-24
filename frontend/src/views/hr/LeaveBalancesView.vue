@@ -1138,7 +1138,7 @@ const formatTransactionType = (t: string) => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .erp-table tbody td {

@@ -514,7 +514,7 @@ onUnmounted(() => {
 }
 
 .bc-home-icon {
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -526,7 +526,7 @@ onUnmounted(() => {
 }
 
 .bc-link {
-  color: #64748b;
+  color: #737373;
   text-decoration: none;
   font-weight: 500;
 }
@@ -568,7 +568,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-more-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -602,12 +602,12 @@ onUnmounted(() => {
   transition: background-color 0.1s ease;
 }
 .more-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
 .menu-item-icon {
-  color: #64748b;
+  color: #737373;
 }
 .more-menu-item:hover .menu-item-icon {
   color: #0B529C;
@@ -628,7 +628,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 .btn-clear-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -717,7 +717,7 @@ onUnmounted(() => {
 }
 
 .gc-cal-icon {
-  color: #64748b;
+  color: #737373;
   margin-right: 8px;
   flex-shrink: 0;
 }
@@ -735,8 +735,8 @@ onUnmounted(() => {
 .gc-pill-tag {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
-  background-color: #f1f5f9;
+  color: #737373;
+  background-color: #f5f5f5;
   padding: 2px 6px;
   border-radius: 4px;
   user-select: none;
@@ -782,7 +782,7 @@ onUnmounted(() => {
 .toolbar-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .toolbar-icon-group {
@@ -839,8 +839,8 @@ onUnmounted(() => {
 
 .char-count-pill {
   font-size: 11px;
-  color: #64748b;
-  background-color: #f8fafc;
+  color: #737373;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   padding: 2px 8px;
   border-radius: 9999px;
@@ -870,7 +870,7 @@ onUnmounted(() => {
 }
 
 .accordion-chevron {
-  color: #64748b;
+  color: #737373;
   transition: transform 0.2s ease;
 }
 
@@ -889,7 +889,7 @@ onUnmounted(() => {
 }
 
 .child-table-header {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -967,7 +967,7 @@ onUnmounted(() => {
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
 }
 
 .child-td-col-icon {
@@ -989,7 +989,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .child-inline-select:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-select:focus {
@@ -1051,7 +1051,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 

@@ -512,7 +512,7 @@ onMounted(() => {
 <style scoped>
 .job-grade-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -589,7 +589,7 @@ onMounted(() => {
 }
 
 .btn-clear-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -650,7 +650,7 @@ onMounted(() => {
 }
 
 .code-preview-pill {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
   font-size: 11.5px;
   font-weight: 600;
@@ -688,11 +688,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 0 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
 }
 
 /* Accordion */
@@ -717,7 +717,7 @@ onMounted(() => {
 }
 
 .badge-count {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
   font-size: 11.5px;
   font-weight: 500;
@@ -779,7 +779,7 @@ onMounted(() => {
 .child-th {
   height: 32px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   font-size: 11.5px;
   font-weight: 500;
   color: #737373;
@@ -885,7 +885,7 @@ onMounted(() => {
 }
 
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import {
   Check, Clock, Lock, CheckCircle2,
@@ -10,6 +10,8 @@ import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
 import FormSelect, { type SelectOption } from '../../components/FormSelect.vue';
+import FormToggle from '../../components/FormToggle.vue';
+import PrintPreviewDrawer from '../../components/PrintPreviewDrawer.vue';
 import { useToast } from '../../composables/useToast';
 
 const route = useRoute();
@@ -258,24 +260,95 @@ const step1State = computed(() => {
   return currentItem.value.approvals[0]?.approval_state || 'approved';
 });
 const step2State = computed(() => {
-  return currentItem.value.approvals[1]?.approval_state || 'pending';
+  const explicit = currentItem.value.approvals[1]?.approval_state;
+  if (explicit) return explicit;
+  if (step1State.value !== 'approved') return 'queued';
+  if (currentItem.value.request_state === 'approved') return 'approved';
+  return 'pending';
 });
 const step3State = computed(() => {
-  return currentItem.value.approvals[2]?.approval_state || 'queued';
+  const explicit = currentItem.value.approvals[2]?.approval_state;
+  if (explicit) return explicit;
+  if (currentItem.value.request_state === 'approved') return 'approved';
+  if (step2State.value === 'approved') return 'pending';
+  return 'queued';
 });
 
 const getConnectorLineClass = (fromState: string, toState: string): string => {
   if (fromState === 'approved' && toState === 'approved') return 'step-line-solid-blue';
   if (fromState === 'approved' && toState === 'pending') return 'step-line-gradient-blue-to-orange';
   if (fromState === 'approved' && toState === 'rejected') return 'step-line-gradient-blue-to-red';
-  if (fromState === 'pending' && toState === 'queued') return 'step-line-gradient-orange-to-gray';
+  if (fromState === 'approved' && (toState === 'queued' || toState === 'waiting')) return 'step-line-gradient-blue-to-gray';
+  if (fromState === 'pending' && (toState === 'queued' || toState === 'waiting')) return 'step-line-gradient-orange-to-gray';
   if (fromState === 'pending' && toState === 'approved') return 'step-line-solid-blue';
-  if (fromState === 'queued' && toState === 'queued') return 'step-line-solid-gray';
-  return 'step-line-solid-blue';
+  if (fromState === 'rejected') return 'step-line-solid-gray';
+  if (fromState === 'queued' || toState === 'queued') return 'step-line-solid-gray';
+  return 'step-line-solid-gray';
 };
 
+// ─── Center Stepper Circles on Cards Y-Axis Dynamically ───
+const stepperContentRef = ref<HTMLElement | null>(null);
+const stepperTrackPositions = ref<{
+  circles: { top: number }[];
+  lines: { top: number; height: number }[];
+}>({
+  circles: [],
+  lines: []
+});
+
+const updateStepperAlignment = () => {
+  if (!stepperContentRef.value) return;
+  const cards = Array.from(stepperContentRef.value.querySelectorAll('.step-card')) as HTMLElement[];
+  if (!cards.length) return;
+
+  const circles: { top: number }[] = [];
+  const lines: { top: number; height: number }[] = [];
+  const containerRect = stepperContentRef.value.getBoundingClientRect();
+
+  cards.forEach((card) => {
+    const cardRect = card.getBoundingClientRect();
+    const relativeCenter = (cardRect.top - containerRect.top) + (cardRect.height / 2);
+    circles.push({ top: Math.round(relativeCenter - 22) });
+  });
+
+  for (let i = 0; i < circles.length - 1; i++) {
+    const lineTop = circles[i].top + 44;
+    const lineHeight = Math.max(0, circles[i + 1].top - lineTop);
+    lines.push({ top: lineTop, height: lineHeight });
+  }
+
+  stepperTrackPositions.value = { circles, lines };
+};
+
+let stepperResizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  nextTick(() => {
+    updateStepperAlignment();
+    if (stepperContentRef.value && typeof ResizeObserver !== 'undefined') {
+      stepperResizeObserver = new ResizeObserver(() => {
+        updateStepperAlignment();
+      });
+      stepperResizeObserver.observe(stepperContentRef.value);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (stepperResizeObserver) {
+    stepperResizeObserver.disconnect();
+  }
+});
+
+// ─── Print Drawer State (Figma Node 5005:78527) ───
+const isPrintDrawerOpen = ref(false);
+const printOptions = ref({
+  showReliefColleague: true,
+  showApprovalAudit: true,
+  showOfficialSeal: true
+});
+
 const handlePrintSlip = () => {
-  window.print();
+  isPrintDrawerOpen.value = true;
 };
 
 const handleDownloadPass = () => {
@@ -658,7 +731,12 @@ const handleDownloadPass = () => {
               <!-- Left Track with Step Circles and Connector Lines (Figma Node 7009:114684) -->
               <div class="stepper-track">
                 <!-- Step 1 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step1State" :title="step1State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step1State"
+                  :style="stepperTrackPositions.circles[0] ? { top: stepperTrackPositions.circles[0].top + 'px' } : undefined"
+                  :title="step1State"
+                >
                   <Check v-if="step1State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step1State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step1State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -666,10 +744,19 @@ const handleDownloadPass = () => {
                 </div>
                 
                 <!-- Connector Line 1: Step 1 -> Step 2 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-1" :class="getConnectorLineClass(step1State, step2State)"></div>
+                <div
+                  class="step-line-1"
+                  :class="getConnectorLineClass(step1State, step2State)"
+                  :style="stepperTrackPositions.lines[0] ? { top: stepperTrackPositions.lines[0].top + 'px', height: stepperTrackPositions.lines[0].height + 'px' } : undefined"
+                ></div>
 
                 <!-- Step 2 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step2State" :title="step2State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step2State"
+                  :style="stepperTrackPositions.circles[1] ? { top: stepperTrackPositions.circles[1].top + 'px' } : undefined"
+                  :title="step2State"
+                >
                   <Check v-if="step2State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step2State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step2State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -677,10 +764,19 @@ const handleDownloadPass = () => {
                 </div>
                 
                 <!-- Connector Line 2: Step 2 -> Step 3 (Solid Blue if both approved; Gradient if opposite) -->
-                <div class="step-line-2" :class="getConnectorLineClass(step2State, step3State)"></div>
+                <div
+                  class="step-line-2"
+                  :class="getConnectorLineClass(step2State, step3State)"
+                  :style="stepperTrackPositions.lines[1] ? { top: stepperTrackPositions.lines[1].top + 'px', height: stepperTrackPositions.lines[1].height + 'px' } : undefined"
+                ></div>
 
                 <!-- Step 3 Icon -->
-                <div class="step-circle" :class="'step-circle-' + step3State" :title="step3State">
+                <div
+                  class="step-circle"
+                  :class="'step-circle-' + step3State"
+                  :style="stepperTrackPositions.circles[2] ? { top: stepperTrackPositions.circles[2].top + 'px' } : undefined"
+                  :title="step3State"
+                >
                   <Check v-if="step3State === 'approved'" :size="20" class="step-icon-white" :stroke-width="2.5" />
                   <Clock v-else-if="step3State === 'pending'" :size="20" class="step-icon-white" :stroke-width="2" />
                   <X v-else-if="step3State === 'rejected'" :size="20" class="step-icon-white" :stroke-width="2.5" />
@@ -689,7 +785,7 @@ const handleDownloadPass = () => {
               </div>
 
               <!-- Right Content Cards Stack (Figma Node 7009:114693) -->
-              <div class="stepper-content">
+              <div ref="stepperContentRef" class="stepper-content">
                 <!-- Step 1 Card: Shift Supervisor Endorsement -->
                 <div class="step-card">
                   <div class="step-meta">
@@ -731,6 +827,153 @@ const handleDownloadPass = () => {
         </div>
       </aside>
     </div>
+
+    <!-- ═══ BOTTOM DRAWER: PRINT PREVIEW (Figma Node 5005:78527) ═══ -->
+    <PrintPreviewDrawer
+      v-model:show="isPrintDrawerOpen"
+      title="Print Settings"
+      subtitle="Configure Document layout and Visibility"
+      documentTitle="Leave Authorization Slip"
+      :documentSubtitle="currentItem.employee_name + ' • ' + currentItem.employee_code"
+      :documentCode="currentItem.code"
+      :documentDate="currentItem.start_date + ' – ' + currentItem.end_date"
+      :documentMeta="currentItem.total_days + ' Days • ' + currentItem.leave_type_name"
+      :currentPage="1"
+      :totalPages="1"
+    >
+      <!-- Left Dynamic Customizations -->
+      <template #settings>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Handover &amp; Relief Details</span>
+          <FormToggle v-model="printOptions.showReliefColleague" size="sm" aria-label="Handover Details" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Approval Sign-off Trail</span>
+          <FormToggle v-model="printOptions.showApprovalAudit" size="sm" aria-label="Approval Sign-off Trail" />
+        </div>
+        <div class="print-setting-toggle-row">
+          <span class="print-setting-toggle-title">Official Stamp &amp; Seal</span>
+          <FormToggle v-model="printOptions.showOfficialSeal" size="sm" aria-label="Official Stamp and Seal" />
+        </div>
+      </template>
+
+      <!-- Right Printable Document Sheet -->
+      <template #document>
+        <!-- Metadata Overview Card -->
+        <div class="print-sheet-meta-card">
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Employee</span>
+            <span class="print-meta-val">{{ currentItem.employee_name }} ({{ currentItem.employee_code }})</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Department &amp; Job</span>
+            <span class="print-meta-val">{{ currentItem.department_name }} • {{ currentItem.job_title }}</span>
+          </div>
+          <div class="print-meta-item">
+            <span class="print-meta-lbl">Leave Category</span>
+            <span class="print-meta-val">{{ currentItem.leave_type_name }} ({{ currentItem.total_days }} Days)</span>
+          </div>
+        </div>
+
+        <!-- Schedule & Coverage Block -->
+        <div class="print-sheet-section">
+          <h4 class="print-section-title">Absence Schedule &amp; Coverage</h4>
+          <div class="print-info-grid">
+            <div class="print-info-cell">
+              <span class="cell-lbl">Start Date</span>
+              <span class="cell-val">{{ currentItem.start_date }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Return Date</span>
+              <span class="cell-val">{{ currentItem.end_date }}</span>
+            </div>
+            <div class="print-info-cell">
+              <span class="cell-lbl">Total Working Absence</span>
+              <span class="cell-val font-bold">{{ currentItem.total_days }} Working Days</span>
+            </div>
+            <div v-if="printOptions.showReliefColleague" class="print-info-cell">
+              <span class="cell-lbl">Relieving Colleague</span>
+              <span class="cell-val">{{ currentItem.handover_employee_name || 'Tewodros Kassahun' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exigency / Justification Narrative -->
+        <div class="print-sheet-section">
+          <h4 class="print-section-title">Reason &amp; Justification Note</h4>
+          <p class="print-narrative-box">&ldquo;{{ currentItem.reason }}&rdquo;</p>
+        </div>
+
+        <!-- Approvals Sign-off Table -->
+        <div v-if="printOptions.showApprovalAudit" class="print-sheet-section">
+          <h4 class="print-section-title">Authorization Trail</h4>
+          <table class="print-audit-table">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>Authorized Signatory</th>
+                <th>Decision Status</th>
+                <th>Certified Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="appr in currentItem.approvals" :key="appr.step_order">
+                <td class="font-medium">Stage {{ appr.step_order }}: {{ appr.step_name }}</td>
+                <td>{{ appr.approver_name }}</td>
+                <td>
+                  <span :class="appr.approval_state === 'approved' ? 'text-success font-medium' : 'text-muted'">
+                    {{ appr.approval_state === 'approved' ? 'Approved & Certified' : 'Pending Review' }}
+                  </span>
+                </td>
+                <td class="text-tertiary">{{ appr.acted_at || 'Pending' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Official Seal & Signatures Block -->
+        <div v-if="printOptions.showOfficialSeal" class="print-endorsement-footer">
+          <div class="official-seal-wrapper">
+            <svg class="official-stamp-svg" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="74" stroke="#0B529C" stroke-width="2.5" fill="none" opacity="0.85" />
+              <circle cx="80" cy="80" r="68" stroke="#0B529C" stroke-width="1.2" stroke-dasharray="3,2" fill="none" opacity="0.85" />
+              <path id="curveTopReq" d="M 22 80 A 58 58 0 0 1 138 80" fill="none" />
+              <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+                <textPath href="#curveTopReq" startOffset="50%" text-anchor="middle">
+                  ★ HALETA HR OPERATIONS / LEAVE DESK ★
+                </textPath>
+              </text>
+              <polygon points="80,50 83,62 95,62 85,70 88,82 80,74 72,82 75,70 65,62 77,62" fill="#0B529C" opacity="0.85" />
+              <text x="80" y="96" font-size="10" font-weight="800" fill="#0B529C" text-anchor="middle" opacity="0.85">AUTHORIZED</text>
+              <text x="80" y="107" font-size="7.5" font-weight="600" fill="#0B529C" text-anchor="middle" opacity="0.85">ABSENCE PASS</text>
+              <path id="curveBottomReq" d="M 138 80 A 58 58 0 0 1 22 80" fill="none" />
+              <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+                <textPath href="#curveBottomReq" startOffset="50%" text-anchor="middle">
+                  QMT ENTERPRISE MANAGEMENT
+                </textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="print-signatures-group">
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Employee Signature</span>
+              <span class="sig-note">{{ currentItem.employee_name }}</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">Supervising Authority</span>
+              <span class="sig-note">Division Manager</span>
+            </div>
+            <div class="sig-column">
+              <div class="sig-line"></div>
+              <span class="sig-role">HR Operations</span>
+              <span class="sig-note">Official Certification</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </PrintPreviewDrawer>
   </div>
 </template>
 
@@ -1433,17 +1676,16 @@ const handleDownloadPass = () => {
 .stepper-wrap {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
+  position: relative;
   width: 100%;
 }
 
 .stepper-track {
   width: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 27px;
+  position: relative;
   flex-shrink: 0;
+  min-height: 100%;
 }
 
 .step-circle {
@@ -1455,7 +1697,16 @@ const handleDownloadPass = () => {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  z-index: 2;
+  transition: top 0.15s ease;
 }
+
+/* Fallback default top positions if JS has not run yet */
+.step-circle:nth-of-type(1) { top: 46px; }
+.step-circle:nth-of-type(2) { top: 180px; }
+.step-circle:nth-of-type(3) { top: 290px; }
 
 /* Step 1: Approved (Brand Blue #0b529c) */
 .step-circle-approved {
@@ -1489,18 +1740,19 @@ const handleDownloadPass = () => {
   opacity: 0.85;
 }
 
-/* ─── Reactive Connector Lines (Figma Node 7009:114687 & 7009:114690) ─── */
-.step-line-1 {
+/* ─── Reactive Connector Lines ─── */
+.step-line-1,
+.step-line-2 {
+  position: absolute;
+  left: 21px;
   width: 2px;
-  height: 133px;
-  margin: 0 auto;
+  z-index: 1;
+  transition: top 0.15s ease, height 0.15s ease;
 }
 
-.step-line-2 {
-  width: 2px;
-  height: 50px;
-  margin: 0 auto;
-}
+/* Fallbacks */
+.step-line-1 { top: 90px; height: 90px; }
+.step-line-2 { top: 224px; height: 66px; }
 
 .step-line-solid-blue {
   background-color: #0b529c !important;
@@ -1522,11 +1774,15 @@ const handleDownloadPass = () => {
   background: linear-gradient(180deg, #0b529c 0%, #e7000b 100%) !important;
 }
 
+.step-line-gradient-blue-to-gray {
+  background: linear-gradient(180deg, #0b529c 0%, #d4d4d4 100%) !important;
+}
+
 .stepper-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .step-card {
@@ -1578,5 +1834,181 @@ const handleDownloadPass = () => {
 
 .text-muted {
   color: #a1a1a1 !important;
+}
+
+/* ─── Bottom Drawer Print Sheet Styles ─── */
+.print-setting-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 12px;
+  border-bottom: 0.5px solid #f5f5f5;
+}
+
+.print-setting-toggle-title {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #404040;
+}
+
+.print-sheet-meta-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+
+.print-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.print-meta-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.print-meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.print-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
+  margin: 0;
+}
+
+.print-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.print-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-lbl {
+  font-size: 12px;
+  color: #737373;
+}
+
+.cell-val {
+  font-size: 13.5px;
+  color: #404040;
+}
+
+.print-narrative-box {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 13.5px;
+  color: #404040;
+  line-height: 22px;
+  margin: 0;
+}
+
+.print-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.print-audit-table th {
+  background: #fafafa;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+  font-weight: 600;
+  color: #404040;
+}
+
+.print-audit-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #404040;
+}
+
+.text-success {
+  color: #009966 !important;
+}
+
+.text-tertiary {
+  color: #737373 !important;
+}
+
+.print-endorsement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.official-seal-wrapper {
+  width: 120px;
+  height: 120px;
+}
+
+.official-stamp-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.print-signatures-group {
+  display: flex;
+  gap: 28px;
+}
+
+.sig-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 130px;
+  text-align: center;
+  gap: 4px;
+}
+
+.sig-line {
+  width: 100%;
+  height: 1px;
+  background: #404040;
+  margin-bottom: 6px;
+}
+
+.sig-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.sig-note {
+  font-size: 10px;
+  color: #737373;
 }
 </style>

@@ -2638,7 +2638,7 @@ onUnmounted(() => {
   height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   flex-shrink: 0;
 }
 
@@ -2699,7 +2699,7 @@ onUnmounted(() => {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 .btn-action-dots:hover {
@@ -2741,7 +2741,7 @@ onUnmounted(() => {
   text-align: left;
 }
 .action-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
@@ -2750,7 +2750,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   padding: 10px 14px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -2833,7 +2833,7 @@ onUnmounted(() => {
 .hero-employee-name {
   font-size: 20px;
   font-weight: 700;
-  color: #1e293b;
+  color: #404040;
   line-height: 1.2;
   margin: 0;
 }
@@ -2847,7 +2847,7 @@ onUnmounted(() => {
 
 .hero-code-id {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   font-weight: 500;
 }
 
@@ -2855,14 +2855,14 @@ onUnmounted(() => {
   font-size: 12px;
   font-weight: 500;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px 8px;
   border-radius: 5px;
 }
 
 .hero-work-location {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   margin-top: 2px;
 }
 
@@ -2889,7 +2889,7 @@ onUnmounted(() => {
 }
 
 .contact-icon {
-  color: #64748b;
+  color: #737373;
   flex-shrink: 0;
 }
 
@@ -2911,7 +2911,7 @@ onUnmounted(() => {
 .reports-to-text {
   font-size: 13px;
 }
-.manager-label { color: #64748b; }
+.manager-label { color: #737373; }
 .manager-name { font-weight: 500; color: #404040; }
 
 /* UNIFIED MASTER WORKSPACE CARD */
@@ -3110,7 +3110,7 @@ onUnmounted(() => {
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
 }
 .badge-confidential {
@@ -3178,7 +3178,7 @@ onUnmounted(() => {
 }
 
 .nested-mini-table th {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #737373;
   font-size: 11px;
   font-weight: 600;
@@ -3268,8 +3268,8 @@ onUnmounted(() => {
   font-weight: 600;
   padding: 1.5px 6px;
   border-radius: 4px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
 }
 
 .account-num-row {
@@ -3363,7 +3363,7 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 500;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 1.5px 7px;
   border-radius: 4px;
 }

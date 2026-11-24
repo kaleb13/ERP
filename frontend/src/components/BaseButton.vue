@@ -1,3 +1,20 @@
+<!--
+  Authoritative QMT BaseButton Component (Figma 4503:1152)
+  =============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Primary button standard across the entire ERP for all actions, forms, headers, and dialogs.
+  - Hierarchy Variants:
+    * `primary`: Brand blue `#0B529C` (`Save`, `Create Entity`). Note: Zero icons on top Save buttons!
+    * `secondary-gray`: White background `#FFFFFF`, subtle border `#E5E5E5`, `#404040` text (Filter button, Sort button, Clear Form, Cancel).
+    * `secondary-color`: Brand subtle `#E1EEFD` background with brand blue text.
+    * `tertiary-gray`: Ghost button with `#737373` text, no border.
+    * `error`: Destructive red `#E7000B` (`Delete`, `Reject`).
+    * `success`: Emerald green `#009966` (`Approve`).
+
+  WHEN NOT TO USE:
+  - DO NOT style the Sort button as brand blue (Sort MUST ALWAYS use `secondary-gray`, identical to Filter).
+  - DO NOT render bare inline action buttons (View, Edit, Delete) side-by-side in table rows (use 3-dot kebab menu instead).
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 

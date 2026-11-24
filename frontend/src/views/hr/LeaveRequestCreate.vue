@@ -751,7 +751,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .btn-more-options:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .more-dropdown-menu {
@@ -783,7 +783,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .more-menu-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-clear-form {
@@ -803,7 +803,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .btn-clear-form:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-save-primary {
@@ -873,7 +873,7 @@ const removeAttachment = (idx: number) => {
   font-size: 11px;
   font-weight: 600;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border: 1px solid #e2e8f0;
   padding: 2px 6px;
   border-radius: 4px;
@@ -979,7 +979,7 @@ const removeAttachment = (idx: number) => {
 .elc-stat-divider {
   width: 1px;
   height: 24px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 /* ─── CARD 2: ACCORDION SECTION ─── */
@@ -997,7 +997,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .accordion-header:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .accordion-title-wrap {
@@ -1069,7 +1069,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .upload-icon-sky {
-  color: #64748b;
+  color: #737373;
 }
 
 .upload-prompt-text {
@@ -1191,13 +1191,13 @@ const removeAttachment = (idx: number) => {
 }
 
 .tb-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .tb-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 2px;
 }
 
@@ -1351,7 +1351,7 @@ const removeAttachment = (idx: number) => {
 }
 
 .portion-menu-option:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .portion-menu-option.is-selected {

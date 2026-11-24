@@ -718,7 +718,7 @@ const filteredCalendars = computed(() => {
 <style scoped>
 .work-calendars-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -776,7 +776,7 @@ const filteredCalendars = computed(() => {
   font-size: 14px;
   font-weight: 600;
   color: #404040;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   outline: none;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -985,8 +985,8 @@ const filteredCalendars = computed(() => {
 }
 
 .select-weekend {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   border-color: #e2e8f0;
 }
 
@@ -1245,7 +1245,7 @@ const filteredCalendars = computed(() => {
 }
 
 .erp-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-active-calendar {
@@ -1298,7 +1298,7 @@ const filteredCalendars = computed(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

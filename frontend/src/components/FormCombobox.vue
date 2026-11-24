@@ -1,6 +1,20 @@
+<!--
+  Authoritative QMT FormCombobox Component (Figma 3345:19141)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Dynamic searchable selector with inline creation ("Create and Continue"):
+    Use when the user is selecting a parent category, vendor, department, or lookup entity that might not yet exist,
+    allowing them to type a name and click "+ Create [Query] and Continue" without breaking form flow.
+  - Options support rich metadata: Title, subtitle, badge tag, and raw entity payload.
+
+  WHEN NOT TO USE:
+  - DO NOT use for standard, closed enum lists or static schema lookups where creating new items on-the-fly
+    is not permitted or makes no business sense (use `FormSelect.vue` instead).
+  - DO NOT use for simple single-line text inputs (use `FormInput.vue`).
+-->
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { Search, ChevronDown, Plus, AlertCircle } from 'lucide-vue-next';;
+import { Search, ChevronDown, Plus, AlertCircle } from 'lucide-vue-next';
 
 export interface ComboboxOption {
   id: number | string;
@@ -490,8 +504,8 @@ onBeforeUnmount(() => {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 4px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-weight: 500;
 }
 

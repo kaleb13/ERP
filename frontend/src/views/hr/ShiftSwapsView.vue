@@ -1522,7 +1522,7 @@ const paginatedTableSwaps = computed(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1560,7 +1560,7 @@ const paginatedTableSwaps = computed(() => {
 }
 
 .popup-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .popup-item.item-approve {

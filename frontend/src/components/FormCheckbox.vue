@@ -1,3 +1,17 @@
+<!--
+  Authoritative QMT FormCheckbox Component (Figma 3345:19141)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Form submission models: Statutory compliance flags, policy conditions, governance requirements,
+    and boolean entity fields saved on form submission (e.g., `is_mandatory`, `active`, `requires_guarantee`).
+  - Settings with Title + Description: Renders clear secondary explanation text beneath the label.
+  - Table row selection: Used in table lead cells (`th-lead` / `td-lead`) for single and bulk row selection.
+  - Supports indeterminate state (`indeterminate: true`) for partial multi-select parent checkboxes.
+
+  WHEN NOT TO USE:
+  - DO NOT use for instant runtime preferences that apply immediately without saving (use `FormToggle.vue`).
+  - DO NOT use raw browser `<input type="checkbox">` elements.
+-->
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 

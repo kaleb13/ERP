@@ -1,3 +1,16 @@
+<!--
+  Authoritative QMT TableFloatingBar Component (Figma 3345:27403)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Floating bottom action bar that appears automatically when 1 or more rows are selected in data tables.
+  - Houses batch/bulk operations: Bulk Change Status, Bulk Duplicate, Bulk Edit, Bulk Export, Bulk Delete.
+  - Automatically wired into `AppDataTable.vue` and available for custom `BaseTable.vue` views.
+
+  WHEN NOT TO USE:
+  - DO NOT display when 0 rows are selected.
+  - DO NOT use for single-row operations (use the 3-dot kebab menu in the table's Actions column instead).
+  - DO NOT use inside modal dialogs or sub-tables with inline row actions.
+-->
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { 
@@ -467,7 +480,7 @@ onUnmounted(() => {
   transition: background-color 0.12s ease;
 }
 .popover-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* ─── Tooltip Prompt (Image 2) ─── */

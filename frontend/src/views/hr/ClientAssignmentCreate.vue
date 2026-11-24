@@ -1271,7 +1271,7 @@ const handleClear = () => {
 <style scoped>
 .client-assignment-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -1319,7 +1319,7 @@ const handleClear = () => {
 }
 
 .btn-more-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #cbd5e1;
 }
 
@@ -1353,7 +1353,7 @@ const handleClear = () => {
 }
 
 .dropdown-action-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -1459,7 +1459,7 @@ const handleClear = () => {
 
 /* Callout Box */
 .agreement-info-box {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 10px 14px;
@@ -1536,7 +1536,7 @@ const handleClear = () => {
   align-items: center;
   gap: 4px;
   padding: 6px 10px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -1549,20 +1549,20 @@ const handleClear = () => {
   border: none;
   background: transparent;
   border-radius: 4px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.12s;
 }
 
 .editor-tool-btn:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   color: #404040;
 }
 
 .toolbar-sep {
   width: 1px;
   height: 16px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   margin: 0 4px;
 }
 
@@ -1582,7 +1582,7 @@ const handleClear = () => {
   display: flex;
   justify-content: flex-end;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1604,7 +1604,7 @@ const handleClear = () => {
   justify-content: space-between;
   gap: 16px;
   padding: 12px 16px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   flex-wrap: wrap;
@@ -1631,7 +1631,7 @@ const handleClear = () => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1699,7 +1699,7 @@ const handleClear = () => {
 .child-th {
   height: 34px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   font-size: 12px;
   font-weight: 500;
   color: #737373;
@@ -1716,7 +1716,7 @@ const handleClear = () => {
 }
 
 .child-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .child-table-row.row-selected {
@@ -1748,7 +1748,7 @@ const handleClear = () => {
   align-items: center;
   height: 32px;
   padding: 0 10px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 12.5px;
@@ -1997,7 +1997,7 @@ const handleClear = () => {
 }
 
 .btn-modal-close:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -2052,7 +2052,7 @@ const handleClear = () => {
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 22px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -2069,7 +2069,7 @@ const handleClear = () => {
 }
 
 .btn-modal-cancel:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-modal-save {

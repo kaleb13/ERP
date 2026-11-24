@@ -1,3 +1,11 @@
+<!--
+  Authoritative QMT Column Solid Icon (Figma 6095:96606 / `column-solid`)
+  ========================================================================
+  The ONLY authorized custom vector component across Haleta ERP.
+  Strictly used as the 3-column solid trigger icon for the column visibility hider
+  in data tables (`AppDataTable.vue`) and child sub-tables (`DynamicSubTable.vue`).
+  Never replace with inline SVGs or outline `Columns` icons.
+-->
 <script setup lang="ts">
 interface Props {
   size?: number | string;

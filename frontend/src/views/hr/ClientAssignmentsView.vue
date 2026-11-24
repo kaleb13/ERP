@@ -585,7 +585,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 <style scoped>
 .client-assignments-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -700,7 +700,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 }
 
 .erp-table-row:hover td {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected td {
@@ -777,13 +777,13 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -821,7 +821,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 }
 
 .menu-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -837,7 +837,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 3px 0;
 }
 
@@ -993,7 +993,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
   font-size: 13px;
   color: #737373;
   line-height: 1.5;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 10px 14px;
   border-radius: 6px;
   margin: 0;
@@ -1019,7 +1019,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 
 .sub-table th {
   padding: 6px 10px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #737373;
   font-weight: 500;
   text-align: left;
@@ -1057,7 +1057,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1073,7 +1073,7 @@ const handleStateChange = (id: number, newState: ClientAssignmentState) => {
 }
 
 .btn-modal-secondary:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-modal-primary {

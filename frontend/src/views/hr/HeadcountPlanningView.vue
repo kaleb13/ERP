@@ -667,7 +667,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .role-pill-group {
   display: inline-flex;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px;
   border-radius: 8px;
   gap: 2px;
@@ -681,7 +681,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -742,7 +742,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
   flex-wrap: wrap;
 }
@@ -816,7 +816,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -920,8 +920,8 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 }
 
 .badge-status-closed {
-  background-color: #F1F5F9;
-  color: #64748B;
+  background-color: #f5f5f5;
+  color: #737373;
 }
 
 /* Action Dots & Menu */
@@ -945,7 +945,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -982,7 +982,7 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 }
 
 .action-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .action-menu-item.text-danger {
@@ -1149,13 +1149,13 @@ const getBudgetStatusBadgeClass = (status: BudgetState) => {
 
 .modal-guidance-text {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   margin: 0 0 16px 0;
   line-height: 1.5;
 }
 
 .modal-summary-panel {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 14px;

@@ -1,3 +1,15 @@
+<!--
+  Authoritative QMT FormRadio Component (Figma 3345:19141)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Mutually exclusive option selection where all choices (2 to 4 options) need to be visible simultaneously.
+  - Examples: Calculation basis ("Percentage" vs "Fixed Amount"), shift timing ("Fixed Hours" vs "Flexible Window").
+  - Includes label and optional description beneath each radio choice.
+
+  WHEN NOT TO USE:
+  - DO NOT use for long lists of choices (>4 options, use `FormSelect.vue` dropdown instead).
+  - DO NOT use for multi-select options (use `FormCheckbox.vue`).
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 

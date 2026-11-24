@@ -1,3 +1,15 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  AUTHORITATIVE ARCHITECTURAL CONTRACT FOR AGENTS & DEVELOPERS:
+  1. FULL BLEED & ZERO SCROLL: Tables must fit 100% of container width naturally without
+     horizontal scrollbars. Maintain 5 to 8 high-signal scanning columns.
+  2. GRAY HEADERS ONLY: Table headers MUST always use gray background (#FAFAFA).
+  3. LEAD CHECKBOX COLUMN: Integrate row selection into first identity column (Checkbox + Title).
+  4. 3-DOT ACTIONS ONLY: Actions column must strictly use 3-dot kebab menu (MoreVertical).
+     Never render bare or loose inline buttons (Eye, Edit, Trash side-by-side).
+  5. SECONDARY SORT & FILTER: Sort and Filter buttons must be styled as secondary-gray.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
@@ -13,6 +25,8 @@ export interface ColumnDef {
   label: string;
   visible?: boolean;
   hideable?: boolean;
+  width?: string;
+  cellType?: 'lead-checkbox' | 'single-badge' | 'multiple-badge' | 'text' | 'currency' | 'toggle' | 'progress' | 'trending' | 'avatar' | 'actions';
 }
 
 export interface SortOption {
@@ -491,14 +505,14 @@ if (typeof window !== 'undefined') {
   border: none;
   background: none;
   font-size: 13px;
-  color: #334155;
+  color: #404040;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .sort-option:hover {
   background: #f8fafc;
-  color: #0f172a;
+  color: #404040;
 }
 
 .columns-popover {
@@ -558,14 +572,42 @@ if (typeof window !== 'undefined') {
 /* REVEALING FILTER PANEL */
 .filter-panel {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 14px 28px;
-  animation: slideDown 0.2s ease-out;
   flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 16px;
+  background: var(--color-background-primary, #fafafa);
+  border-top: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  border-bottom: 1px solid var(--alias-color-border-subtle, #e5e5e5);
+  padding: 16px 24px;
+  animation: slideDown 0.2s ease-out;
+  width: 100%;
+}
+
+/* Deep selectors to ensure child filter grids and controls layout horizontally and wrap */
+.filter-panel :deep(.filter-panel-grid),
+.filter-panel :deep(.filter-grid) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 16px;
+  width: 100%;
+}
+
+.filter-panel :deep(.form-control-wrapper),
+.filter-panel :deep(.combobox-control-wrapper),
+.filter-panel :deep(.filter-item) {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 280px;
+  width: auto;
+}
+
+.filter-panel :deep(.filter-panel-footer) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 8px;
 }
 
 @keyframes slideDown {
@@ -618,7 +660,7 @@ if (typeof window !== 'undefined') {
 }
 
 :deep(.erp-table tr:hover) {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 :deep(.col-no) {
@@ -685,7 +727,7 @@ if (typeof window !== 'undefined') {
 }
 
 :deep(.btn-action-dots:hover) {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 

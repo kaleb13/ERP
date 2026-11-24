@@ -1,3 +1,21 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  AUTHORITATIVE ARCHITECTURAL CONTRACT FOR AGENTS & DEVELOPERS:
+  1. CORE PHILOSOPHY OF QUICK CREATE: QuickCreateModal is needed ONLY when a form/entity
+     is simple enough to be created with a small number of essential inputs (3 to 5 fields),
+     sparing the user from being burdened with all inputs upfront. All extended inputs,
+     policies, and secondary parameters are found once the user clicks "Expand Full Form".
+  2. WHEN QUICK CREATE IS NOT NEEDED (DIRECT CREATE FORM RULE): If an entity fundamentally
+     requires full information—such as several, ten, or more inputs, complex configurations,
+     or 1:N child lines in order to be created or operative—the quick modal is NOT needed.
+     The primary "+ Create" button must go straight to the dedicated creation page ([Entity]Create.vue).
+  3. NO DESCRIPTIONS: NEVER place description inputs, textareas, or WYSIWYG editors inside
+     QuickCreateModal.
+  4. EXPAND FULL FORM MANDATE: Whenever an entity schema has an expanded view, always enable
+     :showExpandButton="true" and preserve typed state in route.query.
+  5. ZERO DYNAMIC ROWS: Never use QuickCreateModal for child table rows. Use <DynamicTableModal />.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -5,7 +23,9 @@ import { X, Maximize2 } from 'lucide-vue-next';
 import BaseButton from './BaseButton.vue';
 
 interface Props {
-  /** Controls modal visibility (use with v-model:show or v-model). */
+  /** Controls modal visibility with v-model or v-model:modelValue */
+  modelValue?: boolean;
+  /** Controls modal visibility with v-model:show */
   show?: boolean;
   /** Backwards compatibility alias for show. */
   isOpen?: boolean;
@@ -21,6 +41,8 @@ interface Props {
   showExpand?: boolean;
   /** Save button label. Default is 'Save'. */
   saveLabel?: string;
+  /** Backwards compatibility alias for saveLabel. */
+  submitLabel?: string;
   /** Cancel button label. Default is 'Cancel'. */
   cancelLabel?: string;
   /** Disables the save button and displays a spinner if loading. */
@@ -32,13 +54,15 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: undefined,
   show: undefined,
   isOpen: undefined,
   expandRoute: undefined,
   expandLabel: 'Expand Full Form',
   showExpandButton: true,
   showExpand: undefined,
-  saveLabel: 'Save',
+  saveLabel: undefined,
+  submitLabel: undefined,
   cancelLabel: 'Cancel',
   loading: false,
   disabled: false,
@@ -46,6 +70,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const isModalVisible = computed(() => {
+  if (props.modelValue !== undefined) return props.modelValue;
   if (props.show !== undefined) return props.show;
   if (props.isOpen !== undefined) return props.isOpen;
   return false;
@@ -56,10 +81,16 @@ const isExpandVisible = computed(() => {
   return props.showExpandButton;
 });
 
+const effectiveSaveLabel = computed(() => {
+  return props.saveLabel || props.submitLabel || 'Save';
+});
+
 const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void;
   (e: 'update:show', value: boolean): void;
   (e: 'update:isOpen', value: boolean): void;
   (e: 'save'): void;
+  (e: 'submit'): void;
   (e: 'cancel'): void;
   (e: 'close'): void;
   (e: 'expand'): void;
@@ -67,14 +98,21 @@ const emit = defineEmits<{
 
 const router = useRouter();
 const handleClose = () => {
+  emit('update:modelValue', false);
   emit('update:show', false);
   emit('update:isOpen', false);
   emit('cancel');
   emit('close');
 };
 
+const handleSave = () => {
+  emit('save');
+  emit('submit');
+};
+
 const handleExpand = () => {
   emit('expand');
+  emit('update:modelValue', false);
   emit('update:show', false);
   emit('update:isOpen', false);
   if (props.expandRoute) {
@@ -179,9 +217,9 @@ watch(
                 size="sm"
                 :loading="loading"
                 :disabled="disabled"
-                @click="$emit('save')"
+                @click="handleSave"
               >
-                {{ saveLabel }}
+                {{ effectiveSaveLabel }}
               </BaseButton>
             </div>
           </div>
@@ -317,7 +355,7 @@ watch(
   transition: all 0.15s ease;
 }
 .btn-quick-more:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -351,12 +389,12 @@ watch(
   transition: background-color 0.1s ease;
 }
 .quick-draft-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
 .quick-draft-icon {
-  color: #64748b;
+  color: #737373;
 }
 .quick-draft-item:hover .quick-draft-icon {
   color: #0B529C;

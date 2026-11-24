@@ -653,7 +653,7 @@ const handleDisburseSettlement = () => {
 
 .sidebar-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 16px 0;
 }
 
@@ -728,13 +728,13 @@ const handleDisburseSettlement = () => {
 }
 
 .btn-sidebar-action.is-secondary {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
   border: 1px solid #e2e8f0;
 }
 
 .btn-sidebar-action.is-secondary:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 /* Right Content Area */
@@ -773,7 +773,7 @@ const handleDisburseSettlement = () => {
   font-size: 13.5px;
   color: #404040;
   line-height: 1.6;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 14px 16px;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
@@ -825,7 +825,7 @@ const handleDisburseSettlement = () => {
 .nested-mini-table th {
   height: 32px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #737373;
   font-size: 11.5px;
   font-weight: 500;
@@ -866,7 +866,7 @@ const handleDisburseSettlement = () => {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 14px 18px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -945,7 +945,7 @@ const handleDisburseSettlement = () => {
 
 /* Approval & Governance Sign-off Box Styles */
 .approval-action-box {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 16px 20px;
@@ -981,13 +981,13 @@ const handleDisburseSettlement = () => {
   display: block;
   font-size: 13.5px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin-bottom: 2px;
 }
 
 .approval-box-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   margin: 0;
   line-height: 1.45;
 }
@@ -1193,7 +1193,7 @@ const handleDisburseSettlement = () => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
   padding: 16px 20px;

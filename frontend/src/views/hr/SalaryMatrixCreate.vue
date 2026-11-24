@@ -688,7 +688,7 @@ onMounted(() => {
 <style scoped>
 .salary-matrix-grid-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -750,7 +750,7 @@ onMounted(() => {
 /* Mode Switcher */
 .mode-toggle-group {
   display: inline-flex;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
@@ -764,7 +764,7 @@ onMounted(() => {
   padding: 0 12px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   font-size: 12.5px;
   font-weight: 500;
   border-radius: 6px;
@@ -794,7 +794,7 @@ onMounted(() => {
 }
 
 .btn-clear-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-save-action {
@@ -919,7 +919,7 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;
@@ -992,7 +992,7 @@ onMounted(() => {
 }
 
 .btn-grid-tool:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1011,7 +1011,7 @@ onMounted(() => {
 }
 
 .salary-spreadsheet-grid th {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   padding: 8px 10px;
   font-size: 12px;
@@ -1137,12 +1137,12 @@ onMounted(() => {
 }
 
 .btn-cell-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 /* ─── 2. OFFICIAL REAL-LIFE DOCUMENT PRESENTATION (Matches Photo) ─── */
 .official-document-view {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   padding: 32px;
   border-radius: 8px;
   display: flex;
@@ -1181,7 +1181,7 @@ onMounted(() => {
 
 .doc-meta-timeline {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   margin-top: 4px;
 }
 
@@ -1199,7 +1199,7 @@ onMounted(() => {
 }
 
 .official-th-row-main th {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   font-weight: 700;
   color: #404040;
   text-align: center;
@@ -1207,21 +1207,21 @@ onMounted(() => {
 }
 
 .official-th-row-sub th {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   text-align: right;
   padding: 4px 6px;
 }
 
 .doc-td-grade {
   text-align: center;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
 }
 
 .doc-td-desc {
-  color: #1e293b;
+  color: #404040;
 }
 
 .doc-td-num {
@@ -1308,7 +1308,7 @@ onMounted(() => {
 
 .modal-intro {
   font-size: 12.5px;
-  color: #64748b;
+  color: #737373;
   margin-bottom: 16px;
   line-height: 1.4;
 }

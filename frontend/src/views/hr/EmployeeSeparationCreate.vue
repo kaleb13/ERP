@@ -414,7 +414,7 @@ const saveRecord = (status: SeparationStatus) => {
 }
 
 .dropdown-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -488,7 +488,7 @@ const saveRecord = (status: SeparationStatus) => {
 
 .riser-line {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   width: 100%;
 }
 
@@ -562,8 +562,8 @@ const saveRecord = (status: SeparationStatus) => {
   position: absolute;
   right: 8px;
   padding: 2px 6px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 10.5px;
   font-weight: 600;
   border-radius: 4px;
@@ -583,13 +583,13 @@ const saveRecord = (status: SeparationStatus) => {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .toolbar-pill {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   padding: 2px 8px;
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
@@ -600,21 +600,21 @@ const saveRecord = (status: SeparationStatus) => {
 .toolbar-separator {
   width: 1px;
   height: 16px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   margin: 0 4px;
 }
 
 .btn-tool-icon {
   background: none;
   border: none;
-  color: #64748b;
+  color: #737373;
   padding: 4px;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .btn-tool-icon:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   color: #404040;
 }
 

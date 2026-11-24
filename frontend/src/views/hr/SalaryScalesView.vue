@@ -838,7 +838,7 @@ onUnmounted(() => {
 .date-icon {
   position: absolute;
   left: 10px;
-  color: #64748b;
+  color: #737373;
   pointer-events: none;
 }
 

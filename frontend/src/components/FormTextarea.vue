@@ -1,3 +1,13 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  ARCHITECTURAL WARNING FOR AGENTS & DEVELOPERS:
+  - DO NOT USE THIS COMPONENT for entity descriptions, policy narratives, or statutory
+    guidelines inside creation forms!
+  - Descriptions in forms MUST be authored with <FormRichText /> in a dedicated collapsible
+    card (<div class="clean-card accordion-card">) beneath the master parameters card.
+  - This component is strictly reserved for short multi-line notes in quick utility dialogs.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 import { AlertCircle } from 'lucide-vue-next';

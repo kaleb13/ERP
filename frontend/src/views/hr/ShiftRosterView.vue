@@ -1149,7 +1149,7 @@ const counterpartOptions = computed(() => {
 <style scoped>
 .shift-roster-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -1170,7 +1170,7 @@ const counterpartOptions = computed(() => {
 .view-mode-pill-group {
   display: flex;
   align-items: center;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 3px;
   border-radius: 8px;
   gap: 2px;
@@ -1220,7 +1220,7 @@ const counterpartOptions = computed(() => {
 }
 
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1416,7 +1416,7 @@ const counterpartOptions = computed(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1845,7 +1845,7 @@ const counterpartOptions = computed(() => {
 .rest-card-tile:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
-  color: #64748b;
+  color: #737373;
 }
 
 .btn-add-slot-trigger {

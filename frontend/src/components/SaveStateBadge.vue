@@ -1,3 +1,19 @@
+<!--
+  Authoritative QMT SaveStateBadge Component (Figma 6095:94979)
+  =============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Specialized live draft persistence indicator across all create/edit views.
+  - Placed STRICTLY inside the breadcrumb #badge slot:
+      <AppBreadcrumb :items="breadcrumbItems">
+        <template #badge>
+          <SaveStateBadge :isSaved="isSaved" :isDraft="false" />
+        </template>
+      </AppBreadcrumb>
+
+  WHEN NOT TO USE:
+  - NEVER place outside the breadcrumb as an unsealed external flex sibling.
+  - DO NOT use for general entity lifecycle status in table rows (use `BaseBadge.vue` instead).
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 import BaseBadge, { type BadgeColor } from './BaseBadge.vue';

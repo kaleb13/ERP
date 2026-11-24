@@ -22,6 +22,8 @@ import SaveStateBadge from '../../components/SaveStateBadge.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import DynamicSubTable, { type DynamicTableColumn } from '../../components/DynamicSubTable.vue';
+import BaseBadge from '../../components/BaseBadge.vue';
+import BadgeGroup from '../../components/BadgeGroup.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -3200,15 +3202,14 @@ onUnmounted(() => {
         <div class="card-accordion-header" @click="toggleSection('allowances')">
           <div class="flex items-center gap-3">
             <span>Allowances & Benefits</span>
-            <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-[#404040] font-medium border border-slate-200">
+            <BaseBadge color="blue" size="sm">
               {{ salaryComponentsList.length }} {{ salaryComponentsList.length === 1 ? 'allowance' : 'allowances' }}
-            </span>
+            </BaseBadge>
           </div>
           <div class="flex items-center gap-3">
-            <div v-if="grossStartingPackage" class="gross-summary-pill">
-              <span class="gross-summary-label">Total Monthly Gross:</span>
-              <span class="gross-summary-value">{{ grossStartingPackage.toLocaleString() }} ETB</span>
-            </div>
+            <BaseBadge v-if="grossStartingPackage" color="success" size="sm">
+              Total Monthly Gross: {{ grossStartingPackage.toLocaleString() }} ETB
+            </BaseBadge>
             <ChevronDown v-if="sections.allowances" :size="15" class="header-chevron" />
             <ChevronRight v-else :size="15" class="header-chevron" />
           </div>
@@ -3484,10 +3485,10 @@ onUnmounted(() => {
                 >
                   Apply Required Amount ({{ currentPositionGuarantee.amount.toLocaleString() }} ETB)
                 </BaseButton>
-                <div v-else class="banner-satisfied-pill">
-                  <Check :size="13" class="text-emerald-600" />
-                  <span>Requirement Amount Matched</span>
-                </div>
+                <BaseBadge v-else color="success" size="sm">
+                  <template #icon-left><Check :size="13" /></template>
+                  Requirement Amount Matched
+                </BaseBadge>
               </div>
             </div>
           </div>
@@ -3875,7 +3876,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-more-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -3909,12 +3910,12 @@ onUnmounted(() => {
   transition: background-color 0.1s ease;
 }
 .more-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0B529C;
 }
 
 .menu-item-icon {
-  color: #64748b;
+  color: #737373;
 }
 .more-menu-item:hover .menu-item-icon {
   color: #0B529C;
@@ -3936,7 +3937,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-clear-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -4000,7 +4001,7 @@ onUnmounted(() => {
 }
 
 .header-chevron {
-  color: #64748b;
+  color: #737373;
   flex-shrink: 0;
 }
 
@@ -4110,7 +4111,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-upload-photo:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -4155,7 +4156,7 @@ onUnmounted(() => {
 }
 
 .disabled-input {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #94a3b8;
   cursor: not-allowed;
 }
@@ -4174,7 +4175,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-verify-id:hover:not(:disabled) {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 .btn-verify-id:disabled {
@@ -4315,7 +4316,7 @@ onUnmounted(() => {
 .gc-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #737373;
   background: #f1f5f9;
   padding: 2px 6px;
   border-radius: 4px;
@@ -4344,7 +4345,7 @@ onUnmounted(() => {
 /* ─── Card Internal Row Divider ─── */
 .card-row-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 16px 0;
   width: 100%;
 }
@@ -4373,27 +4374,6 @@ onUnmounted(() => {
   margin: 0;
 }
 
-.gross-summary-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 12px;
-}
-
-.gross-summary-label {
-  color: #166534;
-  font-weight: 500;
-}
-
-.gross-summary-value {
-  color: #15803d;
-  font-weight: 600;
-}
-
 /* ─── Scanned Signature & Digital Draw Canvas ─── */
 .scanned-sig-wrapper {
   max-width: 540px;
@@ -4403,7 +4383,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 3px;
   border-radius: 8px;
 }
@@ -4415,7 +4395,7 @@ onUnmounted(() => {
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   border: none;
   background: transparent;
@@ -4478,7 +4458,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
   font-size: 12px;
   font-weight: 500;
@@ -4490,8 +4470,8 @@ onUnmounted(() => {
 }
 
 .btn-secondary-sm:hover {
-  background-color: #e2e8f0;
-  color: #1e293b;
+  background-color: #e5e5e5;
+  color: #404040;
 }
 
 .date-composite-disabled {
@@ -4499,7 +4479,7 @@ onUnmounted(() => {
   align-items: center;
   height: 38px;
   padding: 0 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
   margin-top: 4px;
@@ -4507,7 +4487,7 @@ onUnmounted(() => {
 
 .scanned-sig-dropzone {
   border: 1px dashed #cbd5e1;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-radius: 8px;
   padding: 16px 20px;
   display: flex;
@@ -4521,7 +4501,7 @@ onUnmounted(() => {
   margin-top: 4px;
 }
 .scanned-sig-dropzone:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #94a3b8;
 }
 
@@ -4533,7 +4513,7 @@ onUnmounted(() => {
 }
 
 .sig-upload-icon {
-  color: #64748b;
+  color: #737373;
   margin-bottom: 2px;
 }
 
@@ -4603,7 +4583,7 @@ onUnmounted(() => {
 .toolbar-divider {
   width: 1px;
   height: 18px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 4px;
 }
 
@@ -4616,13 +4596,13 @@ onUnmounted(() => {
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   font-size: 12.5px;
   transition: all 0.1s ease;
 }
 .tb-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -4654,7 +4634,7 @@ onUnmounted(() => {
 
 /* ─── Compensation Callout & Helper (Bullet style matching Screenshot 1) ─── */
 .gross-package-callout {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #f1f5f9;
   border-radius: 10px;
   padding: 16px 20px;
@@ -4709,7 +4689,7 @@ onUnmounted(() => {
 }
 
 .child-table-header {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -4787,7 +4767,7 @@ onUnmounted(() => {
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
 }
 
 .child-td-col-icon {
@@ -4869,7 +4849,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .child-inline-input:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-input:focus {
@@ -4924,7 +4904,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .child-inline-select:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-select:focus {
@@ -4947,7 +4927,7 @@ onUnmounted(() => {
 }
 .btn-row-expand:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .col-icon-solid {
@@ -4973,7 +4953,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -5138,7 +5118,7 @@ onUnmounted(() => {
 }
 
 .btn-add-address-card:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -5230,7 +5210,7 @@ onUnmounted(() => {
   font-size: 12.5px;
   font-weight: 500;
   color: #404040;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   cursor: pointer;
   user-select: none;
@@ -5238,7 +5218,7 @@ onUnmounted(() => {
 }
 
 .exemption-rule-chip:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #cbd5e1;
 }
 
@@ -5283,7 +5263,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .compact-upload-bar:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #94a3b8;
 }
 
@@ -5324,7 +5304,7 @@ onUnmounted(() => {
   font-size: 11.5px;
   font-weight: 500;
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 3px 10px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
@@ -5332,7 +5312,7 @@ onUnmounted(() => {
   transition: background-color 0.15s ease;
 }
 .compact-upload-bar:hover .compact-browse-pill {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .compact-upload-attached {
@@ -5439,7 +5419,7 @@ onUnmounted(() => {
 }
 .btn-modal-close:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .row-modal-body {
@@ -5606,7 +5586,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -5640,12 +5620,12 @@ onUnmounted(() => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
@@ -5669,7 +5649,7 @@ onUnmounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   border-color: #cbd5e1;
 }
@@ -5832,18 +5812,6 @@ onUnmounted(() => {
 }
 .banner-apply-btn:hover {
   background-color: #92400e;
-}
-.banner-satisfied-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #065f46;
-  background-color: #d1fae5;
-  padding: 2px 8px;
-  border-radius: 5px;
-  border: 1px solid #a7f3d0;
 }
 .guarantee-optional-banner {
   display: flex;

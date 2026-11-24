@@ -620,7 +620,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .table-row-hover:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-checkbox, .td-checkbox {
@@ -717,7 +717,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -750,7 +750,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .action-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .text-green {
@@ -786,7 +786,7 @@ const formatDateRange = (start: string, end: string) => {
 }
 
 .entitlement-calc-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-left: 4px solid #0B529C;
   border-radius: 6px;

@@ -17,6 +17,105 @@ Use the linked QMT components for both Figma and the ERP implementation. The can
 - **Footer:** Use the linked QMT **Pagination** component in Figma (the desktop square card button-group variant) and the existing `<BasePagination />` through `<AppDataTable />`/`<BaseTable />` in Vue. Do not replace pagination with a hand-built footer or plain “Showing entries” text.
 - **Component integrity:** Figma controls must remain linked instances of their source components. Build only the row/column structure around those instances; do not detach or redraw shared controls.
 - **Sort & Filter Buttons Standard (Secondary Button with Icon Bold):** The Sort button in the Table Top Filter Section MUST ALWAYS be styled as our **Secondary Button** (`secondary-gray`: white background `#ffffff`, subtle border `#e5e5e5`, secondary text `#404040`), exactly matching the Filter button in visual hierarchy. It MUST NEVER be rendered as a colored/brand-blue button. Both Filter (`Filter`) and Sort (`ArrowUpDown`) button icons MUST have the property of `icon bold` (`stroke-width="2.5"` / `class="icon-bold"`).
+- **Mandatory Table Header Standard (`Table header gray`):**
+  - Table headers across all ERP tables in both Vue and Figma MUST use the gray header background (`#FAFAFA` / `var(--color-background-primary)`).
+  - In Figma, always use the linked **`Table header gray`** component; **NEVER** use `Table header white`.
+  - The first header cell uses `Table header gray` with `Checkbox=True, Text=True`.
+- **Authoritative Geometry & Dimensional Specifications (Figma `5520:79458` & `8957:94541`):**
+  - **Outer Card Container**: Full-bleed 100% width, `bg-white`, border `1px solid #E5E5E5` / `#E9EAEB`, `rounded-[12px]`, shadow `0px 1px 3px rgba(10,13,18,0.1)`.
+  - **Title Block**: `px-24px py-16px` (Title 20px semi-bold `#404040`, Subtitle 14px regular `#737373`).
+  - **Table Top Filter Section**: Height `74px`, `pt-20px pb-19px px-24px`.
+    - **Search Input**: Width **400px**, height **44px**, border `1px solid #D5D7DA`, `rounded-8px`, icon `20px`.
+    - **Filter Button**: Height **44px**, `px-18px py-10px`, `rounded-8px`, `secondary-gray` (`#FFFFFF`, border `#D9D9D9`), bold icon (`stroke-width="2.5"`).
+    - **Sort Button**: Height **44px**, `px-12px py-10px`, `rounded-8px`, `secondary-gray` (`#FFFFFF`, border `#D9D9D9`), bold icon (`stroke-width="2.5"`).
+    - **Column Solid Toggle**: Height **44px**, width **44px** (`p-10px`), `rounded-8px`, border `1px solid #D5D7DA`, icon `<IconColumnSolid>` `20px`.
+    - **Maximize Button**: Height **44px**, width **44px** (`p-10px`), `rounded-8px`, border `1px solid #D5D7DA`, icon `maximize` `20px`.
+    - **Primary CTA**: Height **44px**, `px-16px py-10px`, `rounded-8px`, `bg-[#0B529C]`, semi-bold white text (14px), Plus icon `20px`.
+  - **Table Header Cells**: Height **44px**, `bg-[#FAFAFA]`, border-b `1px solid #E9EAEB`, `px-24px py-12px`, text 12px Medium (`#737373`).
+  - **Table Body Cells**: Height **72px**, border-b `1px solid #E9EAEB`, `px-24px py-16px`.
+    - **Lead Identity Column**: Width **300px–340px** (`331px` in canonical Figma frame `5520:79458`), housing row checkbox (`20px`) + primary title (14px Medium, `#404040`) + code subtext (12px Regular, `#737373`).
+    - **Data Columns**: `flex: 1 0 0` (proportional distribution, min-width 120px–200px).
+    - **Actions Column**: `Table cell / Action 3-dots` (`MoreVertical`), width **60px–80px**.
+  - **Pagination Footer**: Height **68px**, `px-24px py-16px`, border-t `1px solid #E9EAEB`, `bg-white`. Page buttons: **40px × 40px** square buttons (active `bg-[#0B529C]`).
+- **Mandatory Table Cell Component Taxonomy (1:1 Design System Mapping):**
+  - Every table column must map directly to its corresponding canonical **`Table cell / [Variant]`** from the QMT Team Library:
+    1. **`Table cell / Lead checkbox`**: First identity column combining row-selection `<FormCheckbox />`, primary title (`#404040`), and optional code subtext (`#737373`).
+    2. **`Table cell / Single badge`**: For Status, State, and salient policy/mode lookups using `<BaseBadge :color="...">`.
+    3. **`Table cell / Multiple badge`**: For multi-value tag arrays or collections of pills.
+    4. **`Table cell / Text`**: Standard data cells using `#404040` (secondary) for primary identifiers, or `#737373` (tertiary) for descriptions, dates, and foreign keys.
+    5. **`Table cell / Currency` / `Amount`**: Formatted monetary values with currency code (e.g., `12,500.00 ETB`).
+    6. **`Table cell / Toggle`**: For inline boolean active/inactive switches (`<FormToggle />` / `<AppSwitch />`).
+    7. **`Table cell / Progress bar`**: For visual quota consumption, allocation percentages, or completion rates.
+    8. **`Table cell / Trending positive` & `Trending negative`**: For metric deltas and percentage variances.
+    9. **`Table cell / Leader avatar` & `Avatar group`**: For profile photo identity (entity's own directory) or team/committee rosters.
+    10. **`Table cell / Action 3-dots`**: Standard 3-dot kebab menu button (`<MoreVertical />`) triggering the standardized action popover. Never use loose inline action buttons.
+
+---
+
+## Mandatory Column-First Table Construction in Figma (Zero Row-Based Assembly)
+
+In Figma, tables MUST ALWAYS be constructed vertically by **Columns**, NEVER horizontally by **Rows**. The authoritative canonical standard is demonstrated in [Figma `10015:10134`](https://www.figma.com/design/05qJWp6THRmHsOuLX8oc5U/Haleta-ERP---Procurement-Module?node-id=10015-10134) and [Figma `5520:79511`](https://www.figma.com/design/Zo2sdiJUDpOdTRMjnswMXw/Haleta-ERP---HR-Module?node-id=5520-79511).
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Table Content Frame (Horizontal Auto-Layout, layoutMode: 'HORIZONTAL', itemSpacing: 0, padding: 0)         │
+├─────────────────┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬───────────────────┤
+│ Column 1        │ Column 2        │ Column 3        │ Column 4        │ Column 5        │ Column 6 (Actions)│
+│ (Vertical Frame)│ (Vertical Frame)│ (Vertical Frame)│ (Vertical Frame)│ (Vertical Frame)│ (Vertical Frame)  │
+│ w: 300–340px    │ w: 190px        │ w: 122px        │ w: 176px        │ w: 127px        │ w: 109px          │
+│ itemSpacing: 0  │ itemSpacing: 0  │ itemSpacing: 0  │ itemSpacing: 0  │ itemSpacing: 0  │ itemSpacing: 0    │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼───────────────────┤
+│ Header Cell 44px│ Header Cell 44px│ Header Cell 44px│ Header Cell 44px│ Header Cell 44px│ Header Cell 44px  │
+│ (Table header)  │ (Table header)  │ (Table header)  │ (Table header)  │ (Table header)  │ (Table header)    │
+│ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL       │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼───────────────────┤
+│ Row 1 Cell 72px │ Row 1 Cell 72px │ Row 1 Cell 72px │ Row 1 Cell 72px │ Row 1 Cell 72px │ Row 1 Cell 72px   │
+│ (Lead checkbox) │ (Text)          │ (Text)          │ (Text)          │ (Single badge)  │ (Action 3-dots)   │
+│ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL       │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼───────────────────┤
+│ Row 2 Cell 72px │ Row 2 Cell 72px │ Row 2 Cell 72px │ Row 2 Cell 72px │ Row 2 Cell 72px │ Row 2 Cell 72px   │
+│ (Lead checkbox) │ (Text)          │ (Text)          │ (Text)          │ (Single badge)  │ (Action 3-dots)   │
+│ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL       │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼───────────────────┤
+│ Row 3 Cell 72px │ Row 3 Cell 72px │ Row 3 Cell 72px │ Row 3 Cell 72px │ Row 3 Cell 72px │ Row 3 Cell 72px   │
+│ (Lead checkbox) │ (Text)          │ (Text)          │ (Text)          │ (Single badge)  │ (Action 3-dots)   │
+│ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL     │ width: FILL       │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┴─────────────────┴───────────────────┘
+```
+
+### 1. Structural Auto-Layout Specification:
+- **Table Body Container (`Content` / `Card Content`)**:
+  - `layoutMode: 'HORIZONTAL'`
+  - `itemSpacing: 0` (zero gap between column frames)
+  - `padding: 0` (cells extend edge-to-edge)
+  - `layoutAlign: 'STRETCH'` / `width: 'FILL'` (full bleed to card borders)
+- **Column Container (`Column`)**:
+  - `layoutMode: 'VERTICAL'`
+  - `itemSpacing: 0` (zero gap between header cell and data cells)
+  - `padding: 0`
+  - Sizing: Either fixed width (e.g. `w-[190px]`, `w-[122px]`, `w-[176px]`, `w-[109px]`) or `layoutGrow: 1` (`flex: 1 0 0`).
+- **Cells Inside Each Column Frame**:
+  - **Child 0 (Header)**: Linked instance of **`Table header gray`** (`bg-[#FAFAFA]`, height `44px`, `width: FILL` / `layoutAlign: 'STRETCH'`).
+  - **Child 1..N (Body)**: Linked instances of **`Table cell / [Variant]`** (height `72px`, `width: FILL` / `layoutAlign: 'STRETCH'`).
+
+### 2. Why Row-Based Assembly is Forbidden:
+- ❌ **NEVER create horizontal Row frames** (`Row 1`, `Row 2`, `Row 3`...):
+  - In a row-based layout, adding a new column requires opening every row frame individually and manually inserting and resizing a cell across all rows.
+  - Reordering columns requires moving individual cells in every row frame.
+  - Deleting or hiding a column requires touching every single row.
+- ✅ **Column-First Benefits**:
+  - **Instant Column Addition**: Duplicate or insert ONE `Column` vertical frame.
+  - **Drag-and-Drop Reordering**: Drag a `Column` frame left or right in Figma; all cells for that column move together.
+  - **One-Click Column Resizing**: Resizing the parent `Column` frame automatically resizes the header and all body cells because children are set to `width: FILL`.
+  - **Direct Column Hider Synchronization**: Hiding or showing a column in Figma simply toggles the `visible` property of that single `Column` frame, matching the ERP Column Hider mechanism 1:1.
+
+### 3. Column Width Guidelines:
+- **Lead Identity Column**: `300px–340px` (or `flex: 1 0 0` / `width: FILL`), housing the checkbox, entity name, and code subtext.
+- **Categorical & Scope Columns**: `160px–220px` (e.g. Organization Unit `190px`, Reports To `176px`).
+- **Numeric & Monetary Columns**: `130px–160px` (e.g. Guarantee `137px`, Spend Band `140px`).
+- **Codes & Pay Grades**: `110px–130px` (e.g. Pay Grade `122px`, Unit Code `110px`).
+- **State & Status Badges**: `120px–140px` (e.g. State `127px`, Status `130px`).
+- **Actions Column**: `100px–110px` (`109px` in canonical frame), centering the 3-dot kebab menu button (`Table cell / Action 3-dots`).
 
 ---
 

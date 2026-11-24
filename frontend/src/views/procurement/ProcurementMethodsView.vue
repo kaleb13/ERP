@@ -1,7 +1,23 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  HALETA ERP ARCHITECTURAL SPECIFICATION — DIRECTORY & VIEW STANDARD:
+  1. SCHEMA FIDELITY & NAMING: Entity is PurchaseMethod. Page title is strictly "Purchase Methods".
+     Threshold child lines are "Threshold Bands". Never use ad-hoc jargon like "Spend Threshold Bands".
+  2. BREADCRUMB ONLY NAVIGATION: Zero back buttons. Exact page name only on top level:
+     [{ label: 'Purchase Methods' }]. Expands to [{ label: 'Purchase Methods', to: '...' }, { label: item.name }]
+     when inspecting. Breadcrumbs sit directly on canvas with zero card containers.
+  3. ZERO FLOATING ACTION BUTTONS: View/inspect details MUST present a clean dossier card directly
+     below the breadcrumb. Never float Edit or Deactivate buttons above detail view cards.
+  4. 3-DOT ACTIONS ONLY: Standard MoreVertical kebab menu popover for all table rows.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { formatDisplayDate } from '../../utils/dateFormat';
+import { useRouter } from 'vue-router';
 import {
-  Plus, Eye, Edit2, Trash2, X, Scale, Building2, FolderTree, Info, MoreVertical, Check
+  Plus, ArrowUpDown, MoreVertical, Eye, Edit2, Check, Trash2,
+  Scale, Layers
 } from 'lucide-vue-next';
 import { useToast } from '../../composables/useToast';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
@@ -14,242 +30,73 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import BaseBadge, { type BadgeColor } from '../../components/BaseBadge.vue';
-import IconColumnSolid from '../../components/IconColumnSolid.vue';
 import {
   purchaseMethodsStore,
   thresholdBandsStore,
   type PurchaseMethodRecord,
   type PurchaseMethodThresholdRecord,
-  formatCurrency,
-  methodOptions,
+  type GovernanceStatus,
   categoryOptions,
-  unitOptions
+  unitOptions,
+  governanceStatusOptions,
+  formatCurrency,
+  getGovernanceStatusLabel,
+  generateMethodCode
 } from './procurementMethodData';
 
-// ─── Breadcrumb Navigation Standard (AGENTS.md Exact Sidebar Page Name Only) ───
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
-  if (inspectingBand.value) {
-    return [
-      {
-        label: 'Spend Threshold Bands',
-        to: '/procurement/thresholds',
-        onClick: () => {
-          inspectingBand.value = null;
-        }
-      },
-      { label: `${inspectingBand.value.method_name} Band` }
-    ];
-  }
-  return [{ label: 'Spend Threshold Bands' }];
-});
-
-// ─── Toast Feedback ───
+const router = useRouter();
 const { toast } = useToast();
 
-const showToast = (msg: string, variant: 'success' | 'error' = 'success') => {
-  if (variant === 'error') {
-    toast.error(msg);
-  } else {
-    toast.success(msg);
-  }
+const getGovernanceBadgeColor = (status: GovernanceStatus): BadgeColor => {
+  if (status === 'acceptForAll') return 'success';
+  if (status === 'acceptForThis') return 'primary';
+  if (status === 'pending') return 'warning';
+  if (status === 'reject') return 'error';
+  return 'gray';
 };
 
-// ─── Search & Filter State ───
-const searchQuery = ref('');
-const filterMethodId = ref('');
-const filterEnforcement = ref('');
-const filterCategory = ref('');
-const filterUnit = ref('');
-const filterState = ref('');
-
-// ─── Selection State ───
-const selectedRowIds = ref<number[]>([]);
-
-// ─── Sorting State ───
-const currentSortKey = ref('minimum_amount');
-const sortOrder = ref<'asc' | 'desc'>('asc');
-const currentPage = ref(1);
-const perPage = ref(10);
-
-// ─── Modals & Drawers ───
-const showQuickModal = ref(false);
-const editingId = ref<number | null>(null);
-const inspectingBand = ref<PurchaseMethodThresholdRecord | null>(null);
-
-// ─── Column Hider Popover ───
-const isColumnHiderOpen = ref(false);
-const columnToggleRef = ref<HTMLElement | null>(null);
-const columnPopoverRef = ref<HTMLElement | null>(null);
-const columnPopoverPosition = ref({ top: 0, left: 0 });
-
-// ─── Table Columns Configuration (table-architecture.instructions.md) ───
-const columns = ref<ColumnDef[]>([
-  { key: 'method_name', label: 'Purchase Method', visible: true, hideable: false },
-  { key: 'amount_range', label: 'Order Value Band (ETB)', visible: true },
-  { key: 'is_mandatory', label: 'Enforcement', visible: true },
-  { key: 'category_name', label: 'Category Scope', visible: false },
-  { key: 'unit_name', label: 'Buying Desk Scope', visible: false },
-  { key: 'effective_range', label: 'Validity Period', visible: false },
-  { key: 'state', label: 'State', visible: true },
-  { key: 'actions', label: 'Actions', visible: true, hideable: false }
-]);
-
-const sortOptions: SortOption[] = [
-  { key: 'minimum_amount', label: 'Value Floor (Lowest to Highest)' },
-  { key: 'method_name', label: 'Purchase Method (A-Z)' },
-  { key: 'is_mandatory', label: 'Enforcement (Mandatory First)' },
-  { key: 'state', label: 'State (Active First)' }
-];
-
-// ─── Filter Options ───
-const enforcementFilterOptions = [
-  { value: '', label: 'All Enforcement Types' },
-  { value: 'mandatory', label: 'Mandatory (Forces Method)' },
-  { value: 'permissive', label: 'Permissive (Permits Method)' }
-];
-
-const stateFilterOptions = [
-  { value: '', label: 'All States' },
-  { value: 'active', label: 'Active Only' },
-  { value: 'inactive', label: 'Inactive Only' }
-];
-
-const categoryScopeOptions = categoryOptions.filter((option) => option.value !== '');
-const unitScopeOptions = unitOptions.filter((option) => option.value !== '');
-
-// ─── QMT Semantic Badge Colors for Lookups ───
-// Gray is strictly reserved for Inactive states. Active policy lookups use vibrant QMT colors.
 const getEnforcementBadgeColor = (isMandatory: boolean): BadgeColor => {
   return isMandatory ? 'indigo' : 'blue';
 };
 
-const activeFilterCount = computed(() => [
-  filterMethodId.value,
-  filterEnforcement.value,
-  filterCategory.value,
-  filterUnit.value,
-  filterState.value
-].filter(Boolean).length);
+// ─── View & Selection State ───
+const searchQuery = ref('');
+const filterQuotations = ref('');
+const filterCommittee = ref('');
+const filterSealedBid = ref('');
+const filterInvitation = ref('');
+const filterStatus = ref('');
+const filterState = ref('');
+const currentSort = ref('name');
+const sortOrder = ref<'asc' | 'desc'>('asc');
+const currentPage = ref(1);
+const perPage = ref(10);
 
-// ─── Filtered & Sorted Threshold Bands ───
-const filteredBands = computed(() => {
-  let list = [...thresholdBandsStore.value];
+const selectedRowIds = ref<number[]>([]);
+const activeActionMenuId = ref<number | null>(null);
+const inspectingMethod = ref<PurchaseMethodRecord | null>(null);
 
-  // Search filter
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase().trim();
-    list = list.filter((b) =>
-      b.method_name.toLowerCase().includes(q) ||
-      b.method_code.toLowerCase().includes(q) ||
-      (b.category_name && b.category_name.toLowerCase().includes(q)) ||
-      (b.unit_name && b.unit_name.toLowerCase().includes(q))
-    );
-  }
-
-  // Method filter
-  if (filterMethodId.value) {
-    list = list.filter((b) => String(b.purchase_method_id) === filterMethodId.value);
-  }
-
-  // Enforcement filter
-  if (filterEnforcement.value === 'mandatory') {
-    list = list.filter((b) => b.is_mandatory);
-  } else if (filterEnforcement.value === 'permissive') {
-    list = list.filter((b) => !b.is_mandatory);
-  }
-
-  // Category filter
-  if (filterCategory.value) {
-    list = list.filter((b) => String(b.procurement_category_id) === filterCategory.value);
-  }
-
-  // Unit filter
-  if (filterUnit.value) {
-    list = list.filter((b) => String(b.procurement_unit_id) === filterUnit.value);
-  }
-
-  // State filter
-  if (filterState.value) {
-    list = list.filter((b) => b.state === filterState.value);
-  }
-
-  // Sort
-  list.sort((a, b) => {
-    let cmp = 0;
-    if (currentSortKey.value === 'minimum_amount') {
-      cmp = a.minimum_amount - b.minimum_amount;
-    } else if (currentSortKey.value === 'method_name') {
-      cmp = a.method_name.localeCompare(b.method_name);
-    } else if (currentSortKey.value === 'is_mandatory') {
-      cmp = (b.is_mandatory ? 1 : 0) - (a.is_mandatory ? 1 : 0);
-    } else if (currentSortKey.value === 'state') {
-      cmp = a.state.localeCompare(b.state);
-    }
-    return sortOrder.value === 'asc' ? cmp : -cmp;
-  });
-
-  return list;
+// ─── Modal State: Purchase Method ───
+const showMethodModal = ref(false);
+const editingMethodId = ref<number | null>(null);
+const methodFormErrors = ref<{ code?: string; name?: string }>({});
+const methodForm = ref({
+  code: '',
+  name: '',
+  description: '',
+  minimum_quotations: 3,
+  requires_committee: false,
+  requires_sealed_bid: false,
+  requires_post_facto_approval: false,
+  allows_single_source: false,
+  is_open_invitation: false
 });
 
-const paginatedBands = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value;
-  return filteredBands.value.slice(start, start + perPage.value);
-});
-
-const visibleColumnCount = computed(
-  () => columns.value.filter((column) => column.visible !== false).length
-);
-
-watch(
-  [searchQuery, filterMethodId, filterEnforcement, filterCategory, filterUnit, filterState],
-  () => {
-    currentPage.value = 1;
-  }
-);
-
-watch(
-  [() => filteredBands.value.length, perPage],
-  ([total, pageSize]) => {
-    currentPage.value = Math.min(
-      currentPage.value,
-      Math.max(1, Math.ceil(total / pageSize))
-    );
-  }
-);
-
-// ─── Selection Handlers (table-architecture.instructions.md) ───
-const isAllSelected = computed(() => {
-  if (paginatedBands.value.length === 0) return false;
-  return paginatedBands.value.every((b) => selectedRowIds.value.includes(b.id));
-});
-
-const isSomeSelected = computed(() => {
-  return paginatedBands.value.some((b) => selectedRowIds.value.includes(b.id)) &&
-    !isAllSelected.value;
-});
-
-const handleSelectAll = (checked: boolean) => {
-  const pageIds = new Set(paginatedBands.value.map((band) => band.id));
-  if (checked) {
-    selectedRowIds.value = [...new Set([...selectedRowIds.value, ...pageIds])];
-  } else {
-    selectedRowIds.value = selectedRowIds.value.filter((id) => !pageIds.has(id));
-  }
-};
-
-const handleSelectRow = (id: number, checked: boolean) => {
-  if (checked) {
-    if (!selectedRowIds.value.includes(id)) {
-      selectedRowIds.value.push(id);
-    }
-  } else {
-    selectedRowIds.value = selectedRowIds.value.filter((i) => i !== id);
-  }
-};
-
-// ─── Quick Create / Edit Form Model ───
-const quickForm = ref({
-  purchase_method_id: '1',
+// ─── Modal State: Threshold Band ───
+const showBandModal = ref(false);
+const editingBandId = ref<number | null>(null);
+const bandFormErrors = ref<{ minimum_amount?: string; maximum_amount?: string; dates?: string }>({});
+const bandForm = ref({
   minimum_amount: 0,
   maximum_amount: 50000 as number | null,
   noLimit: false,
@@ -260,29 +107,340 @@ const quickForm = ref({
   effective_to: ''
 });
 
-const quickErrors = ref<{
-  purchase_method_id?: string;
-  minimum_amount?: string;
-  maximum_amount?: string;
-  effective_from?: string;
-  effective_to?: string;
-  overlap?: string;
-}>({});
-
-const resetFilter = () => {
-  searchQuery.value = '';
-  filterMethodId.value = '';
-  filterEnforcement.value = '';
-  filterCategory.value = '';
-  filterUnit.value = '';
-  filterState.value = '';
+// ─── Toast Feedback Helper ───
+const showLocalToast = (msg: string, variant: 'success' | 'error' = 'success') => {
+  if (variant === 'error') {
+    toast.error('Purchase Methods', msg);
+  } else {
+    toast.success('Purchase Methods', msg);
+  }
 };
 
-const openQuickCreateModal = () => {
-  editingId.value = null;
-  quickErrors.value = {};
-  quickForm.value = {
-    purchase_method_id: '1',
+// ─── Breadcrumb Navigation Standard (AGENTS.md Rule 3) ───
+const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
+  if (inspectingMethod.value) {
+    return [
+      {
+        label: 'Purchase Methods',
+        to: '/procurement/methods',
+        onClick: () => {
+          inspectingMethod.value = null;
+        }
+      },
+      { label: inspectingMethod.value.name }
+    ];
+  }
+  return [{ label: 'Purchase Methods' }];
+});
+
+// ─── Atomic Columns & Column Hider (AGENTS.md Table Architecture) ───
+const tableColumns = ref<ColumnDef[]>([
+  { key: 'name', label: 'Purchase Method', visible: true, sortable: true, hideable: false },
+  { key: 'minimum_quotations', label: 'Quotation Rule', visible: true, sortable: true },
+  { key: 'requires_committee', label: 'Committee Mandate', visible: true, sortable: true },
+  { key: 'requires_sealed_bid', label: 'Sealed Bids', visible: false, sortable: true },
+  { key: 'is_open_invitation', label: 'Invitation Scope', visible: true, sortable: true },
+  { key: 'allows_single_source', label: 'Single Source', visible: false, sortable: true },
+  { key: 'requires_post_facto_approval', label: 'Emergency Ratification', visible: false, sortable: true },
+  { key: 'threshold_bands', label: 'Configured Bands', visible: true, sortable: false },
+  { key: 'status', label: 'Status', visible: true, sortable: true },
+  { key: 'state', label: 'State', visible: true, sortable: true },
+  { key: 'actions', label: 'Actions', visible: true, sortable: false }
+]);
+
+const sortOptions: SortOption[] = [
+  { key: 'name', label: 'Method Name (A-Z)' },
+  { key: 'minimum_quotations', label: 'Quotation Rule' },
+  { key: 'requires_committee', label: 'Committee Mandate' },
+  { key: 'status', label: 'Status' },
+  { key: 'state', label: 'State' }
+];
+
+const isColumnVisible = (key: string) => {
+  const col = tableColumns.value.find((c) => c.key === key);
+  return col ? col.visible !== false : true;
+};
+
+const visibleColumnCount = computed(
+  () => tableColumns.value.filter((column) => column.visible !== false).length
+);
+
+const handleToggleColumn = (key: string) => {
+  const col = tableColumns.value.find((c) => c.key === key);
+  if (col) {
+    col.visible = col.visible === false;
+  }
+};
+
+// ─── Threshold Bands Association Helpers ───
+const getMethodBands = (methodId: number): PurchaseMethodThresholdRecord[] => {
+  return thresholdBandsStore.value.filter((b) => b.purchase_method_id === methodId);
+};
+
+const getMethodBandsCount = (methodId: number): number => {
+  return thresholdBandsStore.value.filter((b) => b.purchase_method_id === methodId).length;
+};
+
+// ─── Filter & Sorting Logic ───
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterQuotations.value) count++;
+  if (filterCommittee.value) count++;
+  if (filterSealedBid.value) count++;
+  if (filterInvitation.value) count++;
+  if (filterStatus.value) count++;
+  if (filterState.value) count++;
+  return count;
+});
+
+const resetFilters = () => {
+  filterQuotations.value = '';
+  filterCommittee.value = '';
+  filterSealedBid.value = '';
+  filterInvitation.value = '';
+  filterStatus.value = '';
+  filterState.value = '';
+  currentPage.value = 1;
+};
+
+watch(
+  [searchQuery, filterQuotations, filterCommittee, filterSealedBid, filterInvitation, filterStatus, filterState],
+  () => {
+    currentPage.value = 1;
+  }
+);
+
+const filteredMethods = computed(() => {
+  let list = [...purchaseMethodsStore.value];
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim();
+    list = list.filter((m) =>
+      m.name.toLowerCase().includes(q) ||
+      m.code.toLowerCase().includes(q) ||
+      (m.description && m.description.toLowerCase().includes(q))
+    );
+  }
+
+  if (filterQuotations.value === 'zero') {
+    list = list.filter((m) => m.minimum_quotations === 0);
+  } else if (filterQuotations.value === 'competitive') {
+    list = list.filter((m) => m.minimum_quotations > 0);
+  }
+
+  if (filterCommittee.value === 'yes') {
+    list = list.filter((m) => m.requires_committee);
+  } else if (filterCommittee.value === 'no') {
+    list = list.filter((m) => !m.requires_committee);
+  }
+
+  if (filterSealedBid.value === 'yes') {
+    list = list.filter((m) => m.requires_sealed_bid);
+  } else if (filterSealedBid.value === 'no') {
+    list = list.filter((m) => !m.requires_sealed_bid);
+  }
+
+  if (filterInvitation.value === 'open') {
+    list = list.filter((m) => m.is_open_invitation);
+  } else if (filterInvitation.value === 'invited') {
+    list = list.filter((m) => !m.is_open_invitation);
+  }
+
+  if (filterStatus.value) {
+    list = list.filter((m) => m.status === filterStatus.value);
+  }
+
+  if (filterState.value) {
+    list = list.filter((m) => m.state === filterState.value);
+  }
+
+  list.sort((a, b) => {
+    let cmp = 0;
+    if (currentSort.value === 'name') {
+      cmp = a.name.localeCompare(b.name);
+    } else if (currentSort.value === 'minimum_quotations') {
+      cmp = a.minimum_quotations - b.minimum_quotations;
+    } else if (currentSort.value === 'requires_committee') {
+      cmp = (b.requires_committee ? 1 : 0) - (a.requires_committee ? 1 : 0);
+    } else if (currentSort.value === 'status') {
+      cmp = a.status.localeCompare(b.status);
+    } else if (currentSort.value === 'state') {
+      cmp = a.state.localeCompare(b.state);
+    }
+    return sortOrder.value === 'asc' ? cmp : -cmp;
+  });
+
+  return list;
+});
+
+const paginatedMethods = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredMethods.value.slice(start, start + perPage.value);
+});
+
+watch(
+  [() => filteredMethods.value.length, perPage],
+  ([total, pageSize]) => {
+    currentPage.value = Math.min(
+      currentPage.value,
+      Math.max(1, Math.ceil(total / pageSize))
+    );
+  }
+);
+
+// ─── Selection Management (Lead Column Integration) ───
+const isAllSelected = computed(() => {
+  if (paginatedMethods.value.length === 0) return false;
+  return paginatedMethods.value.every((m) => selectedRowIds.value.includes(m.id));
+});
+
+const isPartiallySelected = computed(() => {
+  return (
+    paginatedMethods.value.some((m) => selectedRowIds.value.includes(m.id)) &&
+    !isAllSelected.value
+  );
+});
+
+const toggleSelectAll = (checked: boolean) => {
+  const pageIds = new Set(paginatedMethods.value.map((m) => m.id));
+  if (checked) {
+    selectedRowIds.value = [...new Set([...selectedRowIds.value, ...pageIds])];
+  } else {
+    selectedRowIds.value = selectedRowIds.value.filter((id) => !pageIds.has(id));
+  }
+};
+
+const toggleSelectRow = (id: number, checked: boolean) => {
+  if (checked) {
+    if (!selectedRowIds.value.includes(id)) {
+      selectedRowIds.value.push(id);
+    }
+  } else {
+    selectedRowIds.value = selectedRowIds.value.filter((i) => i !== id);
+  }
+};
+
+const handleSortColumn = (key: string) => {
+  if (currentSort.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
+// ─── Modal Actions: Purchase Method ───
+const openCreateModal = () => {
+  editingMethodId.value = null;
+  methodFormErrors.value = {};
+  methodForm.value = {
+    code: '',
+    name: '',
+    description: '',
+    minimum_quotations: 3,
+    requires_committee: false,
+    requires_sealed_bid: false,
+    requires_post_facto_approval: false,
+    allows_single_source: false,
+    is_open_invitation: false
+  };
+  showMethodModal.value = true;
+};
+
+const handleExpandFullForm = () => {
+  showMethodModal.value = false;
+  router.push({
+    path: '/procurement/methods/create',
+    query: {
+      name: methodForm.value.name || undefined,
+      minimum_quotations: String(methodForm.value.minimum_quotations || 3),
+      requires_committee: methodForm.value.requires_committee ? '1' : undefined,
+      requires_sealed_bid: methodForm.value.requires_sealed_bid ? '1' : undefined,
+      is_open_invitation: methodForm.value.is_open_invitation ? '1' : undefined,
+      allows_single_source: methodForm.value.allows_single_source ? '1' : undefined,
+      requires_post_facto_approval: methodForm.value.requires_post_facto_approval ? '1' : undefined
+    }
+  });
+};
+
+const openEditModal = (item: PurchaseMethodRecord) => {
+  editingMethodId.value = item.id;
+  methodFormErrors.value = {};
+  methodForm.value = {
+    code: item.code,
+    name: item.name,
+    description: item.description || '',
+    minimum_quotations: item.minimum_quotations,
+    requires_committee: item.requires_committee,
+    requires_sealed_bid: item.requires_sealed_bid,
+    requires_post_facto_approval: item.requires_post_facto_approval,
+    allows_single_source: item.allows_single_source,
+    is_open_invitation: item.is_open_invitation
+  };
+  showMethodModal.value = true;
+};
+
+const handleSaveMethod = () => {
+  const errors: typeof methodFormErrors.value = {};
+  if (!methodForm.value.name.trim()) errors.name = 'Method Name is required.';
+  methodFormErrors.value = errors;
+
+  if (Object.keys(errors).length > 0) {
+    toast.error('Please fill in required fields', 'Method Name is mandatory.');
+    return;
+  }
+
+  if (editingMethodId.value) {
+    const idx = purchaseMethodsStore.value.findIndex((m) => m.id === editingMethodId.value);
+    if (idx !== -1) {
+      const existing = purchaseMethodsStore.value[idx];
+      purchaseMethodsStore.value[idx] = {
+        ...existing,
+        name: methodForm.value.name.trim(),
+        minimum_quotations: Number(methodForm.value.minimum_quotations),
+        requires_committee: methodForm.value.requires_committee,
+        requires_sealed_bid: methodForm.value.requires_sealed_bid,
+        requires_post_facto_approval: methodForm.value.requires_post_facto_approval,
+        allows_single_source: methodForm.value.allows_single_source,
+        is_open_invitation: methodForm.value.is_open_invitation
+      };
+      if (inspectingMethod.value?.id === existing.id) {
+        inspectingMethod.value = purchaseMethodsStore.value[idx];
+      }
+      showLocalToast(`Updated "${methodForm.value.name.trim()}".`);
+    }
+  } else {
+    const existingCodes = purchaseMethodsStore.value.map((m) => m.code);
+    const nextId = Math.max(0, ...purchaseMethodsStore.value.map((m) => m.id)) + 1;
+    const generatedCode = generateMethodCode(methodForm.value.name.trim(), existingCodes);
+    const newMethod: PurchaseMethodRecord = {
+      id: nextId,
+      uuid: `pm-uuid-${nextId}`,
+      code: generatedCode,
+      name: methodForm.value.name.trim(),
+      description: '',
+      minimum_quotations: Number(methodForm.value.minimum_quotations),
+      requires_committee: methodForm.value.requires_committee,
+      requires_sealed_bid: methodForm.value.requires_sealed_bid,
+      requires_post_facto_approval: methodForm.value.requires_post_facto_approval,
+      allows_single_source: methodForm.value.allows_single_source,
+      is_open_invitation: methodForm.value.is_open_invitation,
+      entity_id: 2,
+      status: 'acceptForAll',
+      state: 'active'
+    };
+    purchaseMethodsStore.value.unshift(newMethod);
+    showLocalToast(`Created purchase method "${methodForm.value.name.trim()}".`);
+  }
+
+  showMethodModal.value = false;
+};
+
+// ─── Modal Actions: Threshold Band ───
+const openAddBandModal = () => {
+  editingBandId.value = null;
+  bandFormErrors.value = {};
+  bandForm.value = {
     minimum_amount: 0,
     maximum_amount: 50000,
     noLimit: false,
@@ -292,14 +450,13 @@ const openQuickCreateModal = () => {
     effective_from: new Date().toISOString().split('T')[0],
     effective_to: ''
   };
-  showQuickModal.value = true;
+  showBandModal.value = true;
 };
 
-const openEditModal = (band: PurchaseMethodThresholdRecord) => {
-  editingId.value = band.id;
-  quickErrors.value = {};
-  quickForm.value = {
-    purchase_method_id: String(band.purchase_method_id),
+const openEditBandModal = (band: PurchaseMethodThresholdRecord) => {
+  editingBandId.value = band.id;
+  bandFormErrors.value = {};
+  bandForm.value = {
     minimum_amount: band.minimum_amount,
     maximum_amount: band.maximum_amount,
     noLimit: band.maximum_amount === null,
@@ -309,164 +466,91 @@ const openEditModal = (band: PurchaseMethodThresholdRecord) => {
     effective_from: band.effective_from,
     effective_to: band.effective_to || ''
   };
-  showQuickModal.value = true;
+  showBandModal.value = true;
 };
 
 const handleSaveBand = () => {
-  quickErrors.value = {};
-  const errors: typeof quickErrors.value = {};
+  if (!inspectingMethod.value) return;
 
-  if (!quickForm.value.purchase_method_id) {
-    errors.purchase_method_id = 'Select a statutory purchase method.';
-  }
-  if (
-    quickForm.value.minimum_amount === null ||
-    !Number.isFinite(quickForm.value.minimum_amount) ||
-    quickForm.value.minimum_amount < 0
-  ) {
-    errors.minimum_amount = 'Floor amount must be 0 or greater.';
-  }
-  if (!quickForm.value.noLimit) {
-    if (
-      quickForm.value.maximum_amount === null ||
-      !Number.isFinite(quickForm.value.maximum_amount) ||
-      quickForm.value.maximum_amount <= 0
-    ) {
-      errors.maximum_amount = 'Ceiling amount must be greater than 0.';
-    } else if (quickForm.value.maximum_amount <= quickForm.value.minimum_amount) {
-      errors.maximum_amount = 'Ceiling must be greater than the floor amount.';
-    }
-  }
-  if (!quickForm.value.effective_from) {
-    errors.effective_from = 'Effective from date is required.';
-  }
-  if (
-    quickForm.value.effective_from &&
-    quickForm.value.effective_to &&
-    quickForm.value.effective_to < quickForm.value.effective_from
-  ) {
-    errors.effective_to = 'Effective to must be on or after the start date.';
-  }
+  const minAmt = Number(bandForm.value.minimum_amount);
+  const maxAmt = bandForm.value.noLimit ? null : Number(bandForm.value.maximum_amount);
 
-  if (
-    quickForm.value.is_mandatory &&
-    !errors.minimum_amount &&
-    !errors.maximum_amount &&
-    !errors.effective_from &&
-    !errors.effective_to
-  ) {
-    const editedBand = thresholdBandsStore.value.find((band) => band.id === editingId.value);
-    const entityId = editedBand?.entity_id ?? 2;
-    const minimumAmount = Number(quickForm.value.minimum_amount);
-    const maximumAmount = quickForm.value.noLimit
-      ? null
-      : Number(quickForm.value.maximum_amount);
-    const categoryId = quickForm.value.procurement_category_id
-      ? Number(quickForm.value.procurement_category_id)
-      : null;
-    const unitId = quickForm.value.procurement_unit_id
-      ? Number(quickForm.value.procurement_unit_id)
-      : null;
-    const overlaps = thresholdBandsStore.value.some((band) => {
-      if (
-        !band.is_mandatory ||
-        band.entity_id !== entityId ||
-        band.id === editingId.value
-      ) {
-        return false;
-      }
-
-      const categoryOverlaps =
-        band.procurement_category_id === null ||
-        categoryId === null ||
-        band.procurement_category_id === categoryId;
-      const unitOverlaps =
-        band.procurement_unit_id === null ||
-        unitId === null ||
-        band.procurement_unit_id === unitId;
-      const amountOverlaps =
-        (band.maximum_amount === null || minimumAmount <= band.maximum_amount) &&
-        (maximumAmount === null || band.minimum_amount <= maximumAmount);
-      const datesOverlap =
-        (!band.effective_to || quickForm.value.effective_from <= band.effective_to) &&
-        (!quickForm.value.effective_to || band.effective_from <= quickForm.value.effective_to);
-
-      return categoryOverlaps && unitOverlaps && amountOverlaps && datesOverlap;
-    });
-
-    if (overlaps) {
-      errors.overlap = 'This mandatory band overlaps an existing band for the same scope and effective dates.';
-    }
-  }
-
-  if (Object.keys(errors).length > 0) {
-    quickErrors.value = errors;
+  if (maxAmt !== null && maxAmt <= minAmt) {
+    toast.error('Invalid Amount Range', 'Maximum ceiling must be strictly greater than minimum floor.');
     return;
   }
 
-  const selectedMethod = purchaseMethodsStore.value.find(
-    (m) => String(m.id) === quickForm.value.purchase_method_id
-  );
-  const selectedCat = categoryOptions.find((c) => c.value === quickForm.value.procurement_category_id);
-  const selectedU = unitOptions.find((u) => u.value === quickForm.value.procurement_unit_id);
+  const category = categoryOptions.find((c) => c.value === bandForm.value.procurement_category_id);
+  const unit = unitOptions.find((u) => u.value === bandForm.value.procurement_unit_id);
 
-  const finalMax = quickForm.value.noLimit ? null : Number(quickForm.value.maximum_amount);
-  const catId = quickForm.value.procurement_category_id ? Number(quickForm.value.procurement_category_id) : null;
-  const unitId = quickForm.value.procurement_unit_id ? Number(quickForm.value.procurement_unit_id) : null;
-
-  if (editingId.value) {
-    const idx = thresholdBandsStore.value.findIndex((b) => b.id === editingId.value);
+  if (editingBandId.value) {
+    const idx = thresholdBandsStore.value.findIndex((b) => b.id === editingBandId.value);
     if (idx !== -1) {
       thresholdBandsStore.value[idx] = {
         ...thresholdBandsStore.value[idx],
-        purchase_method_id: Number(quickForm.value.purchase_method_id),
-        method_name: selectedMethod ? selectedMethod.name : 'Unknown Method',
-        method_code: selectedMethod ? selectedMethod.code : 'CUSTOM',
-        minimum_amount: Number(quickForm.value.minimum_amount),
-        maximum_amount: finalMax,
-        is_mandatory: quickForm.value.is_mandatory,
-        procurement_category_id: catId,
-        category_name: selectedCat && selectedCat.value ? selectedCat.label : 'All Categories',
-        procurement_unit_id: unitId,
-        unit_name: selectedU && selectedU.value ? selectedU.label : 'All Buying Units',
-        effective_from: quickForm.value.effective_from,
-        effective_to: quickForm.value.effective_to || null
+        minimum_amount: minAmt,
+        maximum_amount: maxAmt,
+        is_mandatory: bandForm.value.is_mandatory,
+        procurement_category_id: bandForm.value.procurement_category_id ? Number(bandForm.value.procurement_category_id) : null,
+        category_name: category ? category.label.split(' (')[0] : 'All Categories',
+        procurement_unit_id: bandForm.value.procurement_unit_id ? Number(bandForm.value.procurement_unit_id) : null,
+        unit_name: unit ? unit.label.split(' (')[0] : 'All Buying Desks',
+        effective_from: bandForm.value.effective_from,
+        effective_to: bandForm.value.effective_to || null
       };
-      showToast('Spend threshold band updated successfully.');
+      showLocalToast('Updated threshold band.');
     }
   } else {
-    const nextId = Date.now();
-    const newBand: PurchaseMethodThresholdRecord = {
-      id: nextId,
-      uuid: `pmt-uuid-${nextId}`,
-      purchase_method_id: Number(quickForm.value.purchase_method_id),
-      method_name: selectedMethod ? selectedMethod.name : 'Unknown Method',
-      method_code: selectedMethod ? selectedMethod.code : 'CUSTOM',
-      minimum_amount: Number(quickForm.value.minimum_amount),
-      maximum_amount: finalMax,
+    const nextBandId = Math.max(0, ...thresholdBandsStore.value.map((b) => b.id)) + 1;
+    thresholdBandsStore.value.push({
+      id: nextBandId,
+      uuid: `pmt-uuid-${nextBandId}`,
+      purchase_method_id: inspectingMethod.value.id,
+      method_name: inspectingMethod.value.name,
+      method_code: inspectingMethod.value.code,
+      minimum_amount: minAmt,
+      maximum_amount: maxAmt,
       currency_code: 'ETB',
-      is_mandatory: quickForm.value.is_mandatory,
-      procurement_category_id: catId,
-      category_name: selectedCat && selectedCat.value ? selectedCat.label : 'All Categories',
-      procurement_unit_id: unitId,
-      unit_name: selectedU && selectedU.value ? selectedU.label : 'All Buying Units',
-      effective_from: quickForm.value.effective_from,
-      effective_to: quickForm.value.effective_to || null,
+      is_mandatory: bandForm.value.is_mandatory,
+      procurement_category_id: bandForm.value.procurement_category_id ? Number(bandForm.value.procurement_category_id) : null,
+      category_name: category ? category.label.split(' (')[0] : 'All Categories',
+      procurement_unit_id: bandForm.value.procurement_unit_id ? Number(bandForm.value.procurement_unit_id) : null,
+      unit_name: unit ? unit.label.split(' (')[0] : 'All Buying Desks',
+      effective_from: bandForm.value.effective_from,
+      effective_to: bandForm.value.effective_to || null,
       entity_id: 2,
       state: 'active'
-    };
-    thresholdBandsStore.value.unshift(newBand);
-    showToast('Spend threshold band created successfully.');
+    });
+    showLocalToast('Added threshold band to method.');
   }
 
-  showQuickModal.value = false;
+  showBandModal.value = false;
 };
 
-// ─── Actions Dropdown Menu (3-Dot Kebab Standard) ───
-const activeActionMenuId = ref<number | null>(null);
+const activeBandActionMenuId = ref<number | null>(null);
 
-const toggleActionMenu = (id: number, event: MouseEvent) => {
-  event.stopPropagation();
+const toggleBandActionMenu = (id: number) => {
+  activeBandActionMenuId.value = activeBandActionMenuId.value === id ? null : id;
+};
+
+const closeBandActionMenu = () => {
+  activeBandActionMenuId.value = null;
+};
+
+const handleToggleBandState = (band: PurchaseMethodThresholdRecord) => {
+  band.state = band.state === 'active' ? 'inactive' : 'active';
+  showLocalToast(`Marked band as ${band.state === 'active' ? 'Active' : 'Inactive'}.`);
+  closeBandActionMenu();
+};
+
+const handleDeleteBand = (band: PurchaseMethodThresholdRecord) => {
+  thresholdBandsStore.value = thresholdBandsStore.value.filter((b) => b.id !== band.id);
+  showLocalToast('Threshold band removed.');
+  closeBandActionMenu();
+};
+
+// ─── Row Actions & Detail View ───
+const toggleActionMenu = (id: number) => {
   activeActionMenuId.value = activeActionMenuId.value === id ? null : id;
 };
 
@@ -474,682 +558,684 @@ const closeActionMenu = () => {
   activeActionMenuId.value = null;
 };
 
-const handleToggleBandState = (band: PurchaseMethodThresholdRecord) => {
-  band.state = band.state === 'active' ? 'inactive' : 'active';
-  showToast(`Spend threshold band is now ${band.state}.`);
+const openDetailView = (item: PurchaseMethodRecord) => {
+  inspectingMethod.value = item;
+  activeActionMenuId.value = null;
+  activeBandActionMenuId.value = null;
 };
 
-const handleActionMenuOutsideClick = (event: MouseEvent) => {
-  if (activeActionMenuId.value !== null) {
-    const target = event.target as HTMLElement | null;
-    if (!target?.closest('.action-dropdown-wrapper')) {
-      closeActionMenu();
-    }
-  }
+const handleToggleState = (item: PurchaseMethodRecord) => {
+  item.state = item.state === 'active' ? 'inactive' : 'active';
+  showLocalToast(`Marked "${item.name}" as ${item.state === 'active' ? 'Active' : 'Inactive'}.`);
+  closeActionMenu();
 };
 
-// ─── Single Row Actions ───
-const openInspectDrawer = (band: PurchaseMethodThresholdRecord) => {
-  inspectingBand.value = band;
-};
-
-const closeInspectDrawer = () => {
-  inspectingBand.value = null;
-};
-
-const handleDeleteBand = (band: PurchaseMethodThresholdRecord) => {
-  thresholdBandsStore.value = thresholdBandsStore.value.filter((b) => b.id !== band.id);
-  selectedRowIds.value = selectedRowIds.value.filter((i) => i !== band.id);
-  if (inspectingBand.value?.id === band.id) {
-    inspectingBand.value = null;
-  }
-  showToast(`Deleted spend threshold band rule.`);
-};
-
-// ─── Bulk Actions ───
-const handleBatchDelete = () => {
-  const count = selectedRowIds.value.length;
-  if (!count) return;
-  thresholdBandsStore.value = thresholdBandsStore.value.filter((b) => !selectedRowIds.value.includes(b.id));
-  selectedRowIds.value = [];
-  showToast(`Deleted ${count} spend threshold band(s).`);
-};
-
-const handleBatchToggleState = () => {
-  const count = selectedRowIds.value.length;
-  if (!count) return;
-  thresholdBandsStore.value.forEach((b) => {
-    if (selectedRowIds.value.includes(b.id)) {
-      b.state = b.state === 'active' ? 'inactive' : 'active';
-    }
-  });
-  showToast(`Updated state for ${count} threshold band(s).`);
-};
-
-// ─── Underlying Statutory Specs for Drawer ───
-const inspectingMethodSpecs = computed<PurchaseMethodRecord | null>(() => {
-  if (!inspectingBand.value) return null;
-  return (
-    purchaseMethodsStore.value.find((m) => m.id === inspectingBand.value?.purchase_method_id) || null
-  );
-});
-
-// ─── Column Helpers ───
-const isColVisible = (colKey: string) => {
-  const col = columns.value.find((c) => c.key === colKey);
-  return col ? col.visible !== false : true;
-};
-
-const handleToggleColumn = (key: string) => {
-  const column = columns.value.find((item) => item.key === key);
-  if (column && column.hideable !== false) {
-    column.visible = column.visible === false;
-  }
-};
-
-const updateColumnPopoverPosition = () => {
-  const trigger = columnToggleRef.value;
-  if (!trigger) return;
-
-  const rect = trigger.getBoundingClientRect();
-  const width = 240;
-  const height = columnPopoverRef.value?.getBoundingClientRect().height ?? 300;
-  const left = Math.min(
-    window.innerWidth - width - 8,
-    Math.max(8, rect.right - width)
-  );
-  const top = rect.bottom + height > window.innerHeight
-    ? Math.max(8, rect.top - height - 8)
-    : rect.bottom + 8;
-
-  columnPopoverPosition.value = { top, left };
-};
-
-const closeColumnHider = () => {
-  isColumnHiderOpen.value = false;
-  window.removeEventListener('resize', updateColumnPopoverPosition);
-  window.removeEventListener('scroll', updateColumnPopoverPosition, true);
-  document.removeEventListener('pointerdown', handleColumnPopoverOutsideClick);
-  document.removeEventListener('keydown', handleColumnPopoverKeydown);
-};
-
-const handleColumnPopoverOutsideClick = (event: PointerEvent) => {
-  const target = event.target as Node;
-  if (
-    !columnToggleRef.value?.contains(target) &&
-    !columnPopoverRef.value?.contains(target)
-  ) {
-    closeColumnHider();
-  }
-};
-
-const handleColumnPopoverKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') closeColumnHider();
-};
-
-const toggleColumnHider = async () => {
-  if (isColumnHiderOpen.value) {
-    closeColumnHider();
+const handleDelete = (item: PurchaseMethodRecord) => {
+  const bands = thresholdBandsStore.value.filter((b) => b.purchase_method_id === item.id);
+  if (bands.length > 0) {
+    showLocalToast(`Cannot delete "${item.name}" while threshold bands are configured for it.`, 'error');
+    closeActionMenu();
     return;
   }
+  purchaseMethodsStore.value = purchaseMethodsStore.value.filter((m) => m.id !== item.id);
+  selectedRowIds.value = selectedRowIds.value.filter((i) => i !== item.id);
+  if (inspectingMethod.value?.id === item.id) {
+    inspectingMethod.value = null;
+  }
+  showLocalToast(`Deleted "${item.name}".`);
+  closeActionMenu();
+};
 
-  isColumnHiderOpen.value = true;
-  await nextTick();
-  updateColumnPopoverPosition();
-  window.addEventListener('resize', updateColumnPopoverPosition);
-  window.addEventListener('scroll', updateColumnPopoverPosition, true);
-  document.addEventListener('pointerdown', handleColumnPopoverOutsideClick);
-  document.addEventListener('keydown', handleColumnPopoverKeydown);
+const handleBatchDelete = () => {
+  const selectedSet = new Set(selectedRowIds.value);
+  const blocked = purchaseMethodsStore.value.some(
+    (m) => selectedSet.has(m.id) && thresholdBandsStore.value.some((b) => b.purchase_method_id === m.id)
+  );
+  if (blocked) {
+    showLocalToast('Some selected methods have threshold bands. Remove those bands before deleting.', 'error');
+    return;
+  }
+  purchaseMethodsStore.value = purchaseMethodsStore.value.filter((m) => !selectedSet.has(m.id));
+  showLocalToast(`Deleted ${selectedRowIds.value.length} selected methods.`);
+  selectedRowIds.value = [];
+};
+
+// ─── Global Click Outside Listener ───
+const handleGlobalClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.action-menu-container')) {
+    closeActionMenu();
+    closeBandActionMenu();
+  }
 };
 
 onMounted(() => {
-  window.addEventListener('click', handleActionMenuOutsideClick);
+  window.addEventListener('click', handleGlobalClick);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('click', handleActionMenuOutsideClick);
-  closeColumnHider();
+  window.removeEventListener('click', handleGlobalClick);
 });
 </script>
 
 <template>
-  <div class="spend-thresholds-view">
+  <div class="purchase-methods-page">
+    <!-- ═══ BREADCRUMB NAVIGATION (Rule 3: Exact Page Name Only) ═══ -->
     <div class="breadcrumb-container">
       <AppBreadcrumb :items="breadcrumbItems" :noMargin="true" />
     </div>
 
-    <AppDataTable
-      title="Spend Threshold Bands"
-      subtitle="Configure statutory procurement procedures, value bands, and category or buying desk scope."
-      v-model:searchQuery="searchQuery"
-      searchPlaceholder="Search by method, category, or buying desk..."
-      :showFilter="true"
-      :filterCount="activeFilterCount"
-      :showSort="true"
-      :sortOptions="sortOptions"
-      v-model:currentSort="currentSortKey"
-      v-model:sortOrder="sortOrder"
-      :showColumns="false"
-      :columns="columns"
-      :totalEntries="filteredBands.length"
-      :showPagination="true"
-      v-model:currentPage="currentPage"
-      v-model:perPage="perPage"
-      @toggleColumn="handleToggleColumn"
-    >
-      <template #actions>
-        <AppButton variant="primary" size="sm" @click="openQuickCreateModal">
-          <template #icon-left>
-            <Plus :size="15" />
-          </template>
-          Create Threshold Band
-        </AppButton>
-      </template>
-
-      <template #toolbar-right>
-        <button
-          ref="columnToggleRef"
-          type="button"
-          class="btn-column-toggle"
-          title="Customize columns"
-          aria-label="Customize table columns"
-          :aria-expanded="isColumnHiderOpen"
-          @click.stop="toggleColumnHider"
-        >
-          <IconColumnSolid :size="16" />
-        </button>
-
-        <Teleport to="body">
-          <div
-            v-if="isColumnHiderOpen"
-            ref="columnPopoverRef"
-            class="column-hider-popover"
-            :style="{
-              top: `${columnPopoverPosition.top}px`,
-              left: `${columnPopoverPosition.left}px`
-            }"
-            role="dialog"
-            aria-label="Table columns"
-            @click.stop
-          >
-            <div class="column-hider-title">Table Columns</div>
-            <div class="column-hider-list">
-              <FormCheckbox
-                v-for="column in columns.filter((item) => item.hideable !== false)"
-                :key="column.key"
-                :model-value="column.visible !== false"
-                :label="column.label"
-                size="sm"
-                @update:model-value="handleToggleColumn(column.key)"
-              />
-            </div>
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- ISOLATED DETAIL VIEW (AGENTS.md Rule 10.3 & Rule 10.5)         -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div v-if="inspectingMethod" class="detail-view-wrapper">
+      <!-- Method Profile Summary Card -->
+      <div class="detail-card">
+        <div class="detail-header-row">
+          <div>
+            <h2 class="detail-title">{{ inspectingMethod.name }}</h2>
+            <span class="detail-code">{{ inspectingMethod.code }}</span>
           </div>
-        </Teleport>
-      </template>
-
-      <template #filter-panel>
-        <div class="filter-panel-grid">
-          <FormSelect
-            v-model="filterMethodId"
-            :options="[{ value: '', label: 'All Statutory Methods' }, ...methodOptions]"
-            label="Filter by Method"
-            placeholder="All Statutory Methods"
-            :teleport="true"
-          />
-
-          <FormSelect
-            v-model="filterEnforcement"
-            :options="enforcementFilterOptions"
-            label="Policy Enforcement"
-            placeholder="All Enforcement Types"
-            :teleport="true"
-          />
-
-          <FormSelect
-            v-model="filterCategory"
-            :options="categoryOptions"
-            label="Category Scope"
-            placeholder="All Categories"
-            :teleport="true"
-          />
-
-          <FormSelect
-            v-model="filterUnit"
-            :options="unitOptions"
-            label="Buying Desk Scope"
-            placeholder="All Buying Desks"
-            :teleport="true"
-          />
-
-          <FormSelect
-            v-model="filterState"
-            :options="stateFilterOptions"
-            label="State"
-            placeholder="All States"
-            :teleport="true"
-          />
+          <div class="detail-badges">
+            <BaseBadge size="sm" :color="getGovernanceBadgeColor(inspectingMethod.status)">
+              {{ getGovernanceStatusLabel(inspectingMethod.status) }}
+            </BaseBadge>
+            <BaseBadge size="sm" :color="inspectingMethod.state === 'active' ? 'success' : 'gray'">
+              {{ inspectingMethod.state === 'active' ? 'Active' : 'Inactive' }}
+            </BaseBadge>
+          </div>
         </div>
 
-        <div class="filter-panel-footer">
-          <AppButton variant="secondary" size="sm" @click="resetFilter">
-            Reset Filters
-          </AppButton>
-        </div>
-      </template>
+        <p class="detail-desc-text">{{ inspectingMethod.description || 'Statutory procurement method definition.' }}</p>
 
-      <table class="erp-table">
-        <thead>
-          <tr>
-            <th v-if="isColVisible('method_name')">
-              <div class="th-content-with-checkbox">
-                <FormCheckbox
-                  :model-value="isAllSelected"
-                  :indeterminate="isSomeSelected"
-                  size="md"
-                  @click.stop
-                  @update:model-value="handleSelectAll"
-                >
-                  <span class="sr-only">Select all threshold bands on this page</span>
-                </FormCheckbox>
-                <span>Purchase Method</span>
-              </div>
-            </th>
-            <th v-if="isColVisible('amount_range')">Order Value Band (ETB)</th>
-            <th v-if="isColVisible('is_mandatory')">Enforcement</th>
-            <th v-if="isColVisible('category_name')">Category Scope</th>
-            <th v-if="isColVisible('unit_name')">Buying Desk Scope</th>
-            <th v-if="isColVisible('effective_range')">Validity Period</th>
-            <th v-if="isColVisible('state')">State</th>
-            <th v-if="isColVisible('actions')" class="col-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="paginatedBands.length === 0">
-            <td :colspan="visibleColumnCount" class="empty-state-cell">
-              No spend threshold bands found. Adjust your search or filters, or create a new band.
-            </td>
-          </tr>
-          <tr
-            v-for="row in paginatedBands"
-            :key="row.id"
-            class="erp-row"
-            :class="{ 'row-selected': selectedRowIds.includes(row.id) }"
-          >
-            <td v-if="isColVisible('method_name')" class="td-name">
-              <div class="identity-cell-content">
-                <FormCheckbox
-                  :model-value="selectedRowIds.includes(row.id)"
-                  size="md"
-                  @click.stop
-                  @update:model-value="(checked: boolean) => handleSelectRow(row.id, checked)"
-                >
-                  <span class="sr-only">Select {{ row.method_name }} threshold band</span>
-                </FormCheckbox>
-                <div class="name-cell-stack">
-                  <span class="method-title">{{ row.method_name }}</span>
-                  <span class="table-code-subtext">{{ row.method_code }}</span>
+        <div class="detail-divider"></div>
+
+        <div class="detail-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Quotation Requirement</span>
+            <span class="meta-value">{{ inspectingMethod.minimum_quotations > 0 ? `${inspectingMethod.minimum_quotations} Independent Quotes` : 'None (Off-the-shelf)' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Tender Invitation Scope</span>
+            <span class="meta-value">{{ inspectingMethod.is_open_invitation ? 'Open Public Advert' : 'Invited Shortlist' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Evaluation Committee</span>
+            <span class="meta-value">{{ inspectingMethod.requires_committee ? 'Mandatory Committee' : 'Buyer Evaluation' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Sealed Simultaneous Bids</span>
+            <span class="meta-value">{{ inspectingMethod.requires_sealed_bid ? 'Strict Sealed Bids' : 'Standard Quotation' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Single Source Supplier</span>
+            <span class="meta-value">{{ inspectingMethod.allows_single_source ? 'Allowed (Single Supplier)' : 'Prohibited (Competitive)' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Emergency Post-Facto Ratification</span>
+            <span class="meta-value">{{ inspectingMethod.requires_post_facto_approval ? 'Post-Facto Allowed' : 'Strict Pre-Approval' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Child Lines: PurchaseMethodThreshold Sub-Table Card -->
+      <div class="detail-card">
+        <div class="detail-header-row">
+          <div class="title-with-badge">
+            <h3 class="section-title">Threshold Bands</h3>
+            <span class="tertiary-plain-text">
+              {{ getMethodBands(inspectingMethod.id).length }} bands
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <table class="erp-table members-subtable">
+          <thead>
+            <tr>
+              <th>Order Value Band (ETB)</th>
+              <th>Enforcement Mode</th>
+              <th>Category Scope</th>
+              <th>Buying Desk Scope</th>
+              <th>Valid From</th>
+              <th>Valid To</th>
+              <th>State</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="getMethodBands(inspectingMethod.id).length === 0">
+              <td colspan="8" class="empty-state-cell">
+                <div class="empty-state-container">
+                  <Scale :size="28" class="empty-state-icon" />
+                  <p class="empty-state-title">No threshold bands configured for this method</p>
+                  <p class="empty-state-subtext">Edit this purchase method to configure value ceilings and scopes.</p>
                 </div>
-              </div>
-            </td>
-            <td v-if="isColVisible('amount_range')">
-              <div class="value-band-cell">
-                <span class="amount-primary">{{ formatCurrency(row.minimum_amount) }}</span>
-                <span class="amount-separator">to</span>
-                <span v-if="row.maximum_amount !== null" class="amount-primary">
-                  {{ formatCurrency(row.maximum_amount) }}
+              </td>
+            </tr>
+            <tr
+              v-for="band in getMethodBands(inspectingMethod.id)"
+              :key="band.id"
+              class="subtable-row"
+            >
+              <td>
+                <span class="table-name-primary">
+                  {{ formatCurrency(band.minimum_amount) }} to {{ band.maximum_amount !== null ? formatCurrency(band.maximum_amount) : 'Open Ceiling (No Limit)' }}
                 </span>
-                <span v-else class="amount-unlimited">Open Ceiling (No Limit)</span>
-              </div>
-            </td>
-            <td v-if="isColVisible('is_mandatory')">
-              <BaseBadge :color="getEnforcementBadgeColor(row.is_mandatory)" size="sm">
-                {{ row.is_mandatory ? 'Mandatory' : 'Permissive' }}
-              </BaseBadge>
-            </td>
-            <td v-if="isColVisible('category_name')">
-              <span class="tertiary-plain-text">{{ row.category_name || 'All Categories' }}</span>
-            </td>
-            <td v-if="isColVisible('unit_name')">
-              <span class="tertiary-plain-text">{{ row.unit_name || 'All Buying Desks' }}</span>
-            </td>
-            <td v-if="isColVisible('effective_range')">
-              <span class="validity-text">{{ row.effective_from }} — {{ row.effective_to || 'Ongoing' }}</span>
-            </td>
-            <td v-if="isColVisible('state')">
-              <BaseBadge :color="row.state === 'active' ? 'success' : 'gray'" size="sm">
-                {{ row.state === 'active' ? 'Active' : 'Inactive' }}
-              </BaseBadge>
-            </td>
-            <td v-if="isColVisible('actions')" class="col-actions">
-              <div class="action-dropdown-wrapper" @click.stop>
-                <button
-                  type="button"
-                  class="btn-action-dots"
-                  title="More actions"
-                  @click="toggleActionMenu(row.id, $event)"
+              </td>
+              <td>
+                <BaseBadge
+                  size="sm"
+                  :color="getEnforcementBadgeColor(band.is_mandatory)"
                 >
-                  <MoreVertical :size="15" />
-                </button>
+                  {{ band.is_mandatory ? 'Mandatory' : 'Permissive' }}
+                </BaseBadge>
+              </td>
+              <td>
+                <span class="tertiary-plain-text">{{ band.category_name || 'All Categories' }}</span>
+              </td>
+              <td>
+                <span class="tertiary-plain-text">{{ band.unit_name || 'All Buying Desks' }}</span>
+              </td>
+              <td>
+                <span class="tertiary-plain-text">{{ formatDisplayDate(band.effective_from) }}</span>
+              </td>
+              <td>
+                <span class="tertiary-plain-text">{{ formatDisplayDate(band.effective_to, 'Indefinite') }}</span>
+              </td>
+              <td>
+                <BaseBadge
+                  size="sm"
+                  :color="band.state === 'active' ? 'success' : 'gray'"
+                >
+                  {{ band.state === 'active' ? 'Active' : 'Inactive' }}
+                </BaseBadge>
+              </td>
+              <td class="col-actions">
+                <div class="action-menu-container">
+                  <button
+                    type="button"
+                    class="btn-action-dots"
+                    title="Actions"
+                    @click.stop="toggleBandActionMenu(band.id)"
+                  >
+                    <MoreVertical :size="15" />
+                  </button>
 
-                <!-- Popup Dropdown Menu -->
-                <div
-                  v-if="activeActionMenuId === row.id"
-                  class="action-menu-popup"
-                  @click.stop
-                >
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="() => { closeActionMenu(); openInspectDrawer(row); }"
+                  <div
+                    v-if="activeBandActionMenuId === band.id"
+                    class="action-dropdown"
+                    @click.stop
                   >
-                    <Eye :size="14" />
-                    <span>Inspect Specs</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="() => { closeActionMenu(); openEditModal(row); }"
-                  >
-                    <Edit2 :size="14" />
-                    <span>Edit Band</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="() => { closeActionMenu(); handleToggleBandState(row); }"
-                  >
-                    <Check :size="14" />
-                    <span>{{ row.state === 'active' ? 'Deactivate Band' : 'Activate Band' }}</span>
-                  </button>
-                  <div class="menu-divider"></div>
-                  <button
-                    type="button"
-                    class="menu-item danger"
-                    @click="() => { closeActionMenu(); handleDeleteBand(row); }"
-                  >
-                    <Trash2 :size="14" />
-                    <span>Delete Band</span>
-                  </button>
+                    <button
+                      type="button"
+                      class="dropdown-item"
+                      @click="handleToggleBandState(band)"
+                    >
+                      <Check :size="14" class="dropdown-icon" />
+                      <span>{{ band.state === 'active' ? 'Deactivate' : 'Activate' }}</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button
+                      type="button"
+                      class="dropdown-item dropdown-item-danger"
+                      @click="handleDeleteBand(band)"
+                    >
+                      <Trash2 :size="14" class="dropdown-icon" />
+                      <span>Remove Band</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </AppDataTable>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    <!-- Floating Batch Action Bar (AGENTS.md & Table Architecture) -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- DIRECTORY VIEW: SINGLE TABLE CARD (AGENTS.md Rule 10.1 & 21)   -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <template v-else>
+      <AppDataTable
+        title="Purchase Methods"
+        subtitle="Statutory procurement procedures, evaluation rules, committee mandates, and order value threshold bands."
+        v-model:searchQuery="searchQuery"
+        searchPlaceholder="Search method by name, code, or description..."
+        :showSearch="true"
+        :showFilter="true"
+        :showFullscreen="true"
+        :filterCount="activeFilterCount"
+        :showSort="true"
+        :sortOptions="sortOptions"
+        v-model:currentSort="currentSort"
+        v-model:sortOrder="sortOrder"
+        :showColumns="true"
+        :columns="tableColumns"
+        :totalEntries="filteredMethods.length"
+        :showPagination="true"
+        v-model:currentPage="currentPage"
+        v-model:perPage="perPage"
+        @toggleColumn="handleToggleColumn"
+        @resetFilter="resetFilters"
+      >
+        <!-- Primary Action inside Toolbar (Rule 10.2 & Rule 31) -->
+        <template #actions>
+          <AppButton variant="primary" size="sm" @click="openCreateModal">
+            <template #icon-left>
+              <Plus :size="15" />
+            </template>
+            Create Method
+          </AppButton>
+        </template>
+
+        <!-- Filter Panel -->
+        <template #filter-panel>
+          <div class="filter-panel-grid">
+            <FormSelect
+              label="Quotation Rule"
+              v-model="filterQuotations"
+              :options="[
+                { value: '', label: 'All Quotation Rules' },
+                { value: 'zero', label: 'None (Direct Off-the-shelf)' },
+                { value: 'competitive', label: 'Competitive (3+ Quotes)' }
+              ]"
+              placeholder="Select"
+            />
+            <FormSelect
+              label="Committee Mandate"
+              v-model="filterCommittee"
+              :options="[
+                { value: '', label: 'All Mandates' },
+                { value: 'yes', label: 'Mandatory Committee' },
+                { value: 'no', label: 'Buyer Evaluation Only' }
+              ]"
+              placeholder="Select"
+            />
+            <FormSelect
+              label="Sealed Bids"
+              v-model="filterSealedBid"
+              :options="[
+                { value: '', label: 'All Bidding Modes' },
+                { value: 'yes', label: 'Strict Sealed Bids' },
+                { value: 'no', label: 'Standard Quotations' }
+              ]"
+              placeholder="Select"
+            />
+            <FormSelect
+              label="Invitation Scope"
+              v-model="filterInvitation"
+              :options="[
+                { value: '', label: 'All Invitation Scopes' },
+                { value: 'open', label: 'Open Public Advert' },
+                { value: 'invited', label: 'Invited Shortlist' }
+              ]"
+              placeholder="Select"
+            />
+            <FormSelect
+              label="Governance Status"
+              v-model="filterStatus"
+              :options="[{ value: '', label: 'All Statuses' }, ...governanceStatusOptions]"
+              placeholder="Select"
+            />
+            <FormSelect
+              label="Lifecycle State"
+              v-model="filterState"
+              :options="[
+                { value: '', label: 'All States' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' }
+              ]"
+              placeholder="Select"
+            />
+          </div>
+          <div v-if="activeFilterCount > 0" class="filter-panel-footer">
+            <AppButton variant="outline" size="sm" @click="resetFilters">
+              Reset Filters
+            </AppButton>
+          </div>
+        </template>
+
+        <!-- Table Content (Lead Checkbox in Identity Column) -->
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th
+                v-if="isColumnVisible('name')"
+                class="sortable"
+                @click="handleSortColumn('name')"
+              >
+                <div class="th-content name-header-content">
+                  <FormCheckbox
+                    :model-value="isAllSelected"
+                    :indeterminate="isPartiallySelected"
+                    size="md"
+                    @click.stop
+                    @update:model-value="toggleSelectAll"
+                  >
+                    <span class="sr-only">Select all methods on this page</span>
+                  </FormCheckbox>
+                  <span>Purchase Method</span>
+                  <ArrowUpDown v-if="currentSort === 'name'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
+              <th
+                v-if="isColumnVisible('minimum_quotations')"
+                class="sortable"
+                @click="handleSortColumn('minimum_quotations')"
+              >
+                <div class="th-content">
+                  <span>Quotation Rule</span>
+                  <ArrowUpDown v-if="currentSort === 'minimum_quotations'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
+              <th
+                v-if="isColumnVisible('requires_committee')"
+                class="sortable"
+                @click="handleSortColumn('requires_committee')"
+              >
+                <div class="th-content">
+                  <span>Committee Mandate</span>
+                  <ArrowUpDown v-if="currentSort === 'requires_committee'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
+              <th v-if="isColumnVisible('requires_sealed_bid')">
+                <div class="th-content"><span>Sealed Bids</span></div>
+              </th>
+
+              <th v-if="isColumnVisible('is_open_invitation')">
+                <div class="th-content"><span>Invitation Scope</span></div>
+              </th>
+
+              <th v-if="isColumnVisible('allows_single_source')">
+                <div class="th-content"><span>Single Source</span></div>
+              </th>
+
+              <th v-if="isColumnVisible('requires_post_facto_approval')">
+                <div class="th-content"><span>Emergency Ratification</span></div>
+              </th>
+
+              <th v-if="isColumnVisible('threshold_bands')">
+                <div class="th-content"><span>Configured Bands</span></div>
+              </th>
+
+              <th
+                v-if="isColumnVisible('status')"
+                class="sortable"
+                @click="handleSortColumn('status')"
+              >
+                <div class="th-content">
+                  <span>Status</span>
+                  <ArrowUpDown v-if="currentSort === 'status'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
+              <th
+                v-if="isColumnVisible('state')"
+                class="sortable"
+                @click="handleSortColumn('state')"
+              >
+                <div class="th-content">
+                  <span>State</span>
+                  <ArrowUpDown v-if="currentSort === 'state'" :size="12" class="sort-icon active-sort" />
+                </div>
+              </th>
+
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="paginatedMethods.length === 0">
+              <td :colspan="visibleColumnCount" class="empty-state-cell">
+                <div class="empty-state-container">
+                  <Scale :size="32" class="empty-state-icon" />
+                  <p class="empty-state-title">No purchase methods found</p>
+                  <p class="empty-state-subtext">Try adjusting your search criteria or create a new method.</p>
+                </div>
+              </td>
+            </tr>
+            <tr
+              v-for="row in paginatedMethods"
+              :key="row.id"
+              class="erp-row"
+              :class="{ 'row-selected': selectedRowIds.includes(row.id) }"
+              @click="openDetailView(row)"
+            >
+              <!-- Identity Column (Lead Checkbox + Primary Name + Code) -->
+              <td v-if="isColumnVisible('name')">
+                <div class="name-cell-content">
+                  <FormCheckbox
+                    :model-value="selectedRowIds.includes(row.id)"
+                    size="md"
+                    @click.stop
+                    @update:model-value="(checked: boolean) => toggleSelectRow(row.id, checked)"
+                  >
+                    <span class="sr-only">Select {{ row.name }}</span>
+                  </FormCheckbox>
+                  <div class="name-cell-stack">
+                    <span class="table-name-primary">{{ row.name }}</span>
+                    <span class="table-code-subtext">{{ row.code }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Quotation Rule -->
+              <td v-if="isColumnVisible('minimum_quotations')">
+                <span class="tertiary-plain-text">
+                  {{ row.minimum_quotations > 0 ? `${row.minimum_quotations} Independent Quotes` : 'None (Off-the-shelf)' }}
+                </span>
+              </td>
+
+              <!-- Committee Mandate -->
+              <td v-if="isColumnVisible('requires_committee')">
+                <span class="tertiary-plain-text">
+                  {{ row.requires_committee ? 'Mandatory Committee' : 'Buyer Evaluation' }}
+                </span>
+              </td>
+
+              <!-- Sealed Bids -->
+              <td v-if="isColumnVisible('requires_sealed_bid')">
+                <span class="tertiary-plain-text">
+                  {{ row.requires_sealed_bid ? 'Strict Sealed Bids' : 'Standard Quotation' }}
+                </span>
+              </td>
+
+              <!-- Invitation Scope -->
+              <td v-if="isColumnVisible('is_open_invitation')">
+                <span class="tertiary-plain-text">
+                  {{ row.is_open_invitation ? 'Open Public Advert' : 'Invited Shortlist' }}
+                </span>
+              </td>
+
+              <!-- Single Source -->
+              <td v-if="isColumnVisible('allows_single_source')">
+                <span class="tertiary-plain-text">
+                  {{ row.allows_single_source ? 'Allowed' : 'Prohibited' }}
+                </span>
+              </td>
+
+              <!-- Emergency Post-Facto -->
+              <td v-if="isColumnVisible('requires_post_facto_approval')">
+                <span class="tertiary-plain-text">
+                  {{ row.requires_post_facto_approval ? 'Post-Facto Allowed' : 'Pre-Approval Only' }}
+                </span>
+              </td>
+
+              <!-- Configured Threshold Bands Summary -->
+              <td v-if="isColumnVisible('threshold_bands')">
+                <span class="tertiary-plain-text">
+                  {{ getMethodBandsCount(row.id) }} configured
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td v-if="isColumnVisible('status')">
+                <BaseBadge
+                  size="sm"
+                  :color="getGovernanceBadgeColor(row.status)"
+                >
+                  {{ getGovernanceStatusLabel(row.status) }}
+                </BaseBadge>
+              </td>
+
+              <!-- State -->
+              <td v-if="isColumnVisible('state')">
+                <BaseBadge
+                  size="sm"
+                  :color="row.state === 'active' ? 'success' : 'gray'"
+                >
+                  {{ row.state === 'active' ? 'Active' : 'Inactive' }}
+                </BaseBadge>
+              </td>
+
+              <!-- Actions (3-Dot Kebab Menu) -->
+              <td class="col-actions" @click.stop>
+                <div class="action-menu-container">
+                  <button
+                    type="button"
+                    class="btn-action-dots"
+                    title="Actions"
+                    @click="toggleActionMenu(row.id)"
+                  >
+                    <MoreVertical :size="15" />
+                  </button>
+
+                  <div
+                    v-if="activeActionMenuId === row.id"
+                    class="action-dropdown"
+                  >
+                    <button
+                      type="button"
+                      class="dropdown-item"
+                      @click="openDetailView(row)"
+                    >
+                      <Eye :size="14" class="dropdown-icon" />
+                      <span>Inspect Specs</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item"
+                      @click="() => { openEditModal(row); closeActionMenu(); }"
+                    >
+                      <Edit2 :size="14" class="dropdown-icon" />
+                      <span>Edit Method</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="dropdown-item"
+                      @click="handleToggleState(row)"
+                    >
+                      <Check :size="14" class="dropdown-icon" />
+                      <span>{{ row.state === 'active' ? 'Deactivate' : 'Activate' }}</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button
+                      type="button"
+                      class="dropdown-item dropdown-item-danger"
+                      @click="handleDelete(row)"
+                    >
+                      <Trash2 :size="14" class="dropdown-icon" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </AppDataTable>
+    </template>
+
+    <!-- ═══ SELECTION FLOATING BAR (AGENTS.md Table Architecture) ═══ -->
     <TableFloatingBar
-      :show="selectedRowIds.length > 0"
       :selected-count="selectedRowIds.length"
-      @clear-selection="selectedRowIds = []"
+      @clear="selectedRowIds = []"
     >
-      <template #actions>
-        <AppButton variant="secondary" size="sm" @click="handleBatchToggleState">
-          Toggle Active State
-        </AppButton>
-        <AppButton variant="destructive" size="sm" @click="handleBatchDelete">
-          Delete Selected
-        </AppButton>
-      </template>
+      <AppButton
+        variant="outline"
+        size="sm"
+        @click="selectedRowIds.forEach(id => {
+          const item = purchaseMethodsStore.find(m => m.id === id);
+          if (item) item.state = 'inactive';
+        }); selectedRowIds = []; showLocalToast('Deactivated selected methods.');"
+      >
+        Deactivate Selected
+      </AppButton>
+      <AppButton
+        variant="destructive"
+        size="sm"
+        @click="handleBatchDelete"
+      >
+        Delete Selected
+      </AppButton>
     </TableFloatingBar>
 
-    <!-- Quick Create / Edit Modal (creation-ux.instructions.md <= 5-7 fields, zero child lines) -->
+    <!-- ═══ MODAL: CREATE / EDIT PURCHASE METHOD ═══ -->
     <QuickCreateModal
-      v-model:show="showQuickModal"
-      :title="editingId ? 'Edit Spend Threshold Band' : 'Create Spend Threshold Band'"
-      :show-expand-button="false"
+      v-model:show="showMethodModal"
+      :title="editingMethodId ? 'Edit Purchase Method' : 'Create Purchase Method'"
+      :showExpandButton="!editingMethodId"
+      saveLabel="Save"
       width="md"
-      @save="handleSaveBand"
+      @save="handleSaveMethod"
+      @expand="handleExpandFullForm"
     >
-      <div class="modal-form-grid">
-        <p v-if="quickErrors.overlap" class="form-error-message" role="alert">
-          {{ quickErrors.overlap }}
-        </p>
-
-        <!-- Statutory Purchase Method -->
-        <div class="form-row-full">
-          <FormSelect
-            v-model="quickForm.purchase_method_id"
-            :options="methodOptions"
-            label="Statutory Purchase Method"
-            placeholder="Select Method"
-            :error="quickErrors.purchase_method_id"
-            required
-            :teleport="true"
-          />
-        </div>
-
-        <!-- Value Floor & Ceiling -->
-        <div class="form-row-split">
+      <div class="quick-form-body">
+        <div class="modal-grid-2">
           <FormInput
-            v-model.number="quickForm.minimum_amount"
+            v-model="methodForm.name"
+            label="Method Name"
+            :error="methodFormErrors.name"
+            required
+          />
+
+          <FormInput
+            v-model="methodForm.minimum_quotations"
             type="number"
-            :step="0.01"
-            label="Floor Value (Minimum ETB)"
-            :error="quickErrors.minimum_amount"
+            label="Minimum Quotations Required"
             required
           />
-
-          <FormInput
-            v-model.number="quickForm.maximum_amount"
-            type="number"
-            :step="0.01"
-            label="Ceiling Value (Maximum ETB)"
-            :disabled="quickForm.noLimit"
-            :error="quickErrors.maximum_amount"
-          />
         </div>
 
-        <!-- No Limit Toggle -->
-        <div class="form-row-full">
+        <!-- Rule 5: All booleans MUST use <FormCheckbox /> with Title + Description -->
+        <div class="modal-checkbox-stack">
           <FormCheckbox
-            v-model="quickForm.noLimit"
-            label="No Upper Limit (Open Ceiling)"
-            description="Expenditures exceeding the floor value will route through this method without a cap."
+            v-model="methodForm.requires_committee"
+            label="Requires Procurement Committee Evaluation"
+            description="A designated procurement evaluation committee must review, score, and sanction supplier awards."
           />
-        </div>
-
-        <!-- Mandatory Policy Enforcement -->
-        <div class="form-row-full">
           <FormCheckbox
-            v-model="quickForm.is_mandatory"
-            label="Mandatory Policy Enforcement"
-            description="True forces the purchase method; false permits it as an authorized optional method."
+            v-model="methodForm.requires_sealed_bid"
+            label="Requires Simultaneous Sealed Bids"
+            description="Supplier bids must remain cryptographically sealed and opened simultaneously in committee session."
           />
-        </div>
-
-        <!-- Category & Unit Scope -->
-        <div class="form-row-split">
-          <FormSelect
-            v-model="quickForm.procurement_category_id"
-            :options="categoryScopeOptions"
-            label="Category Scope (Optional)"
-            placeholder="Select Scope"
-            :teleport="true"
+          <FormCheckbox
+            v-model="methodForm.is_open_invitation"
+            label="Open Public Advert"
+            description="Notice is advertised publicly to all qualified market suppliers rather than restricted to an invited shortlist."
           />
-
-          <FormSelect
-            v-model="quickForm.procurement_unit_id"
-            :options="unitScopeOptions"
-            label="Buying Desk Scope (Optional)"
-            placeholder="Select Scope"
-            :teleport="true"
+          <FormCheckbox
+            v-model="methodForm.allows_single_source"
+            label="Allows Single Source Supplier"
+            description="Permits direct award to a sole-source or proprietary supplier without solicitation of multiple quotes."
           />
-        </div>
-
-        <!-- Effective Validity Dates -->
-        <div class="form-row-split">
-          <FormInput
-            v-model="quickForm.effective_from"
-            type="date"
-            label="Effective From"
-            :error="quickErrors.effective_from"
-            required
-          />
-
-          <FormInput
-            v-model="quickForm.effective_to"
-            type="date"
-            label="Effective To (Optional)"
-            :error="quickErrors.effective_to"
+          <FormCheckbox
+            v-model="methodForm.requires_post_facto_approval"
+            label="Allows Emergency Post-Facto Ratification"
+            description="Permits immediate operational procurement with formal committee ratification conducted after placement."
           />
         </div>
       </div>
     </QuickCreateModal>
-
-    <!-- Slide-over Inspection Drawer for Deep Legal & Policy Specs -->
-    <Teleport to="body">
-      <div v-if="inspectingBand" class="drawer-backdrop" @click.self="closeInspectDrawer">
-        <div class="drawer-panel">
-          <div class="drawer-header">
-            <div class="drawer-header-title">
-              <Scale :size="18" class="drawer-header-icon" />
-              <div>
-                <h2>{{ inspectingBand.method_name }}</h2>
-                <span class="drawer-subtitle">
-                  Threshold Policy Rule #{{ inspectingBand.id }}
-                </span>
-              </div>
-            </div>
-            <button type="button" class="btn-drawer-close" @click="closeInspectDrawer">
-              <X :size="18" />
-            </button>
-          </div>
-
-          <div class="drawer-body">
-            <!-- Section 1: Financial Range & Enforcement -->
-            <div class="drawer-card">
-              <h3 class="card-section-title">Financial Value Band</h3>
-              <div class="drawer-metric-grid">
-                <div class="metric-box">
-                  <span class="metric-label">Floor Amount</span>
-                  <span class="metric-val">{{ formatCurrency(inspectingBand.minimum_amount) }}</span>
-                </div>
-                <div class="metric-box">
-                  <span class="metric-label">Ceiling Amount</span>
-                  <span class="metric-val">
-                    {{ inspectingBand.maximum_amount !== null ? formatCurrency(inspectingBand.maximum_amount) : 'Open Ceiling' }}
-                  </span>
-                </div>
-                <div class="metric-box">
-                  <span class="metric-label">Policy Rule</span>
-                  <BaseBadge
-                    :color="getEnforcementBadgeColor(inspectingBand.is_mandatory)"
-                    size="sm"
-                  >
-                    {{ inspectingBand.is_mandatory ? 'Mandatory Policy' : 'Permissive Alternative' }}
-                  </BaseBadge>
-                </div>
-                <div class="metric-box">
-                  <span class="metric-label">Current State</span>
-                  <BaseBadge
-                    :color="inspectingBand.state === 'active' ? 'success' : 'gray'"
-                    size="sm"
-                  >
-                    {{ inspectingBand.state === 'active' ? 'Active' : 'Inactive' }}
-                  </BaseBadge>
-                </div>
-              </div>
-            </div>
-
-            <!-- Section 2: Underlying Statutory Method Specifications (procurement-v4.sql Lines 364–390) -->
-            <div v-if="inspectingMethodSpecs" class="drawer-card">
-              <h3 class="card-section-title">
-                Statutory Method Specifications
-                <span class="spec-legal-ref">[REF: procurement-v4.sql]</span>
-              </h3>
-              <p class="spec-description">{{ inspectingMethodSpecs.description }}</p>
-
-              <div class="specs-checklist">
-                <div class="spec-item">
-                  <span class="spec-label">Quotation Quorum</span>
-                  <span class="spec-value">
-                    {{ inspectingMethodSpecs.minimum_quotations === 0 ? 'None (Single Source)' : `${inspectingMethodSpecs.minimum_quotations} competitive quotations` }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Tender Committee Evaluation</span>
-                  <span class="spec-tag" :class="{ 'tag-yes': inspectingMethodSpecs.requires_committee }">
-                    {{ inspectingMethodSpecs.requires_committee ? 'Mandatory Committee' : 'Buyer Level Evaluation' }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Sealed Bidding Protocol</span>
-                  <span class="spec-tag" :class="{ 'tag-yes': inspectingMethodSpecs.requires_sealed_bid }">
-                    {{ inspectingMethodSpecs.requires_sealed_bid ? 'Simultaneous Opening' : 'Standard Quotation' }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Emergency Post-Facto Ratification</span>
-                  <span class="spec-tag" :class="{ 'tag-warning': inspectingMethodSpecs.requires_post_facto_approval }">
-                    {{ inspectingMethodSpecs.requires_post_facto_approval ? 'Post-Facto Ratified' : 'Pre-Approval Required' }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Single-Source Allowed</span>
-                  <span class="spec-tag">
-                    {{ inspectingMethodSpecs.allows_single_source ? 'Allowed' : 'Competitive Only' }}
-                  </span>
-                </div>
-                <div class="spec-item">
-                  <span class="spec-label">Invitation Scope</span>
-                  <span class="spec-tag">
-                    {{ inspectingMethodSpecs.is_open_invitation ? 'Public Advertisement' : 'Invited Pre-Qualified' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Section 3: Organizational Applicability -->
-            <div class="drawer-card">
-              <h3 class="card-section-title">Applicability & Validity</h3>
-              <div class="scope-grid">
-                <div class="scope-row">
-                  <FolderTree :size="16" class="scope-icon" />
-                  <div>
-                    <span class="scope-title">Procurement Category</span>
-                    <span class="scope-detail">{{ inspectingBand.category_name || 'All Categories (Global Scope)' }}</span>
-                  </div>
-                </div>
-                <div class="scope-row">
-                  <Building2 :size="16" class="scope-icon" />
-                  <div>
-                    <span class="scope-title">Buying Desk</span>
-                    <span class="scope-detail">{{ inspectingBand.unit_name || 'All Buying Desks (Global Scope)' }}</span>
-                  </div>
-                </div>
-                <div class="scope-row">
-                  <Info :size="16" class="scope-icon" />
-                  <div>
-                    <span class="scope-title">Effective Date Window</span>
-                    <span class="scope-detail">{{ inspectingBand.effective_from }} — {{ inspectingBand.effective_to || 'Ongoing' }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="drawer-footer">
-            <AppButton variant="secondary" size="md" @click="closeInspectDrawer">
-              Close
-            </AppButton>
-            <AppButton
-              variant="primary"
-              size="md"
-              @click="() => { const b = inspectingBand; closeInspectDrawer(); if (b) openEditModal(b); }"
-            >
-              Edit Threshold Band
-            </AppButton>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <style scoped>
-.spend-thresholds-view {
+.purchase-methods-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1161,59 +1247,10 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-.btn-column-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background-color: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  color: #404040;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-.btn-column-toggle:hover {
-  background-color: #fafafa;
-  border-color: #d4d4d4;
-}
-
-/* Column Hider Popover */
-.column-hider-popover {
-  position: fixed;
-  width: 240px;
-  background-color: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  padding: 12px;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.column-hider-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #404040;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.column-hider-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
+/* Filter Panel */
 .filter-panel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 14px;
 }
 
@@ -1223,397 +1260,406 @@ onUnmounted(() => {
   margin-top: 12px;
 }
 
-/* Table Cells Formatting */
-.th-content-with-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Table Standards (Rule 8, 9, 28) */
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.identity-cell-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.method-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.value-band-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
-}
-
-.amount-primary {
+.erp-table th {
+  height: 34px;
+  padding: 8px 16px;
+  font-size: 12px;
   font-weight: 500;
-  color: #404040;
-}
-
-.amount-separator {
   color: #737373;
-  font-size: 12px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #E5E5E5;
+  text-align: left;
+  white-space: nowrap;
 }
 
-.amount-unlimited {
+.erp-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.erp-table th.sortable:hover {
+  color: #404040;
+}
+
+.th-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+
+.name-header-content,
+.name-cell-content {
+  gap: 12px;
+}
+
+.name-cell-content {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sort-icon {
   color: #0B529C;
+  flex-shrink: 0;
+}
+
+.erp-table td {
+  height: 38px;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #E5E5E5;
+  vertical-align: middle;
+}
+
+.erp-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.erp-row:hover {
+  background-color: #F5F5F5;
+}
+
+.row-selected {
+  background-color: #E1EEFD;
+}
+
+.name-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.table-name-primary {
+  color: #404040;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 13px;
+}
+
+.table-code-subtext {
+  color: #737373;
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .tertiary-plain-text {
+  color: #737373;
   font-size: 13px;
-  color: #737373;
 }
 
-.validity-text {
-  font-size: 12px;
-  color: #737373;
-  font-variant-numeric: tabular-nums;
-}
-
+/* Action Dropdown */
 .col-actions {
+  width: 64px;
   text-align: right;
-  position: relative;
 }
 
-.action-dropdown-wrapper {
+.action-menu-container {
   position: relative;
   display: inline-flex;
   justify-content: flex-end;
 }
 
 .btn-action-dots {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 6px;
   border: 1px solid transparent;
-  background-color: transparent;
+  background: transparent;
   color: #737373;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f5f5f5;
+  background: #F5F5F5;
   color: #404040;
-  border-color: #e5e5e5;
 }
 
-.action-menu-popup {
+.action-dropdown {
   position: absolute;
-  top: 100%;
   right: 0;
-  margin-top: 4px;
-  z-index: 50;
-  min-width: 175px;
+  top: 32px;
+  min-width: 170px;
   background: #ffffff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
   padding: 4px;
-  display: flex;
-  flex-direction: column;
+  z-index: 40;
 }
 
-.menu-item {
+.dropdown-item {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 7px 10px;
+  font-size: 12.5px;
   color: #404040;
   background: transparent;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.12s;
-  white-space: nowrap;
 }
 
-.menu-item:hover {
-  background-color: #f5f5f5;
-  color: #0b529c;
+.dropdown-item:hover {
+  background: #F5F5F5;
 }
 
-.menu-item.danger {
-  color: #e7000b;
+.dropdown-icon {
+  color: #737373;
 }
 
-.menu-item.danger:hover {
-  background-color: #fef2f2;
-}
-
-.menu-divider {
+.dropdown-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background: #F5F5F5;
   margin: 4px 0;
 }
 
+.dropdown-item-danger {
+  color: #E7000B;
+}
+
+.dropdown-item-danger .dropdown-icon {
+  color: #E7000B;
+}
+
+.dropdown-item-danger:hover {
+  background: #FEF2F2;
+}
+
+/* Empty State */
 .empty-state-cell {
-  padding: 24px;
-  color: #737373;
+  padding: 48px 16px !important;
   text-align: center;
 }
 
-/* Modal Form Styles */
-.modal-form-grid {
+.empty-state-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 6px;
 }
 
-.form-error-message {
+.empty-state-icon {
+  color: #737373;
+  margin-bottom: 4px;
+}
+
+.empty-state-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #404040;
   margin: 0;
-  color: #C10007;
-  font-size: 12px;
 }
 
-.form-row-full {
-  width: 100%;
+.empty-state-subtext {
+  font-size: 12.5px;
+  color: #737373;
+  margin: 0;
 }
 
-.form-row-split {
+/* Quick Form Body */
+.quick-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
 
-/* Inspection Drawer */
-.drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 1000;
+.modal-checkbox-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.unlimited-placeholder-box {
   display: flex;
-  justify-content: flex-end;
-  animation: fadeIn 0.15s ease-out;
+  align-items: center;
+  height: 42px;
+  padding: 0 14px;
+  background: #f5f5f5;
+  border: 1px dashed #d4d4d4;
+  border-radius: 8px;
+  margin-top: 24px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.unlimited-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0b529c;
 }
 
-.drawer-panel {
-  width: 480px;
-  max-width: 90vw;
-  height: 100%;
-  background-color: #ffffff;
+/* Detail View */
+.detail-view-wrapper {
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
-  animation: slideDrawer 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 16px;
 }
 
-@keyframes slideDrawer {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.drawer-header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.drawer-header-icon {
-  color: #0B529C;
-}
-
-.drawer-header-title h2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
-}
-
-.drawer-subtitle {
-  font-size: 12px;
-  color: #737373;
-}
-
-.btn-drawer-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: none;
-  background-color: transparent;
-  color: #737373;
-  cursor: pointer;
-}
-
-.btn-drawer-close:hover {
-  background-color: #f5f5f5;
-  color: #404040;
-}
-
-.drawer-body {
-  flex: 1;
-  overflow-y: auto;
+.detail-card {
+  background: #ffffff;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-.drawer-card {
+.detail-header-row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #e5e5e5;
-  background-color: #fafafa;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.card-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0;
+.title-with-badge {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
-.spec-legal-ref {
-  font-size: 10px;
-  font-family: monospace;
+.detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #404040;
+}
+
+.detail-code {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 12px;
   color: #737373;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.drawer-metric-grid {
+.detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-desc-text {
+  font-size: 13.5px;
+  color: #525252;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.detail-divider {
+  height: 1px;
+  background: #F5F5F5;
+}
+
+.detail-meta-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-.metric-box {
+.meta-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.metric-label {
-  font-size: 11px;
-  color: #737373;
-}
-
-.metric-val {
-  font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-  font-variant-numeric: tabular-nums;
-}
-
-.spec-description {
+.meta-label {
   font-size: 12px;
+  font-weight: 500;
   color: #737373;
-  line-height: 1.4;
-  margin: 0;
 }
 
-.specs-checklist {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e5e5e5;
+.meta-value {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #404040;
 }
 
-.spec-item {
+/* Sub-table in detail view */
+.members-subtable {
+  margin-top: 4px;
+}
+
+.subtable-row:hover {
+  background-color: #F5F5F5;
+}
+
+.subtable-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
-.spec-label {
+.btn-icon-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
   color: #737373;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.spec-value {
-  font-weight: 500;
+.btn-icon-subtle:hover {
+  background-color: #F5F5F5;
   color: #404040;
 }
 
-.spec-tag {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-  color: #737373;
+.btn-danger-subtle:hover {
+  background-color: #FEF2F2;
+  color: #E7000B;
 }
-
-.spec-tag.tag-yes {
-  background-color: #EFF6FF;
-  color: #0B529C;
-}
-
-.spec-tag.tag-warning {
-  background-color: #FFF7ED;
-  color: #E17100;
-}
-
-.scope-grid {
+/* Filter Panel Horizontal Wrap Standard */
+.filter-panel-grid {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 16px;
+  width: 100%;
 }
 
-.scope-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+.filter-panel-grid :deep(.form-control-wrapper) {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 280px;
+  width: auto;
 }
 
-.scope-icon {
-  color: #737373;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.scope-title {
-  display: block;
-  font-size: 11px;
-  color: #737373;
-}
-
-.scope-detail {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040;
-}
-
-.drawer-footer {
+.filter-panel-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid #e5e5e5;
-  background-color: #ffffff;
+  width: 100%;
+  margin-top: 10px;
 }
 </style>

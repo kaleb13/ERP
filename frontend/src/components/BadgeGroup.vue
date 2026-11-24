@@ -1,3 +1,17 @@
+<!--
+  Authoritative QMT BadgeGroup Component (Figma 5221:28673)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Compound notifications and longer informational badges across the platform:
+    e.g., System notices, feature announcements, live metric highlights, sync summaries,
+    and inventory notices (e.g. `StockSummary.vue`).
+  - Houses an inner `BaseBadge` pill, descriptive message text, and an optional action arrow (`ArrowRight`).
+  - Can be interactive (`clickable: true` or `:to="..."`).
+
+  WHEN NOT TO USE:
+  - DO NOT use for standard single-status table cells or state indicators (use `BaseBadge.vue` instead).
+  - DO NOT use as form input labels or breadcrumb badges.
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ArrowRight } from 'lucide-vue-next';
@@ -91,7 +105,7 @@ const handleClick = (e: MouseEvent) => {
         size="sm"
         type="pill-color"
         :color="color"
-        :dot="dot"
+        :dot="dot || type === 'modern'"
         class="qmt-badge-group__inner-badge"
       >
         <slot name="badge">{{ badgeLabel }}</slot>
@@ -119,7 +133,7 @@ const handleClick = (e: MouseEvent) => {
         size="sm"
         type="pill-color"
         :color="color"
-        :dot="dot"
+        :dot="dot || type === 'modern'"
         class="qmt-badge-group__inner-badge"
       >
         <slot name="badge">{{ badgeLabel }}</slot>
@@ -157,22 +171,22 @@ const handleClick = (e: MouseEvent) => {
 /* Sizes (Figma Node 5221:28673) */
 .qmt-badge-group--size-md {
   height: 30px;
-  padding: 3px 10px 3px 4px;
+  padding: 4px 8px 4px 4px;
   gap: 8px;
 }
 
 .qmt-badge-group--size-lg {
   height: 32px;
-  padding: 4px 12px 4px 4px;
+  padding: 4px 10px 4px 4px;
   gap: 10px;
 }
 
 .qmt-badge-group--pos-trailing.qmt-badge-group--size-md {
-  padding: 3px 4px 3px 10px;
+  padding: 4px 4px 4px 8px;
 }
 
 .qmt-badge-group--pos-trailing.qmt-badge-group--size-lg {
-  padding: 4px 4px 4px 12px;
+  padding: 4px 4px 4px 10px;
 }
 
 /* Inner Badge Base (Figma Node 5221:28673: Always a 100% fully rounded pill 9999px) */
@@ -204,15 +218,16 @@ const handleClick = (e: MouseEvent) => {
 }
 
 /* ─── Color Themes: Pill Color (Type = 'pill-color') ─── */
-/* Figma Node 5221:28673: Inner pill is solid white with subtle shadow, outer is tinted */
+/* Figma Node 5221:28673: Inner pill is solid #FFFFFF with 1px semantic colored outline matching outer border (no drop shadow) */
 .qmt-badge-group--type-pill-color :deep(.qmt-badge-group__inner-badge) {
   background-color: #FFFFFF !important;
-  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.06);
-  border: 1px solid rgba(16, 24, 40, 0.06) !important;
+  box-shadow: none;
+  border-width: 1px !important;
+  border-style: solid !important;
   border-radius: 9999px !important;
 }
 
-/* Gray */
+/* Gray (5221:3560) */
 .qmt-badge-group--color-gray {
   background-color: #FAFAFA;
   border-color: #E5E5E5;
@@ -229,9 +244,10 @@ const handleClick = (e: MouseEvent) => {
 }
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-gray :deep(.qmt-badge-group__inner-badge) {
   color: #404040 !important;
+  border-color: #E5E5E5 !important;
 }
 
-/* Primary / Brand Blue */
+/* Primary / Brand Blue (5221:3580) */
 .qmt-badge-group--color-primary,
 .qmt-badge-group--color-brand {
   background-color: #F1F7FE;
@@ -253,35 +269,37 @@ const handleClick = (e: MouseEvent) => {
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-primary :deep(.qmt-badge-group__inner-badge),
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-brand :deep(.qmt-badge-group__inner-badge) {
   color: #0B529C !important;
+  border-color: #BDDBFA !important;
 }
 
-/* Success Green (Figma Node 5221:3640) */
+/* Success Green (5221:3640) */
 .qmt-badge-group--color-success {
   background-color: #ECFDF5;
-  border-color: #A7F3D0;
+  border-color: #5EE9B5;
 }
 .qmt-badge-group--color-success.is-interactive:hover {
   background-color: #D1FAE5;
-  border-color: #6EE7B7;
+  border-color: #00BC7D;
 }
 .qmt-badge-group--color-success .qmt-badge-group__message {
   color: #007A55;
 }
 .qmt-badge-group--color-success .qmt-badge-group__arrow {
-  color: #007A55;
+  color: #009966;
 }
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-success :deep(.qmt-badge-group__inner-badge) {
   color: #007A55 !important;
+  border-color: #5EE9B5 !important;
 }
 
-/* Warning Amber */
+/* Warning Amber (5221:3620) */
 .qmt-badge-group--color-warning {
   background-color: #FFFBEB;
-  border-color: #FDE68A;
+  border-color: #FFD230;
 }
 .qmt-badge-group--color-warning.is-interactive:hover {
   background-color: #FEF3C7;
-  border-color: #FCD34D;
+  border-color: #F0B100;
 }
 .qmt-badge-group--color-warning .qmt-badge-group__message {
   color: #BB4D00;
@@ -291,25 +309,27 @@ const handleClick = (e: MouseEvent) => {
 }
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-warning :deep(.qmt-badge-group__inner-badge) {
   color: #BB4D00 !important;
+  border-color: #FFD230 !important;
 }
 
-/* Error Red */
+/* Error Red (5221:3600) */
 .qmt-badge-group--color-error {
   background-color: #FEF2F2;
-  border-color: #FECACA;
+  border-color: #FFA2A2;
 }
 .qmt-badge-group--color-error.is-interactive:hover {
   background-color: #FEE2E2;
-  border-color: #FCA5A5;
+  border-color: #FB2C36;
 }
 .qmt-badge-group--color-error .qmt-badge-group__message {
   color: #C10007;
 }
 .qmt-badge-group--color-error .qmt-badge-group__arrow {
-  color: #C10007;
+  color: #E7000B;
 }
 .qmt-badge-group--type-pill-color.qmt-badge-group--color-error :deep(.qmt-badge-group__inner-badge) {
   color: #C10007 !important;
+  border-color: #FFA2A2 !important;
 }
 
 /* ─── Modern Variant (Figma 5221:3660 - 5221:3794, 5221:28413) ─── */

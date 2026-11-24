@@ -297,3 +297,21 @@ export const getGovernanceStatusLabel = (status: GovernanceStatus): string => {
     default: return status;
   }
 };
+
+export const generateMethodCode = (name: string, existingCodes: string[] = []): string => {
+  if (!name.trim()) return '';
+  const base = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, '')
+    .split(/\s+/)
+    .slice(0, 3)
+    .join('_');
+  let code = base;
+  let counter = 2;
+  while (existingCodes.includes(code)) {
+    code = `${base}_${counter}`;
+    counter++;
+  }
+  return code;
+};

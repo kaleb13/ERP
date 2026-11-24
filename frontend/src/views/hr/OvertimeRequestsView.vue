@@ -684,7 +684,7 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 }
 
 .erp-table tr:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   cursor: pointer;
 }
 
@@ -772,7 +772,7 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
   border-color: #cbd5e1;
 }
@@ -836,7 +836,7 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -942,7 +942,7 @@ const formatMinutesToHours = (minutes: number | null | undefined): string => {
 
 .input-hint {
   font-size: 11px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.35;
 }
 

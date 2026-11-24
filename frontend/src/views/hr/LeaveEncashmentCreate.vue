@@ -444,7 +444,7 @@ const formatCurrency = (val: number) => {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-icon-more:hover { background-color: #f8fafc; }
+.btn-icon-more:hover { background-color: #fafafa; }
 
 .more-dropdown {
   position: absolute;
@@ -474,7 +474,7 @@ const formatCurrency = (val: number) => {
   cursor: pointer;
   text-align: left;
 }
-.more-dropdown-item:hover { background-color: #f8fafc; }
+.more-dropdown-item:hover { background-color: #fafafa; }
 
 .btn-secondary-clear {
   height: 38px;
@@ -491,7 +491,7 @@ const formatCurrency = (val: number) => {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.btn-secondary-clear:hover { background-color: #f8fafc; }
+.btn-secondary-clear:hover { background-color: #fafafa; }
 
 .btn-primary-save {
   height: 38px;
@@ -611,7 +611,7 @@ const formatCurrency = (val: number) => {
   cursor: pointer;
   border-bottom: 1px solid #f8fafc;
 }
-.picker-item:hover { background-color: #f1f5f9; }
+.picker-item:hover { background-color: #f5f5f5; }
 .picker-item.is-active { background-color: #eff6ff; }
 .picker-avatar {
   width: 28px;
@@ -658,7 +658,7 @@ const formatCurrency = (val: number) => {
 .kpi-divider {
   width: 1px;
   height: 40px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .kpi-columns-group {
@@ -783,7 +783,7 @@ const formatCurrency = (val: number) => {
 .calc-output-divider {
   width: 1px;
   height: 42px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .payroll-feeder-hint {
@@ -791,8 +791,8 @@ const formatCurrency = (val: number) => {
   align-items: center;
   gap: 8px;
   font-size: 11.5px;
-  color: #64748b;
-  background-color: #f8fafc;
+  color: #737373;
+  background-color: #fafafa;
   border: 1px solid #f1f5f9;
   padding: 8px 12px;
   border-radius: 6px;
@@ -800,7 +800,7 @@ const formatCurrency = (val: number) => {
 }
 .payroll-feeder-hint code {
   font-family: monospace;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   padding: 1px 4px;
   border-radius: 3px;
   color: #404040;
@@ -824,7 +824,7 @@ const formatCurrency = (val: number) => {
 .btn-acc-toggle {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 
@@ -860,14 +860,14 @@ const formatCurrency = (val: number) => {
 }
 .toolbar-label {
   font-size: 11.5px;
-  color: #64748b;
+  color: #737373;
   font-weight: 500;
   padding: 0 4px;
 }
 .toolbar-divider {
   width: 1px;
   height: 14px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 2px;
 }
 .btn-tool {
@@ -875,14 +875,14 @@ const formatCurrency = (val: number) => {
   height: 24px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
-.btn-tool:hover { background-color: #f1f5f9; color: #404040; }
+.btn-tool:hover { background-color: #f5f5f5; color: #404040; }
 
 .editor-textarea-field {
   width: 100%;

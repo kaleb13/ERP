@@ -737,7 +737,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 <style scoped>
 .announcement-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -779,7 +779,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .btn-icon-more:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .draft-dropdown-menu {
@@ -809,7 +809,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .dropdown-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0b529c;
 }
 
@@ -829,7 +829,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .btn-secondary-nav:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-primary-save {
@@ -950,13 +950,13 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .tb-dropdown-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .tb-divider {
   width: 1px;
   height: 16px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 4px;
 }
 
@@ -968,7 +968,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
   height: 26px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
@@ -976,7 +976,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .tb-icon-btn:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1037,7 +1037,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .scope-radio-option:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .scope-radio-option.selected {
@@ -1147,7 +1147,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 }
 
 .btn-add-line-chip:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #94a3b8;
   color: #0b529c;
 }
@@ -1301,7 +1301,7 @@ const saveRecord = (stateToSet: AnnouncementState) => {
 
 .ack-section-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 6px 0;
 }
 

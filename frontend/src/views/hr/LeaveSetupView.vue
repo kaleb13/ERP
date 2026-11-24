@@ -658,7 +658,7 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -738,7 +738,7 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
   transition: background-color 0.12s ease;
 }
 .clickable-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-checkbox,
@@ -802,7 +802,7 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
   transition: background-color 0.12s ease;
 }
 .btn-action-dots:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   color: #404040;
 }
 
@@ -833,7 +833,7 @@ const handleToggleTypeState = (item: LeaveTypeRecord) => {
   text-align: left;
 }
 .dropdown-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* Empty State */

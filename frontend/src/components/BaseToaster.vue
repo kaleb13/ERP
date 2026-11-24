@@ -1,3 +1,10 @@
+<!--
+  Authoritative QMT BaseToaster Component (Figma 4055:37)
+  ========================================================
+  Global notification container mounted once at root (e.g. `App.vue`).
+  Teleports toasts to <body> with smooth animations and auto-dismiss.
+  Dispatches notifications dispatched by `useToast().toast`.
+-->
 <script setup lang="ts">
 import BaseToast from './BaseToast.vue';
 import { useToast } from '../composables/useToast';

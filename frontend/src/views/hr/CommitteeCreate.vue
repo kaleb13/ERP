@@ -700,7 +700,7 @@ const handleSaveCommittee = () => {
 <style scoped>
 .committee-create-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
@@ -754,7 +754,7 @@ const handleSaveCommittee = () => {
 }
 
 .btn-clear-form:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #94a3b8;
 }
 
@@ -886,8 +886,8 @@ const handleSaveCommittee = () => {
 .gc-pill-tag {
   position: absolute;
   right: 8px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 6px;
@@ -941,7 +941,7 @@ const handleSaveCommittee = () => {
 }
 
 .child-table-header {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1022,7 +1022,7 @@ const handleSaveCommittee = () => {
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
 }
 
 .child-td-col-icon {
@@ -1052,7 +1052,7 @@ const handleSaveCommittee = () => {
 
 .table-checkbox:hover:not(:checked) {
   border-color: #94a3b8;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .table-checkbox:checked {
@@ -1078,7 +1078,7 @@ const handleSaveCommittee = () => {
   transition: all 0.15s ease;
 }
 .child-inline-select:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-select:focus {
@@ -1100,7 +1100,7 @@ const handleSaveCommittee = () => {
   transition: all 0.15s ease;
 }
 .child-inline-input:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #e2e8f0;
 }
 .child-inline-input:focus {
@@ -1130,7 +1130,7 @@ const handleSaveCommittee = () => {
 }
 .btn-row-expand:hover {
   color: #0B529C;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-row-remove {
@@ -1167,7 +1167,7 @@ const handleSaveCommittee = () => {
   transition: all 0.15s ease;
 }
 .btn-add-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #0B529C;
   color: #0B529C;
 }
@@ -1238,7 +1238,7 @@ const handleSaveCommittee = () => {
 }
 .btn-modal-close:hover {
   color: #404040;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .row-modal-body {
@@ -1353,7 +1353,7 @@ const handleSaveCommittee = () => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1387,12 +1387,12 @@ const handleSaveCommittee = () => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
@@ -1416,7 +1416,7 @@ const handleSaveCommittee = () => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   border-color: #cbd5e1;
 }

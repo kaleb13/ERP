@@ -268,7 +268,7 @@ const handleSave = () => {
   flex-direction: column;
   gap: var(--alias-spacing-3xl, 24px);
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -336,7 +336,7 @@ const handleSave = () => {
   cursor: pointer;
 }
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* Main Form */

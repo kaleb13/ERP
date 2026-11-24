@@ -915,13 +915,13 @@ const shiftSelectOptions = [
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -958,7 +958,7 @@ const shiftSelectOptions = [
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .menu-item.text-danger {
@@ -971,7 +971,7 @@ const shiftSelectOptions = [
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 2px 0;
 }
 
@@ -1076,7 +1076,7 @@ const shiftSelectOptions = [
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1122,7 +1122,7 @@ const shiftSelectOptions = [
   display: flex;
   justify-content: flex-end;
   padding: 12px 20px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1139,6 +1139,6 @@ const shiftSelectOptions = [
 }
 
 .btn-modal-dismiss:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 </style>

@@ -990,7 +990,7 @@ onUnmounted(() => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .erp-row.row-selected {
@@ -1072,7 +1072,7 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1107,12 +1107,12 @@ onUnmounted(() => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 
@@ -1235,7 +1235,7 @@ onUnmounted(() => {
 }
 
 .overview-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 14px;
@@ -1278,7 +1278,7 @@ onUnmounted(() => {
 
 .req-count {
   font-size: 11px;
-  color: #64748b;
+  color: #737373;
   background: #f1f5f9;
   padding: 2px 8px;
   border-radius: 9999px;
@@ -1296,7 +1296,7 @@ onUnmounted(() => {
   font-weight: 500;
   color: #737373;
   border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   text-align: left;
 }
 
@@ -1309,7 +1309,7 @@ onUnmounted(() => {
 
 .req-type {
   font-size: 11.5px;
-  color: #64748b;
+  color: #737373;
   text-transform: capitalize;
 }
 
@@ -1323,7 +1323,7 @@ onUnmounted(() => {
 }
 
 .mand-no {
-  color: #64748b;
+  color: #737373;
 }
 
 .desc-stack {
@@ -1358,7 +1358,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 14px 24px;
   border-top: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .footer-hint {

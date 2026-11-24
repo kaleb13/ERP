@@ -1,3 +1,17 @@
+<!--
+  Authoritative QMT FormToggle Component (Figma 3345:19141)
+  ==============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Instant-apply runtime preferences and live operational switches:
+    e.g., Table column visibility toggle in column hider, live Cloud Sync toggle, Focus mode switch,
+    Dark mode toggle, real-time device enable/disable switch in AttendanceView.
+  - Value takes effect IMMEDIATELY without waiting for a form "Save" button.
+
+  WHEN NOT TO USE:
+  - DO NOT use for standard form fields that require clicking "Save" or "Submit" to persist (use `FormCheckbox.vue` instead).
+  - DO NOT use for statutory compliance rules, policy conditions, or legal constraints (use `FormCheckbox.vue` with label & description).
+  - DO NOT use for table row multi-selection (use `FormCheckbox.vue`).
+-->
 <script setup lang="ts">
 import { computed } from 'vue';
 

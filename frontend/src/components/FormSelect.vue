@@ -1,3 +1,16 @@
+<!--
+  Authoritative QMT FormSelect Component (Figma 3345:19141)
+  ============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Primary dropdown selector across the entire ERP for ALL lookups, enums, status pickers, categories, and foreign keys.
+  - Features: Teleported custom popover listbox, search filtering, option grouping, single & multi-select, custom icons.
+  - Placeholder Rule: Use concise action-led placeholder (`Select Method`, `Select Scope`, `Select Unit`), never verbose explanations.
+
+  WHEN NOT TO USE:
+  - NEVER use native browser `<select>` tags or transparent select overlays.
+  - DO NOT use when inline creation of missing records is required (use `FormCombobox.vue` with "Create and Continue").
+  - DO NOT use for binary on/off options (use `FormCheckbox.vue` or `FormToggle.vue`).
+-->
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots } from 'vue';

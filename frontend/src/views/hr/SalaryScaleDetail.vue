@@ -583,7 +583,7 @@ const tabs = computed(() => [
 .salary-scale-detail-page {
   min-height: 100vh;
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* ═══ TOP DOCUMENT ACTION BAR ═══ */
@@ -622,7 +622,7 @@ const tabs = computed(() => [
   transition: all 0.15s ease;
 }
 .btn-pdf-export:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #cbd5e1;
 }
 
@@ -677,7 +677,7 @@ const tabs = computed(() => [
 .entity-title {
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: #404040;
   margin: 0;
 }
 
@@ -686,11 +686,11 @@ const tabs = computed(() => [
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
 }
 
 .entity-code {
-  color: #64748b;
+  color: #737373;
 }
 
 .doc-meta-side {
@@ -705,7 +705,7 @@ const tabs = computed(() => [
   align-items: center;
   gap: 7px;
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
 }
 
 .meta-icon {
@@ -833,7 +833,7 @@ const tabs = computed(() => [
   display: inline-flex;
   align-items: center;
   padding: 4px 14px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border: 1px solid #e2e8f0;
   color: #737373;
   font-size: 11.5px;
@@ -951,20 +951,20 @@ const tabs = computed(() => [
 
 .spec-level-tag {
   font-size: 12px;
-  color: #64748b;
+  color: #737373;
   font-weight: 500;
 }
 
 .spec-grade-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin: 0 0 6px;
 }
 
 .spec-grade-desc {
   font-size: 12.5px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.5;
   margin: 0 0 16px;
 }
@@ -973,7 +973,7 @@ const tabs = computed(() => [
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 12px 14px;
   border-radius: 8px;
 }
@@ -993,7 +993,7 @@ const tabs = computed(() => [
 
 .guardrail-value {
   font-size: 13px;
-  color: #1e293b;
+  color: #404040;
 }
 
 /* ═══ READ-ONLY VIEW DETAIL MODAL ═══ */
@@ -1035,13 +1035,13 @@ const tabs = computed(() => [
 .modal-dialog-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin: 0;
 }
 
 .modal-dialog-subtitle {
   font-size: 12.5px;
-  color: #64748b;
+  color: #737373;
   margin-top: 2px;
   display: block;
 }
@@ -1054,13 +1054,13 @@ const tabs = computed(() => [
   height: 28px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1077,7 +1077,7 @@ const tabs = computed(() => [
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
@@ -1098,7 +1098,7 @@ const tabs = computed(() => [
 
 .summary-val {
   font-size: 13.5px;
-  color: #1e293b;
+  color: #404040;
 }
 
 .view-desc-card {
@@ -1115,7 +1115,7 @@ const tabs = computed(() => [
 
 .desc-card-text {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.5;
   margin: 0;
 }

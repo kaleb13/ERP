@@ -1128,7 +1128,7 @@ onMounted(() => {
 }
 
 .btn-clear-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-save-action {
@@ -1225,7 +1225,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
   padding: 6px 10px;
 }
@@ -1248,7 +1248,7 @@ onMounted(() => {
 .toolbar-divider {
   width: 1px;
   height: 18px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   margin: 0 4px;
 }
 
@@ -1273,7 +1273,7 @@ onMounted(() => {
 }
 
 .editor-icon-btn:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .editor-color-box {
@@ -1342,7 +1342,7 @@ onMounted(() => {
 
 .badge-count {
   background: #f1f5f9;
-  color: #64748b;
+  color: #737373;
   font-size: 11.5px;
   font-weight: 500;
   padding: 2px 8px;
@@ -1411,7 +1411,7 @@ onMounted(() => {
 }
 
 .child-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .child-row-selected {
@@ -1592,7 +1592,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1626,12 +1626,12 @@ onMounted(() => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-icon:hover:not(:disabled) {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 .btn-modal-ctrl-icon:disabled {
@@ -1655,7 +1655,7 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .btn-modal-ctrl-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   border-color: #cbd5e1;
 }

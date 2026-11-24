@@ -873,7 +873,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 }
 
 .clickable-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-checkbox, .td-checkbox {
@@ -968,7 +968,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 .btn-action-dots:hover {
   color: #0b529c;
   border-color: #0b529c;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .action-popup-menu {
@@ -1004,7 +1004,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 }
 
 .popup-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -1094,8 +1094,8 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   position: absolute;
   right: 8px;
   padding: 2px 6px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 10.5px;
   font-weight: 600;
   border-radius: 4px;
@@ -1157,7 +1157,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   width: 44px;
   height: 4px;
   border-radius: 9999px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
 }
 
 /* Drawer Header with Prominent User Identity */
@@ -1199,8 +1199,8 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1237,7 +1237,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #737373;
   font-size: 11px;
   font-weight: 600;
@@ -1333,7 +1333,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1342,7 +1342,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 }
 
 .btn-drawer-close:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
   border-color: #cbd5e1;
 }
@@ -1361,7 +1361,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -1419,7 +1419,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 .sub-erp-table th {
   height: 32px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #737373;
   font-size: 11.5px;
   font-weight: 500;
@@ -1526,7 +1526,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 }
 
 .btn-footer-secondary:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
 }
 
@@ -1539,7 +1539,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
   border-radius: 8px;
   background-color: transparent;
   border: 1px solid #e2e8f0;
-  color: #64748b;
+  color: #737373;
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -1547,7 +1547,7 @@ const handleMetricClick = (tabKey: SettlementTabKey) => {
 }
 
 .btn-footer-ghost:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   border-color: #cbd5e1;
 }

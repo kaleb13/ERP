@@ -1,3 +1,29 @@
+<!--
+  Authoritative QMT BaseBadge Component (Figma 3345:21147)
+  ============================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Primary badge component across all tables, cards, drawers, and headers.
+  - Used for table Status columns, State columns (`active` / `inactive`), lifecycle states, and salient category tags.
+  - Supports types: `pill-color` (default), `solid`, `modern`.
+  - Supports dot indicator (`:dot="true"`), leading/trailing icons, and close button (`:closable="true"`).
+
+  MANDATORY CONTRACT RULES:
+  - ALWAYS pass color via `:color="..."` (NEVER `:variant="..."`, which causes monochrome fallback).
+  - Valid semantic colors:
+    * `success`: Active lifecycle state, approved governance, completed (`#009966`).
+    * `gray`: STRICTLY reserved for Inactive / Dormant states (`state === 'inactive'`).
+    * `indigo`: Statutory policy rules, mandatory compliance, legal enforcement.
+    * `blue`: Permissive alternatives, secondary scopes, informational options.
+    * `purple`: Specialized operational modes or classifications.
+    * `warning`: Pending review, cautionary thresholds.
+    * `error`: Rejected, failed, strict breach.
+    * `primary`: Brand blue anchor (`#0B529C`).
+
+  WHEN NOT TO USE:
+  - NEVER use `gray` for active functional lookups (e.g. `Permissive`), because it makes active records look inactive/dead.
+  - NEVER construct raw `<span class="status-pill">` or `<span class="status-dot">` tags.
+  - DO NOT use for long compound notifications with action arrows (use `BadgeGroup.vue` instead).
+-->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 import { X } from 'lucide-vue-next';

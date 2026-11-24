@@ -15,7 +15,7 @@ import {
   GitCommit, PieChart, Banknote, ListFilter,
   Fingerprint, UserMinus, CheckSquare, Receipt,
   ClipboardCheck, Calculator, Megaphone, LifeBuoy,
-  Tag, DollarSign, Check, Lock, Scale
+  Tag, DollarSign, Check, Lock, Scale, Route
 } from 'lucide-vue-next';
 import BaseNavItem from './BaseNavItem.vue';
 
@@ -252,10 +252,24 @@ const iconsMap: Record<string, any> = {
   Settings,
   Megaphone,
   LifeBuoy,
-  Scale
+  Scale,
+  Route
 };
 
-// Active link matching helper
+// Active link matching helper (prefers most specific route when sibling paths share a prefix)
+const allActiveMenuPaths = computed<string[]>(() => {
+  const paths: string[] = [];
+  for (const item of activeModule.value.menu as any[]) {
+    if (item.to) paths.push(item.to);
+    if (Array.isArray(item.children)) {
+      for (const child of item.children) {
+        if (child.to) paths.push(child.to);
+      }
+    }
+  }
+  return paths;
+});
+
 const isChildActive = (to?: string) => {
   if (!to) return false;
   if (to.includes('?')) {
@@ -269,11 +283,15 @@ const isChildActive = (to?: string) => {
     }
     return false;
   }
-  if (route.path === to) {
-    if (route.query.tab && route.query.tab !== 'users') {
-      return false;
-    }
-    return true;
+  if (route.path === to) return true;
+  if (route.path.startsWith(`${to}/`)) {
+    const hasMoreSpecificMatch = allActiveMenuPaths.value.some(
+      (other) =>
+        other !== to &&
+        other.length > to.length &&
+        (route.path === other || route.path.startsWith(`${other}/`))
+    );
+    return !hasMoreSpecificMatch;
   }
   return false;
 };
@@ -294,10 +312,19 @@ const activeModule = computed(() => {
       iconColor: '#009966',
       iconBg: '#ECFDF5',
       menu: [
+        { isHeader: true, label: 'Procurement Planning' },
+        { to: '/procurement/plans', label: 'Procurement Plans', icon: 'ClipboardList' },
         { isHeader: true, label: 'Foundation & Policy' },
         { to: '/procurement/categories', label: 'Procurement Categories', icon: 'FolderTree' },
         { to: '/procurement/units', label: 'Procurement Units', icon: 'Building2' },
-        { to: '/procurement/thresholds', label: 'Spend Threshold Bands', icon: 'Scale' }
+        { to: '/procurement/methods', label: 'Purchase Methods', icon: 'Scale' },
+        { to: '/procurement/routing-rules', label: 'Approval & Assignment Rules', icon: 'GitPullRequest' },
+        { to: '/procurement/committee-mandates', label: 'Committee Mandates', icon: 'Users' },
+        { to: '/procurement/tolerances', label: 'Receipt & Matching Rules', icon: 'Sliders' },
+        { isHeader: true, label: 'Supplier Lifecycle' },
+        { to: '/procurement/suppliers', label: 'Supplier Hub', icon: 'Briefcase' },
+        { to: '/procurement/supplier-registrations', label: 'Supplier Registrations', icon: 'UserCheck' },
+        { to: '/procurement/performance-setup', label: 'Performance Setup', icon: 'Award' }
       ]
     };
   } else if (path.startsWith('/hr')) {
@@ -309,7 +336,15 @@ const activeModule = computed(() => {
       iconBg: '#F5F3FF',
       menu: [
         { isHeader: true, label: 'USER AND ACCESS' },
-        { to: '/hr/employees', label: 'Employee Directory', icon: 'User' },
+        {
+          isGroup: true,
+          label: 'Employees',
+          icon: 'Users',
+          children: [
+            { to: '/hr/employees', label: 'Employee Directory', icon: 'UserCheck' },
+            { to: '/hr/movements', label: 'Employee Movement', icon: 'ArrowLeftRight' }
+          ]
+        },
         { isHeader: true, label: 'Organization & Structure' },
         { to: '/hr/org-structures', label: 'Org Structures', icon: 'Network' },
         { isHeader: true, label: 'Work Calendar & Shifts' },
@@ -903,11 +938,11 @@ onUnmounted(() => {
   background: transparent;
 }
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   border-radius: 9999px;
 }
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
 }
 .sidebar-nav {
   scrollbar-width: thin;

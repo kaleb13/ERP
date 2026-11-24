@@ -881,7 +881,7 @@ onUnmounted(() => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .erp-row.row-selected {
@@ -964,7 +964,7 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -999,12 +999,12 @@ onUnmounted(() => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 
@@ -1095,8 +1095,8 @@ onUnmounted(() => {
 }
 
 .gc-pill-tag {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 10.5px;
   font-weight: 600;
   padding: 2px 6px;
@@ -1236,7 +1236,7 @@ onUnmounted(() => {
 
 .step-rule {
   font-size: 10.5px;
-  color: #64748b;
+  color: #737373;
 }
 
 .matrix-grid-modal-footer {

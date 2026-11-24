@@ -638,7 +638,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 <style scoped>
 .service-agreements-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -713,7 +713,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
   width: 100%;
   height: 38px;
   padding: 0 12px 0 34px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;
@@ -754,7 +754,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 }
 
 .erp-table-row:hover td {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected td {
@@ -829,13 +829,13 @@ const handleStateChange = (id: number, newState: AgreementState) => {
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -873,7 +873,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 }
 
 .menu-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0b529c;
 }
 
@@ -889,7 +889,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 3px 0;
 }
 
@@ -994,7 +994,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1007,7 +1007,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 }
 
 .info-block-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 16px;
@@ -1072,7 +1072,7 @@ const handleStateChange = (id: number, newState: AgreementState) => {
 }
 
 .btn-footer-secondary:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-footer-primary {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { X, Printer, Download } from 'lucide-vue-next';;
 import FormToggle from './FormToggle.vue';
 import FormRadio from './FormRadio.vue';
+import PrintPreviewDrawer from './PrintPreviewDrawer.vue';
 import type { ScaleDetailData } from '../views/hr/SalaryScaleDetail.vue';
 
 const props = defineProps<{
@@ -14,19 +14,13 @@ const emit = defineEmits<{
   'update:show': [value: boolean];
 }>();
 
-// ─── Print Settings Reactive State (Matching Image 1) ───
+// ─── Print Settings Reactive State (Matching Figma Node 5005:78527) ───
 const printSettings = ref({
-  showCompanyLogo: true,
-  showDocumentTitle: true,
   showAmharicHeader: true,
   showOfficialStamp: true,
   showSignatures: true,
   displayMode: 'detailed' as 'detailed' | 'summary'
 });
-
-const closeModal = () => {
-  emit('update:show', false);
-};
 
 // Currency Formatter
 const formatCurrency = (val: number): string => {
@@ -52,753 +46,443 @@ const maxPay = computed(() => {
   const allCeilings = props.scale.grades.map(g => g.ceiling_salary);
   return allCeilings.length > 0 ? Math.max(...allCeilings) : 38740;
 });
-
-// Print execution
-const executePrint = () => {
-  window.print();
-};
-
-const downloadPDF = () => {
-  window.print();
-};
 </script>
 
 <template>
-  <div v-if="show" class="print-modal-overlay" @click="closeModal">
-    <div class="print-modal-card" @click.stop>
-      
-      <!-- ═══ MODAL HEADER (Matching Image 1) ═══ -->
-      <div class="print-modal-header">
-        <div class="header-titles">
-          <h2 class="modal-title">Print Settings</h2>
-          <p class="modal-subtitle">Configure Document layout and Visibility</p>
-        </div>
-        <button type="button" class="btn-modal-close" @click="closeModal" aria-label="Close">
-          <X :size="20" />
-        </button>
+  <PrintPreviewDrawer
+    :show="show"
+    title="Print Settings"
+    subtitle="Configure Document layout and Visibility"
+    documentTitle="Master Salary Scale Matrix"
+    :documentSubtitle="scale.entity_name"
+    :documentCode="'SCALE-' + (scale.code || '00124')"
+    :documentDate="formatDate(scale.effective_from) + ' – ' + formatDate(scale.effective_to)"
+    :documentMeta="scale.currency_code + ' — ' + scale.currency_name"
+    :currentPage="1"
+    :totalPages="1"
+    @update:show="(val) => emit('update:show', val)"
+  >
+    <!-- ─── Content-Specific Custom Settings on the Left ─── -->
+    <template #settings>
+      <!-- Amharic Official Header -->
+      <div class="setting-toggle-row">
+        <span class="setting-toggle-title">Amharic Official Header</span>
+        <FormToggle v-model="printSettings.showAmharicHeader" size="sm" aria-label="Amharic Official Header" />
       </div>
 
-      <!-- ═══ MODAL BODY: LEFT SETTINGS + RIGHT LIVE PREVIEW (Matching Image 1) ═══ -->
-      <div class="print-modal-body">
-        
-        <!-- ─── LEFT: SETTINGS SIDEBAR ─── -->
-        <div class="print-settings-sidebar">
-          
-          <!-- Company Logo Toggle -->
-          <div class="setting-toggle-row">
-            <span class="setting-toggle-title">Company Logo</span>
-            <FormToggle v-model="printSettings.showCompanyLogo" size="md" aria-label="Company Logo" />
-          </div>
-
-          <!-- Document Title Toggle -->
-          <div class="setting-toggle-row">
-            <span class="setting-toggle-title">Document Title</span>
-            <FormToggle v-model="printSettings.showDocumentTitle" size="md" aria-label="Document Title" />
-          </div>
-
-          <!-- Amharic Official Header (Image 2 Inspiration) -->
-          <div class="setting-toggle-row">
-            <span class="setting-toggle-title">Amharic Official Header</span>
-            <FormToggle v-model="printSettings.showAmharicHeader" size="md" aria-label="Amharic Official Header" />
-          </div>
-
-          <!-- Official Stamp & Seal (Image 2 Inspiration) -->
-          <div class="setting-toggle-row">
-            <span class="setting-toggle-title">Official Stamp &amp; Seal</span>
-            <FormToggle v-model="printSettings.showOfficialStamp" size="md" aria-label="Official Stamp and Seal" />
-          </div>
-
-          <!-- Signatures Section -->
-          <div class="setting-toggle-row">
-            <span class="setting-toggle-title">Signatures &amp; Endorsement</span>
-            <FormToggle v-model="printSettings.showSignatures" size="md" aria-label="Signatures and Endorsement" />
-          </div>
-
-          <!-- Matrix Display Layout Selector (Matching Image 1 Segmented Radios) -->
-          <div class="layout-selector-section">
-            <span class="selector-section-label">Salary Matrix Display Layout</span>
-
-            <!-- Option 1: Detail List / 2D Grid -->
-            <div
-              class="layout-radio-option"
-              :class="{ 'radio-selected': printSettings.displayMode === 'detailed' }"
-              @click="printSettings.displayMode = 'detailed'"
-            >
-              <FormRadio
-                v-model="printSettings.displayMode"
-                name="salaryDisplayMode"
-                value="detailed"
-                size="sm"
-                label="Detail Matrix Grid"
-                description="Full 2D compensation grid with all grade bands and step progression columns. Paginated to A4 paper."
-              />
-            </div>
-
-            <!-- Option 2: Summary Mode -->
-            <div
-              class="layout-radio-option"
-              :class="{ 'radio-selected': printSettings.displayMode === 'summary' }"
-              @click="printSettings.displayMode = 'summary'"
-            >
-              <FormRadio
-                v-model="printSettings.displayMode"
-                name="salaryDisplayMode"
-                value="summary"
-                size="sm"
-                label="Summary Mode"
-                description="Displays a compact card showing consolidated pay guardrails and grade ranges. Fits on 1 page."
-              />
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ─── RIGHT: LIVE SCROLLABLE PREVIEW CANVAS (Matching Image 1 & Image 2) ─── -->
-        <div class="print-preview-container">
-          <div class="preview-scroll-wrapper">
-            
-            <!-- White Document Sheet (Real-Time Reactive to Left Controls) -->
-            <div class="printable-paper-sheet printable-document-area">
-              
-              <!-- Sheet Header Group -->
-              <div class="sheet-header-block">
-                
-                <!-- Left: Logo & Titles -->
-                <div class="sheet-identity-left">
-                  <!-- Company Logo -->
-                  <div v-if="printSettings.showCompanyLogo" class="sheet-logo-circle">
-                    <svg class="sheet-logo-svg" viewBox="0 0 44 44" fill="none">
-                      <circle cx="22" cy="22" r="21" stroke="#0B529C" stroke-width="2" fill="#f8fafc" />
-                      <path d="M12 30V15L22 25L32 15V30" stroke="#0B529C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M12 21L22 30L32 21" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-
-                  <!-- Document Title & Amharic Inspiration (Image 2) -->
-                  <div class="sheet-titles-col">
-                    <!-- Amharic Official Banner (From Image 2) -->
-                    <div v-if="printSettings.showAmharicHeader" class="amharic-header-group">
-                      <span class="amharic-table-pill">ሠንጠረዥ-2</span>
-                      <h2 class="amharic-doc-title">የመንግሥትና የድርጅት ሠራተኞች የደመወዝ ስኬል የመሸጋገሪያ ሠንጠረዥ</h2>
-                      <span class="amharic-date-sub">ጥቅምት 2017 ዓ.ም</span>
-                    </div>
-
-                    <!-- English Title -->
-                    <div v-if="printSettings.showDocumentTitle" class="english-title-group">
-                      <h1 class="sheet-main-title">Master Salary Scale Matrix</h1>
-                      <span class="sheet-company-name">{{ scale.entity_name }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Right: Scale Identifier & Reference Code -->
-                <div class="sheet-identity-right">
-                  <span class="sheet-doc-code font-mono">SCALE-{{ scale.code || '00124' }}</span>
-                  <div class="sheet-timeline-tag">
-                    {{ formatDate(scale.effective_from) }} – {{ formatDate(scale.effective_to) }}
-                  </div>
-                  <span class="sheet-currency-tag font-mono">{{ scale.currency_code }} ({{ scale.currency_name }})</span>
-                </div>
-              </div>
-
-              <!-- Metadata Summary Card (Matching GatePass style in Image 1) -->
-              <div class="sheet-meta-card">
-                <div class="meta-card-item">
-                  <span class="meta-item-val">{{ scale.entity_name }}</span>
-                  <span class="meta-item-lbl">Owning Entity</span>
-                </div>
-                <div class="meta-card-item">
-                  <span class="meta-item-val">{{ scale.grades.length }} Grades × {{ scale.number_of_steps }} Steps</span>
-                  <span class="meta-item-lbl">Grid Architecture</span>
-                </div>
-                <div class="meta-card-item">
-                  <span class="meta-item-val">{{ new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
-                  <span class="meta-item-lbl">Generated Date</span>
-                </div>
-              </div>
-
-              <!-- ─── DETAILED 2D MATRIX VIEW (Image 2 Inspiration) ─── -->
-              <div v-if="printSettings.displayMode === 'detailed'" class="sheet-matrix-table-container">
-                <table class="official-salary-grid-table">
-                  <thead>
-                    <tr>
-                      <th class="th-lvl" style="width: 55px;">ደረጃ<br><span class="sub-th">Level</span></th>
-                      <th class="th-name">የሥራ መደብ / Job Grade Band</th>
-                      <th class="th-base">መነሻ ደመወዝ<br><span class="sub-th">Base Salary</span></th>
-                      <th 
-                        v-for="s in scale.number_of_steps" 
-                        :key="'step-head-' + s" 
-                        class="th-step"
-                      >
-                        እርከን {{ s }}<br><span class="sub-th">Step {{ s }}</span>
-                      </th>
-                      <th class="th-ceil">ጣሪያ ደመወዝ<br><span class="sub-th">Ceiling Salary</span></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="grade in scale.grades" :key="grade.id">
-                      <!-- Level in Roman Numeral (Image 2 style: I, II, III, IV, V) -->
-                      <td class="td-lvl font-bold">{{ grade.roman_level || ('LV ' + grade.level) }}</td>
-                      
-                      <!-- Grade Name -->
-                      <td class="td-name font-medium">
-                        <span class="grade-title-text">{{ grade.name }}</span>
-                        <span class="grade-code-pill font-mono">{{ grade.code }}</span>
-                      </td>
-
-                      <!-- Base Salary -->
-                      <td class="td-amt font-mono">{{ formatCurrency(grade.base_salary) }}</td>
-
-                      <!-- Progression Steps (1..N) -->
-                      <td 
-                        v-for="step in grade.steps" 
-                        :key="'step-' + grade.id + '-' + step.step_number" 
-                        class="td-amt font-mono"
-                      >
-                        {{ formatCurrency(step.amount) }}
-                      </td>
-
-                      <!-- Ceiling Salary -->
-                      <td class="td-amt font-mono font-bold">{{ formatCurrency(grade.ceiling_salary) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- ─── SUMMARY MODE VIEW ─── -->
-              <div v-else class="sheet-summary-mode-container">
-                <div class="summary-highlight-cards">
-                  <div class="summary-stat-box">
-                    <span class="stat-lbl">Total Configured Grades</span>
-                    <span class="stat-num">{{ scale.grades.length }} Pay Bands</span>
-                  </div>
-                  <div class="summary-stat-box">
-                    <span class="stat-lbl">Progression Step Intervals</span>
-                    <span class="stat-num">{{ scale.number_of_steps }} Increments</span>
-                  </div>
-                  <div class="summary-stat-box">
-                    <span class="stat-lbl">Minimum Starting Floor</span>
-                    <span class="stat-num font-mono">{{ formatCurrency(minPay) }} {{ scale.currency_code }}</span>
-                  </div>
-                  <div class="summary-stat-box">
-                    <span class="stat-lbl">Maximum Ceiling Cap</span>
-                    <span class="stat-num font-mono">{{ formatCurrency(maxPay) }} {{ scale.currency_code }}</span>
-                  </div>
-                </div>
-
-                <table class="summary-grades-compact-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 70px;">Level</th>
-                      <th>Job Grade Band</th>
-                      <th>Floor Base Pay</th>
-                      <th>Ceiling Cap Pay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="grade in scale.grades" :key="'sum-' + grade.id">
-                      <td class="font-bold">Level {{ grade.level }}</td>
-                      <td>{{ grade.name }}</td>
-                      <td class="font-mono">{{ formatCurrency(grade.base_salary) }} {{ scale.currency_code }}</td>
-                      <td class="font-mono font-bold">{{ formatCurrency(grade.ceiling_salary) }} {{ scale.currency_code }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- ─── FOOTER SIGNATURES & OFFICIAL SEAL (Image 2 Inspiration) ─── -->
-              <div v-if="printSettings.showSignatures || printSettings.showOfficialStamp" class="sheet-endorsement-footer">
-                
-                <!-- Official Stamp Seal (Image 2 Circular Stamp Effect) -->
-                <div v-if="printSettings.showOfficialStamp" class="official-seal-wrapper">
-                  <svg class="official-stamp-svg" viewBox="0 0 160 160">
-                    <circle cx="80" cy="80" r="74" stroke="#1d4ed8" stroke-width="2.5" fill="none" opacity="0.85" />
-                    <circle cx="80" cy="80" r="68" stroke="#1d4ed8" stroke-width="1.2" stroke-dasharray="3,2" fill="none" opacity="0.85" />
-                    <!-- Curving Text Path Top -->
-                    <path id="curveTop" d="M 22 80 A 58 58 0 0 1 138 80" fill="none" />
-                    <text font-size="8.5" font-weight="700" fill="#1d4ed8" opacity="0.85" letter-spacing="1.2">
-                      <textPath href="#curveTop" startOffset="50%" text-anchor="middle">
-                        ★ የገንዘብ ሚኒስቴር / COMPENSATION SEAL ★
-                      </textPath>
-                    </text>
-                    <!-- Star & Center Text -->
-                    <polygon points="80,50 83,62 95,62 85,70 88,82 80,74 72,82 75,70 65,62 77,62" fill="#1d4ed8" opacity="0.85" />
-                    <text x="80" y="96" font-size="10" font-weight="800" fill="#1d4ed8" text-anchor="middle" opacity="0.85">APPROVED</text>
-                    <text x="80" y="107" font-size="7.5" font-weight="600" fill="#1d4ed8" text-anchor="middle" opacity="0.85">SALARY SCALE</text>
-                    <!-- Curving Text Path Bottom -->
-                    <path id="curveBottom" d="M 138 80 A 58 58 0 0 1 22 80" fill="none" />
-                    <text font-size="8.5" font-weight="700" fill="#1d4ed8" opacity="0.85" letter-spacing="1.2">
-                      <textPath href="#curveBottom" startOffset="50%" text-anchor="middle">
-                        HALETA ENTERPRISE ERP SYSTEM
-                      </textPath>
-                    </text>
-                  </svg>
-                </div>
-
-                <!-- Signatures Grid -->
-                <div v-if="printSettings.showSignatures" class="sheet-signatures-group">
-                  <div class="sig-column">
-                    <div class="sig-line"></div>
-                    <span class="sig-role">Prepared By: Analyst</span>
-                    <span class="sig-note">Signature &amp; Date</span>
-                  </div>
-                  <div class="sig-column">
-                    <div class="sig-line"></div>
-                    <span class="sig-role">Verified By: HR Director</span>
-                    <span class="sig-note">Signature &amp; Date</span>
-                  </div>
-                  <div class="sig-column">
-                    <div class="sig-line"></div>
-                    <span class="sig-role">Approved By: Managing Director</span>
-                    <span class="sig-note">Official Signature &amp; Date</span>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Page 1/1 Badge (Matching Image 1) -->
-              <div class="sheet-page-badge">
-                Page 1/1
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-
+      <!-- Official Stamp & Seal -->
+      <div class="setting-toggle-row">
+        <span class="setting-toggle-title">Official Stamp &amp; Seal</span>
+        <FormToggle v-model="printSettings.showOfficialStamp" size="sm" aria-label="Official Stamp and Seal" />
       </div>
 
-      <!-- ═══ MODAL FOOTER (Matching Image 1) ═══ -->
-      <div class="print-modal-footer">
-        <AppButton variant="outline" size="sm" @click="closeModal">
-          <template #icon-left><X :size="15" /></template>
-          <span>Close</span>
-        </AppButton>
+      <!-- Signatures Section -->
+      <div class="setting-toggle-row">
+        <span class="setting-toggle-title">Signatures &amp; Endorsement</span>
+        <FormToggle v-model="printSettings.showSignatures" size="sm" aria-label="Signatures and Endorsement" />
+      </div>
 
-        <div class="footer-action-buttons">
-          <AppButton variant="outline" size="sm" @click="downloadPDF">
-            <template #icon-left><Download :size="15" /></template>
-            <span>PDF</span>
-          </AppButton>
-          <AppButton variant="primary" size="sm" @click="executePrint">
-            <template #icon-left><Printer :size="15" /></template>
-            <span>Print</span>
-          </AppButton>
+      <!-- Matrix Display Layout Selector -->
+      <div class="layout-selector-section">
+        <span class="selector-section-label">Salary Matrix Display Layout</span>
+
+        <!-- Option 1: Detail List / 2D Grid -->
+        <div
+          class="layout-radio-option"
+          :class="{ 'radio-selected': printSettings.displayMode === 'detailed' }"
+          @click="printSettings.displayMode = 'detailed'"
+        >
+          <FormRadio
+            v-model="printSettings.displayMode"
+            name="salaryDisplayMode"
+            value="detailed"
+            size="sm"
+            label="Detail Matrix Grid"
+            description="Full 2D compensation grid with all grade bands and step progression columns."
+          />
+        </div>
+
+        <!-- Option 2: Summary Mode -->
+        <div
+          class="layout-radio-option"
+          :class="{ 'radio-selected': printSettings.displayMode === 'summary' }"
+          @click="printSettings.displayMode = 'summary'"
+        >
+          <FormRadio
+            v-model="printSettings.displayMode"
+            name="salaryDisplayMode"
+            value="summary"
+            size="sm"
+            label="Summary Mode"
+            description="Displays a compact card showing consolidated pay guardrails and grade ranges."
+          />
+        </div>
+      </div>
+    </template>
+
+    <!-- ─── Printable Document Sheet on the Right ─── -->
+    <template #document>
+      <!-- Amharic Official Banner (Optional) -->
+      <div v-if="printSettings.showAmharicHeader" class="amharic-header-group">
+        <span class="amharic-table-pill">ሠንጠረዥ-2</span>
+        <h2 class="amharic-doc-title">የመንግሥትና የድርጅት ሠራተኞች የደመወዝ ስኬል የመሸጋገሪያ ሠንጠረዥ</h2>
+        <span class="amharic-date-sub">ጥቅምት 2017 ዓ.ም</span>
+      </div>
+
+      <!-- Metadata Summary Card (Figma Node 5005:78562) -->
+      <div class="sheet-meta-card">
+        <div class="meta-card-item">
+          <span class="meta-item-lbl">Owning Entity</span>
+          <span class="meta-item-val">{{ scale.entity_name }}</span>
+        </div>
+        <div class="meta-card-item">
+          <span class="meta-item-lbl">Grid Architecture</span>
+          <span class="meta-item-val">{{ scale.grades.length }} Grades × {{ scale.number_of_steps }} Steps</span>
+        </div>
+        <div class="meta-card-item">
+          <span class="meta-item-lbl">Generated Date</span>
+          <span class="meta-item-val">{{ new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
         </div>
       </div>
 
-    </div>
-  </div>
+      <!-- ─── DETAILED 2D MATRIX VIEW (Figma Node 5005:78573) ─── -->
+      <div v-if="printSettings.displayMode === 'detailed'" class="sheet-matrix-table-container">
+        <table class="official-salary-grid-table">
+          <thead>
+            <tr>
+              <th class="th-lvl" style="width: 55px;">ደረጃ<br><span class="sub-th">Level</span></th>
+              <th class="th-name">የሥራ መደብ / Job Grade Band</th>
+              <th class="th-base">መነሻ ደመወዝ<br><span class="sub-th">Base Salary</span></th>
+              <th 
+                v-for="s in scale.number_of_steps" 
+                :key="'step-head-' + s" 
+                class="th-step"
+              >
+                እርከን {{ s }}<br><span class="sub-th">Step {{ s }}</span>
+              </th>
+              <th class="th-ceil">ጣሪያ ደመወዝ<br><span class="sub-th">Ceiling Salary</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="grade in scale.grades" :key="grade.id">
+              <td class="td-lvl font-bold">{{ grade.roman_level || ('LV ' + grade.level) }}</td>
+              <td class="td-name font-medium">
+                <span class="grade-title-text">{{ grade.name }}</span>
+                <span class="grade-code-pill font-mono">{{ grade.code }}</span>
+              </td>
+              <td class="td-amt font-mono">{{ formatCurrency(grade.base_salary) }}</td>
+              <td 
+                v-for="step in grade.steps" 
+                :key="'step-' + grade.id + '-' + step.step_number" 
+                class="td-amt font-mono"
+              >
+                {{ formatCurrency(step.amount) }}
+              </td>
+              <td class="td-amt font-mono font-bold">{{ formatCurrency(grade.ceiling_salary) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ─── SUMMARY MODE VIEW ─── -->
+      <div v-else class="sheet-summary-mode-container">
+        <div class="summary-highlight-cards">
+          <div class="summary-stat-box">
+            <span class="stat-lbl">Total Configured Grades</span>
+            <span class="stat-num">{{ scale.grades.length }} Pay Bands</span>
+          </div>
+          <div class="summary-stat-box">
+            <span class="stat-lbl">Progression Step Intervals</span>
+            <span class="stat-num">{{ scale.number_of_steps }} Increments</span>
+          </div>
+          <div class="summary-stat-box">
+            <span class="stat-lbl">Minimum Starting Floor</span>
+            <span class="stat-num font-mono">{{ formatCurrency(minPay) }} {{ scale.currency_code }}</span>
+          </div>
+          <div class="summary-stat-box">
+            <span class="stat-lbl">Maximum Ceiling Cap</span>
+            <span class="stat-num font-mono">{{ formatCurrency(maxPay) }} {{ scale.currency_code }}</span>
+          </div>
+        </div>
+
+        <table class="summary-grades-compact-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">Level</th>
+              <th>Job Grade Band</th>
+              <th>Floor Base Pay</th>
+              <th>Ceiling Cap Pay</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="grade in scale.grades" :key="'sum-' + grade.id">
+              <td class="font-bold">Level {{ grade.level }}</td>
+              <td>{{ grade.name }}</td>
+              <td class="font-mono">{{ formatCurrency(grade.base_salary) }} {{ scale.currency_code }}</td>
+              <td class="font-mono font-bold">{{ formatCurrency(grade.ceiling_salary) }} {{ scale.currency_code }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ─── FOOTER SIGNATURES & OFFICIAL SEAL ─── -->
+      <div v-if="printSettings.showSignatures || printSettings.showOfficialStamp" class="sheet-endorsement-footer">
+        <!-- Official Stamp Seal -->
+        <div v-if="printSettings.showOfficialStamp" class="official-seal-wrapper">
+          <svg class="official-stamp-svg" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="74" stroke="#0B529C" stroke-width="2.5" fill="none" opacity="0.85" />
+            <circle cx="80" cy="80" r="68" stroke="#0B529C" stroke-width="1.2" stroke-dasharray="3,2" fill="none" opacity="0.85" />
+            <path id="curveTopScale" d="M 22 80 A 58 58 0 0 1 138 80" fill="none" />
+            <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+              <textPath href="#curveTopScale" startOffset="50%" text-anchor="middle">
+                ★ የገንዘብ ሚኒስቴር / COMPENSATION SEAL ★
+              </textPath>
+            </text>
+            <polygon points="80,50 83,62 95,62 85,70 88,82 80,74 72,82 75,70 65,62 77,62" fill="#0B529C" opacity="0.85" />
+            <text x="80" y="96" font-size="10" font-weight="800" fill="#0B529C" text-anchor="middle" opacity="0.85">APPROVED</text>
+            <text x="80" y="107" font-size="7.5" font-weight="600" fill="#0B529C" text-anchor="middle" opacity="0.85">SALARY SCALE</text>
+            <path id="curveBottomScale" d="M 138 80 A 58 58 0 0 1 22 80" fill="none" />
+            <text font-size="8.5" font-weight="700" fill="#0B529C" opacity="0.85" letter-spacing="1.2">
+              <textPath href="#curveBottomScale" startOffset="50%" text-anchor="middle">
+                HALETA ENTERPRISE ERP SYSTEM
+              </textPath>
+            </text>
+          </svg>
+        </div>
+
+        <!-- Signatures Grid -->
+        <div v-if="printSettings.showSignatures" class="sheet-signatures-group">
+          <div class="sig-column">
+            <div class="sig-line"></div>
+            <span class="sig-role">Prepared By: Analyst</span>
+            <span class="sig-note">Signature &amp; Date</span>
+          </div>
+          <div class="sig-column">
+            <div class="sig-line"></div>
+            <span class="sig-role">Verified By: HR Director</span>
+            <span class="sig-note">Signature &amp; Date</span>
+          </div>
+          <div class="sig-column">
+            <div class="sig-line"></div>
+            <span class="sig-role">Approved By: Managing Director</span>
+            <span class="sig-note">Official Signature &amp; Date</span>
+          </div>
+        </div>
+      </div>
+    </template>
+  </PrintPreviewDrawer>
 </template>
 
 <style scoped>
-/* ═══════════════════════════════════════════ */
-/* HIGH-FIDELITY PRINT MODAL / DRAWER STYLES    */
-/* ═══════════════════════════════════════════ */
-
-.print-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  backdrop-filter: blur(4px);
-  padding: 30px;
-}
-
-.print-modal-card {
-  background: #ffffff;
-  width: 95vw;
-  max-width: 1240px;
-  height: 88vh;
-  border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  animation: modalScaleUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalScaleUp {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* ═══ MODAL HEADER ═══ */
-.print-modal-header {
-  padding: 18px 26px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
-}
-
-.header-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-}
-
-.modal-subtitle {
-  font-size: 12.5px;
-  color: #737373;
-  margin: 0;
-}
-
-.btn-modal-close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #94a3b8;
-  padding: 4px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-.btn-modal-close:hover {
-  background: #f1f5f9;
-  color: #1e293b;
-}
-
-/* ═══ MODAL BODY: LEFT CONTROLS + RIGHT PREVIEW ═══ */
-.print-modal-body {
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-/* ─── LEFT: SETTINGS SIDEBAR (Matching Image 1) ─── */
-.print-settings-sidebar {
-  width: 320px;
-  flex-shrink: 0;
-  padding: 24px;
-  border-right: 1px solid #f1f5f9;
-  background: #ffffff;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
+/* ─── Settings Sidebar Custom Styling ─── */
 .setting-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 0;
+  padding: 20px 12px;
+  border-bottom: 0.5px solid #f5f5f5;
 }
 
 .setting-toggle-title {
-  font-size: 13.5px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
   font-weight: 500;
-  color: #334155;
+  line-height: 20px;
+  color: #404040; /* Secondary */
 }
 
-/* Layout Selector Section (QMT Radio Cards) */
 .layout-selector-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 10px;
-  padding-top: 18px;
-  border-top: 1px solid #f1f5f9;
+  margin-top: 14px;
+  padding: 16px 12px;
+  border-top: 1px solid #f5f5f5;
 }
 
 .selector-section-label {
-  font-size: 13px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 12px;
   font-weight: 600;
-  color: #334155;
-  margin-bottom: 4px;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .layout-radio-option {
-  display: flex;
-  align-items: flex-start;
-  padding: 10px 12px;
+  padding: 12px;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
   cursor: pointer;
-  background: #ffffff;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-  position: relative;
+  transition: all 0.15s ease;
 }
+
 .layout-radio-option:hover {
-  border-color: var(--qmt-checkbox-border-hover, #0b529c);
-  background: #fafbfd;
+  border-color: #d4d4d4;
+  background: #fafafa;
 }
+
 .layout-radio-option.radio-selected {
-  border-color: var(--qmt-checkbox-radio-border-checked, #0b529c);
-  background: var(--qmt-checkbox-radio-bg-checked, #f1f7fe);
+  border-color: #0b529c;
+  background: #f0f7ff;
 }
 
-/* ─── RIGHT: SCROLLABLE PREVIEW CANVAS (Matching Image 1) ─── */
-.print-preview-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  background: #f8fafc;
-  box-sizing: border-box;
-}
-
-.preview-scroll-wrapper {
-  width: 100%;
-  max-width: 860px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* White Printable Sheet */
-.printable-paper-sheet {
-  background: #ffffff;
-  width: 100%;
-  min-height: 297mm;
-  padding: 16mm 20mm;
-  box-sizing: border-box;
-  position: relative;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-/* Sheet Header Block */
-.sheet-header-block {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 2px solid #0f172a;
-  padding-bottom: 14px;
-  margin-bottom: 18px;
-}
-
-.sheet-identity-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.sheet-logo-circle {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-}
-
-.sheet-logo-svg {
-  width: 48px;
-  height: 48px;
-}
-
-.sheet-titles-col {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Amharic Header (Inspired by Image 2) */
+/* ─── Amharic Banner ─── */
 .amharic-header-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-bottom: 4px;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e5e5e5;
 }
 
 .amharic-table-pill {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f172a;
-  letter-spacing: 0.5px;
+  color: #0b529c;
+  background: #e1eefd;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .amharic-doc-title {
   font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: 700;
+  color: #404040;
   margin: 0;
-  line-height: 1.3;
 }
 
 .amharic-date-sub {
   font-size: 12px;
-  font-weight: 600;
-  color: #475569;
+  color: #737373;
 }
 
-.english-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sheet-main-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.sheet-company-name {
-  font-size: 12.5px;
-  color: #475569;
-  font-weight: 500;
-}
-
-.sheet-identity-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  text-align: right;
-}
-
-.sheet-doc-code {
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: 0.5px;
-}
-
-.sheet-timeline-tag {
-  font-size: 11.5px;
-  color: #475569;
-  font-weight: 500;
-}
-
-.sheet-currency-tag {
-  font-size: 11px;
-  font-weight: 600;
-  color: #0B529C;
-}
-
-/* Subheader Meta Card (Matching Image 1) */
+/* ─── Metadata Summary Card (Figma Node 5005:78562) ─── */
 .sheet-meta-card {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
+  padding: 16px 24px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
 }
 
 .meta-card-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.meta-item-val {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #0f172a;
+  gap: 6px;
 }
 
 .meta-item-lbl {
-  font-size: 11px;
-  color: #64748b;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #737373; /* Tertiary */
 }
 
-/* ─── OFFICIAL 2D SALARY MATRIX TABLE (Matching Image 2) ─── */
+.meta-item-val {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #404040; /* Secondary */
+}
+
+/* ─── Detailed 2D Matrix Table (Figma Node 5005:78573) ─── */
 .sheet-matrix-table-container {
-  margin-bottom: 28px;
-  overflow: hidden;
+  overflow-x: auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
 }
 
 .official-salary-grid-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1.5px solid #0f172a;
-}
-
-.official-salary-grid-table th {
-  padding: 8px 10px;
-  background-color: #f1f5f9;
-  color: #0f172a;
   font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  border: 1px solid #0f172a;
-  line-height: 1.25;
+  text-align: left;
 }
 
-.sub-th {
-  font-size: 10px;
-  font-weight: 500;
-  color: #475569;
-}
-
-.official-salary-grid-table td {
-  padding: 8px 10px;
+.official-salary-grid-table thead th {
+  background-color: #fafafa;
+  color: #404040;
   font-size: 12px;
-  color: #0f172a;
-  border: 1px solid #0f172a;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e5e5e5;
+  border-right: 1px solid #e5e5e5;
   text-align: center;
   vertical-align: middle;
 }
 
+.official-salary-grid-table thead th:last-child {
+  border-right: none;
+}
+
+.sub-th {
+  font-size: 10px;
+  font-weight: 400;
+  color: #737373;
+}
+
+.official-salary-grid-table tbody td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #e9eaeb;
+  border-right: 1px solid #e9eaeb;
+  color: #404040;
+}
+
+.official-salary-grid-table tbody td:last-child {
+  border-right: none;
+}
+
 .td-lvl {
-  font-size: 13px;
-  background-color: #fafafa;
+  text-align: center;
+  font-weight: 700;
+  color: #404040;
 }
 
 .td-name {
-  text-align: left !important;
-  padding-left: 12px !important;
+  min-width: 160px;
 }
 
 .grade-title-text {
-  font-size: 12.5px;
-  color: #0f172a;
+  display: block;
+  font-weight: 500;
+  color: #404040;
 }
 
 .grade-code-pill {
-  margin-left: 6px;
+  display: inline-block;
   font-size: 10px;
-  padding: 1px 5px;
-  background-color: #e2e8f0;
-  color: #334155;
-  border-radius: 3px;
+  color: #737373;
 }
 
 .td-amt {
-  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
 }
 
-/* ─── SUMMARY MODE CONTAINER ─── */
+/* ─── Summary Mode ─── */
 .sheet-summary-mode-container {
-  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .summary-highlight-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 18px;
 }
 
 .summary-stat-box {
-  background-color: #f8fafc;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -806,206 +490,87 @@ const downloadPDF = () => {
 
 .stat-lbl {
   font-size: 11px;
-  color: #64748b;
-  font-weight: 500;
+  color: #737373;
 }
 
 .stat-num {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: #404040;
 }
 
 .summary-grades-compact-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
 }
 
 .summary-grades-compact-table th {
+  background: #fafafa;
   padding: 8px 12px;
-  background-color: #f1f5f9;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
+  border-bottom: 1px solid #e5e5e5;
   text-align: left;
+  font-weight: 600;
+  color: #404040;
 }
 
 .summary-grades-compact-table td {
   padding: 8px 12px;
-  font-size: 12.5px;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  border-bottom: 1px solid #f1f5f9;
+  color: #404040;
 }
 
-/* ─── FOOTER ENDORSEMENTS (Image 2 Authenticity) ─── */
+/* ─── Footer Signatures & Official Seal ─── */
 .sheet-endorsement-footer {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding-top: 14px;
-  margin-top: 20px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
 }
 
 .official-seal-wrapper {
-  transform: rotate(-4deg);
-  opacity: 0.88;
-  filter: drop-shadow(0 2px 4px rgba(29, 78, 216, 0.15));
+  width: 120px;
+  height: 120px;
 }
 
 .official-stamp-svg {
-  width: 130px;
-  height: 130px;
+  width: 100%;
+  height: 100%;
 }
 
 .sheet-signatures-group {
   display: flex;
-  gap: 28px;
+  gap: 32px;
 }
 
 .sig-column {
   display: flex;
   flex-direction: column;
-  width: 150px;
+  align-items: center;
+  width: 140px;
+  text-align: center;
+  gap: 4px;
 }
 
 .sig-line {
+  width: 100%;
   height: 1px;
-  background-color: #0f172a;
+  background: #404040;
   margin-bottom: 6px;
 }
 
 .sig-role {
   font-size: 11px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: #404040;
 }
 
 .sig-note {
   font-size: 10px;
-  color: #64748b;
-}
-
-/* Page 1/1 Badge (Matching Image 1) */
-.sheet-page-badge {
-  position: absolute;
-  bottom: 14px;
-  right: 18px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 9999px;
-  padding: 3px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #475569;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-/* ═══ MODAL FOOTER (Matching Image 1) ═══ */
-.print-modal-footer {
-  padding: 14px 26px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f1f5f9;
-  background: #ffffff;
-}
-
-.btn-footer-close {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 18px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-footer-close:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.footer-action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-footer-pdf {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 18px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #404040;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-footer-pdf:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0B529C;
-}
-
-.btn-footer-print {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 22px;
-  background: #0B529C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(11, 82, 156, 0.2);
-  transition: background-color 0.15s ease;
-}
-.btn-footer-print:hover {
-  background-color: #09427d;
-}
-
-/* Helpers */
-.font-mono { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
-.font-medium { font-weight: 500; }
-.font-bold { font-weight: 700; }
-
-/* ═══ PRINT MEDIA QUERY ═══ */
-@media print {
-  /* Hide all elements except the sheet preview */
-  body * {
-    visibility: hidden;
-  }
-  .printable-document-area,
-  .printable-document-area * {
-    visibility: visible;
-  }
-  .printable-document-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  .sheet-page-badge {
-    display: none !important;
-  }
+  color: #737373;
 }
 </style>

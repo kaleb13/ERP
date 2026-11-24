@@ -6,6 +6,7 @@ import {
   Building2, Users, UserPlus
 } from 'lucide-vue-next';
 import { useToast } from '../../composables/useToast';
+import { formatDisplayDate } from '../../utils/dateFormat';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
 import AppDataTable from '../../components/AppDataTable.vue';
@@ -16,6 +17,8 @@ import FormSelect from '../../components/FormSelect.vue';
 import FormCheckbox from '../../components/FormCheckbox.vue';
 import TableFloatingBar from '../../components/TableFloatingBar.vue';
 import BaseBadge, { type BadgeColor } from '../../components/BaseBadge.vue';
+import BaseAvatar from '../../components/BaseAvatar.vue';
+import AvatarGroup from '../../components/AvatarGroup.vue';
 import {
   procurementUnitsStore,
   unitMembersStore,
@@ -35,6 +38,7 @@ import {
   getGovernanceStatusLabel,
   getEntityName,
   getLocationName,
+  getEmployeeAvatar,
   generateUnitCode
 } from './procurementUnitData';
 
@@ -130,7 +134,7 @@ const tableColumns = ref<ColumnDef[]>([
   { key: 'buys_for_descendants', label: 'Descendant Scope', visible: false, sortable: true },
   { key: 'default_location', label: 'Default Location', visible: false, sortable: false },
   { key: 'cost_center', label: 'Cost Center', visible: false, sortable: false },
-  { key: 'members_count', label: 'Active Members', visible: false, sortable: false },
+  { key: 'members_count', label: 'Active Members', visible: true, sortable: false },
   { key: 'status', label: 'Status', visible: true, sortable: true },
   { key: 'state', label: 'State', visible: true, sortable: true },
   { key: 'actions', label: 'Actions', visible: true, sortable: false }
@@ -170,6 +174,22 @@ const getActiveMembersCount = (unitId: number): number => {
   return unitMembersStore.value.filter(
     (m) => m.procurement_unit_id === unitId && m.state === 'active'
   ).length;
+};
+
+const getActiveMemberAvatars = (unitId: number) => {
+  const seenEmployees = new Set<number>();
+  return unitMembersStore.value
+    .filter((m) => {
+      if (m.procurement_unit_id !== unitId || m.state !== 'active') return false;
+      if (seenEmployees.has(m.member_employee_id)) return false;
+      seenEmployees.add(m.member_employee_id);
+      return true;
+    })
+    .map((m) => ({
+      id: m.id,
+      name: m.employee_name,
+      src: m.avatar || getEmployeeAvatar(m.member_employee_id)
+    }));
 };
 
 // ─── Filters & Sorting ───
@@ -559,6 +579,7 @@ const handleSaveMember = () => {
         member_employee_id: empId,
         employee_name: empName,
         employee_code: empCode,
+        avatar: getEmployeeAvatar(empId),
         role: memberForm.value.role,
         organization_unit_id: deptId,
         department_name: deptName,
@@ -576,6 +597,7 @@ const handleSaveMember = () => {
       member_employee_id: empId,
       employee_name: empName,
       employee_code: empCode,
+      avatar: getEmployeeAvatar(empId),
       role: memberForm.value.role,
       organization_unit_id: deptId,
       department_name: deptName,
@@ -627,28 +649,6 @@ onUnmounted(() => {
     <!-- ISOLATED DETAIL VIEW (AGENTS.md Rule 10.3 & Rule 10.5)         -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div v-if="inspectingUnit" class="detail-view-wrapper">
-      <div class="detail-top-actions">
-        <div class="detail-right-actions">
-          <AppButton
-            variant="outline"
-            size="sm"
-            @click="router.push({ path: '/procurement/units/create', query: { editId: String(inspectingUnit.id) } })"
-          >
-            <template #icon-left>
-              <Edit2 :size="14" />
-            </template>
-            Edit Unit
-          </AppButton>
-          <AppButton
-            variant="outline"
-            size="sm"
-            @click="handleToggleState(inspectingUnit)"
-          >
-            {{ inspectingUnit.state === 'active' ? 'Deactivate' : 'Activate' }}
-          </AppButton>
-        </div>
-      </div>
-
       <!-- Unit Profile Summary Card -->
       <div class="detail-card">
         <div class="detail-header-row">
@@ -706,12 +706,6 @@ onUnmounted(() => {
               {{ getUnitMembers(inspectingUnit.id).length }} members
             </span>
           </div>
-          <AppButton variant="primary" size="sm" @click="openAddMemberModal">
-            <template #icon-left>
-              <UserPlus :size="14" />
-            </template>
-            Add Member
-          </AppButton>
         </div>
 
         <div class="detail-divider"></div>
@@ -734,7 +728,7 @@ onUnmounted(() => {
                 <div class="empty-state-container">
                   <Users :size="28" class="empty-state-icon" />
                   <p class="empty-state-title">No members assigned to this unit</p>
-                  <p class="empty-state-subtext">Click "Add Member" to assign buyers, approvers, or receivers.</p>
+                  <p class="empty-state-subtext">Edit this procurement unit to assign buyers, approvers, or receivers.</p>
                 </div>
               </td>
             </tr>
@@ -744,9 +738,16 @@ onUnmounted(() => {
               class="subtable-row"
             >
               <td>
-                <div class="name-cell-stack">
-                  <span class="table-name-primary">{{ member.employee_name }}</span>
-                  <span class="table-code-subtext">{{ member.employee_code }}</span>
+                <div class="member-identity-cell">
+                  <BaseAvatar
+                    :src="member.avatar || getEmployeeAvatar(member.member_employee_id)"
+                    :name="member.employee_name"
+                    size="sm"
+                  />
+                  <div class="name-cell-stack">
+                    <span class="table-name-primary">{{ member.employee_name }}</span>
+                    <span class="table-code-subtext">{{ member.employee_code }}</span>
+                  </div>
                 </div>
               </td>
               <td>
@@ -756,10 +757,10 @@ onUnmounted(() => {
                 <span class="tertiary-plain-text">{{ member.department_name }}</span>
               </td>
               <td>
-                <span class="tertiary-plain-text">{{ member.valid_from }}</span>
+                <span class="tertiary-plain-text">{{ formatDisplayDate(member.valid_from) }}</span>
               </td>
               <td>
-                <span class="tertiary-plain-text">{{ member.valid_to || 'Indefinite' }}</span>
+                <span class="tertiary-plain-text">{{ formatDisplayDate(member.valid_to, 'Indefinite') }}</span>
               </td>
               <td>
                 <BaseBadge
@@ -771,14 +772,6 @@ onUnmounted(() => {
               </td>
               <td class="col-actions">
                 <div class="subtable-actions">
-                  <button
-                    type="button"
-                    class="btn-icon-subtle"
-                    title="Edit Member"
-                    @click="openEditMemberModal(member)"
-                  >
-                    <Edit2 :size="13" />
-                  </button>
                   <button
                     type="button"
                     class="btn-icon-subtle"
@@ -1058,11 +1051,15 @@ onUnmounted(() => {
                 <span class="tertiary-plain-text">{{ item.cost_center_dimension_id || '—' }}</span>
               </td>
 
-              <!-- Active Members Count -->
+              <!-- Active Members Roster (QMT Table cell / Avatar group 3345:77322) -->
               <td v-if="isColumnVisible('members_count')" @click.stop="openDetailView(item)">
-                <span class="tertiary-plain-text">
-                  {{ getActiveMembersCount(item.id) }} members
-                </span>
+                <AvatarGroup
+                  v-if="getActiveMemberAvatars(item.id).length > 0"
+                  :items="getActiveMemberAvatars(item.id)"
+                  size="xs"
+                  :max="5"
+                />
+                <span v-else class="tertiary-plain-text">—</span>
               </td>
 
               <!-- Governance Status -->
@@ -1155,7 +1152,7 @@ onUnmounted(() => {
             v-model="quickForm.mode"
             label="Operating Mode"
             :options="unitModeOptions"
-            placeholder="Select"
+            placeholder="Select Mode"
             :error="quickFieldErrors.mode"
             required
           />
@@ -1164,66 +1161,9 @@ onUnmounted(() => {
             v-model="quickForm.entity_id"
             label="Owning Legal Entity"
             :options="entityOptions"
-            placeholder="Select"
+            placeholder="Select Entity"
             :error="quickFieldErrors.entity_id"
             required
-          />
-        </div>
-      </div>
-    </QuickCreateModal>
-
-    <!-- ══════════════════════════════════════════════════════════════ -->
-    <!-- ADD / EDIT MEMBER MODAL (Inside Detail View)                   -->
-    <!-- ══════════════════════════════════════════════════════════════ -->
-    <QuickCreateModal
-      v-model:show="showAddMemberModal"
-      :title="editingMemberId ? 'Edit Unit Member' : 'Add Unit Member'"
-      :showExpandButton="false"
-      saveLabel="Save"
-      width="md"
-      @save="handleSaveMember"
-    >
-      <div class="quick-form-body">
-        <FormSelect
-          v-model="memberForm.member_employee_id"
-          label="Employee / Person"
-          :options="employeeOptions"
-          placeholder="Select"
-          :error="memberFormErrors.employee"
-          required
-        />
-
-        <div class="modal-grid-2">
-          <FormSelect
-            v-model="memberForm.role"
-            label="Assigned Role"
-            :options="unitRoleOptions"
-            placeholder="Select"
-            :error="memberFormErrors.role"
-            required
-          />
-
-          <FormSelect
-            v-model="memberForm.organization_unit_id"
-            label="Department Served"
-            :options="departmentOptions"
-            placeholder="Select department"
-          />
-        </div>
-
-        <div class="modal-grid-2">
-          <FormInput
-            v-model="memberForm.valid_from"
-            label="Valid From"
-            type="date"
-            :error="memberFormErrors.valid_from"
-            required
-          />
-
-          <FormInput
-            v-model="memberForm.valid_to"
-            label="Valid To"
-            type="date"
           />
         </div>
       </div>
@@ -1327,6 +1267,12 @@ onUnmounted(() => {
 
 .row-selected {
   background-color: #E1EEFD;
+}
+
+.member-identity-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .name-cell-stack {
@@ -1481,8 +1427,8 @@ onUnmounted(() => {
 }
 
 .modal-checkbox-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding-top: 6px;
 }
@@ -1492,18 +1438,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.detail-top-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.detail-right-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .detail-card {

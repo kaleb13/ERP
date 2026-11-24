@@ -679,7 +679,7 @@ const handleDelete = (id: number) => {
 /* Page Layout */
 .announcements-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: 100vh;
 }
 
@@ -774,7 +774,7 @@ const handleDelete = (id: number) => {
 }
 
 .erp-table-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .erp-table-row.row-selected {
@@ -866,7 +866,7 @@ const handleDelete = (id: number) => {
 
 .mini-progress-bar {
   height: 4px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   border-radius: 9999px;
   overflow: hidden;
 }
@@ -905,7 +905,7 @@ const handleDelete = (id: number) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -940,7 +940,7 @@ const handleDelete = (id: number) => {
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #0b529c;
 }
 
@@ -954,7 +954,7 @@ const handleDelete = (id: number) => {
 
 .menu-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 4px 0;
 }
 
@@ -1061,7 +1061,7 @@ const handleDelete = (id: number) => {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 
@@ -1070,7 +1070,7 @@ const handleDelete = (id: number) => {
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   padding: 16px 24px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -1127,8 +1127,8 @@ const handleDelete = (id: number) => {
 .btn-filter-pill {
   padding: 4px 10px;
   font-size: 11.5px;
-  color: #64748b;
-  background-color: #f1f5f9;
+  color: #737373;
+  background-color: #f5f5f5;
   border: none;
   border-radius: 9999px;
   cursor: pointer;
@@ -1205,7 +1205,7 @@ const handleDelete = (id: number) => {
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 11px;
@@ -1214,7 +1214,7 @@ const handleDelete = (id: number) => {
 }
 
 .btn-nudge-staff:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
 }
 
 .modal-footer {
@@ -1237,6 +1237,6 @@ const handleDelete = (id: number) => {
 }
 
 .btn-secondary-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 </style>

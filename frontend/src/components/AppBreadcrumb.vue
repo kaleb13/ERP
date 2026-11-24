@@ -1,3 +1,18 @@
+<!--
+  Authoritative QMT AppBreadcrumb Component (Figma 6095:94972 & 5577:151)
+  =======================================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Mandatory on EVERY page, view, and form across Haleta ERP.
+  - Sits directly on the transparent canvas background (ZERO white card wrapper, ZERO border).
+  - Directory listing pages: `[{ label: 'Exact Page Name' }]` (only exact page name, never module prefix).
+  - Detail/create pages: `[{ label: 'Parent Page', onClick: ... }, { label: 'New / Item Name' }]`.
+  - Supports optional `#badge` slot directly adjacent to active item for `<SaveStateBadge />`.
+
+  STRICT INVARIANTS:
+  - Zero Card Background: Breadcrumb and top bar MUST NEVER be wrapped in a white card container.
+  - Zero Back Buttons: Breadcrumbs are the SOLE navigation mechanism to traverse up the hierarchy.
+    Never place a back button (`btn-back`, `← Back to...`) anywhere in the application.
+-->
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { Monitor, ChevronRight } from 'lucide-vue-next';

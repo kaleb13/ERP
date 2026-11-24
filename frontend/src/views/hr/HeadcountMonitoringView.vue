@@ -485,7 +485,7 @@ const paginatedRecords = computed(() => {
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
   flex-wrap: wrap;
 }
@@ -559,7 +559,7 @@ const paginatedRecords = computed(() => {
 }
 
 .erp-row:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected {
@@ -650,7 +650,7 @@ const paginatedRecords = computed(() => {
 .progress-bar-track {
   width: 100%;
   height: 5px;
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   border-radius: 9999px;
   overflow: hidden;
 }
@@ -690,7 +690,7 @@ const paginatedRecords = computed(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -727,7 +727,7 @@ const paginatedRecords = computed(() => {
 }
 
 .action-menu-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* Pagination Bar (Image 2) */

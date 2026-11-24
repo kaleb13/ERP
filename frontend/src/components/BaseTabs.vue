@@ -1,3 +1,16 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  AUTHORITATIVE ARCHITECTURAL CONTRACT FOR AGENTS & DEVELOPERS:
+  1. TABULAR SEPARATION FOR 1:N LINES: Whenever an entity creation form includes related
+     lines, child schemas, or 1:N associations (e.g. PurchaseMethodThreshold, ProcurementUnitMember),
+     NEVER place them on the same page below the master card.
+  2. DEDICATED TABS: Use primary capsule tabs (default rounded/pill):
+     - Tab 1: Master entity parameters ([Entity] Details)
+     - Tab 2+: Child rosters / line items using <DynamicSubTable />
+  3. REACTIVE COUNTERS: Child tab labels must display reactive item counts (e.g. Bands (2)).
+  4. VALIDATION ROUTE-BACK: If Tab 1 validation fails while on Tab 2, switch activeTab to Tab 1.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
 <script setup lang="ts" generic="T extends string | number">
 import { computed, type Component } from 'vue';
 

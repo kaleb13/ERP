@@ -778,7 +778,7 @@ const handlePublishRoster = () => {
 }
 
 .btn-top-secondary:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-top-primary {
@@ -849,7 +849,7 @@ const handlePublishRoster = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
@@ -864,12 +864,12 @@ const handlePublishRoster = () => {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
 }
 
 .btn-nav-arrow:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -956,7 +956,7 @@ const handlePublishRoster = () => {
 .metric-divider {
   width: 1px;
   height: 40px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 0 16px;
 }
 
@@ -1019,7 +1019,7 @@ const handlePublishRoster = () => {
 }
 
 .th-weekend {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .th-weekly-hrs {
@@ -1083,7 +1083,7 @@ const handlePublishRoster = () => {
 }
 
 .td-slot:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .td-weekend-slot {
@@ -1158,7 +1158,7 @@ const handlePublishRoster = () => {
 }
 
 .shift-tag-slate {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   color: #404040;
 }
 
@@ -1168,8 +1168,8 @@ const handlePublishRoster = () => {
 }
 
 .shift-tag-rest {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   padding: 6px 8px;
   text-align: center;
 }
@@ -1193,7 +1193,7 @@ const handlePublishRoster = () => {
 
 .slot-empty-plus:hover {
   border-color: #94a3b8;
-  color: #64748b;
+  color: #737373;
 }
 
 /* Weekly Hours Total */
@@ -1275,7 +1275,7 @@ const handlePublishRoster = () => {
 }
 
 .btn-close:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1294,7 +1294,7 @@ const handlePublishRoster = () => {
 }
 
 .slot-target-info {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -1322,7 +1322,7 @@ const handlePublishRoster = () => {
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 20px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -1338,7 +1338,7 @@ const handlePublishRoster = () => {
 }
 
 .btn-cancel:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .btn-confirm {

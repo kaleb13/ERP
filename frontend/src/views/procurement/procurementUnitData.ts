@@ -12,6 +12,7 @@ export interface ProcurementUnitMemberRecord {
   member_employee_id: number;
   employee_name: string;
   employee_code: string;
+  avatar?: string;
   role: ProcurementUnitRole;
   organization_unit_id: number | null;
   department_name: string;
@@ -50,13 +51,38 @@ export const unitRoleOptions = [
   { value: 'viewer', label: 'Viewer (Read-Only)' }
 ];
 
+export const employeeAvatarMap: Record<number, string> = {
+  88: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+  90: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  91: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+  92: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  95: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  98: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
+  99: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+  100: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+  101: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+  102: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+  103: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+  104: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80'
+};
+
+export function getEmployeeAvatar(employeeId: number): string | undefined {
+  return employeeAvatarMap[employeeId];
+}
+
 export const employeeOptions = [
   { value: '88', label: 'Hanna Girma (EMP-0088) • Buyer' },
   { value: '90', label: 'Yonas Alemu (EMP-0090) • Unit Approver' },
   { value: '91', label: 'Meseret Tadesse (EMP-0091) • Storekeeper / Receiver' },
   { value: '92', label: 'Abebe Kassa (EMP-0092) • Import Buyer' },
   { value: '95', label: 'Kidist Bekele (EMP-0095) • Department Requester' },
-  { value: '98', label: 'Sara Tesfaye (EMP-0098) • Spa Specialist' }
+  { value: '98', label: 'Sara Tesfaye (EMP-0098) • Spa Specialist' },
+  { value: '99', label: 'Dawit Mekonnen (EMP-0099) • Senior Buyer' },
+  { value: '100', label: 'Tigist Haile (EMP-0100) • F&B Requester' },
+  { value: '101', label: 'Bereket Tadesse (EMP-0101) • Receiving Officer' },
+  { value: '102', label: 'Selamawit Teshome (EMP-0102) • Procurement Analyst' },
+  { value: '103', label: 'Samuel Kebede (EMP-0103) • Branch Approver' },
+  { value: '104', label: 'Rahel Demissie (EMP-0104) • Audit Viewer' }
 ];
 
 export const departmentOptions = [
@@ -206,6 +232,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 88,
     employee_name: 'Hanna Girma',
     employee_code: 'EMP-0088',
+    avatar: employeeAvatarMap[88],
     role: 'buyer',
     organization_unit_id: null,
     department_name: 'All Departments',
@@ -220,6 +247,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 90,
     employee_name: 'Yonas Alemu',
     employee_code: 'EMP-0090',
+    avatar: employeeAvatarMap[90],
     role: 'unit_approver',
     organization_unit_id: null,
     department_name: 'All Departments',
@@ -234,6 +262,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 91,
     employee_name: 'Meseret Tadesse',
     employee_code: 'EMP-0091',
+    avatar: employeeAvatarMap[91],
     role: 'receiver',
     organization_unit_id: null,
     department_name: 'All Departments',
@@ -248,6 +277,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 95,
     employee_name: 'Kidist Bekele',
     employee_code: 'EMP-0095',
+    avatar: employeeAvatarMap[95],
     role: 'requester',
     organization_unit_id: 12,
     department_name: 'Food & Beverage (OU-12)',
@@ -262,6 +292,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 95,
     employee_name: 'Kidist Bekele',
     employee_code: 'EMP-0095',
+    avatar: employeeAvatarMap[95],
     role: 'requester',
     organization_unit_id: 14,
     department_name: 'Housekeeping (OU-14)',
@@ -276,6 +307,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 92,
     employee_name: 'Abebe Kassa',
     employee_code: 'EMP-0092',
+    avatar: employeeAvatarMap[92],
     role: 'buyer',
     organization_unit_id: null,
     department_name: 'All Departments',
@@ -290,6 +322,7 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 90,
     employee_name: 'Yonas Alemu',
     employee_code: 'EMP-0090',
+    avatar: employeeAvatarMap[90],
     role: 'unit_approver',
     organization_unit_id: null,
     department_name: 'All Departments',
@@ -304,10 +337,101 @@ export const unitMembersStore = ref<ProcurementUnitMemberRecord[]>([
     member_employee_id: 98,
     employee_name: 'Sara Tesfaye',
     employee_code: 'EMP-0098',
+    avatar: employeeAvatarMap[98],
     role: 'buyer',
     organization_unit_id: 16,
     department_name: 'Wellness & Spa (OU-16)',
     valid_from: '2026-08-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 9,
+    uuid: 'pum-uuid-009',
+    procurement_unit_id: 2,
+    member_employee_id: 99,
+    employee_name: 'Dawit Mekonnen',
+    employee_code: 'EMP-0099',
+    avatar: employeeAvatarMap[99],
+    role: 'buyer',
+    organization_unit_id: 12,
+    department_name: 'Food & Beverage (OU-12)',
+    valid_from: '2026-07-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 10,
+    uuid: 'pum-uuid-010',
+    procurement_unit_id: 2,
+    member_employee_id: 100,
+    employee_name: 'Tigist Haile',
+    employee_code: 'EMP-0100',
+    avatar: employeeAvatarMap[100],
+    role: 'requester',
+    organization_unit_id: 12,
+    department_name: 'Food & Beverage (OU-12)',
+    valid_from: '2026-07-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 11,
+    uuid: 'pum-uuid-011',
+    procurement_unit_id: 2,
+    member_employee_id: 101,
+    employee_name: 'Bereket Tadesse',
+    employee_code: 'EMP-0101',
+    avatar: employeeAvatarMap[101],
+    role: 'receiver',
+    organization_unit_id: 14,
+    department_name: 'Housekeeping (OU-14)',
+    valid_from: '2026-07-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 12,
+    uuid: 'pum-uuid-012',
+    procurement_unit_id: 2,
+    member_employee_id: 102,
+    employee_name: 'Selamawit Teshome',
+    employee_code: 'EMP-0102',
+    avatar: employeeAvatarMap[102],
+    role: 'buyer',
+    organization_unit_id: 20,
+    department_name: 'Corporate HQ Operations (OU-20)',
+    valid_from: '2026-07-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 13,
+    uuid: 'pum-uuid-013',
+    procurement_unit_id: 2,
+    member_employee_id: 103,
+    employee_name: 'Samuel Kebede',
+    employee_code: 'EMP-0103',
+    avatar: employeeAvatarMap[103],
+    role: 'unit_approver',
+    organization_unit_id: 25,
+    department_name: 'Finance & Accounts (OU-25)',
+    valid_from: '2026-07-01',
+    valid_to: null,
+    state: 'active'
+  },
+  {
+    id: 14,
+    uuid: 'pum-uuid-014',
+    procurement_unit_id: 2,
+    member_employee_id: 104,
+    employee_name: 'Rahel Demissie',
+    employee_code: 'EMP-0104',
+    avatar: employeeAvatarMap[104],
+    role: 'viewer',
+    organization_unit_id: 25,
+    department_name: 'Finance & Accounts (OU-25)',
+    valid_from: '2026-07-01',
     valid_to: null,
     state: 'active'
   }

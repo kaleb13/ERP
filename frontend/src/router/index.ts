@@ -81,6 +81,28 @@ import ProcurementCategoryCreate from '../views/procurement/ProcurementCategoryC
 import ProcurementUnitsView from '../views/procurement/ProcurementUnitsView.vue';
 import ProcurementUnitCreate from '../views/procurement/ProcurementUnitCreate.vue';
 import ProcurementMethodsView from '../views/procurement/ProcurementMethodsView.vue';
+import ProcurementMethodCreate from '../views/procurement/ProcurementMethodCreate.vue';
+import ProcurementApprovalRoutesView from '../views/procurement/ProcurementApprovalRoutesView.vue';
+import ProcurementApprovalRouteCreate from '../views/procurement/ProcurementApprovalRouteCreate.vue';
+import ProcurementAssignmentRulesView from '../views/procurement/ProcurementAssignmentRulesView.vue';
+import ProcurementAssignmentRuleCreate from '../views/procurement/ProcurementAssignmentRuleCreate.vue';
+import ProcurementApprovalDelegationCreate from '../views/procurement/ProcurementApprovalDelegationCreate.vue';
+import ProcurementRoutingRulesView from '../views/procurement/ProcurementRoutingRulesView.vue';
+import ProcurementCommitteeMandatesView from '../views/procurement/ProcurementCommitteeMandatesView.vue';
+import ProcurementCommitteeMandateCreate from '../views/procurement/ProcurementCommitteeMandateCreate.vue';
+import ProcurementTolerancesView from '../views/procurement/ProcurementTolerancesView.vue';
+import ReceiptToleranceRuleCreate from '../views/procurement/ReceiptToleranceRuleCreate.vue';
+import MatchingToleranceRuleCreate from '../views/procurement/MatchingToleranceRuleCreate.vue';
+import ProcurementPlansView from '../views/procurement/ProcurementPlansView.vue';
+import ProcurementPlanCreate from '../views/procurement/ProcurementPlanCreate.vue';
+import ProcurementPlanDetail from '../views/procurement/ProcurementPlanDetail.vue';
+import SupplierRegistrationsView from '../views/procurement/SupplierRegistrationsView.vue';
+import SupplierRegistrationCreate from '../views/procurement/SupplierRegistrationCreate.vue';
+import SupplierRegistrationDetail from '../views/procurement/SupplierRegistrationDetail.vue';
+import SuppliersView from '../views/procurement/SuppliersView.vue';
+import SupplierDetail from '../views/procurement/SupplierDetail.vue';
+import SupplierPerformanceSetupView from '../views/procurement/SupplierPerformanceSetupView.vue';
+import ProcurementPlanItemCreate from '../views/procurement/ProcurementPlanItemCreate.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -133,19 +155,22 @@ const router = createRouter({
     },
     {
       path: '/hr/movements',
-      redirect: '/hr/employees'
+      name: 'hrEmployeeMovements',
+      component: EmployeeMovementsView
     },
     {
       path: '/hr/movements/admin',
-      redirect: '/hr/employees'
+      redirect: '/hr/movements'
     },
     {
       path: '/hr/movements/create',
-      redirect: '/hr/employees'
+      name: 'hrEmployeeMovementCreate',
+      component: EmployeeMovementCreate
     },
     {
       path: '/hr/movements/:id',
-      redirect: '/hr/employees'
+      name: 'hrEmployeeMovementDetail',
+      component: EmployeeMovementDetail
     },
     {
       path: '/hr/leave-requests',
@@ -570,13 +595,173 @@ const router = createRouter({
       component: ProcurementUnitCreate
     },
     {
-      path: '/procurement/thresholds',
-      name: 'procurementThresholds',
+      path: '/procurement/methods',
+      name: 'procurementMethods',
       component: ProcurementMethodsView
     },
     {
-      path: '/procurement/methods',
-      redirect: '/procurement/thresholds'
+      path: '/procurement/methods/create',
+      name: 'procurementMethodCreate',
+      component: ProcurementMethodCreate
+    },
+    {
+      path: '/procurement/thresholds',
+      redirect: '/procurement/methods'
+    },
+    {
+      path: '/procurement/routing-rules',
+      name: 'procurementRoutingRules',
+      component: ProcurementRoutingRulesView
+    },
+    {
+      path: '/procurement/approval-routes',
+      redirect: '/procurement/routing-rules?tab=approval'
+    },
+    {
+      path: '/procurement/approval-routes/create',
+      name: 'procurementApprovalRouteCreate',
+      component: ProcurementApprovalRouteCreate
+    },
+    {
+      path: '/procurement/approval-routes/:id/edit',
+      name: 'procurementApprovalRouteEdit',
+      component: ProcurementApprovalRouteCreate
+    },
+    {
+      path: '/procurement/assignment-rules',
+      redirect: '/procurement/routing-rules?tab=assignment'
+    },
+    {
+      path: '/procurement/assignment-rules/create',
+      name: 'procurementAssignmentRuleCreate',
+      component: ProcurementAssignmentRuleCreate
+    },
+    {
+      path: '/procurement/assignment-rules/:id/edit',
+      name: 'procurementAssignmentRuleEdit',
+      component: ProcurementAssignmentRuleCreate
+    },
+    {
+      path: '/procurement/delegations',
+      redirect: '/procurement/routing-rules?tab=delegations'
+    },
+    {
+      path: '/procurement/delegations/create',
+      name: 'procurementApprovalDelegationCreate',
+      component: ProcurementApprovalDelegationCreate
+    },
+    {
+      path: '/procurement/delegations/:id/edit',
+      name: 'procurementApprovalDelegationEdit',
+      component: ProcurementApprovalDelegationCreate
+    },
+    {
+      path: '/procurement/committee-mandates',
+      name: 'procurementCommitteeMandates',
+      component: ProcurementCommitteeMandatesView
+    },
+    {
+      path: '/procurement/committee-mandates/create',
+      name: 'procurementCommitteeMandateCreate',
+      component: ProcurementCommitteeMandateCreate
+    },
+    {
+      path: '/procurement/committee-mandates/:id/edit',
+      name: 'procurementCommitteeMandateEdit',
+      component: ProcurementCommitteeMandateCreate
+    },
+    {
+      path: '/procurement/tolerances',
+      name: 'procurementTolerances',
+      component: ProcurementTolerancesView
+    },
+    {
+      path: '/procurement/receipt-tolerances',
+      redirect: '/procurement/tolerances?tab=receipt'
+    },
+    {
+      path: '/procurement/receipt-tolerances/create',
+      name: 'receiptToleranceRuleCreate',
+      component: ReceiptToleranceRuleCreate
+    },
+    {
+      path: '/procurement/receipt-tolerances/:id/edit',
+      name: 'receiptToleranceRuleEdit',
+      component: ReceiptToleranceRuleCreate
+    },
+    {
+      path: '/procurement/matching-tolerances',
+      redirect: '/procurement/tolerances?tab=matching'
+    },
+    {
+      path: '/procurement/matching-tolerances/create',
+      name: 'matchingToleranceRuleCreate',
+      component: MatchingToleranceRuleCreate
+    },
+    {
+      path: '/procurement/matching-tolerances/:id/edit',
+      name: 'matchingToleranceRuleEdit',
+      component: MatchingToleranceRuleCreate
+    },
+    {
+      path: '/procurement/plans',
+      name: 'procurementPlans',
+      component: ProcurementPlansView
+    },
+    {
+      path: '/procurement/plans/create',
+      name: 'procurementPlanCreate',
+      component: ProcurementPlanCreate
+    },
+    {
+      path: '/procurement/plans/items/create',
+      name: 'procurementPlanItemCreate',
+      component: ProcurementPlanItemCreate
+    },
+    {
+      path: '/procurement/plans/:id',
+      name: 'procurementPlanDetail',
+      component: ProcurementPlanDetail
+    },
+    {
+      path: '/procurement/plans/:id/edit',
+      name: 'procurementPlanEdit',
+      component: ProcurementPlanCreate
+    },
+    {
+      path: '/procurement/supplier-registrations',
+      name: 'supplierRegistrations',
+      component: SupplierRegistrationsView
+    },
+    {
+      path: '/procurement/supplier-registrations/create',
+      name: 'supplierRegistrationCreate',
+      component: SupplierRegistrationCreate
+    },
+    {
+      path: '/procurement/supplier-registrations/:id',
+      name: 'supplierRegistrationDetail',
+      component: SupplierRegistrationDetail
+    },
+    {
+      path: '/procurement/supplier-registrations/:id/edit',
+      name: 'supplierRegistrationEdit',
+      component: SupplierRegistrationCreate
+    },
+    {
+      path: '/procurement/suppliers',
+      name: 'suppliers',
+      component: SuppliersView
+    },
+    {
+      path: '/procurement/suppliers/:id',
+      name: 'supplierDetail',
+      component: SupplierDetail
+    },
+    {
+      path: '/procurement/performance-setup',
+      name: 'supplierPerformanceSetup',
+      component: SupplierPerformanceSetupView
     }
   ]
 });

@@ -1,5 +1,21 @@
+<!--
+  Authoritative QMT AppDataTable Component (Figma 10178:30728 & 3345:27403)
+  =========================================================================
+  WHEN TO USE (SCENARIOS & PLACES):
+  - Primary directory and data listing table across Haleta ERP.
+  - Pre-assembles: Title block, Table Top Filter Section (search input, filter popover, secondary sort button),
+    column visibility hider (`IconColumnSolid`), table body, floating bulk action bar (`TableFloatingBar`),
+    and pagination (`BasePagination`).
+  - Used for top-level directory views (Employees, Purchase Methods, Categories, Shifts, Leave Requests, Assets).
+
+  WHEN NOT TO USE:
+  - DO NOT use for 1:N dynamic child line items or rosters in create forms (use `DynamicSubTable.vue` instead).
+  - DO NOT use inside modal dialogs or narrow sidebars.
+-->
 <script setup lang="ts">
 import BaseTable, { type ColumnDef, type SortOption } from './BaseTable.vue';
+
+export type { ColumnDef, SortOption };
 
 interface Props {
   title?: string;

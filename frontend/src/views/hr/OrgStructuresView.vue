@@ -1689,7 +1689,7 @@ onUnmounted(() => {
 <style scoped>
 .org-structures-page {
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;

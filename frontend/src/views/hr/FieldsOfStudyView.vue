@@ -938,7 +938,7 @@ onUnmounted(() => {
 }
 
 .erp-table tr:hover td {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected td {
@@ -1035,7 +1035,7 @@ onUnmounted(() => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1073,7 +1073,7 @@ onUnmounted(() => {
 }
 
 .dropdown-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
 }
 
 .dropdown-item-danger {
@@ -1090,7 +1090,7 @@ onUnmounted(() => {
 
 .dropdown-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 3px 0;
 }
 

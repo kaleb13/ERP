@@ -652,7 +652,7 @@ const breadcrumbItems = [
 .scale-create-page {
   min-height: 100vh;
   padding: 0;
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 /* ═══ TOP ACTION BAR ═══ */
@@ -695,7 +695,7 @@ const breadcrumbItems = [
   transition: all 0.15s ease;
 }
 .btn-secondary-action:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #cbd5e1;
 }
 
@@ -903,7 +903,7 @@ const breadcrumbItems = [
   transition: all 0.15s ease;
 }
 .btn-adjust-all:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
   color: #0B529C;
 }
@@ -1125,7 +1125,7 @@ const breadcrumbItems = [
   transition: all 0.15s ease;
 }
 .btn-step-expand:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #0B529C;
 }
 
@@ -1157,7 +1157,7 @@ const breadcrumbItems = [
   transition: all 0.15s ease;
 }
 .btn-add-grade:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-color: #cbd5e1;
   color: #0B529C;
 }
@@ -1212,13 +1212,13 @@ const breadcrumbItems = [
   height: 28px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .btn-modal-close:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1231,7 +1231,7 @@ const breadcrumbItems = [
 
 .modal-desc-text {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
   line-height: 1.5;
   margin: 0;
 }

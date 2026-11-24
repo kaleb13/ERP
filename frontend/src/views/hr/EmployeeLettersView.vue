@@ -16,6 +16,7 @@ import FormCheckbox from '../../components/FormCheckbox.vue';
 import AppButton from '../../components/AppButton.vue';
 import { type ColumnDef } from '../../components/BaseTable.vue';
 import { useToast } from '../../composables/useToast';
+import logoUrl from '../../assets/Logo.png';
 import {
   employeeLettersData,
   letterTemplatesData,
@@ -925,10 +926,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
                 <div class="doc-header-row">
                   <div class="doc-brand-block">
                     <div class="brand-logo-m">
-                      <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-                        <circle cx="20" cy="20" r="19" stroke="#0B529C" stroke-width="2" />
-                        <path d="M12 28L18 14L22 22L26 14L32 28" stroke="#0B529C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
+                      <img :src="logoUrl" alt="QMT Logo" class="brand-logo-img" />
                     </div>
                     <div class="brand-text-block">
                       <h4 class="brand-company-title">Qelem Meda Technologies</h4>
@@ -1116,10 +1114,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
                 <div v-if="printSettings.companyLogo" class="doc-header-row">
                   <div class="doc-brand-block">
                     <div class="brand-logo-m">
-                      <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-                        <circle cx="20" cy="20" r="19" stroke="#0B529C" stroke-width="2" />
-                        <path d="M12 28L18 14L22 22L26 14L32 28" stroke="#0B529C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
+                      <img :src="logoUrl" alt="QMT Logo" class="brand-logo-img" />
                     </div>
                     <div class="brand-text-block">
                       <h4 class="brand-company-title">Qelem Meda Technologies</h4>
@@ -1226,10 +1221,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
             <div class="doc-header-row">
               <div class="doc-brand-block">
                 <div class="brand-logo-m">
-                  <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="19" stroke="#0B529C" stroke-width="2" />
-                    <path d="M12 28L18 14L22 22L26 14L32 28" stroke="#0B529C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                  <img :src="logoUrl" alt="QMT Logo" class="brand-logo-img" />
                 </div>
                 <div class="brand-text-block">
                   <h4 class="brand-company-title">Qelem Meda Technologies</h4>
@@ -1395,7 +1387,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-secondary-toolbar:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-icon-toolbar {
@@ -1404,7 +1396,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #ffffff;
-  color: #64748b;
+  color: #737373;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1412,7 +1404,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-icon-toolbar:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   color: #404040;
 }
 
@@ -1447,7 +1439,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .table-row-hover:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   cursor: pointer;
 }
 
@@ -1512,7 +1504,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1629,7 +1621,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 .drawer-drag-pill {
   width: 44px;
   height: 4px;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   border-radius: 9999px;
   margin: 8px auto 0 auto;
 }
@@ -1684,12 +1676,12 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-outline-action:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .drawer-segmented-pills {
   display: flex;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 3px;
   border-radius: 9999px;
   gap: 2px;
@@ -1701,7 +1693,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   padding: 5px 14px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #737373;
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1719,7 +1711,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   height: 32px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #737373;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1728,7 +1720,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-close-header:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
@@ -1796,7 +1788,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 }
@@ -1834,7 +1826,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .emp-role-pill {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   padding: 1px 8px;
   border-radius: 9999px;
@@ -1861,7 +1853,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .accordion-header:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .accordion-title {
@@ -1946,7 +1938,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   font-size: 11px;
   font-weight: 600;
   color: #737373;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -2042,10 +2034,17 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   gap: 12px;
 }
 
+.brand-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+}
+
 .brand-company-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin: 0;
 }
 
@@ -2097,7 +2096,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 .fact-bold-val {
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
 }
 
 .fact-val {
@@ -2124,7 +2123,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 .purpose-section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: #404040;
   margin: 0 0 8px 0;
 }
 
@@ -2176,7 +2175,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 }
 
 .btn-footer-close:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-footer-save {
@@ -2243,7 +2242,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
 
 .sub-label {
   font-size: 13px;
-  color: #64748b;
+  color: #737373;
 }
 
 /* iOS Toggle Switch Standard */
@@ -2264,7 +2263,7 @@ const handleRevokeLetter = (letter: EmployeeLetterRecord) => {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background-color: #cbd5e1;
+  background-color: #d4d4d4;
   transition: 0.25s;
   border-radius: 9999px;
 }
@@ -2312,7 +2311,7 @@ input:checked + .slider:before {
 }
 
 .btn-footer-pdf:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .btn-footer-print {
@@ -2372,7 +2371,7 @@ input:checked + .slider:before {
 }
 
 .doc-code-pill {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
   padding: 2px 8px;
   border-radius: 6px;

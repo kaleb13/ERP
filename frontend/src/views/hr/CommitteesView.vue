@@ -1272,8 +1272,8 @@ onUnmounted(() => {
 .gc-pill-tag {
   position: absolute;
   right: 8px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #f5f5f5;
+  color: #737373;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 6px;
@@ -1420,7 +1420,7 @@ onUnmounted(() => {
 }
 
 .erp-table tr:hover td {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .row-selected td {
@@ -1478,7 +1478,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   padding: 3px 8px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 12px;
@@ -1488,13 +1488,13 @@ onUnmounted(() => {
 }
 
 .btn-members-badge:hover {
-  background-color: #e2e8f0;
+  background-color: #e5e5e5;
   border-color: #cbd5e1;
   color: #0B529C;
 }
 
 .inline-icon {
-  color: #64748b;
+  color: #737373;
 }
 
 /* Actions Menu */
@@ -1517,13 +1517,13 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-action-dots:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   border-color: #e2e8f0;
   color: #404040;
 }
@@ -1563,16 +1563,16 @@ onUnmounted(() => {
 }
 
 .dropdown-item:hover {
-  background-color: #f8fafc;
+  background-color: #fafafa;
 }
 
 .dropdown-icon {
-  color: #64748b;
+  color: #737373;
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   margin: 2px 0;
 }
 
@@ -1656,7 +1656,7 @@ onUnmounted(() => {
 }
 
 .roster-info-card {
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 16px;
@@ -1753,7 +1753,7 @@ onUnmounted(() => {
 .child-table th {
   height: 32px;
   padding: 6px 12px;
-  background-color: #f8fafc;
+  background-color: #fafafa;
   border-bottom: 1px solid #e2e8f0;
   font-size: 11.5px;
   font-weight: 500;
@@ -1829,13 +1829,13 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
-  color: #64748b;
+  color: #737373;
   cursor: pointer;
   transition: all 0.1s ease;
 }
 
 .btn-child-icon:hover {
-  background-color: #f1f5f9;
+  background-color: #f5f5f5;
   color: #404040;
 }
 
