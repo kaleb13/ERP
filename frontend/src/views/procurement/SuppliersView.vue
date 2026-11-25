@@ -380,6 +380,7 @@ const formatCategoriesSummary = (s: SupplierRecord) => {
                 :name="supplier.legal_name"
                 size="md"
                 status="company"
+                :placeholder="!supplier.logo_url"
                 :bordered="true"
               />
               <div class="card-identity-text">
@@ -552,7 +553,13 @@ const formatCategoriesSummary = (s: SupplierRecord) => {
                   :modelValue="selectedIds.includes(supplier.id)"
                   @update:modelValue="(v: boolean) => toggleSelectRow(supplier.id, Boolean(v))"
                 />
-                <BaseAvatar :src="supplier.logo_url" :name="supplier.legal_name" size="sm" />
+                <BaseAvatar
+                  :src="supplier.logo_url"
+                  :name="supplier.legal_name"
+                  size="md"
+                  status="company"
+                  :placeholder="!supplier.logo_url"
+                />
                 <div class="lead-text-stack" @click="goToDetail(supplier)">
                   <span class="cell-primary-title">{{ supplier.legal_name }}</span>
                   <span class="cell-subtext">{{ supplier.code }} • TIN {{ supplier.tin }}</span>

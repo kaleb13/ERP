@@ -3,7 +3,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import {
   Check, Clock, Lock, CheckCircle2,
-  PanelRightClose, PanelRightOpen,
+  PanelLeft,
   ShieldCheck, Printer, FileText, X, AlertCircle
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
@@ -557,7 +557,7 @@ const handleDownloadPass = () => {
             title="Expand approval sidebar"
             aria-label="Expand approval sidebar"
           >
-            <PanelRightOpen :size="20" />
+            <PanelLeft :size="20" class="btn-focus-icon" />
           </button>
         </div>
 
@@ -572,7 +572,7 @@ const handleDownloadPass = () => {
               title="Minimize sidebar to focus on dossier"
               aria-label="Minimize sidebar to focus on dossier"
             >
-              <PanelRightClose :size="18" class="btn-focus-icon" />
+              <PanelLeft :size="18" class="btn-focus-icon" />
               <span>Focus</span>
             </button>
           </div>

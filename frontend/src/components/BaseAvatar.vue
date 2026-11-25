@@ -1,49 +1,77 @@
 <!--
-  Authoritative QMT BaseAvatar Component (Figma 3345:28608)
-  =============================================================
-  WHEN TO USE (SCENARIOS & PLACES):
-  - Primary single-user avatar across the entire system: Top navigation profile header,
-    employee dossier cards, comment authors, single assignee cells, and directory lead cells.
-  - Automatically derives 1 or 2 letter uppercase initials when no photo `src` is present.
-  - Supports status dot indicators (`online`, `company`, `busy`, `offline`).
+  Authoritative QMT BaseAvatar & Avatar Profile Photo Component
+  Figma Sources (EVkNwnkJXcHROkdv2QqXoU):
+  - Avatar:                  3345:28608 (xs–2xl, Placeholder, Text, Status icon, Default/Hover/Focused)
+  - Avatar profile photo:    3345:29188 (profile-md 96px, profile-lg 160px, 4px white ring + dual shadow)
+  - _Avatar online indicator: 3345:28987 (xs 6px – 2xl 16px, Online #009966 / Offline #D4D4D4)
+  - _Avatar company icon:    3345:29000 (scalable vector SVG or custom companyLogo, xs 10px – profile-lg 32px)
+  - _Avatar verified tick:   5230:115   (exact QMT #0B529C rosette tick, xs 10px – profile-lg 32px)
+
+  WHEN TO USE:
+  - Primary single-user or company avatar across the entire system (top bar, directory lead cells,
+    cards, comment authors, and profile hero headers via size="profile-md" / "profile-lg").
+  - Pass `status="company"` for suppliers/organizations, `status="verified"` for verified profiles,
+    `status="online"` / `"offline"` for presence.
+  - Pass `:placeholder="!src"` to display QMT's Placeholder=True icon variant instead of initials.
 
   WHEN NOT TO USE:
-  - DO NOT use for groups, committees, or multi-user rosters (use `AvatarGroup.vue` instead).
-  - DO NOT use bare `<img>` tags or raw unstyled circular divs for avatars.
+  - DO NOT use for multi-user rosters or committees (use `AvatarGroup.vue` instead).
+  - DO NOT use raw <img> tags or ad-hoc circular divs.
 -->
 <script setup lang="ts">
-import { computed, ref, type Component } from 'vue';
+import { computed, ref, watch, type Component } from 'vue';
 import { User } from 'lucide-vue-next';
-import defaultCompanyBadge from '../assets/qmt-company-badge.jpg';
+import defaultCompanyBadgeSvg from '../assets/qmt-company-badge.svg';
+
+export type AvatarSize =
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl'
+  | 'profile-md'
+  | 'profile-lg';
+
+export type AvatarStatus =
+  | 'online'
+  | 'company'
+  | 'verified'
+  | 'busy'
+  | 'offline'
+  | boolean;
 
 interface Props {
   /** Image source URL */
   src?: string;
-  /** Full name or string to derive uppercase initials from */
+  /** Full name or company name (used for alt text and initials when placeholder is false) */
   name?: string;
-  /** Direct text to display inside the avatar */
+  /** Explicit 1–2 letter initials override */
   text?: string;
-  /** Custom icon component when no image or text is provided */
+  /** Force QMT Placeholder=True icon state when no photo `src` is available */
+  placeholder?: boolean;
+  /** Custom icon component for Placeholder / icon fallback mode */
   icon?: Component;
-  /** Avatar dimension: xs (24px), sm (32px), md (40px default), lg (48px), xl (56px), 2xl (64px) */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  /** Avatar dimension: xs (24), sm (32), md (40), lg (48), xl (56), 2xl (64), profile-md (96), profile-lg (160) */
+  size?: AvatarSize;
   /** Shape: circle (default) or rounded square */
   shape?: 'circle' | 'square';
-  /** Status indicator (QMT 3345:28608): online (green dot), company (sub-logo image), verified (brand Rosette tick 5230:397), busy (red), offline (gray) */
-  status?: 'online' | 'company' | 'verified' | 'busy' | 'offline' | boolean;
-  /** Optional sub-logo image URL for status="company" (QMT _Avatar company icon 3345:28940) */
+  /** Status indicator overlay: online, offline, company, verified, busy */
+  status?: AvatarStatus;
+  /** Optional custom sub-logo image URL for status="company" (falls back to scalable QMT company badge SVG) */
   companyLogo?: string;
-  /** Optional subtle outline ring (QMT 3345:28608) */
+  /** Subtle 1px border (profile-md & profile-lg always include QMT's 4px white ring + elevation shadow) */
   bordered?: boolean;
   /** Optional alt text for image */
   alt?: string;
-  /** Whether the avatar has hover/active interactive styling */
+  /** Interactive hover & QMT focus-ring treatment */
   interactive?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   shape: 'circle',
+  placeholder: false,
   status: false,
   companyLogo: undefined,
   bordered: false,
@@ -51,13 +79,22 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const imageError = ref(false);
+watch(() => props.src, () => {
+  imageError.value = false;
+});
 
 const handleImageError = () => {
   imageError.value = true;
 };
 
-// Calculate 1 or 2 letter uppercase initials
+const isProfileSize = computed(
+  () => props.size === 'profile-md' || props.size === 'profile-lg'
+);
+
+const showImage = computed(() => Boolean(props.src) && !imageError.value);
+
 const initials = computed(() => {
+  if (props.placeholder) return '';
   if (props.text) return props.text.trim().substring(0, 2).toUpperCase();
   if (!props.name) return '';
   const parts = props.name.trim().split(/\s+/).filter(Boolean);
@@ -66,7 +103,20 @@ const initials = computed(() => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 });
 
-// Normalized status key
+const iconPixelSize = computed(() => {
+  switch (props.size) {
+    case 'xs': return 14;
+    case 'sm': return 18;
+    case 'md': return 22;
+    case 'lg': return 26;
+    case 'xl': return 30;
+    case '2xl': return 34;
+    case 'profile-md': return 46;
+    case 'profile-lg': return 76;
+    default: return 22;
+  }
+});
+
 const normalizedStatus = computed(() => {
   if (props.status === true) return 'online';
   if (!props.status) return null;
@@ -75,45 +125,40 @@ const normalizedStatus = computed(() => {
 </script>
 
 <template>
-  <div 
+  <div
     :class="[
       'qmt-avatar',
       `qmt-avatar--${size}`,
       `qmt-avatar--${shape}`,
       {
+        'qmt-avatar--profile': isProfileSize,
         'qmt-avatar--interactive': interactive,
-        'qmt-avatar--bordered': bordered
+        'qmt-avatar--bordered': bordered && !isProfileSize
       }
     ]"
+    :tabindex="interactive ? 0 : undefined"
     data-qmt-avatar="avatar"
   >
-    <!-- Image Mode -->
+    <!-- Photo Mode -->
     <img
-      v-if="src && !imageError"
+      v-if="showImage"
       :src="src"
       :alt="alt || name || 'Avatar'"
       class="qmt-avatar__image"
       @error="handleImageError"
     />
 
-    <!-- Text / Initials Mode (Figma 3345:28681) -->
-    <span 
-      v-else-if="initials" 
-      class="qmt-avatar__initials"
-    >
+    <!-- Text / Initials Mode (Figma 3345:28608 Text=True) -->
+    <span v-else-if="initials" class="qmt-avatar__initials">
       {{ initials }}
     </span>
 
-    <!-- Icon Fallback Mode -->
-    <div v-else class="qmt-avatar__icon-wrapper">
-      <component 
-        :is="icon || User" 
-        :size="size === 'xs' ? 12 : size === 'sm' ? 16 : size === 'lg' ? 24 : size === 'xl' ? 28 : size === '2xl' ? 32 : 20" 
-        class="qmt-avatar__icon"
-      />
+    <!-- QMT Placeholder / Icon Fallback Mode (Figma 3345:28608 Placeholder=True) -->
+    <div v-else class="qmt-avatar__icon-wrapper" :aria-label="alt || name || 'Avatar placeholder'">
+      <component :is="icon || User" :size="iconPixelSize" class="qmt-avatar__icon" :stroke-width="1.85" />
     </div>
 
-    <!-- QMT Verified Rosette Tick (Figma 5230:397 exact SVG) -->
+    <!-- QMT Verified Rosette Tick (Figma 5230:115, all 8 sizes xs–profile-lg) -->
     <span
       v-if="normalizedStatus === 'verified'"
       :class="['qmt-avatar__verified', `qmt-avatar__verified--${size}`]"
@@ -134,16 +179,20 @@ const normalizedStatus = computed(() => {
       </svg>
     </span>
 
-    <!-- QMT Company Sub-Logo Icon (Figma 3345:28940) -->
+    <!-- QMT Company Icon (Figma 3345:29000 — infinitely scalable vector SVG or custom companyLogo) -->
     <span
       v-else-if="normalizedStatus === 'company'"
       :class="['qmt-avatar__company-badge', `qmt-avatar__company-badge--${size}`]"
       aria-hidden="true"
     >
-      <img :src="companyLogo || defaultCompanyBadge" alt="" class="qmt-avatar__company-img" />
+      <img
+        :src="companyLogo || defaultCompanyBadgeSvg"
+        alt=""
+        class="qmt-avatar__company-img"
+      />
     </span>
 
-    <!-- Status Indicator Dot (Figma 3345:28934) -->
+    <!-- QMT Online / Offline / Busy Indicator (Figma 3345:28987) -->
     <span
       v-else-if="normalizedStatus"
       :class="[
@@ -151,12 +200,13 @@ const normalizedStatus = computed(() => {
         `qmt-avatar__status--${normalizedStatus}`,
         `qmt-avatar__status--${size}`
       ]"
+      aria-hidden="true"
     />
   </div>
 </template>
 
 <style scoped>
-/* QMT Avatar (Figma Node 3345:28608 / 3345:28681 / 3345:28933) */
+/* QMT Avatar (3345:28608) & Avatar Profile Photo (3345:29188) */
 .qmt-avatar {
   position: relative;
   display: inline-flex;
@@ -169,6 +219,7 @@ const normalizedStatus = computed(() => {
   user-select: none;
   flex-shrink: 0;
   box-sizing: border-box;
+  outline: none;
 }
 
 /* Shapes */
@@ -180,7 +231,7 @@ const normalizedStatus = computed(() => {
   border-radius: 8px;
 }
 
-/* Sizes */
+/* Standard Sizes (3345:28608) */
 .qmt-avatar--xs {
   width: 24px;
   height: 24px;
@@ -217,6 +268,26 @@ const normalizedStatus = computed(() => {
   font-size: 20px;
 }
 
+/* Avatar Profile Photo Sizes (3345:29188: 96px md & 160px lg with 4px white ring + dual shadow) */
+.qmt-avatar--profile {
+  border: 4px solid #ffffff;
+  box-shadow:
+    0 4px 6px -2px rgba(10, 13, 18, 0.03),
+    0 12px 16px -4px rgba(10, 13, 18, 0.08);
+}
+
+.qmt-avatar--profile-md {
+  width: 96px;
+  height: 96px;
+  font-size: 28px;
+}
+
+.qmt-avatar--profile-lg {
+  width: 160px;
+  height: 160px;
+  font-size: 48px;
+}
+
 /* Image */
 .qmt-avatar__image {
   width: 100%;
@@ -224,6 +295,7 @@ const normalizedStatus = computed(() => {
   object-fit: cover;
   border-radius: inherit;
   pointer-events: none;
+  display: block;
 }
 
 /* Initials */
@@ -238,7 +310,7 @@ const normalizedStatus = computed(() => {
   letter-spacing: -0.02em;
 }
 
-/* Icon */
+/* Placeholder Icon */
 .qmt-avatar__icon-wrapper {
   display: flex;
   align-items: center;
@@ -251,22 +323,26 @@ const normalizedStatus = computed(() => {
   color: var(--qmt-avatar-fg, #0b529c);
 }
 
-/* Interactive hover */
+/* Interactive Hover & Focus Ring (3345:28608 State=Hover / Focused) */
 .qmt-avatar--interactive {
   cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .qmt-avatar--interactive:hover {
-  opacity: 0.9;
+  opacity: 0.92;
   transform: translateY(-1px);
+}
+
+.qmt-avatar--interactive:focus-visible {
+  box-shadow: 0 0 0 4px #e1eefd;
 }
 
 .qmt-avatar--bordered {
   border: 1px solid #e5e5e5;
 }
 
-/* QMT Verified Rosette Tick (Figma 5230:397) */
+/* QMT Verified Rosette Tick (Figma 5230:115, all 8 sizes) */
 .qmt-avatar__verified {
   position: absolute;
   bottom: -2px;
@@ -290,20 +366,23 @@ const normalizedStatus = computed(() => {
 .qmt-avatar__verified--lg { width: 16px; height: 16px; }
 .qmt-avatar__verified--xl { width: 18px; height: 18px; }
 .qmt-avatar__verified--2xl { width: 20px; height: 20px; }
+.qmt-avatar__verified--profile-md { width: 24px; height: 24px; bottom: 0; right: 0; }
+.qmt-avatar__verified--profile-lg { width: 32px; height: 32px; bottom: 2px; right: 2px; }
 
-/* QMT Company Sub-Logo Icon (Figma 3345:28940) */
+/* QMT Company Icon (Figma 3345:29000, scalable vector SVG + white ring) */
 .qmt-avatar__company-badge {
   position: absolute;
   bottom: -2px;
   right: -2px;
   border-radius: 9999px;
   border: 1.5px solid #ffffff;
-  background-color: #ffffff;
+  background-color: #f4ebff;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.08);
 }
 
 .qmt-avatar__company-badge--xs { width: 10px; height: 10px; }
@@ -312,6 +391,20 @@ const normalizedStatus = computed(() => {
 .qmt-avatar__company-badge--lg { width: 16px; height: 16px; }
 .qmt-avatar__company-badge--xl { width: 18px; height: 18px; }
 .qmt-avatar__company-badge--2xl { width: 20px; height: 20px; }
+.qmt-avatar__company-badge--profile-md {
+  width: 26px;
+  height: 26px;
+  border-width: 2px;
+  bottom: 0;
+  right: 0;
+}
+.qmt-avatar__company-badge--profile-lg {
+  width: 34px;
+  height: 34px;
+  border-width: 2.5px;
+  bottom: 2px;
+  right: 2px;
+}
 
 .qmt-avatar__company-img {
   width: 100%;
@@ -320,14 +413,7 @@ const normalizedStatus = computed(() => {
   display: block;
 }
 
-.qmt-avatar__company-dot {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #0b529c 0%, #6366f1 100%);
-  border-radius: 9999px;
-}
-
-/* Status Indicator Dot (Figma 3345:28934) */
+/* QMT Online Indicator (Figma 3345:28987 exact sizes & QMT semantic tokens) */
 .qmt-avatar__status {
   position: absolute;
   bottom: 0;
@@ -337,57 +423,25 @@ const normalizedStatus = computed(() => {
   box-sizing: border-box;
 }
 
-.qmt-avatar__status--xs {
-  width: 7px;
-  height: 7px;
-}
+.qmt-avatar__status--xs { width: 6px; height: 6px; }
+.qmt-avatar__status--sm { width: 8px; height: 8px; }
+.qmt-avatar__status--md { width: 10px; height: 10px; }
+.qmt-avatar__status--lg { width: 12px; height: 12px; }
+.qmt-avatar__status--xl { width: 14px; height: 14px; }
+.qmt-avatar__status--2xl { width: 16px; height: 16px; }
+.qmt-avatar__status--profile-md { width: 18px; height: 18px; border-width: 2px; }
+.qmt-avatar__status--profile-lg { width: 24px; height: 24px; border-width: 2.5px; }
 
-.qmt-avatar__status--sm {
-  width: 8px;
-  height: 8px;
-}
-
-.qmt-avatar__status--md {
-  width: 10px;
-  height: 10px;
-}
-
-.qmt-avatar__status--lg {
-  width: 12px;
-  height: 12px;
-  border-width: 2px;
-}
-
-.qmt-avatar__status--xl {
-  width: 14px;
-  height: 14px;
-  border-width: 2px;
-}
-
-.qmt-avatar__status--2xl {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-/* Status Colors */
+/* Exact QMT Indicator Colors */
 .qmt-avatar__status--online {
-  background-color: var(--qmt-avatar-status-online, #12b76a);
+  background-color: var(--qmt-avatar-status-online, #009966);
 }
 
-.qmt-avatar__status--company {
-  background-color: var(--qmt-avatar-status-company, #0b529c);
-}
-
-.qmt-avatar__status--verified {
-  background-color: #009966;
+.qmt-avatar__status--offline {
+  background-color: var(--qmt-avatar-status-offline, #d4d4d4);
 }
 
 .qmt-avatar__status--busy {
   background-color: var(--qmt-avatar-status-busy, #e7000b);
-}
-
-.qmt-avatar__status--offline {
-  background-color: var(--qmt-avatar-status-offline, #a1a1a1);
 }
 </style>

@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock, ShieldCheck, ArrowUpRight,
   ArrowRight, User, Check, X, Info,
   Share2, Printer, ShieldAlert,
-  PanelRightClose, PanelRightOpen, FileText
+  PanelLeft, FileText
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
@@ -697,7 +697,7 @@ const handleEffectMovement = () => {
             title="Expand authorization sidebar"
             aria-label="Expand authorization sidebar"
           >
-            <PanelRightOpen :size="20" />
+            <PanelLeft :size="20" class="btn-focus-icon" />
           </button>
         </div>
 
@@ -712,7 +712,7 @@ const handleEffectMovement = () => {
               title="Minimize sidebar to focus on dossier"
               aria-label="Minimize sidebar to focus on dossier"
             >
-              <PanelRightClose :size="18" class="btn-focus-icon" />
+              <PanelLeft :size="18" class="btn-focus-icon" />
               <span>Focus</span>
             </button>
           </div>

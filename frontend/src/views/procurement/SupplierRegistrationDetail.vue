@@ -11,16 +11,17 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import {
-  PanelRightClose, PanelRightOpen, Check, Clock, X,
-  ChevronDown, ChevronRight, MoreVertical
+  Check, X, ChevronDown, ChevronRight, MoreVertical
 } from 'lucide-vue-next';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
-import AppButton from '../../components/AppButton.vue';
+import ApprovalWorkflowRail, {
+  type ApprovalWorkflowStep,
+  type ApprovalStepState,
+  type ApprovalStatusSummary
+} from '../../components/ApprovalWorkflowRail.vue';
 import BaseAvatar from '../../components/BaseAvatar.vue';
 import BaseBadge from '../../components/BaseBadge.vue';
 import BaseDropdownMenu, { type DropdownMenuItem } from '../../components/BaseDropdownMenu.vue';
-import FormSelect from '../../components/FormSelect.vue';
-import FormTextarea from '../../components/FormTextarea.vue';
 import { useToast } from '../../composables/useToast';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import {
@@ -140,10 +141,8 @@ const submitDecision = () => {
   remark.value = '';
 };
 
-// ─── Registration Steps (living stepper) ─────────────────────────────────────
-type StepState = 'done' | 'active' | 'queued' | 'error';
-
-const stepStates = computed<StepState[]>(() => {
+// ─── Registration Steps (living stepper via shared ApprovalWorkflowRail) ─────
+const stepStates = computed<ApprovalStepState[]>(() => {
   switch (status.value) {
     case 'draft':
       return ['active', 'queued', 'queued', 'queued'];
@@ -162,53 +161,109 @@ const stepStates = computed<StepState[]>(() => {
   }
 });
 
-const steps = computed(() => {
+const steps = computed<ApprovalWorkflowStep[]>(() => {
   const reg = registration.value;
   const states = stepStates.value;
   return [
     {
+      id: 'submitted',
       title: 'Application Submitted',
-      subtitle: reg?.submitted_at ? formatDisplayDate(reg.submitted_at) : 'Not submitted yet',
+      subtitle: reg?.contact_person_name ? `${reg.legal_name} (${reg.contact_person_name})` : 'Applicant submission',
+      timestamp: reg?.submitted_at ? formatDisplayDate(reg.submitted_at) : 'Not submitted yet',
       state: states[0]
     },
     {
+      id: 'verification',
       title: 'Contact Verification',
       subtitle: reg?.email_verified_at
-        ? `Email verified ${formatDisplayDate(reg.email_verified_at)}`
+        ? `Email & phone verified`
         : 'Awaiting email and phone confirmation',
+      timestamp: reg?.email_verified_at ? formatDisplayDate(reg.email_verified_at) : undefined,
       state: states[1]
     },
     {
+      id: 'review',
       title: 'Officer Review',
-      subtitle: states[2] === 'active' ? 'Awaiting officer decision' : 'Review of documents and categories',
+      subtitle:
+        states[2] === 'active'
+          ? 'Awaiting officer decision'
+          : reg?.decided_by
+            ? `Reviewed by ${reg.decided_by}`
+            : 'Review of documents and categories',
       state: states[2]
     },
     {
+      id: 'decision',
       title: status.value === 'returned' ? 'Returned for Correction' : 'Final Decision',
       subtitle: reg?.decided_at
-        ? `${getStatusLabel(status.value)} ${formatDisplayDate(reg.decided_at)}`
+        ? `${getStatusLabel(status.value)} by ${reg.decided_by || 'Procurement Officer'}`
         : status.value === 'returned'
           ? 'Awaiting correction'
           : 'Pending',
+      timestamp: reg?.decided_at ? formatDisplayDate(reg.decided_at) : undefined,
+      remarks: reg?.decision_note || undefined,
       state: states[3]
     }
   ];
 });
 
-const STEP_COLORS: Record<StepState, string> = {
-  done: '#0b529c',
-  active: '#fe9a00',
-  queued: '#d4d4d4',
-  error: '#e7000b'
-};
+const railStatusSummary = computed<ApprovalStatusSummary | null>(() => {
+  const reg = registration.value;
+  if (!reg || canDecide.value) return null;
 
-const connectorStyle = (index: number) => {
-  const upper = steps.value[index].state;
-  const lower = steps.value[index + 1].state;
+  if (status.value === 'approved') {
+    return {
+      variant: 'approved',
+      sectionTitle: 'Registration Approved',
+      sectionDescription: 'Supplier registration has been approved and promoted to the core supplier directory.',
+      sealHeading: 'Approved & Qualified',
+      sealMeta: reg.decided_at ? `Decided ${formatDisplayDate(reg.decided_at)}` : undefined,
+      signatoryName: reg.decided_by || 'Marta Tadesse',
+      signatoryRole: 'Procurement Approver',
+      quote: reg.decision_note || undefined
+    };
+  }
+  if (status.value === 'rejected') {
+    return {
+      variant: 'rejected',
+      sectionTitle: 'Registration Rejected',
+      sectionDescription: 'This supplier registration application was declined during officer review.',
+      sealHeading: 'Application Declined',
+      sealMeta: reg.decided_at ? `Decided ${formatDisplayDate(reg.decided_at)}` : undefined,
+      signatoryName: reg.decided_by || 'Marta Tadesse',
+      signatoryRole: 'Procurement Approver',
+      quote: reg.decision_note || undefined
+    };
+  }
+  if (status.value === 'returned') {
+    return {
+      variant: 'returned',
+      sectionTitle: 'Returned for Correction',
+      sectionDescription: 'Returned to the officer or applicant for clarification. Resubmit to continue review.',
+      sealHeading: 'Correction Requested',
+      sealMeta: reg.decided_at ? `Returned ${formatDisplayDate(reg.decided_at)}` : undefined,
+      signatoryName: reg.decided_by || 'Marta Tadesse',
+      signatoryRole: 'Procurement Approver',
+      quote: reg.decision_note || undefined
+    };
+  }
   return {
-    background: `linear-gradient(180deg, ${STEP_COLORS[upper]} 0%, ${STEP_COLORS[lower]} 100%)`
+    variant: 'waiting',
+    sectionTitle: 'Approver Decision',
+    sectionDescription:
+      status.value === 'pending_verification'
+        ? 'A decision can be made once the supplier confirms the email link and phone code.'
+        : status.value === 'draft'
+          ? 'Submit the registration to start contact verification and officer review.'
+          : 'This registration has already been finalized.',
+    sealHeading:
+      status.value === 'pending_verification'
+        ? 'Awaiting Contact Verification'
+        : status.value === 'draft'
+          ? 'Draft Registration'
+          : getStatusLabel(status.value)
   };
-};
+});
 
 const maskedBank = computed(() => {
   const bank = registration.value?.bank_details;
@@ -232,7 +287,13 @@ const maskedBank = computed(() => {
         <!-- Hero Card -->
         <div class="detail-card hero-card">
           <div class="hero-left">
-            <BaseAvatar :src="registration.logo_url" :name="registration.legal_name" size="xl" />
+            <BaseAvatar
+              :src="registration.logo_url"
+              :name="registration.legal_name"
+              size="profile-md"
+              status="company"
+              :placeholder="!registration.logo_url"
+            />
             <div class="hero-identity">
               <h2 class="hero-title">{{ registration.legal_name }}</h2>
               <span class="hero-code">
@@ -487,83 +548,25 @@ const maskedBank = computed(() => {
         </div>
       </div>
 
-      <!-- ═════════ RIGHT APPROVAL RAIL ═════════ -->
-      <aside class="approval-rail" :class="{ collapsed: isRailCollapsed }">
-        <template v-if="isRailCollapsed">
-          <button type="button" class="btn-focus-collapsed" title="Expand rail" @click="isRailCollapsed = false">
-            <PanelRightOpen :size="18" />
-          </button>
-        </template>
-        <template v-else>
-          <button type="button" class="btn-focus" @click="isRailCollapsed = true">
-            <PanelRightClose :size="18" />
-            <span>Focus</span>
-          </button>
-
-          <section class="rail-section">
-            <h3 class="rail-title">Approver Decision</h3>
-            <template v-if="canDecide">
-              <FormSelect
-                v-model="resolution"
-                label="Resolution"
-                :options="resolutionOptions"
-                placeholder="Select Resolution"
-                :error="decisionErrors.resolution"
-                required
-              />
-              <FormTextarea
-                v-model="remark"
-                label="Remark"
-                :rows="3"
-                :error="decisionErrors.remark"
-              />
-              <AppButton variant="primary" size="md" class="btn-full" @click="submitDecision">
-                Submit Decision
-              </AppButton>
-            </template>
-            <p v-else class="rail-note">
-              {{
-                status === 'pending_verification'
-                  ? 'A decision can be made once the supplier confirms the email link and phone code.'
-                  : status === 'draft'
-                    ? 'Submit the registration to start verification and review.'
-                    : status === 'returned'
-                      ? 'Returned to the officer for correction. Resubmit to continue.'
-                      : 'This registration has already been decided.'
-              }}
-            </p>
-          </section>
-
-          <div class="rail-divider"></div>
-
-          <section class="rail-section">
-            <div>
-              <h3 class="rail-title">Registration Steps</h3>
-              <p class="rail-subtitle">Verification and review progress.</p>
-            </div>
-            <ol class="step-list">
-              <li v-for="(step, index) in steps" :key="step.title" class="step-row">
-                <div class="step-track">
-                  <span class="step-circle" :class="`step-${step.state}`">
-                    <Check v-if="step.state === 'done'" :size="20" />
-                    <X v-else-if="step.state === 'error'" :size="20" />
-                    <Clock v-else :size="20" />
-                  </span>
-                  <span
-                    v-if="index < steps.length - 1"
-                    class="step-connector"
-                    :style="connectorStyle(index)"
-                  ></span>
-                </div>
-                <div class="step-content">
-                  <span class="step-title">{{ step.title }}</span>
-                  <span class="step-subtitle">{{ step.subtitle }}</span>
-                </div>
-              </li>
-            </ol>
-          </section>
-        </template>
-      </aside>
+      <!-- ═════════ RIGHT APPROVAL RAIL (Shared QMT ApprovalWorkflowRail) ═════════ -->
+      <ApprovalWorkflowRail
+        v-model:collapsed="isRailCollapsed"
+        v-model:resolution="resolution"
+        v-model:remark="remark"
+        :canDecide="canDecide"
+        decisionTitle="Approver Decision"
+        decisionDescription="You are authorized to review and decide on this supplier registration. Add an optional remark before submitting your decision."
+        :resolutionOptions="resolutionOptions"
+        resolutionPlaceholder="Select Resolution"
+        :resolutionError="decisionErrors.resolution"
+        remarkPlaceholder="Enter your decision reason..."
+        :remarkError="decisionErrors.remark"
+        :statusSummary="railStatusSummary"
+        stepsTitle="Registration Steps"
+        stepsSubtitle="Verification and review progress."
+        :steps="steps"
+        @submit="submitDecision"
+      />
     </div>
   </div>
 </template>
@@ -883,168 +886,6 @@ const maskedBank = computed(() => {
   font-size: 14px;
   line-height: 1.6;
   color: #404040;
-}
-
-/* Approval Rail */
-.approval-rail {
-  background-color: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.approval-rail.collapsed {
-  padding: 20px 16px;
-  min-height: 240px;
-  align-items: center;
-}
-
-.btn-focus,
-.btn-focus-collapsed {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #ffffff;
-  border: 1px solid #d5d7da;
-  border-radius: 8px;
-  color: #404040;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(10, 13, 18, 0.05);
-  outline: none;
-}
-
-.btn-focus {
-  align-self: flex-start;
-  padding: 8px 14px;
-}
-
-.btn-focus-collapsed {
-  width: 36px;
-  height: 36px;
-}
-
-.btn-focus:hover,
-.btn-focus-collapsed:hover {
-  background-color: #fafafa;
-}
-
-.rail-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.rail-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.rail-subtitle {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #737373;
-}
-
-.rail-note {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #737373;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-.rail-divider {
-  border-top: 1px solid #e5e5e5;
-  margin: 4px 0;
-}
-
-/* Stepper */
-.step-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.step-row {
-  display: flex;
-  gap: 16px;
-}
-
-.step-track {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.step-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  flex-shrink: 0;
-}
-
-.step-done {
-  background-color: #0b529c;
-}
-
-.step-active {
-  background-color: #fe9a00;
-}
-
-.step-error {
-  background-color: #e7000b;
-}
-
-.step-queued {
-  background-color: #e5e5e5;
-  border: 1px solid #d4d4d4;
-}
-
-.step-connector {
-  width: 2px;
-  flex: 1;
-  min-height: 32px;
-}
-
-.step-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: 4px;
-  padding-bottom: 32px;
-}
-
-.step-row:last-child .step-content {
-  padding-bottom: 0;
-}
-
-.step-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #404040;
-}
-
-.step-subtitle {
-  font-size: 13px;
-  color: #737373;
 }
 
 @media (max-width: 1100px) {

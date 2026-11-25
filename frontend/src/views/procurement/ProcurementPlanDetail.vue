@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronRight, MoreVertical,
   Check, PauseCircle, XCircle, ExternalLink,
   Filter, X, RotateCcw,
-  PanelRightClose, PanelRightOpen
+  PanelLeft
 } from 'lucide-vue-next';
 import AppBreadcrumb, { type BreadcrumbItem } from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
@@ -666,7 +666,7 @@ const updateLineStatus = (line: ProcurementPlanVersionLineRecord, status: PlanLi
               aria-label="Expand approval sidebar"
               @click="toggleFocusMode"
             >
-              <PanelRightOpen :size="20" />
+              <PanelLeft :size="20" class="btn-focus-icon" />
             </button>
           </div>
 
@@ -678,7 +678,7 @@ const updateLineStatus = (line: ProcurementPlanVersionLineRecord, status: PlanLi
                 title="Minimize sidebar to focus on plan dossier"
                 @click="toggleFocusMode"
               >
-                <PanelRightClose :size="18" class="btn-focus-icon" />
+                <PanelLeft :size="18" class="btn-focus-icon" />
                 <span>Focus</span>
               </button>
             </div>

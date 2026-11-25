@@ -5,7 +5,7 @@ import {
   Award, Clock, CheckCircle2,
   X, AlertCircle, ArrowRight, ShieldCheck,
   RefreshCw, ArrowUpRight, Printer, CornerDownLeft,
-  Check, PanelRightClose, PanelRightOpen
+  Check, PanelLeft
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
 import AppButton from '../../components/AppButton.vue';
@@ -563,7 +563,7 @@ const formatDate = (val?: string | null) => {
             title="Expand authorization sidebar"
             aria-label="Expand authorization sidebar"
           >
-            <PanelRightOpen :size="20" />
+            <PanelLeft :size="20" class="btn-focus-icon" />
           </button>
         </div>
 
@@ -578,7 +578,7 @@ const formatDate = (val?: string | null) => {
               title="Minimize sidebar to focus on dossier"
               aria-label="Minimize sidebar to focus on dossier"
             >
-              <PanelRightClose :size="18" class="btn-focus-icon" />
+              <PanelLeft :size="18" class="btn-focus-icon" />
               <span>Focus</span>
             </button>
           </div>

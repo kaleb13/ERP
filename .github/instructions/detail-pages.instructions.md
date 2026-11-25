@@ -30,30 +30,29 @@ Used for transactional entities subject to multi-stage human approval, review, o
      * Delta or Impact Banner (e.g. Compensation Delta `+ETB 3,350 (+46.9%)` in tinted blue `bg-[#f1f7fe]` with border `#83bff6` and `Info` icon).
   4. **Granular Breakdown / Sub-table**:
      * Embedded child table (e.g. `Daily Attendance Schedule`) structured cleanly with `No.`, `Date`, `Day of the Week`, `Shift Portion`.
-* **Right Approval Rail (`360px` default, collapsible to `68px`)**:
+* **Right Approval Rail (`ApprovalWorkflowRail` — `360px` default, collapsible to `68px`)**:
+  * **Mandatory Shared Component**: ALWAYS reuse `<ApprovalWorkflowRail />` (`frontend/src/components/ApprovalWorkflowRail.vue`, Figma `7009:114669`, `9066:90379`, `10944:42263`) for every Archetype 1 workflow detail page. NEVER hand-roll bare `<ol>` step lists without card surfaces.
   1. **Focus Toggle Button (`.btn-focus` / `.btn-sidebar-collapsed`)**:
-     * Expanded: White rounded 8px button (`padding: 8px 14px; border: 1px solid #d5d7da; box-shadow: 0 1px 2px rgba(10,13,18,0.05); font-semibold 14px text-[#414651]`) with `PanelRightClose` icon and text `Focus`.
-     * Collapsed: Card shrinks to `68px` width (`padding: 20px 16px; min-height: 800px;`) with a single square 36px button (`PanelRightOpen` icon).
+     * **Authoritative Library Icon (`PanelLeft`)**: ALWAYS use **`PanelLeft`** (`sidebar open` in QMT Team Library / `DashboardLayout.vue`) for BOTH the expanded `Focus` button and the collapsed rail expand button. **NEVER** use `PanelRightClose`, `PanelRightOpen`, `PanelLeftClose`, or `PanelLeftOpen` (those chevron-arrow icons are NOT in the QMT Team Library).
+     * Expanded: White rounded `8px` button (`padding: 8px 14px; border: 1px solid #d4d4d4; box-shadow: 0 1px 2px rgba(10,13,18,0.05); font-semibold 14px text-[#404040]`) with `<PanelLeft :size="18" />` and text `Focus`.
+     * Collapsed: Card shrinks to `68px` width (`padding: 20px 16px; min-height: 520px;`) with a single square `36px` button containing `<PanelLeft :size="20" />`.
      * When toggled to Focus mode, the sidebar minimizes to the slim rail, allowing the left dossier to expand smoothly to `100%` of the remaining viewport width.
-  2. **Section 1: Approver Decision**:
-     * Header: `Approver Decision` (`20px font-semibold text-[#404040]`).
-     * Form inputs: `Resolution *` (QMT custom `FormSelect`), `Remark` textarea (`placeholder="Enter your decision reason..."`), and full-width `Submit Decision` button (`AppButton variant="primary"`).
-  3. **Rail Divider**: Subtle 1px divider (`border-top: 1px solid #e5e5e5; margin: 4px 0;`).
-  4. **Section 2: Approval Steps (Living Multi-Stage Stepper)**:
-     * Header: `Approval Steps` with subtitle `Sequential multi-stage authorization workflow.`
-     * **Linear Gradient Connector Lines**:
-       * Line 1 (between Step 1 Approved `#0b529c` and Step 2 Pending `#fe9a00`):
-         `height: 133px; width: 2px; background: linear-gradient(180deg, #0b529c 0%, #fe9a00 100%);`
-       * Line 2 (between Step 2 Pending `#fe9a00` and Step 3 Disabled/Queued `#d4d4d4`):
-         `height: 50px; width: 2px; background: linear-gradient(180deg, #fe9a00 0%, #d4d4d4 100%);`
-     * **Step Circles**:
-       * Diameter: `44px × 44px`, `border-radius: 9999px`.
-       * Icons: `20px` with appropriate stroke widths.
-       * Step 1 (Approved): Background `#0b529c` (Brand Blue), white `Check` icon.
-       * Step 2 (Pending / Active Review): Background `#fe9a00` (Warning 500 Orange), white `Clock` icon.
-       * Step 3 (Queued / Disabled): Background `var(--color/background/tertiary, #e5e5e5)`, border `1px solid var(--color/border/primary, #d4d4d4)`, muted white `Clock` icon.
-     * **Step Content Cards Stack**:
-       * Aligned with `gap: 32px` so each step card vertically centers with its respective 44px circle.
+  2. **Section 1: Approver Decision (or Status Summary Card)**:
+     * Header: `Approver Decision` (`20px font-semibold text-[#404040]`) + helper subtitle (`14px text-[#737373]`).
+     * Form inputs (when `canDecide`): `Resolution *` (QMT `FormSelect`), `Remark` (`FormTextarea` with `placeholder="Enter your decision reason..."`), and full-width `Submit Decision` button (`AppButton`, primary brand blue or destructive red for rejection).
+     * When decided / waiting (`!canDecide`): render a structured Status Summary card (`approved` green seal card, `rejected` red card, `returned` warning card, or `waiting` neutral card) — never a floating raw paragraph without context.
+  3. **Rail Divider**: Subtle `1px` divider (`border-top: 1px solid #e5e5e5; margin: 4px 0;`) whenever multi-stage steps are present.
+  4. **Section 2: Approval / Progress Steps (Living Multi-Stage Stepper)**:
+     * Header: e.g. `Approval Steps` / `Registration Steps` (`20px font-semibold #404040`) with subtitle (`14px #737373`).
+     * **Mandatory Step Card Background Surface (`.step-card`)**: Every step item MUST render inside a distinct rounded card surface (`background: #fafafa; border: 1px solid #e5e5e5; border-radius: 16px; padding: 12px 18px;`), with optional remark quote box (`background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 8px; padding: 8px 12px;`). **NEVER** render step text naked on the white rail background without a `.step-card` surface.
+     * **Step Circles (`44px × 44px`, dynamically Y-centered on each `.step-card` via `ResizeObserver`)**:
+       * `done` / Approved: Background `#0b529c` (Brand Blue), white `Check` (`20px`).
+       * `active` / Pending Review: Background `#fe9a00` (Warning 500 Amber), white `Clock` (`20px`).
+       * `error` / Rejected: Background `#e7000b` (Error Red), white `X` (`20px`).
+       * `queued` / Waiting: Background `#e5e5e5`, border `1px solid #d4d4d4`, muted white `Clock` (`20px`), muted `#a1a1a1` card text.
+     * **Linear Gradient Connector Lines (`2px` wide, connecting circle-to-circle edge-to-edge)**:
+       * Same-state steps use solid color (`#0b529c` or `#d4d4d4`).
+       * Transitioning steps use vertical linear gradients (`#0b529c → #fe9a00`, `#fe9a00 → #d4d4d4`, `#0b529c → #e7000b`, etc.).
 
 ---
 
@@ -114,17 +113,19 @@ Used for structural, policy, or budgetary master plans where an authorized direc
    * Never start a detail page directly with raw tables or tabs without an identity anchor.
 2. **Key High-Level Indicators Before Granular Tabs**:
    * Metrics, quotas, and high-level variances MUST be presented in prominent cards immediately below the identity banner before drilling into detailed tabs or sub-tables.
-3. **Strict Approval Rail Positioning**:
-   * For workflow-driven entities (Archetype 1), the approval actions and living multi-stage stepper MUST ALWAYS reside in the **Right Column** (`360px`).
+3. **Strict Approval Rail Positioning & Shared Component Law**:
+   * For workflow-driven entities (Archetype 1), ALWAYS use `<ApprovalWorkflowRail />` (`frontend/src/components/ApprovalWorkflowRail.vue`) in the **Right Column** (`360px`).
    * NEVER place the approval sidebar on the left side (as in legacy `EmployeeSeparationDetail.vue`).
-   * The approval rail MUST feature the top **Focus** button (`PanelRightClose`), collapsing smoothly into a `68px` slim rail with `PanelRightOpen` icon to let the user focus completely on inspecting the left dossier.
+   * The Focus collapse/expand button MUST use the QMT library icon **`PanelLeft`** (`sidebar open`) — NEVER `PanelRightClose`, `PanelRightOpen`, `PanelLeftClose`, or `PanelLeftOpen`.
+   * Every workflow step MUST sit inside a `.step-card` background surface (`#fafafa`, `1px solid #e5e5e5`, `16px` radius) with dynamically centered `44px` circles and dual linear-gradient connector lines.
 4. **Authoritative Dual Linear Gradient Stepper Lines**:
    * In all workflow approval steppers, connector lines between steps MUST follow the exact Figma dual linear gradient:
      * Approved to Pending: `linear-gradient(180deg, #0b529c 0%, #fe9a00 100%)`.
      * Pending to Disabled: `linear-gradient(180deg, #fe9a00 0%, #d4d4d4 100%)`.
    * Never use plain solid gray lines for active multi-stage workflow steppers.
-5. **Zero Back Buttons & Transparent Canvas Breadcrumbs**:
+5. **Zero Back Buttons & Clickable Transparent-Canvas Breadcrumbs**:
    * Never render back buttons or white container cards around breadcrumb bars. Breadcrumbs sit on the transparent canvas as the sole traversal mechanism.
+   * **Every parent/intermediate breadcrumb (`index < items.length - 1`) MUST be clickable** — supply `to` (for route navigation) and/or `onClick` (for closing in-page inspection views). `AppBreadcrumb` supports both `<router-link>` (`to`) and `<button>` (`onClick`-only). Never leave an intermediate breadcrumb non-clickable.
 6. **Strict White Card Container Law (Zero Naked Canvas Content)**:
    * **Only Two Elements Sit on the Primary Canvas (`#fafafa`)**: The top breadcrumb bar (with its sealed status badge) and dedicated bottom audit logs / stock ledger explorers.
    * **Every Other Section MUST Have a Solid White Card Container (`background: #ffffff; border: 1px solid var(--alias-color-border-subtle, #e5e5e5); border-radius: 16px;`)**:

@@ -74,7 +74,7 @@ export interface OrganizationUnitRecord {
 const breadcrumbItems = computed(() => {
   if (viewMode.value === 'detail' && selectedUnit.value) {
     return [
-      { label: 'Organization Units', onClick: () => { viewMode.value = 'list'; selectedUnit.value = null; } },
+      { label: 'Organization Units', to: '/hr/organization-units', onClick: () => { viewMode.value = 'list'; selectedUnit.value = null; } },
       { label: selectedUnit.value.name, current: true }
     ];
   }

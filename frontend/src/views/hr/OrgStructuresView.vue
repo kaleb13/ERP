@@ -6,7 +6,7 @@ import {
   Filter, ArrowUpDown, MoreVertical, Edit2,
   Trash2, Copy, Calendar, CheckCircle2,
   FolderTree, ZoomIn, ZoomOut, RotateCcw,
-  PanelLeftClose, PanelLeftOpen, List
+  PanelLeft, List
 } from 'lucide-vue-next';;
 import BaseTabs, { type BaseTabItem } from '../../components/BaseTabs.vue';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
@@ -1178,8 +1178,7 @@ onUnmounted(() => {
               @click="isSidebarCollapsed = !isSidebarCollapsed"
               :title="isSidebarCollapsed ? 'Show Structures List' : 'Focus Mode (Hide List)'"
             >
-              <PanelLeftOpen v-if="isSidebarCollapsed" :size="15" />
-              <PanelLeftClose v-else :size="15" />
+              <PanelLeft :size="16" />
               <span>Focus</span>
             </button>
 

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
   Plus, Search, Filter, MoreVertical, 
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeft,
   CheckCircle2
 } from 'lucide-vue-next';
 import AppBreadcrumb from '../../components/AppBreadcrumb.vue';
@@ -299,10 +299,7 @@ const handleSaveQuick = () => {
             @click="isFocused = !isFocused"
             :title="isFocused ? 'Switch to Master-Detail List' : 'Focus Full Screen'"
           >
-            <component 
-              :is="isFocused ? PanelLeftOpen : PanelLeftClose" 
-              :size="18" 
-            />
+            <PanelLeft :size="18" />
             <span>{{ isFocused ? 'List' : 'Focus' }}</span>
           </button>
         </div>

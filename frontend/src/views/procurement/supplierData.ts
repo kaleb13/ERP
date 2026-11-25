@@ -1,5 +1,8 @@
 import { ref } from 'vue';
-import ethioTelecomLogo from '../../assets/ethio-telecom-logo.png';
+import ethioTelecomLogo from '../../assets/Ethiotelecom.png';
+import shoaLogo from '../../assets/Shoa.png';
+import siemensLogo from '../../assets/Siemens.png';
+import queensLogo from '../../assets/Queens.png';
 
 /**
  * Supplier 360° Monitoring & Lifecycle data layer.
@@ -135,6 +138,11 @@ export interface SupplierChangeRequestItem {
   proposed_values: Record<string, string>;
 }
 
+export interface SupplierScoreHistoryPoint {
+  period: string;
+  overall_score: number;
+}
+
 export interface SupplierScorecardSummary {
   scorecard_number: string;
   period_label: string;
@@ -144,7 +152,7 @@ export interface SupplierScorecardSummary {
   lines: Array<{ code: string; name: string; weight: number; score: number }>;
 }
 
-export interface SupplierImprovementItem {
+export interface SupplierImprovementActionItem {
   id: number;
   code: string;
   title: string;
@@ -152,6 +160,8 @@ export interface SupplierImprovementItem {
   target_date: string;
   status: 'open' | 'in_progress' | 'verified';
 }
+
+export type SupplierImprovementItem = SupplierImprovementActionItem;
 
 export interface SupplierRecord {
   id: number;
@@ -179,6 +189,7 @@ export interface SupplierRecord {
   portal_users: SupplierPortalUserItem[];
   change_requests: SupplierChangeRequestItem[];
   scorecard: SupplierScorecardSummary | null;
+  score_history: SupplierScoreHistoryPoint[];
   improvement_actions: SupplierImprovementItem[];
   linked_counts: {
     purchase_orders: number;
@@ -462,6 +473,12 @@ export const suppliersStore = ref<SupplierRecord[]>([
         { code: 'COMMS', name: 'Responsiveness', weight: 10, score: 75.0 }
       ]
     },
+    score_history: [
+      { period: 'Q4 2025', overall_score: 71.5 },
+      { period: 'Q1 2026', overall_score: 74.2 },
+      { period: 'Q2 2026', overall_score: 75.8 },
+      { period: 'Q3 2026', overall_score: 79.3 }
+    ],
     improvement_actions: [
       {
         id: 2,
@@ -477,7 +494,7 @@ export const suppliersStore = ref<SupplierRecord[]>([
   {
     id: 502,
     code: 'SUP-502',
-    logo_url: '',
+    logo_url: shoaLogo,
     legal_name: 'Shoa Supermarket',
     trade_name: 'Shoa Shopping Center',
     tin: '0022334455',
@@ -631,6 +648,12 @@ export const suppliersStore = ref<SupplierRecord[]>([
         { code: 'COMMS', name: 'Responsiveness', weight: 10, score: 52.0 }
       ]
     },
+    score_history: [
+      { period: 'Q4 2025', overall_score: 72.4 },
+      { period: 'Q1 2026', overall_score: 68.0 },
+      { period: 'Q2 2026', overall_score: 63.6 },
+      { period: 'Q3 2026', overall_score: 58.2 }
+    ],
     improvement_actions: [
       {
         id: 1,
@@ -654,7 +677,7 @@ export const suppliersStore = ref<SupplierRecord[]>([
   {
     id: 503,
     code: 'SUP-503',
-    logo_url: '',
+    logo_url: siemensLogo,
     legal_name: 'Siemens AG',
     trade_name: 'Siemens Industrial',
     tin: 'DE-812904411',
@@ -779,13 +802,19 @@ export const suppliersStore = ref<SupplierRecord[]>([
         { code: 'COMMS', name: 'Responsiveness', weight: 10, score: 89.0 }
       ]
     },
+    score_history: [
+      { period: 'Q4 2025', overall_score: 84.0 },
+      { period: 'Q1 2026', overall_score: 86.2 },
+      { period: 'Q2 2026', overall_score: 87.5 },
+      { period: 'Q3 2026', overall_score: 88.6 }
+    ],
     improvement_actions: [],
     linked_counts: { purchase_orders: 4, returns: 0, invoices: 4, contracts: 1 }
   },
   {
     id: 540,
     code: 'SUP-540',
-    logo_url: '',
+    logo_url: queensLogo,
     legal_name: 'Queens Supermarket',
     trade_name: 'Queens Retail PLC',
     tin: '0012345678',
@@ -910,6 +939,7 @@ export const suppliersStore = ref<SupplierRecord[]>([
       }
     ],
     scorecard: null,
+    score_history: [],
     improvement_actions: [],
     linked_counts: { purchase_orders: 3, returns: 0, invoices: 2, contracts: 0 }
   }

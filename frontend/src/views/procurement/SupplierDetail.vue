@@ -32,6 +32,7 @@ import QuickCreateModal from '../../components/QuickCreateModal.vue';
 import { useToast } from '../../composables/useToast';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import StarRating from '../../components/StarRating.vue';
+import { BarChart, LineChart } from '../../components/charts';
 import SupplierRatingModal from './SupplierRatingModal.vue';
 import {
   suppliersStore,
@@ -139,19 +140,74 @@ const openRatingFor = (stars: number) => {
   showRatingModal.value = true;
 };
 
-const getScoreBarColor = (score: number) => {
-  if (score >= 85) return '#009966';
-  if (score >= 70) return '#0b529c';
-  if (score >= 50) return '#e17100';
-  return '#e7000b';
-};
-
 const resolveGrade = (score: number) => {
   if (score >= 85) return 'excellent' as const;
   if (score >= 70) return 'satisfactory' as const;
   if (score >= 50) return 'needs_improvement' as const;
   return 'unsatisfactory' as const;
 };
+
+const getScoreBarColor = (score: number) => {
+  if (score >= 85) return '#009966';
+  if (score >= 70) return '#0B529C';
+  if (score >= 50) return '#E17100';
+  return '#E7000B';
+};
+
+const kpiShortLabelMap: Record<string, string> = {
+  OTD: 'Delivery',
+  QUALITY: 'Quality',
+  PRICE: 'Pricing',
+  COMMS: 'Response'
+};
+
+// ─── TAB 4: PERFORMANCE CHART SERIES (QMT BarChart & LineChart) ──────────────
+const rankedScorecardLines = computed(() => {
+  const lines = supplier.value?.scorecard?.lines ?? [];
+  return [...lines].sort((a, b) => b.score - a.score);
+});
+
+const kpiChartCategories = computed(() =>
+  rankedScorecardLines.value.map((l) => kpiShortLabelMap[l.code] || l.name)
+);
+
+const kpiChartWeights = computed(() =>
+  rankedScorecardLines.value.map((l) => `${l.name} • ${l.weight}% weight`)
+);
+
+const kpiChartSeries = computed(() => {
+  if (rankedScorecardLines.value.length === 0) return [];
+  return [
+    {
+      name: 'Score',
+      data: rankedScorecardLines.value.map((l) => l.score),
+      barColors: rankedScorecardLines.value.map((l) => getScoreBarColor(l.score))
+    }
+  ];
+});
+
+const trendCategories = computed(
+  () => supplier.value?.score_history.map((pt) => pt.period) ?? []
+);
+
+const trendSeries = computed(() => {
+  const hist = supplier.value?.score_history ?? [];
+  if (hist.length === 0) return [];
+  return [{ name: 'Overall Score', data: hist.map((pt) => pt.overall_score) }];
+});
+
+const scoreTrendDelta = computed(() => {
+  const hist = supplier.value?.score_history ?? [];
+  if (hist.length < 2) return null;
+  const diff = Number((hist[hist.length - 1].overall_score - hist[hist.length - 2].overall_score).toFixed(1));
+  return {
+    diff,
+    label: `${diff > 0 ? '+' : ''}${diff.toFixed(1)} pts`,
+    color: (diff > 0 ? 'success' : diff < 0 ? 'error' : 'blue') as 'success' | 'error' | 'blue'
+  };
+});
+
+const formatScoreTick = (v: number) => `${v.toFixed(1)}`;
 
 // ─── TAB 2: RISK — Read-Only Table + QuickCreateModal + 3-Dot Lifecycle Menu ─
 const riskTypeOptions = [
@@ -424,14 +480,22 @@ const handleSaveScorecard = () => {
   const overall = Number(
     lines.reduce((acc, l) => acc + (l.score * l.weight) / 100, 0).toFixed(1)
   );
+  const periodLabel = scorecardDraft.period_label.trim() || 'Q4 2026 (Oct 1 – Dec 31)';
   s.scorecard = {
     scorecard_number: s.scorecard?.scorecard_number || `SSC-2026-Q4-${s.id}`,
-    period_label: scorecardDraft.period_label.trim() || 'Q4 2026 (Oct 1 – Dec 31)',
+    period_label: periodLabel,
     overall_score: overall,
     grade: resolveGrade(overall),
     status: 'reviewed',
     lines
   };
+  const shortPeriod = periodLabel.split('(')[0].trim() || periodLabel;
+  const existingIdx = s.score_history.findIndex((pt) => pt.period === shortPeriod);
+  if (existingIdx >= 0) {
+    s.score_history[existingIdx].overall_score = overall;
+  } else {
+    s.score_history.push({ period: shortPeriod, overall_score: overall });
+  }
   showScorecardModal.value = false;
   toast.success(`Scorecard recorded (${overall.toFixed(1)} / 100 • ${getGradeLabel(s.scorecard.grade)}).`);
 };
@@ -472,7 +536,7 @@ const handleAddImprovementAction = () => {
     status: 'open'
   });
   showActionModal.value = false;
-  toast.success('Improvement action added (status: Open).');
+  toast.success('Improvement action created (status: Open).');
 };
 
 const getImprovementActionsMenu = (act: SupplierImprovementActionItem): DropdownMenuItem[] => [
@@ -517,9 +581,9 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
             <BaseAvatar
               :src="supplier.logo_url"
               :name="supplier.legal_name"
-              size="2xl"
-              :bordered="true"
-              class="hero-supplier-avatar"
+              size="profile-md"
+              status="company"
+              :placeholder="!supplier.logo_url"
             />
             <div class="hero-identity">
               <div class="hero-title-row">
@@ -776,7 +840,7 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
               </p>
               <AppButton variant="primary" size="sm" @click="openRiskModal">
                 <Plus :size="15" />
-                Add Risk Event
+                Create Risk Event
               </AppButton>
             </div>
 
@@ -847,14 +911,14 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
             </div>
             <AppButton variant="primary" size="sm" @click="openPriceListModal">
               <Plus :size="15" />
-              Add Price List
+              Create Price List
             </AppButton>
           </div>
         </div>
 
         <div v-if="supplier.price_lists.length === 0" class="detail-card empty-card">
           <p class="empty-title">No price lists configured</p>
-          <p class="empty-sub">Use Add Price List above to record a catalogue or contract rate sheet.</p>
+          <p class="empty-sub">Use Create Price List above to record a catalogue or contract rate sheet.</p>
         </div>
 
         <div v-for="pl in supplier.price_lists" :key="pl.id" class="detail-card accordion-card">
@@ -965,55 +1029,60 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
         </div>
       </div>
 
-      <!-- ═════════ TAB 4: PERFORMANCE (Authoritative Accordion Cards — Actions & Descriptions Inside Body) ═════════ -->
+      <!-- ═════════ TAB 4: PERFORMANCE (2 Clean QMT Charts + Collapsible Improvement Actions) ═════════ -->
       <div v-else-if="activeTab === 'performance'" class="tab-stack">
-        <div class="detail-card accordion-card">
-          <div
-            class="card-accordion-header"
-            :class="{ 'is-collapsed': collapsedSections.scorecard }"
-            @click="collapsedSections.scorecard = !collapsedSections.scorecard"
+        <div class="performance-charts-grid">
+          <BarChart
+            title="Scorecard Breakdown"
+            :subtitle="
+              supplier.scorecard
+                ? `${supplier.scorecard.scorecard_number} • ${supplier.scorecard.overall_score.toFixed(1)} / 100 (${getGradeLabel(supplier.scorecard.grade)})`
+                : 'No scorecard evaluated yet'
+            "
+            :categories="kpiChartCategories"
+            :category-subtitles="kpiChartWeights"
+            :series="kpiChartSeries"
+            orientation="horizontal"
+            layout="single"
+            palette="brand"
+            :max-value="100"
+            :show-values="true"
+            :value-formatter="formatScoreTick"
+            :height="228"
+            empty-text="No scorecard evaluated for this supplier yet. Record a scorecard to view weighted KPI scores."
           >
-            <div class="accordion-header-left">
-              <span>{{ supplier.scorecard ? `${supplier.scorecard.scorecard_number} — ${supplier.scorecard.period_label}` : 'Scorecard Breakdown' }}</span>
-              <ChevronDown v-if="!collapsedSections.scorecard" :size="16" class="header-chevron" />
-              <ChevronRight v-else :size="16" class="header-chevron" />
-            </div>
-            <BaseBadge
-              v-if="supplier.scorecard"
-              size="sm"
-              :color="getGradeBadgeColor(supplier.scorecard.grade)"
-            >
-              {{ supplier.scorecard.overall_score.toFixed(1) }} • {{ getGradeLabel(supplier.scorecard.grade) }}
-            </BaseBadge>
-          </div>
-
-          <div v-show="!collapsedSections.scorecard" class="card-accordion-body">
-            <div class="body-action-row">
-              <p class="section-subtitle">
-                Weighted KPI score distribution across delivery, quality, price variance, and responsiveness.
-              </p>
-              <AppButton variant="primary" size="sm" @click="openScorecardModal">
-                <Plus :size="15" />
+            <template #actions>
+              <AppButton variant="secondary-gray" size="sm" @click="openScorecardModal">
+                <Plus :size="14" />
                 Record Scorecard
               </AppButton>
-            </div>
+            </template>
+          </BarChart>
 
-            <div v-if="supplier.scorecard" class="kpi-bars-list">
-              <div v-for="line in supplier.scorecard.lines" :key="line.code" class="kpi-bar-row">
-                <div class="kpi-bar-head">
-                  <span class="kpi-bar-name">{{ line.name }} <span class="kpi-bar-weight">({{ line.weight }}% weight)</span></span>
-                  <span class="kpi-bar-score">{{ line.score.toFixed(1) }} / 100</span>
-                </div>
-                <div class="kpi-bar-track">
-                  <div
-                    class="kpi-bar-fill"
-                    :style="{ width: `${Math.min(100, Math.max(0, line.score))}%`, backgroundColor: getScoreBarColor(line.score) }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="empty-cell">No scorecard evaluated for this supplier yet. Click Record Scorecard above to log KPI scores.</div>
-          </div>
+          <LineChart
+            title="Performance Trend"
+            :subtitle="
+              trendCategories.length > 0
+                ? `${trendCategories[0]} – ${trendCategories[trendCategories.length - 1]} • Quarterly overall score`
+                : 'Quarterly overall score progression'
+            "
+            :categories="trendCategories"
+            :series="trendSeries"
+            variant="area"
+            palette="brand"
+            :min-value="0"
+            :max-value="100"
+            :reference-line="{ value: 70, label: 'Target 70' }"
+            :value-formatter="formatScoreTick"
+            :height="228"
+            empty-text="Record at least one scorecard to track quarterly score progression."
+          >
+            <template #actions>
+              <BaseBadge v-if="scoreTrendDelta" size="sm" :color="scoreTrendDelta.color">
+                {{ scoreTrendDelta.label }}
+              </BaseBadge>
+            </template>
+          </LineChart>
         </div>
 
         <div class="detail-card accordion-card">
@@ -1039,7 +1108,7 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
               </p>
               <AppButton variant="primary" size="sm" @click="openActionModal">
                 <Plus :size="15" />
-                Add Action
+                Create Improvement Action
               </AppButton>
             </div>
 
@@ -1219,7 +1288,7 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
 
       <QuickCreateModal
         v-model="showRiskModal"
-        title="Add Risk Event"
+        title="Create Risk Event"
         :show-expand-button="false"
         save-label="Save"
         width="md"
@@ -1253,7 +1322,7 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
 
       <QuickCreateModal
         v-model="showActionModal"
-        title="Add Improvement Action"
+        title="Create Improvement Action"
         :show-expand-button="false"
         save-label="Save"
         width="md"
@@ -1328,13 +1397,6 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
   display: flex;
   align-items: center;
   gap: 20px;
-}
-
-.hero-supplier-avatar {
-  width: 88px !important;
-  height: 88px !important;
-  font-size: 26px !important;
-  box-shadow: 0 2px 8px rgba(10, 13, 18, 0.06);
 }
 
 .hero-identity {
@@ -1714,53 +1776,12 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
   padding-top: 4px;
 }
 
-/* KPI Progress Bars */
-.kpi-bars-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.kpi-bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.kpi-bar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13.5px;
-}
-
-.kpi-bar-name {
-  font-weight: 400;
-  color: #404040;
-}
-
-.kpi-bar-weight {
-  font-weight: 400;
-  color: #737373;
-}
-
-.kpi-bar-score {
-  font-weight: 500;
-  color: #404040;
-}
-
-.kpi-bar-track {
-  height: 8px;
-  width: 100%;
-  background-color: #f5f5f5;
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.kpi-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.25s ease;
+/* Performance 2-Chart Side-by-Side Row */
+.performance-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
 }
 
 /* Tables */
@@ -1892,6 +1913,7 @@ const getImprovementActionsMenu = (act: SupplierImprovementActionItem): Dropdown
 
 @media (max-width: 1120px) {
   .overview-grid-2,
+  .performance-charts-grid,
   .field-grid-3,
   .modal-form-grid-2 {
     grid-template-columns: 1fr;

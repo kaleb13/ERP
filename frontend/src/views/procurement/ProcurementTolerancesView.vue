@@ -92,6 +92,7 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
     return [
       {
         label: 'Receipt & Matching Rule',
+        to: '/procurement/tolerances?tab=receipt',
         onClick: () => {
           inspectingRule.value = null;
         }
@@ -105,6 +106,7 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
     return [
       {
         label: 'Receipt & Matching Rule',
+        to: '/procurement/tolerances?tab=matching',
         onClick: () => {
           inspectingMatchingRule.value = null;
         }

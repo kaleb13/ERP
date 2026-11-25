@@ -94,7 +94,7 @@ onMounted(() => {
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   const base: BreadcrumbItem = {
     label: 'Receipt & Matching Rule',
-    onClick: () => router.push('/procurement/tolerances?tab=receipt')
+    to: '/procurement/tolerances?tab=receipt'
   };
   if (editingId.value) {
     return [base, { label: `Edit Rule #${editingId.value}` }];

@@ -410,7 +410,13 @@ const getActionItems = (r: SupplierRegistrationRecord): DropdownMenuItem[] => [
                   :modelValue="selectedIds.includes(reg.id)"
                   @update:modelValue="(v: boolean) => toggleSelectRow(reg.id, Boolean(v))"
                 />
-                <BaseAvatar :src="reg.logo_url" :name="reg.legal_name" size="sm" />
+                <BaseAvatar
+                  :src="reg.logo_url"
+                  :name="reg.legal_name"
+                  size="md"
+                  status="company"
+                  :placeholder="!reg.logo_url"
+                />
                 <div class="lead-text-stack" @click="goToDetail(reg)">
                   <span class="cell-primary-title">{{ reg.legal_name }}</span>
                   <span class="cell-subtext">{{ reg.registration_number }}</span>

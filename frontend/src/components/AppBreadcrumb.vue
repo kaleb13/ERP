@@ -58,10 +58,10 @@ withDefaults(
     <template v-for="(item, index) in items" :key="index">
       <ChevronRight :size="16" class="breadcrumb-divider" />
 
-      <!-- Clickable link for non-last items that have a 'to' property -->
-      <router-link 
-        v-if="item.to && index < items.length - 1" 
-        :to="item.to" 
+      <!-- Clickable router-link for non-last items with a 'to' target -->
+      <router-link
+        v-if="item.to && index < items.length - 1"
+        :to="item.to"
         class="breadcrumb-link"
         @click="item.onClick ? item.onClick() : undefined"
       >
@@ -69,7 +69,24 @@ withDefaults(
         <span>{{ item.label }}</span>
       </router-link>
 
-      <!-- Active / Current Page for the last item or items without 'to' -->
+      <!-- Clickable button for non-last items with an 'onClick' handler (in-page detail/inspect views) -->
+      <button
+        v-else-if="item.onClick && index < items.length - 1"
+        type="button"
+        class="breadcrumb-link breadcrumb-btn"
+        @click="item.onClick()"
+      >
+        <component :is="item.icon" v-if="item.icon" :size="16" class="breadcrumb-item-icon" />
+        <span>{{ item.label }}</span>
+      </button>
+
+      <!-- Non-clickable intermediate crumb (falls back to Tertiary, never active Secondary) -->
+      <span v-else-if="index < items.length - 1" class="breadcrumb-inactive">
+        <component :is="item.icon" v-if="item.icon" :size="16" class="breadcrumb-item-icon" />
+        <span>{{ item.label }}</span>
+      </span>
+
+      <!-- Active / Current Page for the last item -->
       <span v-else class="breadcrumb-current" aria-current="page">
         <component :is="item.icon" v-if="item.icon" :size="16" class="breadcrumb-item-icon" />
         <span>{{ item.label }}</span>
@@ -149,6 +166,24 @@ withDefaults(
 .breadcrumb-link:hover {
   color: var(--primitive-color-brand-blue-700, #0B529C);
   background-color: var(--primitive-color-brand-blue-50, #f1f7fe);
+}
+
+.breadcrumb-btn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  margin: 0;
+}
+
+.breadcrumb-inactive {
+  color: var(--alias-color-text-tertiary, #737373);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .breadcrumb-current {
